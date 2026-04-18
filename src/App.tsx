@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import RecuperarSenha from "./pages/RecuperarSenha";
 import Home from "./pages/Home";
 import Busca from "./pages/Busca";
 import Livros from "./pages/Livros";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/recuperar-senha" element={<RecuperarSenha />} />
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/busca" element={<ProtectedRoute><Busca /></ProtectedRoute>} />
             <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />

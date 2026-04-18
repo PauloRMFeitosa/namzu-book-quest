@@ -46,6 +46,9 @@ const Login = () => {
           <Button type="submit" disabled={busy} className="h-[52px] rounded-2xl text-base font-semibold mt-2 bg-primary hover:bg-primary-hover">
             {busy ? "Entrando..." : "Entrar"}
           </Button>
+          <Link to="/recuperar-senha" className="text-sm text-primary font-semibold text-center mt-1">
+            Esqueci minha senha
+          </Link>
         </form>
         <p className="text-sm text-center mt-6 text-muted-foreground">
           Não tem conta? <Link to="/signup" className="text-primary font-semibold">Criar conta</Link>
