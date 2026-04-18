@@ -501,6 +501,311 @@ export type Database = {
           },
         ]
       }
+      leitura_aplicacoes: {
+        Row: {
+          descricao: string
+          id: string
+          leitura_id: string | null
+          plano_acao: Json | null
+        }
+        Insert: {
+          descricao: string
+          id?: string
+          leitura_id?: string | null
+          plano_acao?: Json | null
+        }
+        Update: {
+          descricao?: string
+          id?: string
+          leitura_id?: string | null
+          plano_acao?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_aplicacoes_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_citacoes: {
+        Row: {
+          id: string
+          leitura_id: string | null
+          pagina: number | null
+          texto: string
+        }
+        Insert: {
+          id?: string
+          leitura_id?: string | null
+          pagina?: number | null
+          texto: string
+        }
+        Update: {
+          id?: string
+          leitura_id?: string | null
+          pagina?: number | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_citacoes_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_conteudo: {
+        Row: {
+          conceito_principal: string | null
+          id: string
+          leitura_id: string | null
+          resumo: string | null
+        }
+        Insert: {
+          conceito_principal?: string | null
+          id?: string
+          leitura_id?: string | null
+          resumo?: string | null
+        }
+        Update: {
+          conceito_principal?: string | null
+          id?: string
+          leitura_id?: string | null
+          resumo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_conteudo_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_links: {
+        Row: {
+          descricao: string | null
+          id: string
+          leitura_id: string | null
+          tipo: string | null
+          url: string
+        }
+        Insert: {
+          descricao?: string | null
+          id?: string
+          leitura_id?: string | null
+          tipo?: string | null
+          url: string
+        }
+        Update: {
+          descricao?: string | null
+          id?: string
+          leitura_id?: string | null
+          tipo?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_links_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_pos: {
+        Row: {
+          created_at: string | null
+          id: string
+          ideia_principal: string | null
+          publica: boolean | null
+          resenha: string | null
+          resumo_geral: string | null
+          tem_spoiler: boolean | null
+          usuario_livro_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ideia_principal?: string | null
+          publica?: boolean | null
+          resenha?: string | null
+          resumo_geral?: string | null
+          tem_spoiler?: boolean | null
+          usuario_livro_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ideia_principal?: string | null
+          publica?: boolean | null
+          resenha?: string | null
+          resumo_geral?: string | null
+          tem_spoiler?: boolean | null
+          usuario_livro_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "usuario_livros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leitura_detalhada"
+            referencedColumns: ["usuario_livro_id"]
+          },
+          {
+            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_livros_lendo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_ultimos_lidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_pre: {
+        Row: {
+          dominio_previo: string | null
+          intencao: string
+          leitura_id: string
+          observacao: string | null
+        }
+        Insert: {
+          dominio_previo?: string | null
+          intencao: string
+          leitura_id: string
+          observacao?: string | null
+        }
+        Update: {
+          dominio_previo?: string | null
+          intencao?: string
+          leitura_id?: string
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_pre_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: true
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leitura_tags: {
+        Row: {
+          leitura_id: string
+          tag_id: string
+        }
+        Insert: {
+          leitura_id: string
+          tag_id: string
+        }
+        Update: {
+          leitura_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_tags_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leitura_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leituras: {
+        Row: {
+          created_at: string | null
+          id: string
+          pagina_fim: number | null
+          pagina_inicio: number | null
+          paginas_lidas: number | null
+          percentual_lido: number | null
+          tipo: string
+          user_id: string
+          usuario_livro_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pagina_fim?: number | null
+          pagina_inicio?: number | null
+          paginas_lidas?: number | null
+          percentual_lido?: number | null
+          tipo: string
+          user_id: string
+          usuario_livro_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pagina_fim?: number | null
+          pagina_inicio?: number | null
+          paginas_lidas?: number | null
+          percentual_lido?: number | null
+          tipo?: string
+          user_id?: string
+          usuario_livro_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "usuario_livros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leitura_detalhada"
+            referencedColumns: ["usuario_livro_id"]
+          },
+          {
+            foreignKeyName: "leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_livros_lendo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_ultimos_lidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       livros_cache: {
         Row: {
           created_at: string | null
@@ -666,6 +971,21 @@ export type Database = {
         }
         Relationships: []
       }
+      tags: {
+        Row: {
+          id: string
+          nome: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       usuario_conquistas: {
         Row: {
           conquista_id: string
@@ -798,6 +1118,105 @@ export type Database = {
             columns: ["clube_id"]
             isOneToOne: false
             referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_leitura_detalhada: {
+        Row: {
+          ideia_principal: string | null
+          publica: boolean | null
+          resenha: string | null
+          resumo_geral: string | null
+          titulo_original: string | null
+          usuario_livro_id: string | null
+        }
+        Relationships: []
+      }
+      vw_livros_lendo: {
+        Row: {
+          data_fim: string | null
+          data_inicio: string | null
+          edicao_id: string | null
+          favorito: boolean | null
+          id: string | null
+          nota: number | null
+          obra_id: string | null
+          review_texto: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          data_fim?: string | null
+          data_inicio?: string | null
+          edicao_id?: string | null
+          favorito?: boolean | null
+          id?: string | null
+          nota?: number | null
+          obra_id?: string | null
+          review_texto?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          data_fim?: string | null
+          data_inicio?: string | null
+          edicao_id?: string | null
+          favorito?: boolean | null
+          id?: string | null
+          nota?: number | null
+          obra_id?: string | null
+          review_texto?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_livros_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "edicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_ultimos_lidos: {
+        Row: {
+          data_fim: string | null
+          data_inicio: string | null
+          edicao_id: string | null
+          favorito: boolean | null
+          id: string | null
+          nota: number | null
+          obra_id: string | null
+          review_texto: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_livros_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "edicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
         ]
