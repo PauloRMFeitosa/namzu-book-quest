@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { GoogleButton } from "@/components/GoogleButton";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -50,6 +51,12 @@ const Login = () => {
             Esqueci minha senha
           </Link>
         </form>
+        <div className="flex items-center gap-3 my-5">
+          <div className="h-px bg-border flex-1" />
+          <span className="text-xs text-muted-foreground">ou</span>
+          <div className="h-px bg-border flex-1" />
+        </div>
+        <GoogleButton label="Entrar com Google" />
         <p className="text-sm text-center mt-6 text-muted-foreground">
           Não tem conta? <Link to="/signup" className="text-primary font-semibold">Criar conta</Link>
         </p>
