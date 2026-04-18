@@ -82,7 +82,10 @@ export const RegistrarLeituraDialog = ({
   const reset = () => {
     if (isEdit) return;
     setResumo(""); setConceito(""); setPaginasLidas(""); setPercentual("");
-    setCitacoes([]); setAplicacoes([]); setTags([]); setLinks([]);
+    setCitacoes([{ texto: "", pagina: "" }]);
+    setAplicacoes([{ descricao: "", plano_acao: null }]);
+    setTags([]);
+    setLinks([{ tipo: "url", url: "", descricao: "" }]);
   };
 
   const salvar = async () => {
