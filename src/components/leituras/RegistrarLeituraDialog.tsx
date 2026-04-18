@@ -61,22 +61,31 @@ export const RegistrarLeituraDialog = ({
   const [paginasLidas, setPaginasLidas] = useState(leitura?.paginas_lidas?.toString() ?? "");
   const [percentual, setPercentual] = useState(leitura?.percentual_lido?.toString() ?? "");
   const [citacoes, setCitacoes] = useState<Citacao[]>(
-    leitura?.leitura_citacoes?.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" })) ?? []
+    leitura?.leitura_citacoes?.length
+      ? leitura.leitura_citacoes.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" }))
+      : [{ texto: "", pagina: "" }]
   );
   const [aplicacoes, setAplicacoes] = useState<Aplicacao[]>(
-    leitura?.leitura_aplicacoes?.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao })) ?? []
+    leitura?.leitura_aplicacoes?.length
+      ? leitura.leitura_aplicacoes.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao }))
+      : [{ descricao: "", plano_acao: null }]
   );
   const [tags, setTags] = useState<string[]>(
     leitura?.leitura_tags?.map((t) => t.tags?.nome).filter(Boolean) as string[] ?? []
   );
   const [links, setLinks] = useState<Link[]>(
-    leitura?.leitura_links?.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" })) ?? []
+    leitura?.leitura_links?.length
+      ? leitura.leitura_links.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" }))
+      : [{ tipo: "url", url: "", descricao: "" }]
   );
 
   const reset = () => {
     if (isEdit) return;
     setResumo(""); setConceito(""); setPaginasLidas(""); setPercentual("");
-    setCitacoes([]); setAplicacoes([]); setTags([]); setLinks([]);
+    setCitacoes([{ texto: "", pagina: "" }]);
+    setAplicacoes([{ descricao: "", plano_acao: null }]);
+    setTags([]);
+    setLinks([{ tipo: "url", url: "", descricao: "" }]);
   };
 
   const salvar = async () => {
@@ -256,13 +265,7 @@ export const RegistrarLeituraDialog = ({
           </TabsContent>
 
           <TabsContent value="citacoes" className="flex flex-col gap-2 mt-0">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_citacoes</code></p>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setCitacoes([...citacoes, { texto: "", pagina: "" }])}>
-                <Plus className="w-3 h-3" /> Adicionar
-              </Button>
-            </div>
-            {citacoes.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhuma citação adicionada.</p>}
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_citacoes</code></p>
             {citacoes.map((c, i) => (
               <div key={i} className="flex gap-2">
                 <Textarea value={c.texto} onChange={(e) => {
@@ -278,16 +281,13 @@ export const RegistrarLeituraDialog = ({
                 </div>
               </div>
             ))}
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setCitacoes([...citacoes, { texto: "", pagina: "" }])}>
+              <Plus className="w-3 h-3" /> Adicionar citação
+            </Button>
           </TabsContent>
 
           <TabsContent value="aplicacoes" className="flex flex-col gap-2 mt-0">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_aplicacoes</code></p>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setAplicacoes([...aplicacoes, { descricao: "", plano_acao: null }])}>
-                <Plus className="w-3 h-3" /> Adicionar
-              </Button>
-            </div>
-            {aplicacoes.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhuma aplicação adicionada.</p>}
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_aplicacoes</code></p>
             {aplicacoes.map((a, i) => (
               <div key={i} className="flex flex-col gap-1 card-soft p-2">
                 <Textarea value={a.descricao} onChange={(e) => {
@@ -311,6 +311,9 @@ export const RegistrarLeituraDialog = ({
                 )}
               </div>
             ))}
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setAplicacoes([...aplicacoes, { descricao: "", plano_acao: null }])}>
+              <Plus className="w-3 h-3" /> Adicionar aplicação
+            </Button>
           </TabsContent>
 
           <TabsContent value="tags" className="flex flex-col gap-2 mt-0">
@@ -319,13 +322,7 @@ export const RegistrarLeituraDialog = ({
           </TabsContent>
 
           <TabsContent value="links" className="flex flex-col gap-2 mt-0">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_links</code></p>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setLinks([...links, { tipo: "url", url: "", descricao: "" }])}>
-                <Plus className="w-3 h-3" /> Adicionar
-              </Button>
-            </div>
-            {links.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhum link adicionado.</p>}
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_links</code></p>
             {links.map((l, i) => (
               <div key={i} className="flex flex-col gap-1 card-soft p-2">
                 <div className="flex gap-2">
@@ -349,6 +346,9 @@ export const RegistrarLeituraDialog = ({
                 }} placeholder="Descrição" className="h-10 rounded-xl" />
               </div>
             ))}
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setLinks([...links, { tipo: "url", url: "", descricao: "" }])}>
+              <Plus className="w-3 h-3" /> Adicionar link
+            </Button>
           </TabsContent>
 
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
