@@ -206,14 +206,16 @@ export const RegistrarLeituraDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          <Plus className="w-4 h-4" /> Registrar leitura
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
+            <Plus className="w-4 h-4" /> Registrar leitura
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova leitura</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar leitura" : "Nova leitura"}</DialogTitle>
           <p className="text-xs text-muted-foreground">Preencha apenas as seções que desejar registrar nesta sessão.</p>
         </DialogHeader>
 
