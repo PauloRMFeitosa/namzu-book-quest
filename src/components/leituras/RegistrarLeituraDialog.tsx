@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -90,26 +90,20 @@ export const RegistrarLeituraDialog = ({
       : [{ tipo: "url", url: "", descricao: "" }]
   );
 
-  const initialSnapshot = useMemo(() => JSON.stringify({
-    resumo: c0?.resumo ?? "",
-    conceito: c0?.conceito_principal ?? "",
-    paginasLidas: leitura?.paginas_lidas?.toString() ?? "",
-    percentual: leitura?.percentual_lido?.toString() ?? "",
-    citacoes: leitura?.leitura_citacoes?.length
-      ? leitura.leitura_citacoes.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" }))
-      : [{ texto: "", pagina: "" }],
-    aplicacoes: leitura?.leitura_aplicacoes?.length
-      ? leitura.leitura_aplicacoes.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao }))
-      : [{ descricao: "", plano_acao: null }],
-    tags: (leitura?.leitura_tags?.map((t) => t.tags?.nome).filter(Boolean) as string[]) ?? [],
-    links: leitura?.leitura_links?.length
-      ? leitura.leitura_links.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" }))
-      : [{ tipo: "url", url: "", descricao: "" }],
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [leitura]);
+  const snapshotRef = useRef<string>("");
+  const currentState = () =>
+    JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links });
 
-  const isDirty = () =>
-    JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links }) !== initialSnapshot;
+  // Captura snapshot toda vez que o dialog abre (após estados estarem populados)
+  useEffect(() => {
+    if (open) {
+      // microtask para garantir que estados já estão sincronizados
+      snapshotRef.current = currentState();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const isDirty = () => currentState() !== snapshotRef.current;
 
   const setOpen = (next: boolean) => {
     if (!next && open && isDirty() && !loading) {
