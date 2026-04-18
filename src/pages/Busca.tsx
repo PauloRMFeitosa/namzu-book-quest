@@ -18,54 +18,18 @@ interface LocalResult {
 
 interface ExternalResult {
   origem: "externo";
-  source?: string;
-  external_id?: string;
+  obra_id: string; // já criada pela edge function
   titulo: string;
   autor?: string;
-  autores?: string[];
   ano?: number | null;
   capa_url?: string | null;
-  isbn_13?: string | null;
-  editora?: string | null;
-  num_paginas?: number | null;
-  sinopse?: string | null;
-  idioma?: string | null;
 }
 
-const cache = new Map<string, { local: LocalResult[]; externos: ExternalResult[] }>();
+const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult | null }>();
 
-function normalizeExternal(raw: any): ExternalResult {
-  const titulo = raw.titulo ?? raw.title ?? raw.titulo_original ?? "Sem título";
-  const autores: string[] | undefined =
-    raw.autores ?? raw.authors ?? (raw.author_name ? raw.author_name : undefined);
-  const autor = raw.autor ?? raw.author ?? autores?.[0];
-  const ano =
-    raw.ano ??
-    raw.year ??
-    raw.first_publish_year ??
-    (raw.publishedDate ? parseInt(String(raw.publishedDate).slice(0, 4)) || null : null);
-  const capa_url =
-    raw.capa_url ??
-    raw.thumbnail ??
-    raw.cover_url ??
-    raw.capa ??
-    raw.imageLinks?.thumbnail ??
-    null;
-  return {
-    origem: "externo",
-    source: raw.source ?? raw.fonte,
-    external_id: raw.external_id ?? raw.id ?? raw.google_volume_id ?? raw.key,
-    titulo,
-    autor,
-    autores,
-    ano,
-    capa_url: capa_url ? String(capa_url).replace("http://", "https://") : null,
-    isbn_13: raw.isbn_13 ?? raw.isbn13 ?? raw.isbn ?? null,
-    editora: raw.editora ?? raw.publisher ?? null,
-    num_paginas: raw.num_paginas ?? raw.pageCount ?? raw.number_of_pages ?? null,
-    sinopse: raw.sinopse ?? raw.description ?? null,
-    idioma: raw.idioma ?? raw.language ?? null,
-  };
+function isIsbn(s: string) {
+  const digits = s.replace(/[-\s]/g, "");
+  return /^\d{13}$/.test(digits) || /^\d{10}$/.test(digits);
 }
 
 const Busca = () => {
@@ -73,7 +37,7 @@ const Busca = () => {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [local, setLocal] = useState<LocalResult[]>([]);
-  const [externos, setExternos] = useState<ExternalResult[]>([]);
+  const [externo, setExterno] = useState<ExternalResult | null>(null);
   const [loadingLocal, setLoadingLocal] = useState(false);
   const [loadingExterno, setLoadingExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
@@ -83,7 +47,7 @@ const Busca = () => {
     const term = q.trim();
     if (!term) {
       setLocal([]);
-      setExternos([]);
+      setExterno(null);
       setLoadingLocal(false);
       setLoadingExterno(false);
       lastQuery.current = "";
@@ -97,12 +61,12 @@ const Busca = () => {
       const cached = cache.get(term.toLowerCase());
       if (cached) {
         setLocal(cached.local);
-        setExternos(cached.externos);
+        setExterno(cached.externo);
         return;
       }
 
       setLoadingLocal(true);
-      setExternos([]);
+      setExterno(null);
       setLoadingExterno(false);
 
       const termLow = term.toLowerCase();
@@ -151,35 +115,72 @@ const Busca = () => {
       if (locais.length === 0) {
         setLoadingExterno(true);
         try {
-          const { data, error } = await supabase.functions.invoke("rapid-action", {
-            body: { titulo: term, autor: term },
-          });
-          if (error) throw error;
-          const arr: any[] = Array.isArray(data)
-            ? data
-            : data?.results ?? data?.items ?? data?.data ?? [];
-          const ext = arr.map(normalizeExternal);
-          setExternos(ext);
-          cache.set(termLow, { local: locais, externos: ext });
+          // Monta payload conforme rapid-action: { isbn13, titulo, autor }
+          const payload: Record<string, string> = {};
+          if (isIsbn(term)) payload.isbn13 = term.replace(/[-\s]/g, "");
+          else payload.titulo = term;
+
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rapid-action`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+              },
+              body: JSON.stringify(payload),
+            },
+          );
+
+          if (!res.ok) {
+            const txt = await res.text();
+            console.error("rapid-action HTTP", res.status, txt);
+            if (res.status === 404) {
+              toast.info("Livro não encontrado nas fontes externas");
+            } else {
+              toast.error(`Erro na busca externa (${res.status})`);
+            }
+            cache.set(termLow, { local: locais, externo: null });
+            return;
+          }
+
+          const data = await res.json();
+          // A função retorna a obra já criada/upsertada
+          const obra = data?.obra ?? data?.data ?? data;
+          const ext: ExternalResult | null = obra?.id
+            ? {
+                origem: "externo",
+                obra_id: obra.id,
+                titulo: obra.titulo_original ?? obra.title ?? term,
+                ano: obra.ano_primeira_publicacao ?? null,
+                capa_url: obra.capa_padrao_url ?? obra.image ?? null,
+              }
+            : null;
+          setExterno(ext);
+          cache.set(termLow, { local: locais, externo: ext });
         } catch (e: any) {
-          console.error("rapid-action error", e);
-          toast.error("Erro ao buscar em fontes externas");
+          console.error("rapid-action fetch failed", e);
+          toast.error("Erro ao conectar com a função (CORS?)");
         } finally {
           setLoadingExterno(false);
         }
       } else {
-        cache.set(termLow, { local: locais, externos: [] });
+        cache.set(termLow, { local: locais, externo: null });
       }
     }, 500);
     return () => clearTimeout(t);
   }, [q]);
 
-  const adicionarLocal = async (r: LocalResult) => {
+  const adicionar = async (obraId: string, key: string) => {
     if (!user) return;
-    setAdicionando(r.obra_id);
+    setAdicionando(key);
     const { error } = await supabase.from("usuario_livros").insert({
       user_id: user.id,
-      obra_id: r.obra_id,
+      obra_id: obraId,
       status: "quero_ler",
     });
     setAdicionando(null);
@@ -190,49 +191,6 @@ const Busca = () => {
     toast.success("Adicionado a Quero Ler!");
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
-  };
-
-  const adicionarExterno = async (r: ExternalResult, idx: number) => {
-    if (!user) return;
-    const key = `ext-${idx}`;
-    setAdicionando(key);
-    try {
-      const { data, error } = await supabase.functions.invoke("rapid-action", {
-        body: {
-          action: "add",
-          titulo: r.titulo,
-          autor: r.autor,
-          book: r,
-        },
-      });
-      if (error) throw error;
-      const obraId =
-        data?.obra_id ?? data?.id ?? data?.book?.obra_id ?? data?.book?.id ?? null;
-      if (data?.duplicado) toast.info("Já está na sua lista");
-      else toast.success("Livro adicionado ao acervo!");
-
-      if (obraId) {
-        setExternos((prev) => prev.filter((_, i) => i !== idx));
-        setLocal((prev) => [
-          {
-            origem: "local",
-            obra_id: obraId,
-            titulo: r.titulo,
-            autor: r.autor,
-            ano: r.ano,
-            capa_url: r.capa_url,
-          },
-          ...prev,
-        ]);
-      }
-      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-      qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    } catch (e: any) {
-      console.error("add error", e);
-      toast.error(e?.message ?? "Erro ao adicionar");
-    } finally {
-      setAdicionando(null);
-    }
   };
 
   const renderCard = (
@@ -276,7 +234,7 @@ const Busca = () => {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Título ou autor"
+          placeholder="Título, autor ou ISBN"
           className="h-[52px] pl-12 rounded-2xl text-base"
         />
       </div>
@@ -293,20 +251,14 @@ const Busca = () => {
             No acervo
           </h2>
           {local.map((r) =>
-            renderCard(r.obra_id, r, () => adicionarLocal(r), adicionando === r.obra_id),
+            renderCard(r.obra_id, r, () => adicionar(r.obra_id, r.obra_id), adicionando === r.obra_id),
           )}
         </section>
       )}
 
-      {term &&
-        !loadingLocal &&
-        local.length === 0 &&
-        !loadingExterno &&
-        externos.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-6">
-            Nenhum livro encontrado.
-          </p>
-        )}
+      {term && !loadingLocal && local.length === 0 && !loadingExterno && !externo && (
+        <p className="text-sm text-muted-foreground text-center py-6">Nenhum livro encontrado.</p>
+      )}
 
       {loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -314,18 +266,16 @@ const Busca = () => {
         </p>
       )}
 
-      {!loadingExterno && externos.length > 0 && (
+      {!loadingExterno && externo && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5" /> Resultados da internet
+            <Globe className="w-3.5 h-3.5" /> Encontrado na internet
           </h2>
-          {externos.map((r, i) =>
-            renderCard(
-              `${r.source ?? "ext"}-${r.external_id ?? i}`,
-              r,
-              () => adicionarExterno(r, i),
-              adicionando === `ext-${i}`,
-            ),
+          {renderCard(
+            `ext-${externo.obra_id}`,
+            externo,
+            () => adicionar(externo.obra_id, `ext-${externo.obra_id}`),
+            adicionando === `ext-${externo.obra_id}`,
           )}
         </section>
       )}
