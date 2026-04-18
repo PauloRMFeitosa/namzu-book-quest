@@ -88,7 +88,7 @@ const LeituraDetalhe = () => {
         {!preLeitura && (
           <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
         )}
-        <LeiturasList leituras={livro.leituras} />
+        <LeiturasList leituras={livro.leituras} usuarioLivroId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
       </div>
 
       {/* Bloco C: Pós-leitura */}

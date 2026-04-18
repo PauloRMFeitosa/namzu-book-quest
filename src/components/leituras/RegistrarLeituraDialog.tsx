@@ -30,24 +30,51 @@ interface Props {
   usuarioLivroId: string;
   totalPaginas: number | null;
   disabled?: boolean;
+  /** Quando passado, abre em modo edição com os valores iniciais */
+  leitura?: import("@/hooks/leituras/useLivroDetalhe").LeituraFull | null;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
+  /** Esconde o trigger padrão (usado em modo edição controlado externamente) */
+  hideTrigger?: boolean;
 }
 
-export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled }: Props) => {
+export const RegistrarLeituraDialog = ({
+  usuarioLivroId,
+  totalPaginas,
+  disabled,
+  leitura,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  const setOpen = onOpenChange ?? setOpenInternal;
   const [loading, setLoading] = useState(false);
+  const isEdit = !!leitura;
 
-  const [resumo, setResumo] = useState("");
-  const [conceito, setConceito] = useState("");
-  const [paginasLidas, setPaginasLidas] = useState("");
-  const [percentual, setPercentual] = useState("");
-  const [citacoes, setCitacoes] = useState<Citacao[]>([]);
-  const [aplicacoes, setAplicacoes] = useState<Aplicacao[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [links, setLinks] = useState<Link[]>([]);
+  const c0 = leitura?.leitura_conteudo?.[0];
+  const [resumo, setResumo] = useState(c0?.resumo ?? "");
+  const [conceito, setConceito] = useState(c0?.conceito_principal ?? "");
+  const [paginasLidas, setPaginasLidas] = useState(leitura?.paginas_lidas?.toString() ?? "");
+  const [percentual, setPercentual] = useState(leitura?.percentual_lido?.toString() ?? "");
+  const [citacoes, setCitacoes] = useState<Citacao[]>(
+    leitura?.leitura_citacoes?.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" })) ?? []
+  );
+  const [aplicacoes, setAplicacoes] = useState<Aplicacao[]>(
+    leitura?.leitura_aplicacoes?.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao })) ?? []
+  );
+  const [tags, setTags] = useState<string[]>(
+    leitura?.leitura_tags?.map((t) => t.tags?.nome).filter(Boolean) as string[] ?? []
+  );
+  const [links, setLinks] = useState<Link[]>(
+    leitura?.leitura_links?.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" })) ?? []
+  );
 
   const reset = () => {
+    if (isEdit) return;
     setResumo(""); setConceito(""); setPaginasLidas(""); setPercentual("");
     setCitacoes([]); setAplicacoes([]); setTags([]); setLinks([]);
   };
@@ -65,19 +92,40 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
     }
     setLoading(true);
     try {
-      const { data: leitura, error } = await supabase
-        .from("leituras")
-        .insert({
-          user_id: user!.id,
-          usuario_livro_id: usuarioLivroId,
-          tipo: "leitura",
-          paginas_lidas: paginasLidas ? Number(paginasLidas) : null,
-          percentual_lido: percentual ? Number(percentual) : null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      const lid = leitura.id;
+      let lid: string;
+      if (isEdit) {
+        lid = leitura!.id;
+        const { error } = await supabase
+          .from("leituras")
+          .update({
+            paginas_lidas: paginasLidas ? Number(paginasLidas) : null,
+            percentual_lido: percentual ? Number(percentual) : null,
+          })
+          .eq("id", lid);
+        if (error) throw error;
+        // Apaga filhos para reinserir
+        await Promise.all([
+          supabase.from("leitura_conteudo").delete().eq("leitura_id", lid),
+          supabase.from("leitura_citacoes").delete().eq("leitura_id", lid),
+          supabase.from("leitura_aplicacoes").delete().eq("leitura_id", lid),
+          supabase.from("leitura_links").delete().eq("leitura_id", lid),
+          supabase.from("leitura_tags").delete().eq("leitura_id", lid),
+        ]);
+      } else {
+        const { data: novaLeitura, error } = await supabase
+          .from("leituras")
+          .insert({
+            user_id: user!.id,
+            usuario_livro_id: usuarioLivroId,
+            tipo: "leitura",
+            paginas_lidas: paginasLidas ? Number(paginasLidas) : null,
+            percentual_lido: percentual ? Number(percentual) : null,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        lid = novaLeitura.id;
+      }
 
       if (resumo.trim() || conceito.trim()) {
         await supabase.from("leitura_conteudo").insert({
@@ -145,7 +193,7 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
         }
       }
 
-      toast.success("Leitura registrada!");
+      toast.success(isEdit ? "Leitura atualizada!" : "Leitura registrada!");
       reset();
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLivroId] });
@@ -158,14 +206,16 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          <Plus className="w-4 h-4" /> Registrar leitura
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
+            <Plus className="w-4 h-4" /> Registrar leitura
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova leitura</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar leitura" : "Nova leitura"}</DialogTitle>
           <p className="text-xs text-muted-foreground">Preencha apenas as seções que desejar registrar nesta sessão.</p>
         </DialogHeader>
 
@@ -302,7 +352,7 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
           </TabsContent>
 
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-            {loading ? "Salvando..." : "Salvar leitura"}
+            {loading ? "Salvando..." : isEdit ? "Atualizar leitura" : "Salvar leitura"}
           </Button>
         </Tabs>
       </DialogContent>
