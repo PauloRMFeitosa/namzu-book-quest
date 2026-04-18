@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Wand2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Trash2, Wand2, BookOpen, Quote, Target, Tag, Link2, BarChart3 } from "lucide-react";
 import { TagsInput } from "./TagsInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,8 +53,15 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
   };
 
   const salvar = async () => {
-    if (!resumo.trim() && !conceito.trim() && !paginasLidas) {
-      return toast.error("Informe pelo menos resumo, conceito ou páginas lidas");
+    const temConteudo = resumo.trim() || conceito.trim();
+    const temProgresso = paginasLidas || percentual;
+    const temCitacoes = citacoes.some((c) => c.texto.trim());
+    const temAplicacoes = aplicacoes.some((a) => a.descricao.trim());
+    const temTags = tags.length > 0;
+    const temLinks = links.some((l) => l.url.trim());
+
+    if (!temConteudo && !temProgresso && !temCitacoes && !temAplicacoes && !temTags && !temLinks) {
+      return toast.error("Preencha pelo menos uma seção da leitura");
     }
     setLoading(true);
     try {
@@ -158,38 +166,53 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova leitura</DialogTitle>
+          <p className="text-xs text-muted-foreground">Preencha apenas as seções que desejar registrar nesta sessão.</p>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="text-xs text-muted-foreground">Resumo</label>
-            <Textarea value={resumo} onChange={(e) => setResumo(e.target.value)} rows={3} className="rounded-xl mt-1" />
-          </div>
+        <Tabs defaultValue="conteudo" className="flex flex-col gap-4">
+          <TabsList className="grid grid-cols-6 h-auto">
+            <TabsTrigger value="conteudo" className="flex-col gap-0.5 py-2 text-[10px]"><BookOpen className="w-4 h-4" />Conteúdo</TabsTrigger>
+            <TabsTrigger value="progresso" className="flex-col gap-0.5 py-2 text-[10px]"><BarChart3 className="w-4 h-4" />Progresso</TabsTrigger>
+            <TabsTrigger value="citacoes" className="flex-col gap-0.5 py-2 text-[10px]"><Quote className="w-4 h-4" />Citações</TabsTrigger>
+            <TabsTrigger value="aplicacoes" className="flex-col gap-0.5 py-2 text-[10px]"><Target className="w-4 h-4" />Aplicar</TabsTrigger>
+            <TabsTrigger value="tags" className="flex-col gap-0.5 py-2 text-[10px]"><Tag className="w-4 h-4" />Tags</TabsTrigger>
+            <TabsTrigger value="links" className="flex-col gap-0.5 py-2 text-[10px]"><Link2 className="w-4 h-4" />Links</TabsTrigger>
+          </TabsList>
 
-          <div>
-            <label className="text-xs text-muted-foreground">Conceito principal</label>
-            <Input value={conceito} onChange={(e) => setConceito(e.target.value)} className="h-11 rounded-xl mt-1" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          <TabsContent value="conteudo" className="flex flex-col gap-3 mt-0">
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_conteudo</code></p>
             <div>
-              <label className="text-xs text-muted-foreground">Páginas lidas</label>
-              <Input type="number" min={0} max={totalPaginas ?? undefined} value={paginasLidas} onChange={(e) => setPaginasLidas(e.target.value)} className="h-11 rounded-xl mt-1" />
+              <label className="text-xs text-muted-foreground">Resumo</label>
+              <Textarea value={resumo} onChange={(e) => setResumo(e.target.value)} rows={4} className="rounded-xl mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Ou %</label>
-              <Input type="number" min={0} max={100} value={percentual} onChange={(e) => setPercentual(e.target.value)} className="h-11 rounded-xl mt-1" />
+              <label className="text-xs text-muted-foreground">Conceito principal</label>
+              <Input value={conceito} onChange={(e) => setConceito(e.target.value)} className="h-11 rounded-xl mt-1" />
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Citações */}
-          <div className="flex flex-col gap-2">
+          <TabsContent value="progresso" className="flex flex-col gap-3 mt-0">
+            <p className="text-xs text-muted-foreground">Salvo em <code>leituras</code></p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Páginas lidas</label>
+                <Input type="number" min={0} max={totalPaginas ?? undefined} value={paginasLidas} onChange={(e) => setPaginasLidas(e.target.value)} className="h-11 rounded-xl mt-1" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Ou %</label>
+                <Input type="number" min={0} max={100} value={percentual} onChange={(e) => setPercentual(e.target.value)} className="h-11 rounded-xl mt-1" />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="citacoes" className="flex flex-col gap-2 mt-0">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Citações</label>
+              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_citacoes</code></p>
               <Button type="button" size="sm" variant="ghost" onClick={() => setCitacoes([...citacoes, { texto: "", pagina: "" }])}>
                 <Plus className="w-3 h-3" /> Adicionar
               </Button>
             </div>
+            {citacoes.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhuma citação adicionada.</p>}
             {citacoes.map((c, i) => (
               <div key={i} className="flex gap-2">
                 <Textarea value={c.texto} onChange={(e) => {
@@ -205,16 +228,16 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
                 </div>
               </div>
             ))}
-          </div>
+          </TabsContent>
 
-          {/* Aplicações */}
-          <div className="flex flex-col gap-2">
+          <TabsContent value="aplicacoes" className="flex flex-col gap-2 mt-0">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Aplicações</label>
+              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_aplicacoes</code></p>
               <Button type="button" size="sm" variant="ghost" onClick={() => setAplicacoes([...aplicacoes, { descricao: "", plano_acao: null }])}>
                 <Plus className="w-3 h-3" /> Adicionar
               </Button>
             </div>
+            {aplicacoes.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhuma aplicação adicionada.</p>}
             {aplicacoes.map((a, i) => (
               <div key={i} className="flex flex-col gap-1 card-soft p-2">
                 <Textarea value={a.descricao} onChange={(e) => {
@@ -238,22 +261,21 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
                 )}
               </div>
             ))}
-          </div>
+          </TabsContent>
 
-          {/* Tags */}
-          <div>
-            <label className="text-sm font-medium">Tags</label>
-            <div className="mt-2"><TagsInput tags={tags} onChange={setTags} /></div>
-          </div>
+          <TabsContent value="tags" className="flex flex-col gap-2 mt-0">
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_tags</code> + <code>tags</code></p>
+            <TagsInput tags={tags} onChange={setTags} />
+          </TabsContent>
 
-          {/* Links */}
-          <div className="flex flex-col gap-2">
+          <TabsContent value="links" className="flex flex-col gap-2 mt-0">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Links</label>
+              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_links</code></p>
               <Button type="button" size="sm" variant="ghost" onClick={() => setLinks([...links, { tipo: "url", url: "", descricao: "" }])}>
                 <Plus className="w-3 h-3" /> Adicionar
               </Button>
             </div>
+            {links.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhum link adicionado.</p>}
             {links.map((l, i) => (
               <div key={i} className="flex flex-col gap-1 card-soft p-2">
                 <div className="flex gap-2">
@@ -277,12 +299,12 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
                 }} placeholder="Descrição" className="h-10 rounded-xl" />
               </div>
             ))}
-          </div>
+          </TabsContent>
 
-          <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover sticky bottom-0">
+          <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
             {loading ? "Salvando..." : "Salvar leitura"}
           </Button>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
