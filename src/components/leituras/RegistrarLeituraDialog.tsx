@@ -311,6 +311,9 @@ export const RegistrarLeituraDialog = ({
                 )}
               </div>
             ))}
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setAplicacoes([...aplicacoes, { descricao: "", plano_acao: null }])}>
+              <Plus className="w-3 h-3" /> Adicionar aplicação
+            </Button>
           </TabsContent>
 
           <TabsContent value="tags" className="flex flex-col gap-2 mt-0">
@@ -319,13 +322,7 @@ export const RegistrarLeituraDialog = ({
           </TabsContent>
 
           <TabsContent value="links" className="flex flex-col gap-2 mt-0">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Salvo em <code>leitura_links</code></p>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setLinks([...links, { tipo: "url", url: "", descricao: "" }])}>
-                <Plus className="w-3 h-3" /> Adicionar
-              </Button>
-            </div>
-            {links.length === 0 && <p className="text-xs text-muted-foreground italic">Nenhum link adicionado.</p>}
+            <p className="text-xs text-muted-foreground">Salvo em <code>leitura_links</code></p>
             {links.map((l, i) => (
               <div key={i} className="flex flex-col gap-1 card-soft p-2">
                 <div className="flex gap-2">
@@ -349,6 +346,9 @@ export const RegistrarLeituraDialog = ({
                 }} placeholder="Descrição" className="h-10 rounded-xl" />
               </div>
             ))}
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setLinks([...links, { tipo: "url", url: "", descricao: "" }])}>
+              <Plus className="w-3 h-3" /> Adicionar link
+            </Button>
           </TabsContent>
 
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
