@@ -1,5 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,7 +61,8 @@ export const RegistrarLeituraDialog = ({
   const qc = useQueryClient();
   const [openInternal, setOpenInternal] = useState(false);
   const open = openProp ?? openInternal;
-  const setOpen = onOpenChange ?? setOpenInternal;
+  const baseSetOpen = onOpenChange ?? setOpenInternal;
+  const [confirmClose, setConfirmClose] = useState(false);
   const [loading, setLoading] = useState(false);
   const isEdit = !!leitura;
 
@@ -78,6 +89,35 @@ export const RegistrarLeituraDialog = ({
       ? leitura.leitura_links.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" }))
       : [{ tipo: "url", url: "", descricao: "" }]
   );
+
+  const initialSnapshot = useMemo(() => JSON.stringify({
+    resumo: c0?.resumo ?? "",
+    conceito: c0?.conceito_principal ?? "",
+    paginasLidas: leitura?.paginas_lidas?.toString() ?? "",
+    percentual: leitura?.percentual_lido?.toString() ?? "",
+    citacoes: leitura?.leitura_citacoes?.length
+      ? leitura.leitura_citacoes.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" }))
+      : [{ texto: "", pagina: "" }],
+    aplicacoes: leitura?.leitura_aplicacoes?.length
+      ? leitura.leitura_aplicacoes.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao }))
+      : [{ descricao: "", plano_acao: null }],
+    tags: (leitura?.leitura_tags?.map((t) => t.tags?.nome).filter(Boolean) as string[]) ?? [],
+    links: leitura?.leitura_links?.length
+      ? leitura.leitura_links.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" }))
+      : [{ tipo: "url", url: "", descricao: "" }],
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [leitura]);
+
+  const isDirty = () =>
+    JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links }) !== initialSnapshot;
+
+  const setOpen = (next: boolean) => {
+    if (!next && open && isDirty() && !loading) {
+      setConfirmClose(true);
+      return;
+    }
+    baseSetOpen(next);
+  };
 
   const reset = () => {
     if (isEdit) return;
@@ -214,6 +254,7 @@ export const RegistrarLeituraDialog = ({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       {!hideTrigger && (
         <DialogTrigger asChild>
@@ -357,5 +398,25 @@ export const RegistrarLeituraDialog = ({
         </Tabs>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você tem alterações não salvas. Se fechar agora, elas serão perdidas.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => { setConfirmClose(false); baseSetOpen(false); }}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            Descartar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
