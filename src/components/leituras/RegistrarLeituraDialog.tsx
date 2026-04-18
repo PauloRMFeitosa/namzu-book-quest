@@ -61,7 +61,8 @@ export const RegistrarLeituraDialog = ({
   const qc = useQueryClient();
   const [openInternal, setOpenInternal] = useState(false);
   const open = openProp ?? openInternal;
-  const setOpen = onOpenChange ?? setOpenInternal;
+  const baseSetOpen = onOpenChange ?? setOpenInternal;
+  const [confirmClose, setConfirmClose] = useState(false);
   const [loading, setLoading] = useState(false);
   const isEdit = !!leitura;
 
