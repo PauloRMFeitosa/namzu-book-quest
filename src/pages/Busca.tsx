@@ -18,7 +18,7 @@ interface LocalResult {
 
 interface ExternalResult {
   origem: "externo";
-  source: "google" | "openlibrary";
+  source?: string;
   external_id?: string;
   titulo: string;
   autor?: string;
@@ -32,9 +32,41 @@ interface ExternalResult {
   idioma?: string | null;
 }
 
-type Result = LocalResult | ExternalResult;
-
 const cache = new Map<string, { local: LocalResult[]; externos: ExternalResult[] }>();
+
+function normalizeExternal(raw: any): ExternalResult {
+  const titulo = raw.titulo ?? raw.title ?? raw.titulo_original ?? "Sem título";
+  const autores: string[] | undefined =
+    raw.autores ?? raw.authors ?? (raw.author_name ? raw.author_name : undefined);
+  const autor = raw.autor ?? raw.author ?? autores?.[0];
+  const ano =
+    raw.ano ??
+    raw.year ??
+    raw.first_publish_year ??
+    (raw.publishedDate ? parseInt(String(raw.publishedDate).slice(0, 4)) || null : null);
+  const capa_url =
+    raw.capa_url ??
+    raw.thumbnail ??
+    raw.cover_url ??
+    raw.capa ??
+    raw.imageLinks?.thumbnail ??
+    null;
+  return {
+    origem: "externo",
+    source: raw.source ?? raw.fonte,
+    external_id: raw.external_id ?? raw.id ?? raw.google_volume_id ?? raw.key,
+    titulo,
+    autor,
+    autores,
+    ano,
+    capa_url: capa_url ? String(capa_url).replace("http://", "https://") : null,
+    isbn_13: raw.isbn_13 ?? raw.isbn13 ?? raw.isbn ?? null,
+    editora: raw.editora ?? raw.publisher ?? null,
+    num_paginas: raw.num_paginas ?? raw.pageCount ?? raw.number_of_pages ?? null,
+    sinopse: raw.sinopse ?? raw.description ?? null,
+    idioma: raw.idioma ?? raw.language ?? null,
+  };
+}
 
 const Busca = () => {
   const { user } = useAuth();
@@ -54,6 +86,7 @@ const Busca = () => {
       setExternos([]);
       setLoadingLocal(false);
       setLoadingExterno(false);
+      lastQuery.current = "";
       return;
     }
 
@@ -72,18 +105,19 @@ const Busca = () => {
       setExternos([]);
       setLoadingExterno(false);
 
-      // 1) Busca local (titulo + autores)
-      const like = `%${term}%`;
+      const termLow = term.toLowerCase();
       const [{ data: porTitulo }, { data: porAutor }] = await Promise.all([
         supabase
           .from("obras")
           .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
-          .ilike("titulo_ordenacao", `%${term.toLowerCase()}%`)
+          .ilike("titulo_ordenacao", `%${termLow}%`)
           .limit(20),
         supabase
           .from("obra_autores")
-          .select("obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)")
-          .ilike("autores.nome_ordenacao", `%${term.toLowerCase()}%`)
+          .select(
+            "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+          )
+          .ilike("autores.nome_ordenacao", `%${termLow}%`)
           .limit(20),
       ]);
 
@@ -114,24 +148,27 @@ const Busca = () => {
       setLocal(locais);
       setLoadingLocal(false);
 
-      // 2) Se vazio, busca em fontes externas
       if (locais.length === 0) {
         setLoadingExterno(true);
         try {
-          const { data, error } = await supabase.functions.invoke("buscar-livros", {
-            body: { action: "search", titulo: term, autor: term },
+          const { data, error } = await supabase.functions.invoke("rapid-action", {
+            body: { titulo: term, autor: term },
           });
           if (error) throw error;
-          const ext: ExternalResult[] = (data?.results ?? []).map((r: any) => ({ ...r, origem: "externo" }));
+          const arr: any[] = Array.isArray(data)
+            ? data
+            : data?.results ?? data?.items ?? data?.data ?? [];
+          const ext = arr.map(normalizeExternal);
           setExternos(ext);
-          cache.set(term.toLowerCase(), { local: locais, externos: ext });
+          cache.set(termLow, { local: locais, externos: ext });
         } catch (e: any) {
+          console.error("rapid-action error", e);
           toast.error("Erro ao buscar em fontes externas");
         } finally {
           setLoadingExterno(false);
         }
       } else {
-        cache.set(term.toLowerCase(), { local: locais, externos: [] });
+        cache.set(termLow, { local: locais, externos: [] });
       }
     }, 500);
     return () => clearTimeout(t);
@@ -160,36 +197,26 @@ const Busca = () => {
     const key = `ext-${idx}`;
     setAdicionando(key);
     try {
-      const { data, error } = await supabase.functions.invoke("buscar-livros", {
+      const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
           action: "add",
-          book: {
-            source: r.source,
-            external_id: r.external_id,
-            titulo: r.titulo,
-            autor: r.autor,
-            autores: r.autores,
-            ano: r.ano,
-            capa_url: r.capa_url,
-            isbn_13: r.isbn_13,
-            editora: r.editora,
-            num_paginas: r.num_paginas,
-            sinopse: r.sinopse,
-            idioma: r.idioma,
-          },
+          titulo: r.titulo,
+          autor: r.autor,
+          book: r,
         },
       });
       if (error) throw error;
+      const obraId =
+        data?.obra_id ?? data?.id ?? data?.book?.obra_id ?? data?.book?.id ?? null;
       if (data?.duplicado) toast.info("Já está na sua lista");
       else toast.success("Livro adicionado ao acervo!");
 
-      // Move o item para a seção local
-      if (data?.obra_id) {
+      if (obraId) {
         setExternos((prev) => prev.filter((_, i) => i !== idx));
         setLocal((prev) => [
           {
             origem: "local",
-            obra_id: data.obra_id,
+            obra_id: obraId,
             titulo: r.titulo,
             autor: r.autor,
             ano: r.ano,
@@ -201,14 +228,20 @@ const Busca = () => {
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
     } catch (e: any) {
+      console.error("add error", e);
       toast.error(e?.message ?? "Erro ao adicionar");
     } finally {
       setAdicionando(null);
     }
   };
 
-  const Card = ({ r, onAdd, busy }: { r: Result; onAdd: () => void; busy: boolean }) => (
-    <div className="card-soft p-3 flex gap-3 items-center">
+  const renderCard = (
+    key: string,
+    r: LocalResult | ExternalResult,
+    onAdd: () => void,
+    busy: boolean,
+  ) => (
+    <div key={key} className="card-soft p-3 flex gap-3 items-center">
       {r.capa_url ? (
         <img src={r.capa_url} alt="" className="w-14 h-20 rounded-md object-cover" />
       ) : (
@@ -221,7 +254,12 @@ const Busca = () => {
         {r.autor && <p className="text-xs text-muted-foreground line-clamp-1">{r.autor}</p>}
         {r.ano && <p className="text-[10px] text-muted-foreground mt-0.5">{r.ano}</p>}
       </div>
-      <Button size="sm" onClick={onAdd} disabled={busy} className="rounded-xl bg-primary hover:bg-primary-hover">
+      <Button
+        size="sm"
+        onClick={onAdd}
+        disabled={busy}
+        className="rounded-xl bg-primary hover:bg-primary-hover"
+      >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
       </Button>
     </div>
@@ -251,20 +289,28 @@ const Busca = () => {
 
       {term && !loadingLocal && local.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">No acervo</h2>
-          {local.map((r) => (
-            <Card key={r.obra_id} r={r} onAdd={() => adicionarLocal(r)} busy={adicionando === r.obra_id} />
-          ))}
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            No acervo
+          </h2>
+          {local.map((r) =>
+            renderCard(r.obra_id, r, () => adicionarLocal(r), adicionando === r.obra_id),
+          )}
         </section>
       )}
 
-      {term && !loadingLocal && local.length === 0 && !loadingExterno && externos.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-6">Nenhum livro encontrado no banco.</p>
-      )}
+      {term &&
+        !loadingLocal &&
+        local.length === 0 &&
+        !loadingExterno &&
+        externos.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Nenhum livro encontrado.
+          </p>
+        )}
 
       {loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
-          <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas (Google Books, Open Library)…
+          <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
         </p>
       )}
 
@@ -273,9 +319,14 @@ const Busca = () => {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <Globe className="w-3.5 h-3.5" /> Resultados da internet
           </h2>
-          {externos.map((r, i) => (
-            <Card key={`${r.source}-${r.external_id ?? i}`} r={r} onAdd={() => adicionarExterno(r, i)} busy={adicionando === `ext-${i}`} />
-          ))}
+          {externos.map((r, i) =>
+            renderCard(
+              `${r.source ?? "ext"}-${r.external_id ?? i}`,
+              r,
+              () => adicionarExterno(r, i),
+              adicionando === `ext-${i}`,
+            ),
+          )}
         </section>
       )}
     </div>
