@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, BookOpen, Globe, Loader2 } from "lucide-react";
+import { Search, Plus, BookOpen, Globe, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -14,22 +14,34 @@ interface LocalResult {
   autor?: string;
   ano?: number | null;
   capa_url?: string | null;
+  isbn13?: string | null;
 }
 
 interface ExternalResult {
   origem: "externo";
-  obra_id: string; // já criada pela edge function
+  key: string; // chave estável (isbn ou titulo+autor)
   titulo: string;
-  autor?: string;
-  ano?: number | null;
-  capa_url?: string | null;
+  autores: string[];
+  ano: number | null;
+  capa_url: string | null;
+  isbn13: string | null;
+  fonte: string;
 }
 
-const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult | null }>();
+const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
 
-function isIsbn(s: string) {
-  const digits = s.replace(/[-\s]/g, "");
-  return /^\d{13}$/.test(digits) || /^\d{10}$/.test(digits);
+function normalize(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function externalKey(b: { isbn13: string | null; titulo: string; autores: string[] }) {
+  return b.isbn13
+    ? `i:${b.isbn13}`
+    : `t:${normalize(b.titulo)}|${normalize(b.autores[0] ?? "")}`;
 }
 
 const Busca = () => {
@@ -37,19 +49,24 @@ const Busca = () => {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [local, setLocal] = useState<LocalResult[]>([]);
-  const [externo, setExterno] = useState<ExternalResult | null>(null);
+  const [externo, setExterno] = useState<ExternalResult[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(false);
   const [loadingExterno, setLoadingExterno] = useState(false);
+  const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
+  const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
   const lastQuery = useRef<string>("");
 
+  const term = q.trim();
+  const tooShort = term.length > 0 && term.length < 3;
+
   useEffect(() => {
-    const term = q.trim();
-    if (!term) {
+    if (term.length < 3) {
       setLocal([]);
-      setExterno(null);
+      setExterno([]);
       setLoadingLocal(false);
       setLoadingExterno(false);
+      setErroExterno(false);
       lastQuery.current = "";
       return;
     }
@@ -62,15 +79,21 @@ const Busca = () => {
       if (cached) {
         setLocal(cached.local);
         setExterno(cached.externo);
+        setLoadingLocal(false);
+        setLoadingExterno(false);
+        setErroExterno(false);
         return;
       }
 
       setLoadingLocal(true);
-      setExterno(null);
+      setExterno([]);
+      setErroExterno(false);
       setLoadingExterno(false);
 
       const termLow = term.toLowerCase();
-      const [{ data: porTitulo }, { data: porAutor }] = await Promise.all([
+      const termNorm = normalize(term);
+
+      const [{ data: porTitulo }, { data: porAutor }, { data: porIsbn }] = await Promise.all([
         supabase
           .from("obras")
           .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
@@ -81,8 +104,15 @@ const Busca = () => {
           .select(
             "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
           )
-          .ilike("autores.nome_ordenacao", `%${termLow}%`)
+          .ilike("autores.nome_ordenacao", `%${termNorm}%`)
           .limit(20),
+        supabase
+          .from("edicoes")
+          .select(
+            "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+          )
+          .ilike("isbn_13", `%${term.replace(/[-\s]/g, "")}%`)
+          .limit(10),
       ]);
 
       const map = new Map<string, LocalResult>();
@@ -107,77 +137,64 @@ const Busca = () => {
           capa_url: o.capa_padrao_url,
         });
       });
+      (porIsbn ?? []).forEach((row: any) => {
+        const o = row.obras;
+        if (!o || map.has(o.id)) return;
+        map.set(o.id, {
+          origem: "local",
+          obra_id: o.id,
+          titulo: o.titulo_original,
+          ano: o.ano_primeira_publicacao,
+          capa_url: o.capa_padrao_url,
+          isbn13: row.isbn_13,
+        });
+      });
 
       const locais = Array.from(map.values());
       setLocal(locais);
       setLoadingLocal(false);
 
-      if (locais.length === 0) {
-        setLoadingExterno(true);
-        try {
-          // Monta payload conforme rapid-action: { isbn13, titulo, autor }
-          const payload: Record<string, string> = {};
-          if (isIsbn(term)) payload.isbn13 = term.replace(/[-\s]/g, "");
-          else payload.titulo = term;
+      // Se encontrou local, ENCERRA o fluxo (não chama API externa)
+      if (locais.length > 0) {
+        cache.set(termLow, { local: locais, externo: [] });
+        return;
+      }
 
-          const { data: sessionData } = await supabase.auth.getSession();
-          const accessToken = sessionData?.session?.access_token;
-
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rapid-action`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-              },
-              body: JSON.stringify(payload),
-            },
-          );
-
-          if (!res.ok) {
-            const txt = await res.text();
-            console.error("rapid-action HTTP", res.status, txt);
-            if (res.status === 404) {
-              toast.info("Livro não encontrado nas fontes externas");
-            } else {
-              toast.error(`Erro na busca externa (${res.status})`);
-            }
-            cache.set(termLow, { local: locais, externo: null });
-            return;
-          }
-
-          const data = await res.json();
-          // A função retorna { obra: {...}, obra_id?, ... }
-          const obra = data?.obra ?? data?.data ?? data;
-          const obraId = obra?.id ?? data?.obra_id;
-          const ext: ExternalResult | null = obraId
-            ? {
-                origem: "externo",
-                obra_id: obraId,
-                titulo: obra?.titulo_original ?? obra?.title ?? term,
-                autor: obra?.autor ?? obra?.authors?.[0] ?? undefined,
-                ano: obra?.ano_primeira_publicacao ?? null,
-                capa_url: obra?.capa_padrao_url ?? obra?.image ?? null,
-              }
-            : null;
-          setExterno(ext);
-          cache.set(termLow, { local: locais, externo: ext });
-        } catch (e: any) {
-          console.error("rapid-action fetch failed", e);
-          toast.error("Erro ao conectar com a função (CORS?)");
-        } finally {
-          setLoadingExterno(false);
-        }
-      } else {
-        cache.set(termLow, { local: locais, externo: null });
+      // Sem resultado local → busca externa
+      setLoadingExterno(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("search-books", {
+          body: { query: term },
+        });
+        if (error) throw error;
+        const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
+          origem: "externo" as const,
+          key: externalKey({
+            isbn13: b.isbn13 ?? null,
+            titulo: b.titulo,
+            autores: b.autores ?? [],
+          }),
+          titulo: b.titulo,
+          autores: b.autores ?? [],
+          ano: b.ano ?? null,
+          capa_url: b.capa_url ?? null,
+          isbn13: b.isbn13 ?? null,
+          fonte: b.fonte ?? "externo",
+        }));
+        setExterno(results);
+        cache.set(termLow, { local: [], externo: results });
+      } catch (e: any) {
+        console.error("search-books failed", e);
+        setErroExterno(true);
+        toast.error("Erro ao buscar em fontes externas");
+      } finally {
+        setLoadingExterno(false);
       }
     }, 500);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [term]);
 
-  const adicionar = async (obraId: string, key: string) => {
+  const adicionarLocal = async (obraId: string, key: string) => {
     if (!user) return;
     setAdicionando(key);
     const { error } = await supabase.from("usuario_livros").insert({
@@ -190,42 +207,115 @@ const Busca = () => {
       if (error.code === "23505") return toast.info("Já está na sua lista");
       return toast.error(error.message);
     }
-    toast.success("Adicionado a Quero Ler!");
+    toast.success("Livro adicionado");
+    setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
   };
 
+  const adicionarExterno = async (b: ExternalResult) => {
+    if (!user) return;
+    setAdicionando(b.key);
+    try {
+      const { data, error } = await supabase.functions.invoke("rapid-action", {
+        body: {
+          titulo: b.titulo,
+          autor: b.autores?.[0] ?? null,
+          isbn13: b.isbn13 ?? null,
+        },
+      });
+      if (error) throw error;
+      const obraId = data?.obra?.id ?? data?.obra_id;
+      if (!obraId) throw new Error("Resposta inválida da função");
+
+      const { error: insErr } = await supabase.from("usuario_livros").insert({
+        user_id: user.id,
+        obra_id: obraId,
+        status: "quero_ler",
+      });
+      if (insErr && insErr.code !== "23505") throw insErr;
+
+      // Remove do externo, move para local
+      setExterno((arr) => arr.filter((x) => x.key !== b.key));
+      setLocal((arr) => [
+        {
+          origem: "local",
+          obra_id: obraId,
+          titulo: b.titulo,
+          autor: b.autores?.[0],
+          ano: b.ano,
+          capa_url: b.capa_url,
+          isbn13: b.isbn13 ?? undefined,
+        },
+        ...arr,
+      ]);
+      setAdicionados((s) => new Set(s).add(b.key));
+      toast.success("Livro adicionado");
+      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+      qc.invalidateQueries({ queryKey: ["meus-livros"] });
+    } catch (e: any) {
+      console.error("adicionarExterno", e);
+      toast.error(e?.message ?? "Erro ao adicionar");
+    } finally {
+      setAdicionando(null);
+    }
+  };
+
   const renderCard = (
     key: string,
-    r: LocalResult | ExternalResult,
+    capa: string | null | undefined,
+    titulo: string,
+    autor: string | undefined,
+    ano: number | null | undefined,
     onAdd: () => void,
     busy: boolean,
+    done: boolean,
+    badge?: string,
   ) => (
     <div key={key} className="card-soft p-3 flex gap-3 items-center">
-      {r.capa_url ? (
-        <img src={r.capa_url} alt="" className="w-14 h-20 rounded-md object-cover" />
+      {capa ? (
+        <img src={capa} alt="" className="w-14 h-20 rounded-md object-cover" />
       ) : (
         <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center">
           <BookOpen className="w-5 h-5 text-primary" />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold line-clamp-2">{r.titulo}</p>
-        {r.autor && <p className="text-xs text-muted-foreground line-clamp-1">{r.autor}</p>}
-        {r.ano && <p className="text-[10px] text-muted-foreground mt-0.5">{r.ano}</p>}
+        <p className="font-semibold line-clamp-2">{titulo}</p>
+        {autor && <p className="text-xs text-muted-foreground line-clamp-1">{autor}</p>}
+        <div className="flex items-center gap-2 mt-0.5">
+          {ano && <p className="text-[10px] text-muted-foreground">{ano}</p>}
+          {badge && (
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              · {badge}
+            </span>
+          )}
+        </div>
       </div>
       <Button
         size="sm"
         onClick={onAdd}
-        disabled={busy}
+        disabled={busy || done}
         className="rounded-xl bg-primary hover:bg-primary-hover"
       >
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+        {busy ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : done ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          <Plus className="w-4 h-4" />
+        )}
       </Button>
     </div>
   );
 
-  const term = q.trim();
+  const semResultados =
+    term.length >= 3 &&
+    !loadingLocal &&
+    !loadingExterno &&
+    !erroExterno &&
+    local.length === 0 &&
+    externo.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -241,45 +331,73 @@ const Busca = () => {
         />
       </div>
 
-      {term && loadingLocal && (
+      {tooShort && (
+        <p className="text-sm text-muted-foreground">Digite ao menos 3 caracteres…</p>
+      )}
+
+      {term.length >= 3 && loadingLocal && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Buscando no acervo…
         </p>
       )}
 
-      {term && !loadingLocal && local.length > 0 && (
+      {local.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             No acervo
           </h2>
           {local.map((r) =>
-            renderCard(r.obra_id, r, () => adicionar(r.obra_id, r.obra_id), adicionando === r.obra_id),
+            renderCard(
+              r.obra_id,
+              r.capa_url,
+              r.titulo,
+              r.autor,
+              r.ano,
+              () => adicionarLocal(r.obra_id, r.obra_id),
+              adicionando === r.obra_id,
+              adicionados.has(r.obra_id),
+            ),
           )}
         </section>
       )}
 
-      {term && !loadingLocal && local.length === 0 && !loadingExterno && !externo && (
-        <p className="text-sm text-muted-foreground text-center py-6">Nenhum livro encontrado.</p>
-      )}
-
-      {loadingExterno && (
+      {term.length >= 3 && !loadingLocal && local.length === 0 && loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
         </p>
       )}
 
-      {!loadingExterno && externo && (
+      {externo.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5" /> Encontrado na internet
+            <Globe className="w-3.5 h-3.5" /> Encontrados na internet
           </h2>
-          {renderCard(
-            `ext-${externo.obra_id}`,
-            externo,
-            () => adicionar(externo.obra_id, `ext-${externo.obra_id}`),
-            adicionando === `ext-${externo.obra_id}`,
+          {externo.map((b) =>
+            renderCard(
+              b.key,
+              b.capa_url,
+              b.titulo,
+              b.autores[0],
+              b.ano,
+              () => adicionarExterno(b),
+              adicionando === b.key,
+              adicionados.has(b.key),
+              b.fonte,
+            ),
           )}
         </section>
+      )}
+
+      {erroExterno && (
+        <p className="text-sm text-destructive text-center py-4">
+          Não foi possível consultar as fontes externas agora.
+        </p>
+      )}
+
+      {semResultados && (
+        <p className="text-sm text-muted-foreground text-center py-6">
+          Nenhum livro encontrado.
+        </p>
       )}
     </div>
   );
