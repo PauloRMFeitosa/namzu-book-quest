@@ -1,0 +1,949 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      autores: {
+        Row: {
+          id: string
+          nome_completo: string
+          nome_normalizado: string | null
+          nome_ordenacao: string
+        }
+        Insert: {
+          id?: string
+          nome_completo: string
+          nome_normalizado?: string | null
+          nome_ordenacao: string
+        }
+        Update: {
+          id?: string
+          nome_completo?: string
+          nome_normalizado?: string | null
+          nome_ordenacao?: string
+        }
+        Relationships: []
+      }
+      clube_conteudo_acessos: {
+        Row: {
+          acessado_em: string | null
+          conteudo_id: string
+          user_id: string
+        }
+        Insert: {
+          acessado_em?: string | null
+          conteudo_id: string
+          user_id: string
+        }
+        Update: {
+          acessado_em?: string | null
+          conteudo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_conteudo_acessos_conteudo_id_fkey"
+            columns: ["conteudo_id"]
+            isOneToOne: false
+            referencedRelation: "clube_conteudos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_conteudos: {
+        Row: {
+          clube_id: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          liberado_apos_dias: number | null
+          ordem_liberacao: number
+          tipo: string
+          titulo: string
+          url_conteudo: string
+        }
+        Insert: {
+          clube_id: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          liberado_apos_dias?: number | null
+          ordem_liberacao: number
+          tipo: string
+          titulo: string
+          url_conteudo: string
+        }
+        Update: {
+          clube_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          liberado_apos_dias?: number | null
+          ordem_liberacao?: number
+          tipo?: string
+          titulo?: string
+          url_conteudo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_conteudos_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_membros: {
+        Row: {
+          clube_id: string
+          data_entrada: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          clube_id: string
+          data_entrada?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          clube_id?: string
+          data_entrada?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_membros_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_post_curtidas: {
+        Row: {
+          created_at: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_post_curtidas_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "clube_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_posts: {
+        Row: {
+          clube_id: string
+          conteudo: string
+          created_at: string | null
+          curtidas_count: number | null
+          id: string
+          is_destaque_curador: boolean | null
+          obra_id: string | null
+          parent_post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          clube_id: string
+          conteudo: string
+          created_at?: string | null
+          curtidas_count?: number | null
+          id?: string
+          is_destaque_curador?: boolean | null
+          obra_id?: string | null
+          parent_post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          clube_id?: string
+          conteudo?: string
+          created_at?: string | null
+          curtidas_count?: number | null
+          id?: string
+          is_destaque_curador?: boolean | null
+          obra_id?: string | null
+          parent_post_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_posts_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_posts_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_posts_parent_post_id_fkey"
+            columns: ["parent_post_id"]
+            isOneToOne: false
+            referencedRelation: "clube_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_progresso: {
+        Row: {
+          capitulo_atual: string | null
+          clube_id: string
+          data_conclusao: string | null
+          obra_id: string
+          pagina_atual: number | null
+          percentual: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          capitulo_atual?: string | null
+          clube_id: string
+          data_conclusao?: string | null
+          obra_id: string
+          pagina_atual?: number | null
+          percentual?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          capitulo_atual?: string | null
+          clube_id?: string
+          data_conclusao?: string | null
+          obra_id?: string
+          pagina_atual?: number | null
+          percentual?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_progresso_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_progresso_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_trilhas: {
+        Row: {
+          clube_id: string
+          data_fim_sugerida: string | null
+          data_inicio_sugerida: string | null
+          id: string
+          obra_id: string
+          ordem: number
+        }
+        Insert: {
+          clube_id: string
+          data_fim_sugerida?: string | null
+          data_inicio_sugerida?: string | null
+          id?: string
+          obra_id: string
+          ordem: number
+        }
+        Update: {
+          clube_id?: string
+          data_fim_sugerida?: string | null
+          data_inicio_sugerida?: string | null
+          id?: string
+          obra_id?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_trilhas_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_trilhas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clubes: {
+        Row: {
+          created_at: string | null
+          curador_id: string
+          descricao: string | null
+          duracao_tipo: string
+          id: string
+          imagem_capa_url: string | null
+          is_ativo: boolean | null
+          nome: string
+          objetivo: string | null
+          preco_centavos: number | null
+          regras: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          curador_id: string
+          descricao?: string | null
+          duracao_tipo?: string
+          id?: string
+          imagem_capa_url?: string | null
+          is_ativo?: boolean | null
+          nome: string
+          objetivo?: string | null
+          preco_centavos?: number | null
+          regras?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          curador_id?: string
+          descricao?: string | null
+          duracao_tipo?: string
+          id?: string
+          imagem_capa_url?: string | null
+          is_ativo?: boolean | null
+          nome?: string
+          objetivo?: string | null
+          preco_centavos?: number | null
+          regras?: string | null
+        }
+        Relationships: []
+      }
+      conquistas: {
+        Row: {
+          codigo: string
+          descricao: string
+          icone_url: string | null
+          id: string
+          nome: string
+          xp_recompensa: number | null
+        }
+        Insert: {
+          codigo: string
+          descricao: string
+          icone_url?: string | null
+          id?: string
+          nome: string
+          xp_recompensa?: number | null
+        }
+        Update: {
+          codigo?: string
+          descricao?: string
+          icone_url?: string | null
+          id?: string
+          nome?: string
+          xp_recompensa?: number | null
+        }
+        Relationships: []
+      }
+      edicoes: {
+        Row: {
+          atualizado_em: string | null
+          capa_url: string | null
+          editora: string
+          fonte_dados: string
+          formato: string
+          id: string
+          idioma: string
+          isbn_13: string | null
+          num_paginas: number | null
+          obra_id: string
+          preco_capa_centavos: number | null
+          titulo_edicao: string
+        }
+        Insert: {
+          atualizado_em?: string | null
+          capa_url?: string | null
+          editora: string
+          fonte_dados?: string
+          formato: string
+          id?: string
+          idioma?: string
+          isbn_13?: string | null
+          num_paginas?: number | null
+          obra_id: string
+          preco_capa_centavos?: number | null
+          titulo_edicao: string
+        }
+        Update: {
+          atualizado_em?: string | null
+          capa_url?: string | null
+          editora?: string
+          fonte_dados?: string
+          formato?: string
+          id?: string
+          idioma?: string
+          isbn_13?: string | null
+          num_paginas?: number | null
+          obra_id?: string
+          preco_capa_centavos?: number | null
+          titulo_edicao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamificacao_perfis: {
+        Row: {
+          nivel: number
+          streak_atual: number
+          streak_maximo: number
+          ultima_atividade_date: string | null
+          updated_at: string | null
+          user_id: string
+          xp_proximo_nivel: number
+          xp_total: number
+        }
+        Insert: {
+          nivel?: number
+          streak_atual?: number
+          streak_maximo?: number
+          ultima_atividade_date?: string | null
+          updated_at?: string | null
+          user_id: string
+          xp_proximo_nivel?: number
+          xp_total?: number
+        }
+        Update: {
+          nivel?: number
+          streak_atual?: number
+          streak_maximo?: number
+          ultima_atividade_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+          xp_proximo_nivel?: number
+          xp_total?: number
+        }
+        Relationships: []
+      }
+      gamificacao_xp_log: {
+        Row: {
+          acao: string
+          clube_id: string | null
+          created_at: string | null
+          id: string
+          referencia_id: string | null
+          user_id: string
+          xp_ganho: number
+        }
+        Insert: {
+          acao: string
+          clube_id?: string | null
+          created_at?: string | null
+          id?: string
+          referencia_id?: string | null
+          user_id: string
+          xp_ganho: number
+        }
+        Update: {
+          acao?: string
+          clube_id?: string | null
+          created_at?: string | null
+          id?: string
+          referencia_id?: string | null
+          user_id?: string
+          xp_ganho?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamificacao_xp_log_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      livros_cache: {
+        Row: {
+          created_at: string | null
+          google_volume_id: string | null
+          isbn_13: string
+          raw_json: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          google_volume_id?: string | null
+          isbn_13: string
+          raw_json?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          google_volume_id?: string | null
+          isbn_13?: string
+          raw_json?: Json | null
+        }
+        Relationships: []
+      }
+      missoes: {
+        Row: {
+          ativo_ate: string
+          ativo_de: string
+          codigo: string
+          descricao: string
+          id: string
+          meta_acao: string
+          meta_valor: number
+          tipo: string
+          titulo: string
+          xp_recompensa: number
+        }
+        Insert: {
+          ativo_ate: string
+          ativo_de: string
+          codigo: string
+          descricao: string
+          id?: string
+          meta_acao: string
+          meta_valor: number
+          tipo: string
+          titulo: string
+          xp_recompensa: number
+        }
+        Update: {
+          ativo_ate?: string
+          ativo_de?: string
+          codigo?: string
+          descricao?: string
+          id?: string
+          meta_acao?: string
+          meta_valor?: number
+          tipo?: string
+          titulo?: string
+          xp_recompensa?: number
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          created_at: string | null
+          id: string
+          lida: boolean | null
+          link_url: string | null
+          mensagem: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lida?: boolean | null
+          link_url?: string | null
+          mensagem: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lida?: boolean | null
+          link_url?: string | null
+          mensagem?: string
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      obra_autores: {
+        Row: {
+          autor_id: string
+          funcao: string
+          obra_id: string
+          ordem: number | null
+        }
+        Insert: {
+          autor_id: string
+          funcao?: string
+          obra_id: string
+          ordem?: number | null
+        }
+        Update: {
+          autor_id?: string
+          funcao?: string
+          obra_id?: string
+          ordem?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_autores_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_autores_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras: {
+        Row: {
+          ano_primeira_publicacao: number | null
+          capa_padrao_url: string | null
+          created_at: string | null
+          id: string
+          idioma_original: string
+          sinopse_padrao: string | null
+          slug: string
+          titulo_ordenacao: string
+          titulo_original: string
+        }
+        Insert: {
+          ano_primeira_publicacao?: number | null
+          capa_padrao_url?: string | null
+          created_at?: string | null
+          id?: string
+          idioma_original?: string
+          sinopse_padrao?: string | null
+          slug: string
+          titulo_ordenacao: string
+          titulo_original: string
+        }
+        Update: {
+          ano_primeira_publicacao?: number | null
+          capa_padrao_url?: string | null
+          created_at?: string | null
+          id?: string
+          idioma_original?: string
+          sinopse_padrao?: string | null
+          slug?: string
+          titulo_ordenacao?: string
+          titulo_original?: string
+        }
+        Relationships: []
+      }
+      usuario_conquistas: {
+        Row: {
+          conquista_id: string
+          desbloqueado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          conquista_id: string
+          desbloqueado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          conquista_id?: string
+          desbloqueado_em?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_conquistas_conquista_id_fkey"
+            columns: ["conquista_id"]
+            isOneToOne: false
+            referencedRelation: "conquistas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuario_livros: {
+        Row: {
+          data_fim: string | null
+          data_inicio: string | null
+          edicao_id: string | null
+          favorito: boolean | null
+          id: string
+          nota: number | null
+          obra_id: string
+          review_texto: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          data_fim?: string | null
+          data_inicio?: string | null
+          edicao_id?: string | null
+          favorito?: boolean | null
+          id?: string
+          nota?: number | null
+          obra_id: string
+          review_texto?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          data_fim?: string | null
+          data_inicio?: string | null
+          edicao_id?: string | null
+          favorito?: boolean | null
+          id?: string
+          nota?: number | null
+          obra_id?: string
+          review_texto?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_livros_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "edicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuario_missoes: {
+        Row: {
+          concluida: boolean | null
+          concluida_em: string | null
+          missao_id: string
+          progresso_atual: number | null
+          user_id: string
+        }
+        Insert: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          missao_id: string
+          progresso_atual?: number | null
+          user_id: string
+        }
+        Update: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          missao_id?: string
+          progresso_atual?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_missoes_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      ranking_clube: {
+        Row: {
+          clube_id: string | null
+          nivel: number | null
+          posicao: number | null
+          streak_atual: number | null
+          user_id: string | null
+          xp_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_membros_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      dar_xp: {
+        Args: {
+          p_acao: string
+          p_clube_id?: string
+          p_ref_id?: string
+          p_user_id: string
+          p_xp: number
+        }
+        Returns: undefined
+      }
+      refresh_ranking: { Args: never; Returns: undefined }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
