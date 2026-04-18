@@ -149,15 +149,17 @@ const Busca = () => {
           }
 
           const data = await res.json();
-          // A função retorna a obra já criada/upsertada
+          // A função retorna { obra: {...}, obra_id?, ... }
           const obra = data?.obra ?? data?.data ?? data;
-          const ext: ExternalResult | null = obra?.id
+          const obraId = obra?.id ?? data?.obra_id;
+          const ext: ExternalResult | null = obraId
             ? {
                 origem: "externo",
-                obra_id: obra.id,
-                titulo: obra.titulo_original ?? obra.title ?? term,
-                ano: obra.ano_primeira_publicacao ?? null,
-                capa_url: obra.capa_padrao_url ?? obra.image ?? null,
+                obra_id: obraId,
+                titulo: obra?.titulo_original ?? obra?.title ?? term,
+                autor: obra?.autor ?? obra?.authors?.[0] ?? undefined,
+                ano: obra?.ano_primeira_publicacao ?? null,
+                capa_url: obra?.capa_padrao_url ?? obra?.image ?? null,
               }
             : null;
           setExterno(ext);
