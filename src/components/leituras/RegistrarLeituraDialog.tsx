@@ -237,9 +237,10 @@ export const RegistrarLeituraDialog = ({
       }
 
       toast.success(isEdit ? "Leitura atualizada!" : "Leitura registrada!");
+      snapshotRef.current = currentState();
       reset();
-      setOpen(false);
-      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLivroId] });
+      setConfirmClose(false);
+      baseSetOpen(false);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
