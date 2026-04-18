@@ -352,7 +352,7 @@ export const RegistrarLeituraDialog = ({
           </TabsContent>
 
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-            {loading ? "Salvando..." : "Salvar leitura"}
+            {loading ? "Salvando..." : isEdit ? "Atualizar leitura" : "Salvar leitura"}
           </Button>
         </Tabs>
       </DialogContent>
