@@ -53,8 +53,15 @@ export const RegistrarLeituraDialog = ({ usuarioLivroId, totalPaginas, disabled 
   };
 
   const salvar = async () => {
-    if (!resumo.trim() && !conceito.trim() && !paginasLidas) {
-      return toast.error("Informe pelo menos resumo, conceito ou páginas lidas");
+    const temConteudo = resumo.trim() || conceito.trim();
+    const temProgresso = paginasLidas || percentual;
+    const temCitacoes = citacoes.some((c) => c.texto.trim());
+    const temAplicacoes = aplicacoes.some((a) => a.descricao.trim());
+    const temTags = tags.length > 0;
+    const temLinks = links.some((l) => l.url.trim());
+
+    if (!temConteudo && !temProgresso && !temCitacoes && !temAplicacoes && !temTags && !temLinks) {
+      return toast.error("Preencha pelo menos uma seção da leitura");
     }
     setLoading(true);
     try {
