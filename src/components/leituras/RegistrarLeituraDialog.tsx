@@ -254,6 +254,7 @@ export const RegistrarLeituraDialog = ({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       {!hideTrigger && (
         <DialogTrigger asChild>
