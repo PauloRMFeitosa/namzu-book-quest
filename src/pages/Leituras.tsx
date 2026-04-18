@@ -1,160 +1,132 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Check, Play } from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
+import LeituraDetalhe from "./LeituraDetalhe";
+import { ProgressoBar } from "@/components/leituras/ProgressoBar";
 
-const LeiturasList = () => {
+type LivroLista = {
+  id: string;
+  status: string;
+  data_fim: string | null;
+  obras: { titulo_original: string; capa_padrao_url: string | null } | null;
+  edicoes: { num_paginas: number | null } | null;
+};
+
+const useLivrosLendo = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const { data = [] } = useQuery({
-    queryKey: ["leituras-ativas", user?.id],
+  return useQuery({
+    queryKey: ["leituras-lendo", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: livros } = await supabase
+        .from("usuario_livros")
+        .select("id, status, data_fim, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
+        .eq("user_id", user!.id)
+        .eq("status", "lendo")
+        .order("updated_at", { ascending: false });
+      const ids = (livros ?? []).map((l) => l.id);
+      let agg: Record<string, number> = {};
+      if (ids.length) {
+        const { data: leituras } = await supabase
+          .from("leituras")
+          .select("usuario_livro_id, paginas_lidas")
+          .eq("user_id", user!.id)
+          .eq("tipo", "leitura")
+          .in("usuario_livro_id", ids);
+        for (const r of leituras ?? []) {
+          if (!r.usuario_livro_id) continue;
+          agg[r.usuario_livro_id] = (agg[r.usuario_livro_id] ?? 0) + (r.paginas_lidas ?? 0);
+        }
+      }
+      return (livros ?? []).map((l) => ({ ...l, paginasLidas: agg[l.id] ?? 0 })) as (LivroLista & { paginasLidas: number })[];
+    },
+  });
+};
+
+const useUltimosLidos = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["leituras-lidos", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("usuario_livros")
-        .select("*, obras(*)")
+        .select("id, status, data_fim, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
         .eq("user_id", user!.id)
-        .in("status", ["lendo", "quero_ler"])
-        .order("updated_at", { ascending: false });
-      return data ?? [];
+        .in("status", ["lido", "concluido"])
+        .order("data_fim", { ascending: false, nullsFirst: false })
+        .limit(5);
+      return (data ?? []) as LivroLista[];
     },
   });
-
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Minhas leituras</h1>
-      {data.length === 0 ? (
-        <div className="card-soft p-8 text-center">
-          <BookOpen className="w-10 h-10 mx-auto text-primary mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">Comece sua primeira leitura</p>
-          <Button onClick={() => navigate("/busca")} className="rounded-2xl bg-primary hover:bg-primary-hover">Buscar livros</Button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {data.map((l: any) => (
-            <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
-              {l.obras?.capa_padrao_url ? (
-                <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
-              ) : (
-                <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center"><BookOpen className="w-5 h-5 text-primary" /></div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold line-clamp-2">{l.obras?.titulo_original}</p>
-                <p className="text-xs text-muted-foreground capitalize mt-1">{l.status.replace("_", " ")}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 };
 
-const LeituraDetalhe = () => {
-  const { id } = useParams();
-  const { user } = useAuth();
+const LeiturasList = () => {
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const [nota, setNota] = useState<string>("");
-  const [review, setReview] = useState("");
-
-  const { data: l, isLoading } = useQuery({
-    queryKey: ["leitura", id],
-    enabled: !!id && !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("usuario_livros")
-        .select("*, obras(*)")
-        .eq("id", id!)
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  useEffect(() => {
-    if (l) {
-      setNota(l.nota?.toString() ?? "");
-      setReview(l.review_texto ?? "");
-    }
-  }, [l]);
-
-  const updateStatus = async (status: string) => {
-    const patch: any = { status };
-    if (status === "lendo" && !l?.data_inicio) patch.data_inicio = new Date().toISOString().slice(0, 10);
-    if (status === "lido" || status === "concluido") patch.data_fim = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("usuario_livros").update(patch).eq("id", id!);
-    if (error) return toast.error(error.message);
-    toast.success("Atualizado!");
-    qc.invalidateQueries();
-  };
-
-  const salvarNotas = async () => {
-    const { error } = await supabase
-      .from("usuario_livros")
-      .update({ nota: nota ? Number(nota) : null, review_texto: review || null })
-      .eq("id", id!);
-    if (error) return toast.error(error.message);
-    toast.success("Notas salvas");
-  };
-
-  if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
-  if (!l) return <p className="text-muted-foreground">Leitura não encontrada.</p>;
+  const { data: lendo = [] } = useLivrosLendo();
+  const { data: lidos = [] } = useUltimosLidos();
 
   return (
-    <div className="flex flex-col gap-5">
-      <button onClick={() => navigate(-1)} className="self-start flex items-center gap-1 text-muted-foreground -ml-2 p-2">
-        <ArrowLeft className="w-4 h-4" /> Voltar
-      </button>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">Minhas leituras</h1>
 
-      <div className="flex gap-4">
-        {l.obras?.capa_padrao_url ? (
-          <img src={l.obras.capa_padrao_url} alt="" className="w-28 h-40 rounded-xl object-cover shadow-elevated" />
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Lendo</h2>
+        {lendo.length === 0 ? (
+          <div className="card-soft p-6 text-center">
+            <BookOpen className="w-8 h-8 mx-auto text-primary mb-2" />
+            <p className="text-sm text-muted-foreground mb-3">Nenhum livro em andamento.</p>
+            <Button onClick={() => navigate("/busca")} className="rounded-2xl bg-primary hover:bg-primary-hover">Buscar livros</Button>
+          </div>
         ) : (
-          <div className="w-28 h-40 rounded-xl bg-secondary flex items-center justify-center"><BookOpen className="w-10 h-10 text-primary" /></div>
+          <div className="flex flex-col gap-3">
+            {lendo.map((l) => {
+              const total = l.edicoes?.num_paginas ?? null;
+              const percentual = total && total > 0 ? Math.min(100, Math.round((l.paginasLidas / total) * 100)) : 0;
+              const restantes = total ? Math.max(0, total - l.paginasLidas) : null;
+              return (
+                <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+                  {l.obras?.capa_padrao_url ? (
+                    <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
+                  ) : (
+                    <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center"><BookOpen className="w-5 h-5 text-primary" /></div>
+                  )}
+                  <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center">
+                    <p className="font-semibold line-clamp-2">{l.obras?.titulo_original}</p>
+                    <ProgressoBar paginasLidas={l.paginasLidas} totalPaginas={total} percentual={percentual} restantes={restantes} compact />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         )}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold leading-tight">{l.obras?.titulo_original}</h1>
-          {l.obras?.ano_primeira_publicacao && <p className="text-sm text-muted-foreground mt-1">{l.obras.ano_primeira_publicacao}</p>}
-          <p className="text-xs uppercase tracking-wider text-primary font-semibold mt-2">{l.status.replace("_", " ")}</p>
-        </div>
-      </div>
+      </section>
 
-      {l.obras?.sinopse_padrao && (
-        <p className="text-sm text-muted-foreground leading-relaxed">{l.obras.sinopse_padrao}</p>
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
-        {l.status !== "lendo" && (
-          <Button onClick={() => updateStatus("lendo")} className="h-12 rounded-2xl bg-primary hover:bg-primary-hover">
-            <Play className="w-4 h-4" /> Começar
-          </Button>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Últimos lidos</h2>
+        {lidos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum livro concluído ainda.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {lidos.map((l) => (
+              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+                {l.obras?.capa_padrao_url ? (
+                  <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
+                ) : (
+                  <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center"><BookOpen className="w-5 h-5 text-primary" /></div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold line-clamp-2">{l.obras?.titulo_original}</p>
+                  {l.data_fim && <p className="text-xs text-muted-foreground mt-1">Concluído em {new Date(l.data_fim).toLocaleDateString("pt-BR")}</p>}
+                </div>
+              </button>
+            ))}
+          </div>
         )}
-        {l.status !== "lido" && l.status !== "concluido" && (
-          <Button onClick={() => updateStatus("concluido")} variant="outline" className="h-12 rounded-2xl border-2">
-            <Check className="w-4 h-4" /> Concluir
-          </Button>
-        )}
-      </div>
-
-      <div className="card-soft p-4 flex flex-col gap-3">
-        <h3 className="font-semibold">Minhas notas</h3>
-        <div>
-          <label className="text-xs text-muted-foreground">Nota (0–10)</label>
-          <Input type="number" min={0} max={10} step={0.5} value={nota} onChange={(e) => setNota(e.target.value)} className="h-12 rounded-xl mt-1" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Resenha</label>
-          <Textarea value={review} onChange={(e) => setReview(e.target.value)} rows={4} className="rounded-xl mt-1" />
-        </div>
-        <Button onClick={salvarNotas} className="h-12 rounded-2xl bg-primary hover:bg-primary-hover">Salvar</Button>
-      </div>
+      </section>
     </div>
   );
 };
