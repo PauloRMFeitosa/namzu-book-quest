@@ -61,16 +61,22 @@ export const RegistrarLeituraDialog = ({
   const [paginasLidas, setPaginasLidas] = useState(leitura?.paginas_lidas?.toString() ?? "");
   const [percentual, setPercentual] = useState(leitura?.percentual_lido?.toString() ?? "");
   const [citacoes, setCitacoes] = useState<Citacao[]>(
-    leitura?.leitura_citacoes?.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" })) ?? []
+    leitura?.leitura_citacoes?.length
+      ? leitura.leitura_citacoes.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" }))
+      : [{ texto: "", pagina: "" }]
   );
   const [aplicacoes, setAplicacoes] = useState<Aplicacao[]>(
-    leitura?.leitura_aplicacoes?.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao })) ?? []
+    leitura?.leitura_aplicacoes?.length
+      ? leitura.leitura_aplicacoes.map((a) => ({ descricao: a.descricao, plano_acao: a.plano_acao }))
+      : [{ descricao: "", plano_acao: null }]
   );
   const [tags, setTags] = useState<string[]>(
     leitura?.leitura_tags?.map((t) => t.tags?.nome).filter(Boolean) as string[] ?? []
   );
   const [links, setLinks] = useState<Link[]>(
-    leitura?.leitura_links?.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" })) ?? []
+    leitura?.leitura_links?.length
+      ? leitura.leitura_links.map((l) => ({ tipo: l.tipo ?? "url", url: l.url, descricao: l.descricao ?? "" }))
+      : [{ tipo: "url", url: "", descricao: "" }]
   );
 
   const reset = () => {
