@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { GoogleButton } from "@/components/GoogleButton";
+import logoNamzu from "@/assets/logo-namzu.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
