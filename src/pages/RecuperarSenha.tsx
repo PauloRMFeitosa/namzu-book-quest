@@ -63,6 +63,7 @@ const RecuperarSenha = () => {
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
+        <img src={logoNamzu} alt="NAMZU" className="w-20 h-20 rounded-2xl shadow-md mx-auto mb-6 object-cover" />
         {step === "request" ? (
           <>
             <h1 className="text-3xl font-bold mb-2">Esqueci minha senha</h1>
