@@ -1,7 +1,7 @@
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import logoNamzu from "@/assets/logo-namzu.png";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -11,9 +11,7 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
       <div className="flex flex-col items-center gap-6 max-w-sm w-full text-center animate-fade-in">
-        <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center shadow-elevated">
-          <BookOpen className="w-12 h-12 text-primary-foreground" />
-        </div>
+        <img src={logoNamzu} alt="NAMZU" className="w-24 h-24 rounded-3xl shadow-elevated object-cover" />
         <h1 className="text-4xl font-extrabold tracking-tight text-primary">NAMZU</h1>
         <p className="text-lg text-muted-foreground">A sabedoria começa aqui!!!</p>
         <div className="flex flex-col gap-3 w-full mt-6">
