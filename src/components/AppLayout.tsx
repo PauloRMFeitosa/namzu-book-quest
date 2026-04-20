@@ -4,6 +4,7 @@ import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History,
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import logoNamzu from "@/assets/logo-namzu.png";
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
@@ -33,7 +34,15 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-6 animate-fade-in">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border shadow-sm">
+        <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
+          <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 rounded-lg object-cover" />
+          <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
+          <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
+        </div>
+      </header>
+
+      <main className="flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
         {children}
       </main>
 
