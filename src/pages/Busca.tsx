@@ -2,11 +2,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, BookOpen, Globe, Loader2, Check } from "lucide-react";
+import { Search, Plus, BookOpen, Globe, Loader2, Check, BookmarkPlus, CheckCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+
+type AddStatus = "quero_ler" | "concluido";
 
 interface LocalResult {
   origem: "local";
@@ -196,26 +204,28 @@ const Busca = () => {
     return () => clearTimeout(t);
   }, [term]);
 
-  const adicionarLocal = async (obraId: string, key: string) => {
+  const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
     setAdicionando(key);
+    const today = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("usuario_livros").insert({
       user_id: user.id,
       obra_id: obraId,
-      status: "quero_ler",
+      status,
+      ...(status === "concluido" ? { data_fim: today } : {}),
     });
     setAdicionando(null);
     if (error) {
       if (error.code === "23505") return toast.info("Já está na sua lista");
       return toast.error(error.message);
     }
-    toast.success("Livro adicionado");
+    toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
   };
 
-  const adicionarExterno = async (b: ExternalResult) => {
+  const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
     if (!user) return;
     setAdicionando(b.key);
     try {
@@ -230,14 +240,15 @@ const Busca = () => {
       const obraId = data?.obra?.id ?? data?.obra_id;
       if (!obraId) throw new Error("Resposta inválida da função");
 
+      const today = new Date().toISOString().slice(0, 10);
       const { error: insErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
-        status: "quero_ler",
+        status,
+        ...(status === "concluido" ? { data_fim: today } : {}),
       });
       if (insErr && insErr.code !== "23505") throw insErr;
 
-      // Remove do externo, move para local
       setExterno((arr) => arr.filter((x) => x.key !== b.key));
       setLocal((arr) => [
         {
@@ -252,7 +263,7 @@ const Busca = () => {
         ...arr,
       ]);
       setAdicionados((s) => new Set(s).add(b.key));
-      toast.success("Livro adicionado");
+      toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
     } catch (e: any) {
@@ -269,7 +280,7 @@ const Busca = () => {
     titulo: string,
     autor: string | undefined,
     ano: number | null | undefined,
-    onAdd: () => void,
+    onAdd: (status: AddStatus) => void,
     busy: boolean,
     done: boolean,
     badge?: string,
@@ -294,20 +305,31 @@ const Busca = () => {
           )}
         </div>
       </div>
-      <Button
-        size="sm"
-        onClick={onAdd}
-        disabled={busy || done}
-        className="rounded-xl bg-primary hover:bg-primary-hover"
-      >
-        {busy ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : done ? (
-          <Check className="w-4 h-4" />
-        ) : (
-          <Plus className="w-4 h-4" />
-        )}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            disabled={busy || done}
+            className="rounded-xl bg-primary hover:bg-primary-hover"
+          >
+            {busy ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : done ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
+            <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAdd("concluido")}>
+            <CheckCheck className="w-4 h-4 mr-2" /> Já lido
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
@@ -365,7 +387,7 @@ const Busca = () => {
               r.titulo,
               r.autor,
               r.ano,
-              () => adicionarLocal(r.obra_id, r.obra_id),
+              (status) => adicionarLocal(r.obra_id, r.obra_id, status),
               adicionando === r.obra_id,
               adicionados.has(r.obra_id),
             ),
@@ -391,7 +413,7 @@ const Busca = () => {
               b.titulo,
               b.autores[0],
               b.ano,
-              () => adicionarExterno(b),
+              (status) => adicionarExterno(b, status),
               adicionando === b.key,
               adicionados.has(b.key),
               b.fonte,
