@@ -204,26 +204,28 @@ const Busca = () => {
     return () => clearTimeout(t);
   }, [term]);
 
-  const adicionarLocal = async (obraId: string, key: string) => {
+  const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
     setAdicionando(key);
+    const today = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("usuario_livros").insert({
       user_id: user.id,
       obra_id: obraId,
-      status: "quero_ler",
+      status,
+      ...(status === "concluido" ? { data_fim: today } : {}),
     });
     setAdicionando(null);
     if (error) {
       if (error.code === "23505") return toast.info("Já está na sua lista");
       return toast.error(error.message);
     }
-    toast.success("Livro adicionado");
+    toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
   };
 
-  const adicionarExterno = async (b: ExternalResult) => {
+  const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
     if (!user) return;
     setAdicionando(b.key);
     try {
@@ -238,14 +240,15 @@ const Busca = () => {
       const obraId = data?.obra?.id ?? data?.obra_id;
       if (!obraId) throw new Error("Resposta inválida da função");
 
+      const today = new Date().toISOString().slice(0, 10);
       const { error: insErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
-        status: "quero_ler",
+        status,
+        ...(status === "concluido" ? { data_fim: today } : {}),
       });
       if (insErr && insErr.code !== "23505") throw insErr;
 
-      // Remove do externo, move para local
       setExterno((arr) => arr.filter((x) => x.key !== b.key));
       setLocal((arr) => [
         {
@@ -260,7 +263,7 @@ const Busca = () => {
         ...arr,
       ]);
       setAdicionados((s) => new Set(s).add(b.key));
-      toast.success("Livro adicionado");
+      toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
     } catch (e: any) {
