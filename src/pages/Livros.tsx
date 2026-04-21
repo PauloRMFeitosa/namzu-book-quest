@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type Filtro = "todos" | "lendo" | "quero_ler" | "lido";
 
 const Livros = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const { data = [] } = useQuery({
     queryKey: ["meus-livros", user?.id],
@@ -23,11 +27,27 @@ const Livros = () => {
     },
   });
 
-  const grupos = {
-    lendo: data.filter((l: any) => l.status === "lendo"),
-    quero_ler: data.filter((l: any) => l.status === "quero_ler"),
-    lido: data.filter((l: any) => l.status === "lido" || l.status === "concluido"),
+  const matchFiltro = (status: string, f: Filtro) => {
+    if (f === "todos") return true;
+    if (f === "lido") return status === "lido" || status === "concluido";
+    return status === f;
   };
+
+  const counts = {
+    todos: data.length,
+    lendo: data.filter((l: any) => matchFiltro(l.status, "lendo")).length,
+    quero_ler: data.filter((l: any) => matchFiltro(l.status, "quero_ler")).length,
+    lido: data.filter((l: any) => matchFiltro(l.status, "lido")).length,
+  };
+
+  const filtrados = data.filter((l: any) => matchFiltro(l.status, filtro));
+
+  const chips: { key: Filtro; label: string }[] = [
+    { key: "todos", label: "Todos" },
+    { key: "lendo", label: "Lendo" },
+    { key: "quero_ler", label: "Quero ler" },
+    { key: "lido", label: "Lidos" },
+  ];
 
   const Grid = ({ items }: { items: any[] }) =>
     items.length === 0 ? (
@@ -58,16 +78,26 @@ const Livros = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Meus livros</h1>
-      <Tabs defaultValue="lendo">
-        <TabsList className="grid grid-cols-3 w-full rounded-2xl h-12 bg-muted">
-          <TabsTrigger value="lendo" className="rounded-xl">Lendo</TabsTrigger>
-          <TabsTrigger value="quero_ler" className="rounded-xl">Quero Ler</TabsTrigger>
-          <TabsTrigger value="lido" className="rounded-xl">Lidos</TabsTrigger>
-        </TabsList>
-        <TabsContent value="lendo"><Grid items={grupos.lendo} /></TabsContent>
-        <TabsContent value="quero_ler"><Grid items={grupos.quero_ler} /></TabsContent>
-        <TabsContent value="lido"><Grid items={grupos.lido} /></TabsContent>
-      </Tabs>
+      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+        {chips.map((c) => {
+          const ativo = filtro === c.key;
+          return (
+            <button
+              key={c.key}
+              onClick={() => setFiltro(c.key)}
+              className={cn(
+                "rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap transition-colors",
+                ativo
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground hover:bg-muted/80",
+              )}
+            >
+              {c.label} ({counts[c.key]})
+            </button>
+          );
+        })}
+      </div>
+      <Grid items={filtrados} />
     </div>
   );
 };
