@@ -280,7 +280,7 @@ const Busca = () => {
     titulo: string,
     autor: string | undefined,
     ano: number | null | undefined,
-    onAdd: () => void,
+    onAdd: (status: AddStatus) => void,
     busy: boolean,
     done: boolean,
     badge?: string,
@@ -305,20 +305,31 @@ const Busca = () => {
           )}
         </div>
       </div>
-      <Button
-        size="sm"
-        onClick={onAdd}
-        disabled={busy || done}
-        className="rounded-xl bg-primary hover:bg-primary-hover"
-      >
-        {busy ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : done ? (
-          <Check className="w-4 h-4" />
-        ) : (
-          <Plus className="w-4 h-4" />
-        )}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            disabled={busy || done}
+            className="rounded-xl bg-primary hover:bg-primary-hover"
+          >
+            {busy ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : done ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
+            <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAdd("concluido")}>
+            <CheckCheck className="w-4 h-4 mr-2" /> Já lido
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
