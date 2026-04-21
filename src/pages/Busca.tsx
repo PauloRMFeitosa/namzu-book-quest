@@ -413,7 +413,7 @@ const Busca = () => {
               b.titulo,
               b.autores[0],
               b.ano,
-              () => adicionarExterno(b),
+              (status) => adicionarExterno(b, status),
               adicionando === b.key,
               adicionados.has(b.key),
               b.fonte,
