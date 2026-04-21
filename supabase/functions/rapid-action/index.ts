@@ -54,6 +54,138 @@ function makeSlug(title: string, id?: string) {
   return id ? `${base}-${id}` : base;
 }
 
+async function upsertAutor(nome: string) {
+  const normalizado = normalizeAuthor(nome);
+  if (!normalizado) return null;
+  const { data: existente } = await supabase
+    .from("autores")
+    .select("id")
+    .eq("nome_normalizado", normalizado)
+    .maybeSingle();
+  if (existente) return { id: existente.id, criado: false };
+  const { data, error } = await supabase
+    .from("autores")
+    .insert({
+      nome_completo: nome,
+      nome_ordenacao: nome.toLowerCase(),
+      nome_normalizado: normalizado,
+    })
+    .select("id")
+    .single();
+  if (error) return null;
+  return { id: data.id, criado: true };
+}
+
+async function vincularAutor(obraId: string, autorId: string, ordem: number) {
+  await supabase.from("obra_autores").upsert(
+    { obra_id: obraId, autor_id: autorId, funcao: "autor", ordem },
+    { onConflict: "obra_id,autor_id,funcao" },
+  );
+}
+
+// =========================
+// MODOS MANUAIS
+// =========================
+async function handleManualAutor(payload: any) {
+  const nome = (payload.nome ?? "").toString().trim();
+  if (!nome) return json({ error: "Nome obrigatório" }, 400);
+  const r = await upsertAutor(nome);
+  if (!r) return json({ error: "Falha ao salvar autor" }, 500);
+  return json({ success: true, autor: { id: r.id, nome }, criado: r.criado });
+}
+
+async function handleManualObra(payload: any) {
+  const titulo = (payload.titulo ?? "").toString().trim();
+  const autor = (payload.autor ?? "").toString().trim();
+  if (!titulo || !autor) {
+    return json({ error: "Título e autor são obrigatórios" }, 400);
+  }
+  const ano = payload.ano ? parseInt(String(payload.ano).slice(0, 4)) : null;
+  const idioma = payload.idioma || "pt-BR";
+
+  const slug = makeSlug(titulo);
+  const { data: obra, error: obraErr } = await supabase
+    .from("obras")
+    .upsert(
+      {
+        titulo_original: titulo,
+        titulo_ordenacao: titulo.toLowerCase(),
+        idioma_original: idioma,
+        ano_primeira_publicacao: ano,
+        sinopse_padrao: payload.sinopse ?? null,
+        capa_padrao_url: payload.capa_url ?? null,
+        slug,
+      },
+      { onConflict: "slug" },
+    )
+    .select()
+    .single();
+  if (obraErr || !obra) {
+    return json({ error: obraErr?.message ?? "Falha ao salvar obra" }, 500);
+  }
+
+  const todos = [autor, ...((payload.autores_extras ?? []) as string[])].filter(Boolean);
+  let ordem = 1;
+  for (const nome of todos) {
+    const a = await upsertAutor(nome);
+    if (a) await vincularAutor(obra.id, a.id, ordem++);
+  }
+
+  return json({
+    success: true,
+    obra: {
+      id: obra.id,
+      titulo_original: obra.titulo_original,
+      capa_padrao_url: obra.capa_padrao_url,
+      ano_primeira_publicacao: obra.ano_primeira_publicacao,
+      autor,
+    },
+  });
+}
+
+async function handleManualEdicao(payload: any) {
+  const obraId = payload.obra_id;
+  const tituloEdicao = (payload.titulo_edicao ?? "").toString().trim();
+  const editora = (payload.editora ?? "").toString().trim();
+  const formato = payload.formato;
+  if (!obraId || !tituloEdicao || !editora || !formato) {
+    return json({ error: "Campos obrigatórios faltando" }, 400);
+  }
+
+  if (payload.isbn_13) {
+    const { data: existente } = await supabase
+      .from("edicoes")
+      .select("id")
+      .eq("isbn_13", payload.isbn_13)
+      .maybeSingle();
+    if (existente) {
+      return json({ success: true, edicao: { id: existente.id }, duplicada: true });
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("edicoes")
+    .insert({
+      obra_id: obraId,
+      titulo_edicao: tituloEdicao,
+      editora,
+      formato,
+      idioma: payload.idioma || "pt-BR",
+      isbn_13: payload.isbn_13 || null,
+      num_paginas: payload.num_paginas ?? null,
+      capa_url: payload.capa_url ?? null,
+      preco_capa_centavos: payload.preco_capa_centavos ?? null,
+      fonte_dados: "manual",
+    })
+    .select("id")
+    .single();
+  if (error) return json({ error: error.message }, 500);
+  return json({ success: true, edicao: { id: data.id } });
+}
+
+// =========================
+// BUSCA EXTERNA (modo padrão)
+// =========================
 async function searchGoogle({ isbn13, titulo, autor }: any) {
   let query = "";
   if (isbn13) query = `isbn:${isbn13}`;
@@ -128,8 +260,15 @@ serve(async (req) => {
   }
 
   try {
-    const { isbn13, titulo, autor } = await req.json();
+    const payload = await req.json();
+    const { mode } = payload;
 
+    if (mode === "manual_autor") return await handleManualAutor(payload);
+    if (mode === "manual_obra") return await handleManualObra(payload);
+    if (mode === "manual_edicao") return await handleManualEdicao(payload);
+
+    // ----- Modo padrão: busca em APIs externas -----
+    const { isbn13, titulo, autor } = payload;
     if (!isbn13 && !titulo && !autor) {
       return json({ error: "Informe isbn13, titulo ou autor" }, 400);
     }
@@ -169,32 +308,8 @@ serve(async (req) => {
     const obraId = obra.id;
 
     for (const nome of book.authors || []) {
-      const normalizado = normalizeAuthor(nome);
-      let { data: autorDB } = await supabase
-        .from("autores")
-        .select("id")
-        .eq("nome_normalizado", normalizado)
-        .maybeSingle();
-
-      if (!autorDB) {
-        const { data } = await supabase
-          .from("autores")
-          .insert({
-            nome_completo: nome,
-            nome_ordenacao: nome.toLowerCase(),
-            nome_normalizado: normalizado,
-          })
-          .select("id")
-          .single();
-        autorDB = data;
-      }
-
-      if (autorDB) {
-        await supabase.from("obra_autores").upsert(
-          { obra_id: obraId, autor_id: autorDB.id, funcao: "autor", ordem: 1 },
-          { onConflict: "obra_id,autor_id,funcao" },
-        );
-      }
+      const a = await upsertAutor(nome);
+      if (a) await vincularAutor(obraId, a.id, 1);
     }
 
     if (book.isbn13) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, BookOpen, Globe, Loader2, Check } from "lucide-react";
@@ -47,6 +48,7 @@ function externalKey(b: { isbn13: string | null; titulo: string; autores: string
 const Busca = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [local, setLocal] = useState<LocalResult[]>([]);
   const [externo, setExterno] = useState<ExternalResult[]>([]);
@@ -319,7 +321,17 @@ const Busca = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Buscar livros</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Buscar livros</h1>
+        <Button
+          size="icon"
+          onClick={() => navigate("/cadastro-manual")}
+          className="rounded-full bg-primary hover:bg-primary-hover shrink-0"
+          title="Cadastrar manualmente"
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
+      </div>
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
@@ -395,9 +407,18 @@ const Busca = () => {
       )}
 
       {semResultados && (
-        <p className="text-sm text-muted-foreground text-center py-6">
-          Nenhum livro encontrado.
-        </p>
+        <div className="flex flex-col items-center gap-3 py-6">
+          <p className="text-sm text-muted-foreground text-center">
+            Nenhum livro encontrado.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/cadastro-manual")}
+            className="rounded-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Cadastrar manualmente
+          </Button>
+        </div>
       )}
     </div>
   );

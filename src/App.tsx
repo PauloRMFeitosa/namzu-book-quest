@@ -18,6 +18,7 @@ import Metas from "./pages/Metas";
 import Historico from "./pages/Historico";
 import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
+import CadastroManual from "./pages/CadastroManual";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+            <Route path="/cadastro-manual" element={<ProtectedRoute><CadastroManual /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
