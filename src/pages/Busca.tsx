@@ -387,7 +387,7 @@ const Busca = () => {
               r.titulo,
               r.autor,
               r.ano,
-              () => adicionarLocal(r.obra_id, r.obra_id),
+              (status) => adicionarLocal(r.obra_id, r.obra_id, status),
               adicionando === r.obra_id,
               adicionados.has(r.obra_id),
             ),
