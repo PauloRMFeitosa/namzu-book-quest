@@ -1,77 +1,47 @@
 
-Plano: criar uma página dedicada de **Cadastro Manual** com três abas — **Obra**, **Autor** e **Edição** — acessível por um botão `+` na página de Busca.
+Plano: nos cards de resultado da busca (`src/pages/Busca.tsx`), substituir o botão único `+` por um menu com duas ações: **"Quero ler"** e **"Já lido"**.
 
-## 1. Acesso
-- `src/pages/Busca.tsx`: adicionar botão `+` (ícone `Plus`) no header, ao lado do título "Buscar livros". Também exibir CTA "Cadastrar manualmente" no estado `semResultados`.
-- Navega para nova rota `/cadastro-manual` (registrada em `src/App.tsx` dentro do `ProtectedRoute`/`AppLayout`).
+## Mudanças
 
-## 2. Nova página `src/pages/CadastroManual.tsx`
-Componente `Tabs` com 3 abas:
+### `src/pages/Busca.tsx`
 
-### Aba "Obra"
-Campos:
-- Título* (input)
-- Autor principal* (autocomplete em `autores` por `nome_ordenacao`; se não existir, cria junto)
-- Coautores (TagsInput, opcional)
-- Ano de publicação (number, opcional)
-- Idioma original (select, default `pt-BR`)
-- Sinopse (textarea, opcional)
-- URL da capa (input + preview, opcional)
-- **Status inicial na minha lista** (RadioGroup): Quero ler | Lendo | **Já lido**
-- Se "Já lido": data de início, data de conclusão (default hoje), nota (1–5)
+1. **Importar** `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` de `@/components/ui/dropdown-menu` e ícones `BookmarkPlus` e `CheckCheck` do lucide.
 
-### Aba "Autor"
-Campos:
-- Nome completo*
-- (Após salvar, autor fica disponível no autocomplete da aba Obra)
+2. **Generalizar as funções de adição** para aceitar `status: "quero_ler" | "concluido"`:
+   - `adicionarLocal(obraId, key, status)` → passa `status` no `insert` em `usuario_livros`. Se `status === "concluido"`, também grava `data_fim: new Date().toISOString().slice(0,10)`.
+   - `adicionarExterno(b, status)` → mesmo tratamento após criar a obra via `rapid-action`.
+   - Mensagens de toast adaptadas: "Adicionado em Quero ler" / "Marcado como lido (+100 XP)".
 
-### Aba "Edição"
-Campos:
-- Obra* (autocomplete em `obras` por título; opção "criar nova" abre aba Obra)
-- Título da edição* (default: título da obra)
-- Editora*
-- Formato* (select: ebook, fisico, audiobook)
-- Idioma (default `pt-BR`)
-- ISBN-13 (validação 13 dígitos, opcional)
-- Nº de páginas (opcional)
-- URL da capa (opcional)
-- Preço em R$ (opcional, salvo em centavos)
+3. **Atualizar `renderCard`** trocando o `<Button>` único por:
+   ```tsx
+   <DropdownMenu>
+     <DropdownMenuTrigger asChild>
+       <Button size="sm" disabled={busy || done} className="rounded-xl">
+         {busy ? <Loader2 className="animate-spin"/> : done ? <Check/> : <Plus/>}
+       </Button>
+     </DropdownMenuTrigger>
+     <DropdownMenuContent align="end">
+       <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
+         <BookmarkPlus className="w-4 h-4 mr-2"/> Quero ler
+       </DropdownMenuItem>
+       <DropdownMenuItem onClick={() => onAdd("concluido")}>
+         <CheckCheck className="w-4 h-4 mr-2"/> Já lido
+       </DropdownMenuItem>
+     </DropdownMenuContent>
+   </DropdownMenu>
+   ```
+   `onAdd` passa a ser `(status) => void`.
 
-Validação com `zod` em todas as abas. Botões Cancelar | Salvar (loading).
+4. **Invalidações React Query**: já existem (`meus-livros`, `ultimas-leituras`); manter. O trigger `trg_concluir_livro` já concede 100 XP automaticamente quando status = `concluido`.
 
-## 3. Backend
-Como as tabelas `obras`, `autores`, `obra_autores` e `edicoes` **não permitem INSERT por usuários** (sem RLS de INSERT), toda criação ocorre via edge function com service role.
+## Sem mudanças
 
-Estender `supabase/functions/rapid-action/index.ts` aceitando um campo `mode`:
-- `mode: "manual_obra"` → cria obra + autores informados + relação `obra_autores` + (opcional) edição inicial; opcionalmente já cria `usuario_livros` com status escolhido (quando `user_id` + `status` vierem). Retorna `obra.id`.
-- `mode: "manual_autor"` → cria apenas o autor. Retorna `autor.id`.
-- `mode: "manual_edicao"` → cria edição vinculada a `obra_id`. Retorna `edicao.id`.
-- Sem `mode` → comportamento atual (busca em APIs externas) preservado.
+- Sem alterações de schema, RLS, edge functions ou outras telas.
+- Comportamento de busca (local/externo, cache, debounce) preservado.
 
-Validação de duplicidade:
-- Obra: `slug` derivado de título; se já existe slug, retorna a existente (upsert atual já faz isso).
-- Autor: por `nome_normalizado`.
-- Edição: por `isbn_13` quando informado.
+## Resultado
 
-Para o `usuario_livros` quando status = "concluido", trigger existente `trg_concluir_livro` concede XP automaticamente.
-
-Autenticação: a função fica com `verify_jwt = false` (já é o caso), mas validamos JWT em código quando o payload pedir vincular `usuario_livros`.
-
-## 4. Pós-cadastro
-- Toast de sucesso por aba.
-- Aba Obra: opção "Salvar e adicionar outra" + redirecionar para `/livros/:obraId` quando "Salvar e ver".
-- Invalidar React Query: `["meus-livros"]`, `["ultimas-leituras"]`.
+- Cada card de resultado passa a abrir um menu ao clicar no botão de ação, permitindo escolher entre **Quero ler** (comportamento atual) ou **Já lido** (insere com `status='concluido'` + `data_fim=hoje`, dispara XP).
 
 ## Arquivos alterados
-- `src/pages/CadastroManual.tsx` (novo)
-- `src/components/cadastro-manual/AutorAutocomplete.tsx` (novo, reutilizado nas abas)
-- `src/components/cadastro-manual/ObraAutocomplete.tsx` (novo)
-- `src/pages/Busca.tsx` (botão `+` e CTA)
-- `src/App.tsx` (rota `/cadastro-manual`)
-- `supabase/functions/rapid-action/index.ts` (suportar `mode` manual)
-
-## Resultado esperado
-- Botão `+` no topo da Busca abre `/cadastro-manual`.
-- Usuário cadastra obras, autores e edições isoladamente, com autocompletes para reaproveitar registros existentes.
-- Em "Obra", pode marcar como "Já lido" e ganhar XP via trigger existente.
-- Sem migrations: toda escrita centralizada na edge function `rapid-action` com service role.
+- `src/pages/Busca.tsx`
