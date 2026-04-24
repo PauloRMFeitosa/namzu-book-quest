@@ -11,7 +11,7 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
       <div className="flex flex-col items-center gap-6 max-w-sm w-full text-center animate-fade-in">
-        <img src={logoNamzu} alt="NAMZU" className="w-24 h-24 rounded-3xl shadow-elevated object-cover" />
+        <img src={logoNamzu} alt="NAMZU" className="w-32 h-32 object-contain" />
         <h1 className="text-4xl font-extrabold tracking-tight text-primary">NAMZU</h1>
         <p className="text-lg text-muted-foreground">A sabedoria começa aqui!!!</p>
         <div className="flex flex-col gap-3 w-full mt-6">
