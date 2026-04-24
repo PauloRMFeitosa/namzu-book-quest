@@ -69,7 +69,7 @@ const Livros = () => {
                 <BookOpen className="w-8 h-8 text-primary" />
               </div>
             )}
-            <p className="text-sm font-medium mt-2 line-clamp-2">{l.obras?.titulo_original}</p>
+            <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
           </button>
         ))}
       </div>
