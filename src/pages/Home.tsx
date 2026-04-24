@@ -109,15 +109,15 @@ const Home = () => {
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
             {ultimas.map((l: any) => (
-              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="flex-shrink-0 w-24 hover-lift">
+              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="flex-shrink-0 w-24 hover-lift flex flex-col">
                 {l.obras?.capa_padrao_url ? (
                   <img src={l.obras.capa_padrao_url} alt="" className="w-24 h-32 rounded-lg object-cover shadow-soft" />
                 ) : (
-                  <div className="w-24 h-32 rounded-lg bg-secondary flex items-center justify-center">
+                  <div className="w-24 h-32 rounded-lg bg-secondary flex items-center justify-center shadow-soft">
                     <BookOpen className="w-6 h-6 text-primary" />
                   </div>
                 )}
-                <p className="text-xs mt-1 line-clamp-2 font-medium">{l.obras?.titulo_original}</p>
+                <p className="text-xs mt-1 line-clamp-2 break-words font-medium min-h-[2rem] text-left">{l.obras?.titulo_original}</p>
               </button>
             ))}
           </div>
