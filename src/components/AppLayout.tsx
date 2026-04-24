@@ -1,7 +1,8 @@
 import { ReactNode, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
@@ -24,7 +25,7 @@ const drawerItems = [
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -32,13 +33,32 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     navigate("/onboarding");
   };
 
+  const avatarUrl = (user?.user_metadata?.avatar_url as string) || (user?.user_metadata?.picture as string) || "";
+  const fullName = (user?.user_metadata?.full_name as string) || user?.email || "U";
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p: string) => p[0]?.toUpperCase())
+    .join("") || "U";
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
-          <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
+          <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
+            <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 object-contain" />
+            <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
+          </Link>
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
+          <Link to="/perfil" aria-label="Ver perfil" className="ml-auto hover-lift">
+            <Avatar className="w-9 h-9 border border-border">
+              <AvatarImage src={avatarUrl} alt={fullName} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </header>
 
