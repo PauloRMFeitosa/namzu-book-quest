@@ -1,39 +1,54 @@
-## Plano: atualizar logo e favicon usando a nova imagem (sem fundo)
+## Objetivo
+Na página de Busca (`/busca`), exibir todos os livros já cadastrados no acervo (tabela `obras`) por padrão, com opções de ordenação e filtros — mantendo a busca por texto e a busca em fontes externas como hoje.
 
-A nova imagem enviada (`Design_sem_nome-2.png`) será usada como logo oficial em todo o app, substituindo o arquivo atual.
+## Mudanças propostas em `src/pages/Busca.tsx`
 
-### 1. Logo (`src/assets/logo-namzu.png`)
-- Copiar `user-uploads://Design_sem_nome-2.png` para `src/assets/logo-namzu.png` (sobrescrevendo).
-- Como é PNG com fundo branco visualmente mas o pedido é "sem fundo", vou processar a imagem para tornar o fundo branco transparente antes de salvar (usando Python/Pillow via `code--exec`), garantindo que ela fique limpa sobre qualquer cor de fundo (claro ou escuro).
-- Todas as telas que já importam `@/assets/logo-namzu.png` herdam a nova versão automaticamente:
-  - `src/pages/Onboarding.tsx`
-  - `src/pages/Login.tsx`
-  - `src/pages/Signup.tsx`
-  - `src/pages/RecuperarSenha.tsx`
-  - `src/components/AppLayout.tsx`
-- Remover a classe `shadow-elevated` do `<img>` no `Onboarding.tsx` (a sombra atual foi pensada para um card com fundo; sem fundo fica estranho). Manter `rounded-3xl` opcional — vou remover também para o logo aparecer "solto".
+### 1. Lista padrão do acervo (sem termo de busca)
+Quando o campo de busca está vazio, em vez de mostrar a tela em branco, exibir todas as obras do acervo com paginação (lazy load / "carregar mais", lotes de 30).
 
-### 2. Favicon
-- Gerar `public/favicon.png` a partir da mesma imagem com fundo transparente, redimensionada para 256×256.
-- Remover `public/favicon.ico` (browsers requisitam `/favicon.ico` por padrão e ele sobrescreveria o novo).
-- Atualizar `index.html` adicionando:
-  ```html
-  <link rel="icon" href="/favicon.png" type="image/png">
-  ```
+Query inicial:
+- `obras` join `obra_autores → autores` join `edicoes` (para autor principal e editora).
+- Ordem padrão: título A→Z.
 
-### Processamento da imagem (via script)
-Pequeno script Python com Pillow:
-1. Abrir a imagem.
-2. Converter para RGBA.
-3. Tornar transparente todos os pixels quase brancos (threshold ~240).
-4. Salvar em `src/assets/logo-namzu.png` (tamanho original) e `public/favicon.png` (256×256).
+### 2. Controles de ordenação
+Dropdown "Ordenar por":
+- Título (A→Z) — padrão
+- Título (Z→A)
+- Autor (A→Z)
+- Autor (Z→A)
 
-### Sem mudanças
-- Sem alterações em rotas, schema, edge functions ou lógica de UI além do ajuste cosmético no Onboarding.
+(Usa `titulo_ordenacao` e `autores.nome_ordenacao`.)
 
-### Arquivos alterados
-- `src/assets/logo-namzu.png` (substituído, fundo transparente)
-- `public/favicon.png` (criado, fundo transparente, 256×256)
-- `public/favicon.ico` (removido)
-- `index.html` (link do favicon)
-- `src/pages/Onboarding.tsx` (remover sombra/cantos arredondados do logo)
+### 3. Filtros
+Dois selects (ou popovers com busca) abaixo do campo de busca:
+- **Autor**: lista distinta de autores presentes no acervo.
+- **Editora**: lista distinta de editoras de `edicoes`.
+
+Ambos com opção "Todos". Filtros se combinam (AND) e funcionam tanto sobre o acervo completo quanto sobre o resultado da busca textual local.
+
+### 4. Comportamento da busca textual
+- Mantém o fluxo atual (debounce 500ms, busca local; se vazio, busca externa).
+- Quando há termo digitado: ordenação e filtros se aplicam apenas à seção "No acervo".
+- Quando não há termo: a tela mostra "Acervo" com todas as obras + filtros + ordenação.
+
+### 5. UI
+- Cabeçalho: título "Buscar livros" + botão "+" (cadastro manual) — como hoje.
+- Campo de busca — como hoje.
+- Linha de controles (3 itens compactos): `[Ordenar ▾] [Autor ▾] [Editora ▾]`. Botão "Limpar" aparece quando há filtro ativo.
+- Lista renderizada com o `renderCard` existente (mesmo visual).
+- Rodapé: botão "Carregar mais" quando há mais resultados.
+
+## Detalhes técnicos
+- 3 queries com React Query (`@tanstack/react-query`):
+  - `acervo-obras` (paginada por offset, depende de ordenação/filtros).
+  - `acervo-autores` (lista distinta para o filtro).
+  - `acervo-editoras` (lista distinta para o filtro).
+- Para "autor principal" no card, usar `obra_autores` com `ordem = 1` (ou primeiro retornado).
+- Filtro por editora: como `editora` está em `edicoes`, fazer `inner join` em `edicoes` quando filtro de editora estiver ativo (`edicoes!inner(editora)` + `eq`).
+- Filtro por autor: `obra_autores!inner(autor_id)` + `eq`.
+- Ordenação por autor: ordenar via `obra_autores.autores.nome_ordenacao` (usando `order` no select aninhado não é trivial no PostgREST; alternativa: ordenar no client após buscar a página, OU criar uma view materializada `obras_lista` com colunas `titulo_ordenacao`, `autor_principal_ordenacao`, `editora_principal`). Proposta inicial: **ordenar no client** dentro do lote carregado (suficiente para acervos pequenos/médios). Se acervo crescer, criar view depois.
+- Sem alterações de schema/RLS — `obras`, `autores`, `obra_autores`, `edicoes` já são públicos para leitura.
+
+## Fora do escopo
+- Não altera a página `/livros` (Meus livros).
+- Não altera busca externa nem fluxo de adicionar.
