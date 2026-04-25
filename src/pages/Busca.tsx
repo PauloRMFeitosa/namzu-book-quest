@@ -632,6 +632,8 @@ const Busca = () => {
                   (status) => adicionarLocal(r.obra_id, r.obra_id, status),
                   adicionando === r.obra_id,
                   adicionados.has(r.obra_id),
+                  undefined,
+                  r.obra_id,
                 ),
               )}
               {visiveis < acervoOrdenado.length && (
@@ -670,6 +672,8 @@ const Busca = () => {
               (status) => adicionarLocal(r.obra_id, r.obra_id, status),
               adicionando === r.obra_id,
               adicionados.has(r.obra_id),
+              undefined,
+              r.obra_id,
             ),
           )}
         </section>
