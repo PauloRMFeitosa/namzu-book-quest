@@ -2,19 +2,49 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, BookOpen, Globe, Loader2, Check, BookmarkPlus, CheckCheck } from "lucide-react";
+import {
+  Search,
+  Plus,
+  BookOpen,
+  Globe,
+  Loader2,
+  Check,
+  BookmarkPlus,
+  CheckCheck,
+  ArrowUpDown,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type AddStatus = "quero_ler" | "concluido";
+
+type Ordenacao = "titulo_asc" | "titulo_desc" | "autor_asc" | "autor_desc";
+
+interface AcervoItem {
+  obra_id: string;
+  titulo: string;
+  titulo_ordenacao: string;
+  ano: number | null;
+  capa_url: string | null;
+  autor: string | null;
+  autor_ordenacao: string;
+}
 
 interface LocalResult {
   origem: "local";
@@ -28,7 +58,7 @@ interface LocalResult {
 
 interface ExternalResult {
   origem: "externo";
-  key: string; // chave estável (isbn ou titulo+autor)
+  key: string;
   titulo: string;
   autores: string[];
   ano: number | null;
@@ -38,6 +68,7 @@ interface ExternalResult {
 }
 
 const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
+const PAGE_SIZE = 30;
 
 function normalize(s: string) {
   return s
@@ -67,9 +98,136 @@ const Busca = () => {
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
   const lastQuery = useRef<string>("");
 
+  // Controles do acervo
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
+  const [filtroAutor, setFiltroAutor] = useState<string>("todos");
+  const [filtroEditora, setFiltroEditora] = useState<string>("todos");
+  const [visiveis, setVisiveis] = useState(PAGE_SIZE);
+
   const term = q.trim();
   const tooShort = term.length > 0 && term.length < 3;
+  const mostrandoAcervo = term.length === 0;
 
+  // Lista de autores para o filtro
+  const { data: autoresOpts = [] } = useQuery({
+    queryKey: ["acervo-autores"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("autores")
+        .select("id, nome_completo, nome_ordenacao")
+        .order("nome_ordenacao", { ascending: true })
+        .limit(1000);
+      return (data ?? []) as { id: string; nome_completo: string; nome_ordenacao: string }[];
+    },
+  });
+
+  // Lista de editoras para o filtro
+  const { data: editorasOpts = [] } = useQuery({
+    queryKey: ["acervo-editoras"],
+    queryFn: async () => {
+      const { data } = await supabase.from("edicoes").select("editora").limit(1000);
+      const set = new Set<string>();
+      (data ?? []).forEach((e: any) => e?.editora && set.add(e.editora));
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    },
+  });
+
+  // Acervo (apenas quando não há termo de busca)
+  const { data: acervo = [], isLoading: loadingAcervo } = useQuery({
+    queryKey: ["acervo-obras", filtroAutor, filtroEditora],
+    enabled: mostrandoAcervo,
+    queryFn: async () => {
+      let query = supabase
+        .from("obras")
+        .select(
+          `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
+           obra_autores!left(ordem, autores(nome_completo, nome_ordenacao))
+           ${filtroEditora !== "todos" ? ", edicoes!inner(editora)" : ""}`,
+        )
+        .limit(500);
+
+      if (filtroAutor !== "todos") {
+        query = supabase
+          .from("obra_autores")
+          .select(
+            `autor_id, ordem,
+             autores!inner(nome_completo, nome_ordenacao),
+             obras!inner(id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url
+               ${filtroEditora !== "todos" ? ", edicoes!inner(editora)" : ""}
+             )`,
+          )
+          .eq("autor_id", filtroAutor)
+          .limit(500) as any;
+      }
+
+      if (filtroEditora !== "todos") {
+        query = (query as any).eq(
+          filtroAutor !== "todos" ? "obras.edicoes.editora" : "edicoes.editora",
+          filtroEditora,
+        );
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("acervo query", error);
+        return [] as AcervoItem[];
+      }
+
+      const items: AcervoItem[] = [];
+      const seen = new Set<string>();
+
+      const pushObra = (o: any, autorRow?: any) => {
+        if (!o || seen.has(o.id)) return;
+        seen.add(o.id);
+        const oas = o.obra_autores ?? [];
+        const principal = autorRow ??
+          oas.slice().sort((a: any, b: any) => (a.ordem ?? 99) - (b.ordem ?? 99))[0];
+        const autorNome = principal?.autores?.nome_completo ?? null;
+        const autorOrd = principal?.autores?.nome_ordenacao ?? "zzz";
+        items.push({
+          obra_id: o.id,
+          titulo: o.titulo_original,
+          titulo_ordenacao: o.titulo_ordenacao ?? o.titulo_original?.toLowerCase() ?? "",
+          ano: o.ano_primeira_publicacao,
+          capa_url: o.capa_padrao_url,
+          autor: autorNome,
+          autor_ordenacao: autorOrd,
+        });
+      };
+
+      if (filtroAutor !== "todos") {
+        (data ?? []).forEach((row: any) => pushObra(row.obras, row));
+      } else {
+        (data ?? []).forEach((o: any) => pushObra(o));
+      }
+      return items;
+    },
+  });
+
+  // Ordenação client-side
+  const acervoOrdenado = useMemo(() => {
+    const arr = [...acervo];
+    arr.sort((a, b) => {
+      switch (ordenacao) {
+        case "titulo_desc":
+          return b.titulo_ordenacao.localeCompare(a.titulo_ordenacao, "pt-BR");
+        case "autor_asc":
+          return a.autor_ordenacao.localeCompare(b.autor_ordenacao, "pt-BR");
+        case "autor_desc":
+          return b.autor_ordenacao.localeCompare(a.autor_ordenacao, "pt-BR");
+        case "titulo_asc":
+        default:
+          return a.titulo_ordenacao.localeCompare(b.titulo_ordenacao, "pt-BR");
+      }
+    });
+    return arr;
+  }, [acervo, ordenacao]);
+
+  useEffect(() => {
+    setVisiveis(PAGE_SIZE);
+  }, [ordenacao, filtroAutor, filtroEditora, mostrandoAcervo]);
+
+  // Busca textual (mantida)
   useEffect(() => {
     if (term.length < 3) {
       setLocal([]);
@@ -164,13 +322,11 @@ const Busca = () => {
       setLocal(locais);
       setLoadingLocal(false);
 
-      // Se encontrou local, ENCERRA o fluxo (não chama API externa)
       if (locais.length > 0) {
         cache.set(termLow, { local: locais, externo: [] });
         return;
       }
 
-      // Sem resultado local → busca externa
       setLoadingExterno(true);
       try {
         const { data, error } = await supabase.functions.invoke("search-books", {
@@ -278,7 +434,7 @@ const Busca = () => {
     key: string,
     capa: string | null | undefined,
     titulo: string,
-    autor: string | undefined,
+    autor: string | undefined | null,
     ano: number | null | undefined,
     onAdd: (status: AddStatus) => void,
     busy: boolean,
@@ -333,13 +489,15 @@ const Busca = () => {
     </div>
   );
 
-  const semResultados =
+  const semResultadosBusca =
     term.length >= 3 &&
     !loadingLocal &&
     !loadingExterno &&
     !erroExterno &&
     local.length === 0 &&
     externo.length === 0;
+
+  const filtroAtivo = filtroAutor !== "todos" || filtroEditora !== "todos" || ordenacao !== "titulo_asc";
 
   return (
     <div className="flex flex-col gap-4">
@@ -357,7 +515,6 @@ const Busca = () => {
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
-          autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Título, autor ou ISBN"
@@ -365,10 +522,112 @@ const Busca = () => {
         />
       </div>
 
+      {/* Controles de ordenação e filtros */}
+      <div className="flex flex-wrap gap-2">
+        <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as Ordenacao)}>
+          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[150px] gap-2 text-sm">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="titulo_asc">Título (A→Z)</SelectItem>
+            <SelectItem value="titulo_desc">Título (Z→A)</SelectItem>
+            <SelectItem value="autor_asc">Autor (A→Z)</SelectItem>
+            <SelectItem value="autor_desc">Autor (Z→A)</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filtroAutor} onValueChange={setFiltroAutor}>
+          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[130px] text-sm">
+            <SelectValue placeholder="Autor" />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="todos">Todos os autores</SelectItem>
+            {autoresOpts.map((a) => (
+              <SelectItem key={a.id} value={a.id}>
+                {a.nome_completo}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filtroEditora} onValueChange={setFiltroEditora}>
+          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[130px] text-sm">
+            <SelectValue placeholder="Editora" />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="todos">Todas as editoras</SelectItem>
+            {editorasOpts.map((e) => (
+              <SelectItem key={e} value={e}>
+                {e}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {filtroAtivo && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 rounded-xl"
+            onClick={() => {
+              setOrdenacao("titulo_asc");
+              setFiltroAutor("todos");
+              setFiltroEditora("todos");
+            }}
+          >
+            <X className="w-4 h-4 mr-1" /> Limpar
+          </Button>
+        )}
+      </div>
+
       {tooShort && (
         <p className="text-sm text-muted-foreground">Digite ao menos 3 caracteres…</p>
       )}
 
+      {/* Acervo (sem termo) */}
+      {mostrandoAcervo && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Acervo {acervoOrdenado.length > 0 && `(${acervoOrdenado.length})`}
+          </h2>
+          {loadingAcervo ? (
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Carregando acervo…
+            </p>
+          ) : acervoOrdenado.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhum livro encontrado com esses filtros.
+            </p>
+          ) : (
+            <>
+              {acervoOrdenado.slice(0, visiveis).map((r) =>
+                renderCard(
+                  r.obra_id,
+                  r.capa_url,
+                  r.titulo,
+                  r.autor,
+                  r.ano,
+                  (status) => adicionarLocal(r.obra_id, r.obra_id, status),
+                  adicionando === r.obra_id,
+                  adicionados.has(r.obra_id),
+                ),
+              )}
+              {visiveis < acervoOrdenado.length && (
+                <Button
+                  variant="outline"
+                  className="rounded-xl mt-2"
+                  onClick={() => setVisiveis((v) => v + PAGE_SIZE)}
+                >
+                  Carregar mais
+                </Button>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* Busca textual */}
       {term.length >= 3 && loadingLocal && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Buscando no acervo…
@@ -428,7 +687,7 @@ const Busca = () => {
         </p>
       )}
 
-      {semResultados && (
+      {semResultadosBusca && (
         <div className="flex flex-col items-center gap-3 py-6">
           <p className="text-sm text-muted-foreground text-center">
             Nenhum livro encontrado.
