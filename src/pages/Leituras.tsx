@@ -11,6 +11,7 @@ type LivroLista = {
   id: string;
   status: string;
   data_fim: string | null;
+  obra_id: string;
   obras: { titulo_original: string; capa_padrao_url: string | null } | null;
   edicoes: { num_paginas: number | null } | null;
 };
@@ -23,7 +24,7 @@ const useLivrosLendo = () => {
     queryFn: async () => {
       const { data: livros } = await supabase
         .from("usuario_livros")
-        .select("id, status, data_fim, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
+        .select("id, status, data_fim, obra_id, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
         .eq("user_id", user!.id)
         .eq("status", "lendo")
         .order("updated_at", { ascending: false });
@@ -54,7 +55,7 @@ const useUltimosLidos = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("usuario_livros")
-        .select("id, status, data_fim, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
+        .select("id, status, data_fim, obra_id, obras(titulo_original, capa_padrao_url), edicoes(num_paginas)")
         .eq("user_id", user!.id)
         .in("status", ["lido", "concluido"])
         .order("data_fim", { ascending: false, nullsFirst: false })
@@ -88,7 +89,7 @@ const LeiturasList = () => {
               const percentual = total && total > 0 ? Math.min(100, Math.round((l.paginasLidas / total) * 100)) : 0;
               const restantes = total ? Math.max(0, total - l.paginasLidas) : null;
               return (
-                <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+                <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
                   {l.obras?.capa_padrao_url ? (
                     <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
                   ) : (
@@ -112,7 +113,7 @@ const LeiturasList = () => {
         ) : (
           <div className="flex flex-col gap-3">
             {lidos.map((l) => (
-              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+              <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
                 {l.obras?.capa_padrao_url ? (
                   <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
                 ) : (

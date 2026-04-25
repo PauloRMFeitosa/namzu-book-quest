@@ -440,15 +440,16 @@ const Busca = () => {
     busy: boolean,
     done: boolean,
     badge?: string,
-  ) => (
-    <div key={key} className="card-soft p-3 flex gap-3 items-center">
-      {capa ? (
-        <img src={capa} alt="" className="w-14 h-20 rounded-md object-cover" />
-      ) : (
-        <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center">
-          <BookOpen className="w-5 h-5 text-primary" />
-        </div>
-      )}
+    obraId?: string,
+  ) => {
+    const Capa = capa ? (
+      <img src={capa} alt="" className="w-14 h-20 rounded-md object-cover" />
+    ) : (
+      <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center">
+        <BookOpen className="w-5 h-5 text-primary" />
+      </div>
+    );
+    const Info = (
       <div className="flex-1 min-w-0">
         <p className="font-semibold line-clamp-2">{titulo}</p>
         {autor && <p className="text-xs text-muted-foreground line-clamp-1">{autor}</p>}
@@ -461,33 +462,53 @@ const Busca = () => {
           )}
         </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="sm"
-            disabled={busy || done}
-            className="rounded-xl bg-primary hover:bg-primary-hover"
+    );
+
+    return (
+      <div key={key} className="card-soft p-3 flex gap-3 items-center">
+        {obraId ? (
+          <button
+            onClick={() => navigate(`/obras/${obraId}`)}
+            className="flex gap-3 items-center flex-1 min-w-0 text-left hover-lift"
           >
-            {busy ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : done ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
-            <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAdd("concluido")}>
-            <CheckCheck className="w-4 h-4 mr-2" /> Já lido
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
+            {Capa}
+            {Info}
+          </button>
+        ) : (
+          <>
+            {Capa}
+            {Info}
+          </>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              disabled={busy || done}
+              className="rounded-xl bg-primary hover:bg-primary-hover"
+            >
+              {busy ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : done ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
+              <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAdd("concluido")}>
+              <CheckCheck className="w-4 h-4 mr-2" /> Já lido
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
 
   const semResultadosBusca =
     term.length >= 3 &&
@@ -611,6 +632,8 @@ const Busca = () => {
                   (status) => adicionarLocal(r.obra_id, r.obra_id, status),
                   adicionando === r.obra_id,
                   adicionados.has(r.obra_id),
+                  undefined,
+                  r.obra_id,
                 ),
               )}
               {visiveis < acervoOrdenado.length && (
@@ -649,6 +672,8 @@ const Busca = () => {
               (status) => adicionarLocal(r.obra_id, r.obra_id, status),
               adicionando === r.obra_id,
               adicionados.has(r.obra_id),
+              undefined,
+              r.obra_id,
             ),
           )}
         </section>
