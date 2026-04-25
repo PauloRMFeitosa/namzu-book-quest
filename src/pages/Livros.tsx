@@ -20,7 +20,7 @@ const Livros = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("usuario_livros")
-        .select("*, obras(*)")
+        .select("id, status, obra_id, obras(*)")
         .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
       return data ?? [];
@@ -61,7 +61,7 @@ const Livros = () => {
     ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
         {items.map((l: any) => (
-          <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="text-left hover-lift">
+          <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="text-left hover-lift">
             {l.obras?.capa_padrao_url ? (
               <img src={l.obras.capa_padrao_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
             ) : (

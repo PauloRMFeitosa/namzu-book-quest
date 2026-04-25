@@ -64,7 +64,7 @@ const Home = () => {
       </header>
 
       {lendo ? (
-        <section className="card-soft p-5 hover-lift cursor-pointer" onClick={() => navigate(`/leituras/${lendo.id}`)}>
+        <section className="card-soft p-5 hover-lift cursor-pointer" onClick={() => navigate(`/obras/${lendo.obra_id}`)}>
           <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Leitura atual</p>
           <div className="flex gap-4">
             {lendo.obras?.capa_padrao_url ? (
@@ -109,7 +109,7 @@ const Home = () => {
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
             {ultimas.map((l: any) => (
-              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="flex-shrink-0 w-24 hover-lift flex flex-col">
+              <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="flex-shrink-0 w-24 hover-lift flex flex-col">
                 {l.obras?.capa_padrao_url ? (
                   <img src={l.obras.capa_padrao_url} alt="" className="w-24 h-32 rounded-lg object-cover shadow-soft" />
                 ) : (
