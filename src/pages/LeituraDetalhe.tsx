@@ -70,7 +70,7 @@ const LeituraDetalhe = () => {
 
       {/* Bloco A: Pré-leitura */}
       {preLeitura?.leitura_pre ? (
-        <PreLeituraView pre={preLeitura.leitura_pre} />
+        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLivroId={livro.id} />
       ) : (
         <PreLeituraForm usuarioLivroId={livro.id} />
       )}
