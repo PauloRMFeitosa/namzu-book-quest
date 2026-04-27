@@ -62,6 +62,8 @@
     --popover-foreground: 90 14% 97%;
     --primary: 210 47% 69%;
     --primary-foreground: 213 56% 16%;
+    --primary-hover: 210 50% 76%;
+    --primary-active: 210 47% 60%;
     --secondary: 213 30% 18%;
     --secondary-foreground: 90 14% 97%;
     --muted: 213 30% 18%;
@@ -73,6 +75,18 @@
     --border: 213 30% 22%;
     --input: 213 30% 22%;
     --ring: 210 47% 69%;
+
+    --shadow-soft: 0 6px 18px hsl(0 0% 0% / 0.4);
+    --shadow-elevated: 0 10px 30px hsl(0 0% 0% / 0.55);
+
+    --sidebar-background: 213 35% 10%;
+    --sidebar-foreground: 90 14% 97%;
+    --sidebar-primary: 210 47% 69%;
+    --sidebar-primary-foreground: 213 56% 16%;
+    --sidebar-accent: 213 30% 18%;
+    --sidebar-accent-foreground: 90 14% 97%;
+    --sidebar-border: 213 30% 22%;
+    --sidebar-ring: 210 47% 69%;
   }
 }
 
