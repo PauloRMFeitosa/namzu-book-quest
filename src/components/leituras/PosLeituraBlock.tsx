@@ -2,11 +2,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Quote, Tag, Target, ExternalLink, Wand2 } from "lucide-react";
+import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2 } from "lucide-react";
 
 export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const qc = useQueryClient();
@@ -33,6 +43,24 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [spoiler, setSpoiler] = useState<boolean>(pos?.tem_spoiler ?? false);
   const [publica, setPublica] = useState<boolean>(pos?.publica ?? false);
   const [loading, setLoading] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const excluir = async () => {
+    if (!pos?.id) return;
+    setRemoving(true);
+    try {
+      const { error } = await supabase.from("leitura_pos").delete().eq("id", pos.id);
+      if (error) throw error;
+      toast.success("Pós-leitura excluída");
+      setConfirmDel(false);
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   useEffect(() => {
     if (pos) {
@@ -87,9 +115,19 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="card-soft p-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Pós-leitura</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold">Pós-leitura</h3>
+            {pos?.id && (
+              <span className="text-[10px] uppercase tracking-wider bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">Editando</span>
+            )}
+          </div>
+          {pos?.id && (
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Resumo geral</label>
@@ -112,9 +150,26 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
           </label>
         </div>
         <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          {loading ? "Salvando..." : "Salvar pós-leitura"}
+          {loading ? "Salvando..." : pos?.id ? "Salvar alterações" : "Salvar pós-leitura"}
         </Button>
       </div>
+
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir pós-leitura?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove o resumo geral, ideia principal e resenha desta leitura.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={excluir} disabled={removing} className="bg-destructive hover:bg-destructive/90">
+              {removing ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {todasCitacoes.length > 0 && (
         <div className="card-soft p-4">
