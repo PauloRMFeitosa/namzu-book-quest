@@ -115,9 +115,19 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="card-soft p-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Pós-leitura</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold">Pós-leitura</h3>
+            {pos?.id && (
+              <span className="text-[10px] uppercase tracking-wider bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">Editando</span>
+            )}
+          </div>
+          {pos?.id && (
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Resumo geral</label>
