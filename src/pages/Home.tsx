@@ -101,7 +101,7 @@ const Home = () => {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Últimas leituras</h3>
+          <h3 className="font-semibold">Últimos livros adicionados</h3>
           <button onClick={() => navigate("/livros")} className="text-sm text-primary font-medium">Ver todos</button>
         </div>
         {ultimas.length === 0 ? (
