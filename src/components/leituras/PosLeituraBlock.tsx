@@ -2,11 +2,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Quote, Tag, Target, ExternalLink, Wand2 } from "lucide-react";
+import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2 } from "lucide-react";
 
 export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const qc = useQueryClient();
