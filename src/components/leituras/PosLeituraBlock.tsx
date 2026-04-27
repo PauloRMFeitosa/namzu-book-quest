@@ -150,9 +150,26 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
           </label>
         </div>
         <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          {loading ? "Salvando..." : "Salvar pós-leitura"}
+          {loading ? "Salvando..." : pos?.id ? "Salvar alterações" : "Salvar pós-leitura"}
         </Button>
       </div>
+
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir pós-leitura?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove o resumo geral, ideia principal e resenha desta leitura.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={excluir} disabled={removing} className="bg-destructive hover:bg-destructive/90">
+              {removing ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {todasCitacoes.length > 0 && (
         <div className="card-soft p-4">
