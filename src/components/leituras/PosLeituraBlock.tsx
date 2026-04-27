@@ -43,6 +43,24 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [spoiler, setSpoiler] = useState<boolean>(pos?.tem_spoiler ?? false);
   const [publica, setPublica] = useState<boolean>(pos?.publica ?? false);
   const [loading, setLoading] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const excluir = async () => {
+    if (!pos?.id) return;
+    setRemoving(true);
+    try {
+      const { error } = await supabase.from("leitura_pos").delete().eq("id", pos.id);
+      if (error) throw error;
+      toast.success("Pós-leitura excluída");
+      setConfirmDel(false);
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   useEffect(() => {
     if (pos) {
