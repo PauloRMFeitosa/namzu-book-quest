@@ -89,7 +89,7 @@ const LeiturasList = () => {
               const percentual = total && total > 0 ? Math.min(100, Math.round((l.paginasLidas / total) * 100)) : 0;
               const restantes = total ? Math.max(0, total - l.paginasLidas) : null;
               return (
-                <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+                <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
                   {l.obras?.capa_padrao_url ? (
                     <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
                   ) : (
@@ -113,7 +113,7 @@ const LeiturasList = () => {
         ) : (
           <div className="flex flex-col gap-3">
             {lidos.map((l) => (
-              <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
                 {l.obras?.capa_padrao_url ? (
                   <img src={l.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
                 ) : (

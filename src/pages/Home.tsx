@@ -64,7 +64,7 @@ const Home = () => {
       </header>
 
       {lendo ? (
-        <section className="card-soft p-5 hover-lift cursor-pointer" onClick={() => navigate(`/obras/${lendo.obra_id}`)}>
+        <section className="card-soft p-5 hover-lift cursor-pointer" onClick={() => navigate(`/leituras/${lendo.id}`)}>
           <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Leitura atual</p>
           <div className="flex gap-4">
             {lendo.obras?.capa_padrao_url ? (
