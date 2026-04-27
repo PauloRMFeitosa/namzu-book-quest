@@ -68,8 +68,8 @@ export default {
         "2xl": "1rem",
       },
       boxShadow: {
-        soft: "0 6px 18px hsl(213 56% 16% / 0.08)",
-        elevated: "0 10px 30px hsl(213 56% 16% / 0.12)",
+        soft: "var(--shadow-soft)",
+        elevated: "var(--shadow-elevated)",
       },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
