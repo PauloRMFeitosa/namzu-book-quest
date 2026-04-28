@@ -99,7 +99,7 @@ const ObraDetalhe = () => {
   const stats = avaliacoes.reduce(
     (acc: any, a: any) => {
       const s = a.status;
-      if (s === "lido" || s === "concluido") acc.lidos++;
+      if (s === "lido" || s === "lido") acc.lidos++;
       else if (s === "lendo") acc.lendo++;
       else if (s === "quero_ler") acc.quero++;
       return acc;
@@ -148,7 +148,7 @@ const ObraDetalhe = () => {
     },
   });
 
-  const adicionar = async (status: "quero_ler" | "concluido") => {
+  const adicionar = async (status: "quero_ler" | "lido") => {
     if (!user) return;
     setAdicionando(true);
     const today = new Date().toISOString().slice(0, 10);
@@ -156,14 +156,14 @@ const ObraDetalhe = () => {
       user_id: user.id,
       obra_id: id!,
       status,
-      ...(status === "concluido" ? { data_fim: today } : {}),
+      ...(status === "lido" ? { data_fim: today } : {}),
     });
     setAdicionando(false);
     if (error) {
       if (error.code === "23505") return toast.info("Já está na sua lista");
       return toast.error(error.message);
     }
-    toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
+    toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
@@ -268,7 +268,7 @@ const ObraDetalhe = () => {
               Quero ler
             </Button>
             <Button
-              onClick={() => adicionar("concluido")}
+              onClick={() => adicionar("lido")}
               disabled={adicionando}
               className="rounded-xl bg-primary hover:bg-primary-hover"
             >

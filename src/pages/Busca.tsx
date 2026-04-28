@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type AddStatus = "quero_ler" | "concluido";
+type AddStatus = "quero_ler" | "lido";
 
 type Ordenacao = "titulo_asc" | "titulo_desc" | "autor_asc" | "autor_desc";
 
@@ -368,7 +368,7 @@ const Busca = () => {
       user_id: user.id,
       obra_id: obraId,
       status,
-      ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
+      ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
     };
     const { error } = await supabase.from("usuario_livros").insert(payload);
     setAdicionando(null);
@@ -384,7 +384,7 @@ const Busca = () => {
         : `Não foi possível adicionar: ${error.message}`;
       return toast.error(msg);
     }
-    toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
+    toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
@@ -412,7 +412,7 @@ const Busca = () => {
         user_id: user.id,
         obra_id: obraId,
         status,
-        ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
+        ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
       });
       if (insErr && insErr.code !== "23505") {
         console.error("adicionarExterno insert error", { code: insErr.code, message: insErr.message, details: (insErr as any).details, hint: (insErr as any).hint });
@@ -436,7 +436,7 @@ const Busca = () => {
         ...arr,
       ]);
       setAdicionados((s) => new Set(s).add(b.key));
-      toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
+      toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
       qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
@@ -519,7 +519,7 @@ const Busca = () => {
             <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
               <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAdd("concluido")}>
+            <DropdownMenuItem onClick={() => onAdd("lido")}>
               <CheckCheck className="w-4 h-4 mr-2" /> Já lido
             </DropdownMenuItem>
           </DropdownMenuContent>
