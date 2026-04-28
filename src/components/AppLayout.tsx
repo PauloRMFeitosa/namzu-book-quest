@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
-import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut } from "lucide-react";
+import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +27,7 @@ const drawerItems = [
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -100,7 +102,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <SheetTitle className="text-left">NAMZU</SheetTitle>
           </SheetHeader>
           <div className="mt-6 flex flex-col gap-1">
-            {drawerItems.map((item) => (
+            {[...drawerItems, ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : [])].map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
