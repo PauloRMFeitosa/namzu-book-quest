@@ -1,43 +1,90 @@
-## Problema
+# Plano: Página de Administração
 
-Na página `/buscar`, ao escolher **"Já lido"** no menu de adicionar (tanto em livros do acervo quanto externos), o INSERT em `usuario_livros` com `status='concluido'` falha e o usuário vê um toast de erro.
+## Objetivo
+Criar uma área `/admin` protegida por role, onde administradores podem visualizar a gamificação e cadastrar/gerenciar usuários, livros, autores, clubes, metas (missões) e conquistas.
 
-A causa não está no frontend — o INSERT está montado corretamente (`user_id`, `obra_id`, `status`, `data_fim`). O problema está na cadeia de funções de gamificação acionada pela conclusão:
+## 1. Sistema de Roles (banco)
+Hoje não existe controle de admin. Vou criar a estrutura segura padrão:
 
-- A função `dar_xp` chama `refresh_ranking()` no final
-- `refresh_ranking()` executa `refresh materialized view concurrently ranking_clube`
-- Esse `REFRESH ... CONCURRENTLY` exige um índice único na materialized view e que a view já tenha sido populada uma vez. Quando isso falha, o erro propaga para o INSERT original e a operação inteira é abortada.
+- Enum `app_role` com valores `admin`, `user`
+- Tabela `user_roles` (`id`, `user_id`, `role`, unique por par)
+- RLS habilitada em `user_roles`
+- Função `has_role(_user_id, _role)` `SECURITY DEFINER` (evita recursão)
+- Policies:
+  - Usuário pode ler suas próprias roles
+  - Apenas admins podem inserir/remover roles
 
-Além disso, o frontend hoje exibe `error.message` cru ao usuário, dificultando identificar o problema. E a operação síncrona em série (rapid-action → insert) no fluxo externo deixa o usuário sem feedback claro de qual etapa falhou.
+**Importante:** após a migração, o usuário precisará marcar manualmente o primeiro admin pelo SQL Editor (vou deixar o comando pronto na resposta).
 
-## Correção
+## 2. Policies adicionais para escrita pública
+Várias tabelas hoje só têm SELECT público (obras, autores, edicoes, clubes, conquistas, missoes). Vou adicionar policies de INSERT/UPDATE/DELETE restritas a `has_role(auth.uid(), 'admin')` para:
 
-### 1. Backend (migração SQL)
+- `obras`, `autores`, `obra_autores`, `edicoes`
+- `clubes`, `clube_trilhas`, `clube_conteudos`
+- `conquistas`, `missoes`
 
-Tornar a gamificação resiliente para que um problema na MV de ranking nunca quebre o fluxo principal de marcar livro como lido:
+## 3. Frontend
 
-- Reescrever `refresh_ranking()` para envolver o `REFRESH MATERIALIZED VIEW` em um bloco `BEGIN ... EXCEPTION WHEN OTHERS THEN ... END`, apenas logando via `RAISE NOTICE` em caso de falha (ranking não é crítico para concluir leitura).
-- Garantir que a MV `ranking_clube` exista; se não existir, ajustar `refresh_ranking()` para ser no-op silencioso quando a MV estiver ausente (verificar `pg_matviews`).
-- Garantir o trigger `trg_concluir_livro` em `usuario_livros` (AFTER UPDATE OF status, AFTER INSERT) — hoje a função existe mas o contexto indica que nenhum trigger está attached; sem o trigger o XP nunca é dado. Criar o trigger e tornar a função tolerante a erros do ranking conforme acima.
-- Tornar `dar_xp` defensiva: o `perform refresh_ranking()` no final deve estar dentro de bloco com `EXCEPTION WHEN OTHERS THEN NULL`.
+### Hook
+- `src/hooks/useIsAdmin.ts` — consulta `user_roles` do usuário logado e retorna `{ isAdmin, loading }`
 
-### 2. Frontend (`src/pages/Busca.tsx`)
+### Layout / Navegação
+- `AppLayout.tsx`: adicionar item "Admin" no drawer lateral, visível apenas se `isAdmin`
+- `App.tsx`: nova rota `/admin/*` protegida por `ProtectedRoute` + checagem de admin (redireciona para `/` se não for)
 
-- Em `adicionarLocal` e `adicionarExterno`, melhorar o tratamento de erro:
-  - Logar `error` completo no console (`code`, `message`, `details`, `hint`).
-  - Exibir mensagem amigável no toast (não o `error.message` cru).
-  - Tratar explicitamente o caso já existente `23505` ("já está na lista") com navegação opcional para `/leituras/:id`.
-- Após sucesso ao marcar como concluído, invalidar também `["livro-detalhe"]` e `["meu-livro-obra"]` para refletir em outras telas.
+### Páginas (`src/pages/admin/`)
+Layout com tabs (shadcn `Tabs`) numa única página `Admin.tsx`, ou subrotas. Proposta: **uma página com Tabs** para simplicidade mobile:
 
-## Arquivos afetados
+1. **Visão Gamificação** — top do ranking (`gamificacao_perfis` ordenado por `xp_total`), total de XP distribuído, distribuição por nível, conquistas mais desbloqueadas
+2. **Usuários** — lista de usuários (via `gamificacao_perfis` + auth metadata acessível), atribuir/remover role admin
+3. **Livros (Obras + Edições)** — listar, criar nova obra (título, slug, ano, sinopse, capa), vincular autores, criar edições
+4. **Autores** — listar, criar (nome completo, normalizado, ordenação), editar, excluir
+5. **Clubes** — listar, criar (nome, descrição, curador, objetivo, regras, capa, preço, duração), editar, ativar/desativar
+6. **Metas (Missões)** — listar, criar (código, título, descrição, tipo, meta_acao, meta_valor, xp_recompensa, período ativo)
+7. **Gamificação (Conquistas)** — listar, criar conquista (código, nome, descrição, ícone, xp_recompensa)
 
-- Migração SQL nova (corrigir `refresh_ranking`, `dar_xp`, criar trigger `trg_concluir_livro` em `usuario_livros`).
-- `src/pages/Busca.tsx` — melhor tratamento de erro nas duas funções `adicionar*`.
+Cada aba usa formulários `react-hook-form` + `zod`, tabelas `shadcn/ui Table` e dialogs para criação/edição. Toda a IO com Supabase via cliente.
 
-## Validação
+### Limitação importante: cadastrar usuários
+O cliente Supabase (anon key) **não pode criar usuários arbitrários**. Duas opções:
 
-Após aplicar:
-1. Buscar um livro já no acervo → "Já lido" → deve aparecer toast "Marcado como lido (+100 XP)" e o livro aparecer em `/leituras`.
-2. Buscar um livro externo → "Já lido" → mesmo comportamento, com obra criada via `rapid-action`.
-3. XP do usuário deve incrementar em 100 em `gamificacao_perfis`.
-4. Mesmo se a MV `ranking_clube` falhar, a marcação como lido deve concluir com sucesso.
+- **A (recomendada):** botão "Convidar usuário" envia link de cadastro / instruções; o admin promove a admin depois pela aba Usuários
+- **B:** criar uma **edge function** `admin-create-user` que usa `SUPABASE_SERVICE_ROLE_KEY` + `auth.admin.createUser()`, protegida verificando se o caller tem role admin
+
+Vou implementar a **opção B** (edge function) para que o admin consiga criar usuários direto pela página, com email + senha temporária.
+
+## 4. Detalhes técnicos
+
+```text
+src/
+  hooks/useIsAdmin.ts
+  components/AdminRoute.tsx        (wrapper que checa isAdmin)
+  pages/admin/
+    Admin.tsx                      (shell com Tabs)
+    tabs/
+      GamificacaoTab.tsx
+      UsuariosTab.tsx
+      LivrosTab.tsx
+      AutoresTab.tsx
+      ClubesTab.tsx
+      MetasTab.tsx
+      ConquistasTab.tsx
+supabase/functions/admin-create-user/index.ts
+```
+
+Migrações:
+- enum `app_role`, tabela `user_roles`, função `has_role`
+- policies de admin nas tabelas listadas
+- (opcional) view `admin_usuarios` agregando dados de `gamificacao_perfis` para listagem
+
+## 5. Ações manuais necessárias após implementação
+1. Promover seu usuário a admin no SQL Editor:
+   ```sql
+   insert into user_roles (user_id, role)
+   values ('<seu-user-id>', 'admin');
+   ```
+2. (opcional) revisar policies das tabelas se quiser bloqueios diferentes.
+
+## Fora do escopo
+- Edição inline avançada (drag/drop, bulk), uploads de imagem para Storage (capas continuam por URL)
+- Logs de auditoria das ações de admin
