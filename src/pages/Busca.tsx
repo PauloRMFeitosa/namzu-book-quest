@@ -412,9 +412,15 @@ const Busca = () => {
         user_id: user.id,
         obra_id: obraId,
         status,
-        ...(status === "concluido" ? { data_fim: today } : {}),
+        ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
       });
-      if (insErr && insErr.code !== "23505") throw insErr;
+      if (insErr && insErr.code !== "23505") {
+        console.error("adicionarExterno insert error", { code: insErr.code, message: insErr.message, details: (insErr as any).details, hint: (insErr as any).hint });
+        const msg = insErr.message?.includes("ranking_clube") || insErr.message?.includes("refresh")
+          ? "Erro ao atualizar ranking. Tente novamente."
+          : insErr.message;
+        throw new Error(msg);
+      }
 
       setExterno((arr) => arr.filter((x) => x.key !== b.key));
       setLocal((arr) => [
@@ -433,6 +439,8 @@ const Busca = () => {
       toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
+      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
     } catch (e: any) {
       console.error("adicionarExterno", e);
       toast.error(e?.message ?? "Erro ao adicionar");
