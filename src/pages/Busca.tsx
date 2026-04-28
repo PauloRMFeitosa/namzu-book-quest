@@ -364,15 +364,12 @@ const Busca = () => {
     if (!user) return;
     setAdicionando(key);
     const today = new Date().toISOString().slice(0, 10);
-    const payload: Record<string, unknown> = {
+    const payload = {
       user_id: user.id,
       obra_id: obraId,
       status,
+      ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
     };
-    if (status === "concluido") {
-      payload.data_fim = today;
-      payload.data_inicio = today;
-    }
     const { error } = await supabase.from("usuario_livros").insert(payload);
     setAdicionando(null);
     if (error) {
