@@ -364,21 +364,32 @@ const Busca = () => {
     if (!user) return;
     setAdicionando(key);
     const today = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("usuario_livros").insert({
+    const payload = {
       user_id: user.id,
       obra_id: obraId,
       status,
-      ...(status === "concluido" ? { data_fim: today } : {}),
-    });
+      ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
+    };
+    const { error } = await supabase.from("usuario_livros").insert(payload);
     setAdicionando(null);
     if (error) {
-      if (error.code === "23505") return toast.info("Já está na sua lista");
-      return toast.error(error.message);
+      console.error("adicionarLocal error", { code: error.code, message: error.message, details: (error as any).details, hint: (error as any).hint });
+      if (error.code === "23505") {
+        toast.info("Este livro já está na sua biblioteca");
+        setAdicionados((s) => new Set(s).add(key));
+        return;
+      }
+      const msg = error.message?.includes("ranking_clube") || error.message?.includes("refresh")
+        ? "Erro ao atualizar ranking. Tente novamente."
+        : `Não foi possível adicionar: ${error.message}`;
+      return toast.error(msg);
     }
     toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
+    qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
+    qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
   };
 
   const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
@@ -401,9 +412,15 @@ const Busca = () => {
         user_id: user.id,
         obra_id: obraId,
         status,
-        ...(status === "concluido" ? { data_fim: today } : {}),
+        ...(status === "concluido" ? { data_fim: today, data_inicio: today } : {}),
       });
-      if (insErr && insErr.code !== "23505") throw insErr;
+      if (insErr && insErr.code !== "23505") {
+        console.error("adicionarExterno insert error", { code: insErr.code, message: insErr.message, details: (insErr as any).details, hint: (insErr as any).hint });
+        const msg = insErr.message?.includes("ranking_clube") || insErr.message?.includes("refresh")
+          ? "Erro ao atualizar ranking. Tente novamente."
+          : insErr.message;
+        throw new Error(msg);
+      }
 
       setExterno((arr) => arr.filter((x) => x.key !== b.key));
       setLocal((arr) => [
@@ -422,6 +439,8 @@ const Busca = () => {
       toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
       qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
       qc.invalidateQueries({ queryKey: ["meus-livros"] });
+      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
     } catch (e: any) {
       console.error("adicionarExterno", e);
       toast.error(e?.message ?? "Erro ao adicionar");
