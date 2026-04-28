@@ -364,21 +364,35 @@ const Busca = () => {
     if (!user) return;
     setAdicionando(key);
     const today = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("usuario_livros").insert({
+    const payload: Record<string, unknown> = {
       user_id: user.id,
       obra_id: obraId,
       status,
-      ...(status === "concluido" ? { data_fim: today } : {}),
-    });
+    };
+    if (status === "concluido") {
+      payload.data_fim = today;
+      payload.data_inicio = today;
+    }
+    const { error } = await supabase.from("usuario_livros").insert(payload);
     setAdicionando(null);
     if (error) {
-      if (error.code === "23505") return toast.info("Já está na sua lista");
-      return toast.error(error.message);
+      console.error("adicionarLocal error", { code: error.code, message: error.message, details: (error as any).details, hint: (error as any).hint });
+      if (error.code === "23505") {
+        toast.info("Este livro já está na sua biblioteca");
+        setAdicionados((s) => new Set(s).add(key));
+        return;
+      }
+      const msg = error.message?.includes("ranking_clube") || error.message?.includes("refresh")
+        ? "Erro ao atualizar ranking. Tente novamente."
+        : `Não foi possível adicionar: ${error.message}`;
+      return toast.error(msg);
     }
     toast.success(status === "concluido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     setAdicionados((s) => new Set(s).add(key));
     qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
     qc.invalidateQueries({ queryKey: ["meus-livros"] });
+    qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
+    qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
   };
 
   const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
