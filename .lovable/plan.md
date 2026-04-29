@@ -1,48 +1,69 @@
-O problema atual não parece ser o carregamento do menu. A requisição real do app para `user_roles` está voltando `[]` para o usuário logado:
+## Objetivo
 
-```text
-user_id atual no app: a633d6a8-bf66-44f4-bdf2-df764e01fa0e
-email no token: paulormf@gmail.com
-consulta: user_roles?user_id=eq.a633...&role=eq.admin
-resposta: []
-```
+Adicionar no painel **Administração** uma nova aba **"Visibilidade"** onde o admin pode ligar/desligar globalmente para todos os usuários:
 
-Ou seja: para o usuário que está logado agora, o frontend não encontra uma linha `role = admin` visível em `public.user_roles`. Mesmo que exista uma role cadastrada, provavelmente ela está vinculada a outro UUID de usuário, ou o app precisa consultar a role de forma mais robusta.
+- Página **Clubes**
+- Página **Metas**
+- Página **Histórico**
+- Página **Notificações**
+- Bloco de **Gamificação na Home** (StatsChips: XP, nível, streak)
 
-Plano de correção:
+Quando desligado, o item desaparece da navegação inferior, do menu "Mais" e a rota correspondente redireciona para a Home. Na Home, o bloco de gamificação some.
 
-1. Ajustar a verificação de admin
-   - Trocar a consulta direta em `useIsAdmin` por uma chamada mais confiável à função segura `public.has_role(user.id, 'admin')`, via RPC.
-   - Manter fallback para a consulta direta em `user_roles` caso o RPC não esteja disponível.
-   - Preservar o estado de carregamento para evitar esconder o menu antes da consulta terminar.
+## Como vai funcionar
 
-2. Melhorar a navegação para admin
-   - No menu “Mais”, exibir um estado de carregamento enquanto a role está sendo conferida.
-   - Se `isAdmin = true`, mostrar o item “Admin”.
-   - Opcionalmente, adicionar um botão/link direto para `/admin` em Configurações para facilitar o acesso quando o menu lateral não for percebido.
+1. **Tabela `app_settings`** (key/value JSON) no Supabase, leitura pública (qualquer usuário lê), escrita só admin via RLS.
+   - Chaves: `show_clubes`, `show_metas`, `show_historico`, `show_notificacoes`, `show_gamificacao_home` (boolean, default `true`).
 
-3. Adicionar diagnóstico seguro no frontend
-   - Se a consulta de admin falhar ou retornar falso, registrar no console apenas dados não sensíveis úteis para depuração: `user.id`, `email`, resultado da role e erro Supabase.
-   - Isso ajuda a confirmar se o UUID cadastrado no Supabase é exatamente o mesmo do usuário logado.
+2. **Hook `useFeatureFlags()`** que faz uma única query cacheada (React Query) e expõe os valores. Disponível em toda a app.
 
-4. Ajustar o banco, se necessário
-   - Se o diagnóstico confirmar que a role está em outro UUID, inserir a role correta para:
+3. **AppLayout**: filtra `navItems` (Clubes) e `drawerItems` (Metas, Histórico, Notificações) com base nas flags. Admin sempre vê tudo (bypass).
 
+4. **Home**: esconde o `<StatsChips />` quando `show_gamificacao_home = false`.
+
+5. **Rotas protegidas**: criar wrapper `<FeatureRoute flag="show_clubes">` que redireciona para `/` quando a flag está off (proteção caso o usuário acesse a URL diretamente). Aplicado em `/clubes`, `/metas`, `/historico`, `/notificacoes`.
+
+6. **Aba Admin "Visibilidade"** (`src/pages/admin/tabs/VisibilidadeTab.tsx`):
+   - 5 switches, um por flag, com label descritivo.
+   - Salvamento por toggle (upsert imediato + toast).
+
+## Detalhes técnicos
+
+**Migração SQL:**
 ```sql
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('a633d6a8-bf66-44f4-bdf2-df764e01fa0e', 'admin')
-ON CONFLICT DO NOTHING;
+create table public.app_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz default now()
+);
+alter table public.app_settings enable row level security;
+
+create policy "Todos leem settings" on public.app_settings
+  for select using (true);
+create policy "Admin escreve settings" on public.app_settings
+  for all using (has_role(auth.uid(),'admin'))
+  with check (has_role(auth.uid(),'admin'));
+
+insert into public.app_settings(key,value) values
+  ('show_clubes','true'::jsonb),
+  ('show_metas','true'::jsonb),
+  ('show_historico','true'::jsonb),
+  ('show_notificacoes','true'::jsonb),
+  ('show_gamificacao_home','true'::jsonb)
+on conflict (key) do nothing;
 ```
 
-5. Validação
-   - Recarregar o app.
-   - Abrir “Mais”.
-   - Confirmar que “Admin” aparece.
-   - Testar acesso direto a `/admin`.
+**Arquivos a criar:**
+- `src/hooks/useFeatureFlags.ts`
+- `src/components/FeatureRoute.tsx`
+- `src/pages/admin/tabs/VisibilidadeTab.tsx`
 
-Arquivos que serão alterados após aprovação:
-- `src/hooks/useIsAdmin.ts`
-- `src/components/AppLayout.tsx`
-- Possivelmente `src/pages/Configuracoes.tsx` para incluir um atalho de admin se a role estiver ativa.
+**Arquivos a editar:**
+- `src/pages/admin/Admin.tsx` — adicionar tab "Visibilidade" (primeira posição).
+- `src/components/AppLayout.tsx` — filtrar nav/drawer pelas flags (admin vê tudo).
+- `src/pages/Home.tsx` — esconder `StatsChips` quando flag off.
+- `src/App.tsx` — envolver rotas `/clubes`, `/metas`, `/historico`, `/notificacoes` com `<FeatureRoute>`.
 
-Observação importante: pelo log de rede, o UUID atualmente logado é `a633d6a8-bf66-44f4-bdf2-df764e01fa0e`. Se a role foi cadastrada em qualquer outro UUID, o menu não aparecerá mesmo com o código correto.
+## Comportamento para o admin
+
+O admin **sempre vê** todos os menus mesmo com flags desligadas (para poder testar e reativar). Usuários comuns respeitam as flags.
