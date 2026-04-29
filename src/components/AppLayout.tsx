@@ -84,8 +84,11 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-elevated">
-        <div className="max-w-3xl mx-auto grid grid-cols-6 px-2 py-2">
-          {navItems.map((item) => (
+        <div
+          className="max-w-3xl mx-auto grid px-2 py-2"
+          style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
+        >
+          {visibleNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -117,7 +120,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <SheetTitle className="text-left">NAMZU</SheetTitle>
           </SheetHeader>
           <div className="mt-6 flex flex-col gap-1">
-            {[...drawerItems, ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : [])].map((item) => (
+            {[...visibleDrawer, ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : [])].map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
