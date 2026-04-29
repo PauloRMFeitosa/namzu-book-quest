@@ -24,6 +24,7 @@ import CadastroManual from "./pages/CadastroManual";
 import ObraDetalhe from "./pages/ObraDetalhe";
 import Admin from "./pages/admin/Admin";
 import { AdminRoute } from "./components/AdminRoute";
+import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,12 +47,12 @@ const App = () => (
             <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />
             <Route path="/leituras" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
             <Route path="/leituras/:id" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
-            <Route path="/clubes" element={<ProtectedRoute><Clubes /></ProtectedRoute>} />
-            <Route path="/clubes/:id" element={<ProtectedRoute><Clubes /></ProtectedRoute>} />
+            <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><Clubes /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><Clubes /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-            <Route path="/metas" element={<ProtectedRoute><Metas /></ProtectedRoute>} />
-            <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
-            <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
+            <Route path="/metas" element={<ProtectedRoute><FeatureRoute flag="show_metas"><Metas /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/historico" element={<ProtectedRoute><FeatureRoute flag="show_historico"><Historico /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/notificacoes" element={<ProtectedRoute><FeatureRoute flag="show_notificacoes"><Notificacoes /></FeatureRoute></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
             <Route path="/cadastro-manual" element={<ProtectedRoute><CadastroManual /></ProtectedRoute>} />
             <Route path="/obras/:id" element={<ProtectedRoute><ObraDetalhe /></ProtectedRoute>} />

@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,7 +29,21 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { flags } = useFeatureFlags();
   const navigate = useNavigate();
+
+  const visibleNav = navItems.filter((i) => {
+    if (isAdmin) return true;
+    if (i.to === "/clubes") return flags.show_clubes;
+    return true;
+  });
+  const visibleDrawer = drawerItems.filter((i) => {
+    if (isAdmin) return true;
+    if (i.to === "/metas") return flags.show_metas;
+    if (i.to === "/historico") return flags.show_historico;
+    if (i.to === "/notificacoes") return flags.show_notificacoes;
+    return true;
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,8 +84,11 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-elevated">
-        <div className="max-w-3xl mx-auto grid grid-cols-6 px-2 py-2">
-          {navItems.map((item) => (
+        <div
+          className="max-w-3xl mx-auto grid px-2 py-2"
+          style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
+        >
+          {visibleNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -102,7 +120,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <SheetTitle className="text-left">NAMZU</SheetTitle>
           </SheetHeader>
           <div className="mt-6 flex flex-col gap-1">
-            {[...drawerItems, ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : [])].map((item) => (
+            {[...visibleDrawer, ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : [])].map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}

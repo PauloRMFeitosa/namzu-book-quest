@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StatsChips } from "@/components/StatsChips";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Plus, ArrowRight } from "lucide-react";
@@ -10,6 +11,7 @@ import { BookOpen, Plus, ArrowRight } from "lucide-react";
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { flags } = useFeatureFlags();
   const firstName = (user?.user_metadata?.full_name as string)?.split(" ")[0] || user?.email?.split("@")[0] || "leitor";
 
   const { data: lendo } = useQuery({
@@ -60,7 +62,7 @@ const Home = () => {
           <p className="text-sm text-muted-foreground">Olá,</p>
           <h1 className="text-2xl font-bold capitalize">{firstName} 👋</h1>
         </div>
-        <StatsChips />
+        {flags.show_gamificacao_home && <StatsChips />}
       </header>
 
       {lendo ? (
