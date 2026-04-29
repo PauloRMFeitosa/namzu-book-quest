@@ -18,14 +18,41 @@ export const useIsAdmin = () => {
         return;
       }
       setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+
+      // 1) Try via security definer RPC (most reliable)
+      const rpc = await (supabase as any).rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+
+      let admin = false;
+      if (!rpc.error && typeof rpc.data === "boolean") {
+        admin = rpc.data;
+      } else {
+        // 2) Fallback: direct table query
+        const { data, error } = await (supabase as any)
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        admin = !error && !!data;
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn("[useIsAdmin] fallback query error", { error, userId: user.id });
+        }
+      }
+
+      // eslint-disable-next-line no-console
+      console.info("[useIsAdmin] check", {
+        userId: user.id,
+        email: user.email,
+        isAdmin: admin,
+        rpcError: rpc.error?.message,
+      });
+
       if (!cancelled) {
-        setIsAdmin(!error && !!data);
+        setIsAdmin(admin);
         setLoading(false);
       }
     };
