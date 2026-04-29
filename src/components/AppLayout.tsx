@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,7 +29,21 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { flags } = useFeatureFlags();
   const navigate = useNavigate();
+
+  const visibleNav = navItems.filter((i) => {
+    if (isAdmin) return true;
+    if (i.to === "/clubes") return flags.show_clubes;
+    return true;
+  });
+  const visibleDrawer = drawerItems.filter((i) => {
+    if (isAdmin) return true;
+    if (i.to === "/metas") return flags.show_metas;
+    if (i.to === "/historico") return flags.show_historico;
+    if (i.to === "/notificacoes") return flags.show_notificacoes;
+    return true;
+  });
 
   const handleSignOut = async () => {
     await signOut();
