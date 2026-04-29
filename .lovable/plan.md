@@ -1,69 +1,64 @@
 ## Objetivo
 
-Adicionar no painel **Administração** uma nova aba **"Visibilidade"** onde o admin pode ligar/desligar globalmente para todos os usuários:
+Habilitar **CRUD completo (criar, editar, excluir)** no painel admin para todas as entidades:
 
-- Página **Clubes**
-- Página **Metas**
-- Página **Histórico**
-- Página **Notificações**
-- Bloco de **Gamificação na Home** (StatsChips: XP, nível, streak)
+- **Usuários** — editar nome/email/senha, excluir conta (via edge function com service role)
+- **Livros (obras)** — editar título, ano, sinopse, capa
+- **Autores** — editar nome
+- **Clubes** — editar todos os campos + excluir
+- **Metas (missões)** — editar todos os campos
+- **Conquistas** — editar todos os campos
 
-Quando desligado, o item desaparece da navegação inferior, do menu "Mais" e a rota correspondente redireciona para a Home. Na Home, o bloco de gamificação some.
+A criação e exclusão já existem na maioria das tabs; falta o **editar** em todas e **excluir/editar** em usuários e clubes.
 
-## Como vai funcionar
+## Implementação
 
-1. **Tabela `app_settings`** (key/value JSON) no Supabase, leitura pública (qualquer usuário lê), escrita só admin via RLS.
-   - Chaves: `show_clubes`, `show_metas`, `show_historico`, `show_notificacoes`, `show_gamificacao_home` (boolean, default `true`).
+### 1. Edge Function `admin-manage-user`
 
-2. **Hook `useFeatureFlags()`** que faz uma única query cacheada (React Query) e expõe os valores. Disponível em toda a app.
+Cria nova função com `verify_jwt = false` (validação manual do JWT em código), que verifica se o caller é admin via `user_roles` e suporta:
 
-3. **AppLayout**: filtra `navItems` (Clubes) e `drawerItems` (Metas, Histórico, Notificações) com base nas flags. Admin sempre vê tudo (bypass).
+- `action: "update"` → atualiza email, senha e/ou `user_metadata.full_name` via `auth.admin.updateUserById`
+- `action: "delete"` → remove a conta via `auth.admin.deleteUser` (bloqueia auto-exclusão)
 
-4. **Home**: esconde o `<StatsChips />` quando `show_gamificacao_home = false`.
+### 2. Componente reutilizável `EditDialog`
 
-5. **Rotas protegidas**: criar wrapper `<FeatureRoute flag="show_clubes">` que redireciona para `/` quando a flag está off (proteção caso o usuário acesse a URL diretamente). Aplicado em `/clubes`, `/metas`, `/historico`, `/notificacoes`.
+Pequeno wrapper de Dialog com botão lápis na linha da tabela. Cada tab passa o registro atual e os campos editáveis.
 
-6. **Aba Admin "Visibilidade"** (`src/pages/admin/tabs/VisibilidadeTab.tsx`):
-   - 5 switches, um por flag, com label descritivo.
-   - Salvamento por toggle (upsert imediato + toast).
+### 3. Tabs atualizadas
+
+Em cada tab adiciono botão **Editar** (ícone Pencil) ao lado do Excluir, abrindo um dialog pré-preenchido. Salvar faz `update` na tabela. Para **Usuários** e **Clubes**, também adiciono o botão Excluir.
+
+| Tab | Editar | Excluir |
+|---|---|---|
+| Usuários | nome, email, senha (opcional) | sim (via edge function) |
+| Livros | título, ano, sinopse, capa, idioma | já existe |
+| Autores | nome completo (recalcula ordenação/normalizado) | já existe |
+| Clubes | todos os campos + ativo | adicionar |
+| Metas | todos os campos | já existe |
+| Conquistas | todos os campos | já existe |
+
+### 4. Confirmação de exclusão
+
+Mantenho `confirm()` simples nas existentes; para usuários adiciono confirmação extra ("Esta ação é irreversível e remove os dados do auth.users").
+
+## Arquivos
+
+**Criar:**
+- `supabase/functions/admin-manage-user/index.ts`
+- `src/components/admin/EditDialog.tsx` (wrapper genérico)
+
+**Editar:**
+- `supabase/config.toml` — declarar `[functions.admin-manage-user] verify_jwt = false`
+- `src/pages/admin/tabs/UsuariosTab.tsx` — botões Editar e Excluir + dialog
+- `src/pages/admin/tabs/LivrosTab.tsx` — botão Editar + dialog
+- `src/pages/admin/tabs/AutoresTab.tsx` — botão Editar + dialog
+- `src/pages/admin/tabs/ClubesTab.tsx` — botão Editar e Excluir + dialog (mantém o toggle ativo)
+- `src/pages/admin/tabs/MetasTab.tsx` — botão Editar + dialog
+- `src/pages/admin/tabs/ConquistasTab.tsx` — botão Editar + dialog
 
 ## Detalhes técnicos
 
-**Migração SQL:**
-```sql
-create table public.app_settings (
-  key text primary key,
-  value jsonb not null,
-  updated_at timestamptz default now()
-);
-alter table public.app_settings enable row level security;
-
-create policy "Todos leem settings" on public.app_settings
-  for select using (true);
-create policy "Admin escreve settings" on public.app_settings
-  for all using (has_role(auth.uid(),'admin'))
-  with check (has_role(auth.uid(),'admin'));
-
-insert into public.app_settings(key,value) values
-  ('show_clubes','true'::jsonb),
-  ('show_metas','true'::jsonb),
-  ('show_historico','true'::jsonb),
-  ('show_notificacoes','true'::jsonb),
-  ('show_gamificacao_home','true'::jsonb)
-on conflict (key) do nothing;
-```
-
-**Arquivos a criar:**
-- `src/hooks/useFeatureFlags.ts`
-- `src/components/FeatureRoute.tsx`
-- `src/pages/admin/tabs/VisibilidadeTab.tsx`
-
-**Arquivos a editar:**
-- `src/pages/admin/Admin.tsx` — adicionar tab "Visibilidade" (primeira posição).
-- `src/components/AppLayout.tsx` — filtrar nav/drawer pelas flags (admin vê tudo).
-- `src/pages/Home.tsx` — esconder `StatsChips` quando flag off.
-- `src/App.tsx` — envolver rotas `/clubes`, `/metas`, `/historico`, `/notificacoes` com `<FeatureRoute>`.
-
-## Comportamento para o admin
-
-O admin **sempre vê** todos os menus mesmo com flags desligadas (para poder testar e reativar). Usuários comuns respeitam as flags.
+- A edge function valida o token JWT manualmente e checa `user_roles.role = 'admin'` antes de aceitar qualquer operação.
+- O service role key é lido apenas no servidor via `Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')` — nunca exposto ao frontend.
+- Updates nas tabelas (obras, autores, clubes, missoes, conquistas) usam as RLS já existentes ("Admin escreve …") com `has_role(auth.uid(),'admin')`, então funcionam diretamente do cliente para usuários admin.
+- Excluir clube: remove o registro em `clubes`. Pode quebrar se houver FKs — neste caso oferecemos apenas desativar (já existente). Vou tentar `delete` e, em erro de FK, sugerir desativar via toast.

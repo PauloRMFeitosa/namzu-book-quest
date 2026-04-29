@@ -8,15 +8,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Shield, ShieldOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Plus, Shield, ShieldOff, Pencil, Trash2 } from "lucide-react";
 
 export const UsuariosTab = () => {
+  const { user: me } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
   const [admins, setAdmins] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", full_name: "", make_admin: false });
   const [submitting, setSubmitting] = useState(false);
+
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ email: "", password: "", full_name: "" });
 
   const load = async () => {
     setLoading(true);
@@ -53,15 +58,44 @@ export const UsuariosTab = () => {
       return;
     }
     toast.success("Usuário criado");
-    setOpen(false);
+    setOpenCreate(false);
     setForm({ email: "", password: "", full_name: "", make_admin: false });
+    load();
+  };
+
+  const startEdit = (userId: string) => {
+    setEditing({ user_id: userId });
+    setEditForm({ email: "", password: "", full_name: "" });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    const payload: any = { action: "update", user_id: editing.user_id };
+    if (editForm.email) payload.email = editForm.email;
+    if (editForm.password) payload.password = editForm.password;
+    if (editForm.full_name) payload.full_name = editForm.full_name;
+    const { data, error } = await supabase.functions.invoke("admin-manage-user", { body: payload });
+    if (error || (data as any)?.error) return toast.error((data as any)?.error ?? error?.message ?? "Erro");
+    toast.success("Usuário atualizado");
+    setEditing(null);
+    load();
+  };
+
+  const removeUser = async (userId: string) => {
+    if (userId === me?.id) return toast.error("Você não pode excluir sua própria conta");
+    if (!confirm("Excluir este usuário? Ação irreversível.")) return;
+    const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+      body: { action: "delete", user_id: userId },
+    });
+    if (error || (data as any)?.error) return toast.error((data as any)?.error ?? error?.message ?? "Erro");
+    toast.success("Usuário excluído");
     load();
   };
 
   return (
     <div className="space-y-4 mt-4">
       <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="w-4 h-4" />Novo usuário</Button>
           </DialogTrigger>
@@ -86,7 +120,7 @@ export const UsuariosTab = () => {
         <CardContent>
           {loading ? <p className="text-sm text-muted-foreground">Carregando…</p> : (
             <Table>
-              <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Nível</TableHead><TableHead>XP</TableHead><TableHead>Admin</TableHead><TableHead></TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Nível</TableHead><TableHead>XP</TableHead><TableHead>Admin</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {rows.map((u) => {
                   const isAdmin = admins.has(u.user_id);
@@ -96,9 +130,15 @@ export const UsuariosTab = () => {
                       <TableCell>{u.nivel}</TableCell>
                       <TableCell>{u.xp_total}</TableCell>
                       <TableCell>{isAdmin ? "Sim" : "—"}</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => toggleAdmin(u.user_id, isAdmin)}>
+                      <TableCell className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => toggleAdmin(u.user_id, isAdmin)} title={isAdmin ? "Remover admin" : "Tornar admin"}>
                           {isAdmin ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => startEdit(u.user_id)} title="Editar">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => removeUser(u.user_id)} title="Excluir" className="text-destructive">
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -109,6 +149,19 @@ export const UsuariosTab = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Preencha apenas os campos que deseja alterar.</p>
+            <div><Label>Novo email</Label><Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div><Label>Nova senha</Label><Input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} /></div>
+            <div><Label>Nome completo</Label><Input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
+            <Button onClick={saveEdit} className="w-full">Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
