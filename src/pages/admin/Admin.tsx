@@ -7,9 +7,10 @@ import { AutoresTab } from "./tabs/AutoresTab";
 import { ClubesTab } from "./tabs/ClubesTab";
 import { MetasTab } from "./tabs/MetasTab";
 import { ConquistasTab } from "./tabs/ConquistasTab";
+import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
 
 const Admin = () => {
-  const [tab, setTab] = useState("gamificacao");
+  const [tab, setTab] = useState("visibilidade");
   return (
     <div className="space-y-4">
       <header>
@@ -22,6 +23,7 @@ const Admin = () => {
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <div className="overflow-x-auto -mx-4 px-4">
           <TabsList className="inline-flex w-max">
+            <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
             <TabsTrigger value="gamificacao">Gamificação</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
             <TabsTrigger value="livros">Livros</TabsTrigger>
@@ -32,6 +34,7 @@ const Admin = () => {
           </TabsList>
         </div>
 
+        <TabsContent value="visibilidade"><VisibilidadeTab /></TabsContent>
         <TabsContent value="gamificacao"><GamificacaoTab /></TabsContent>
         <TabsContent value="usuarios"><UsuariosTab /></TabsContent>
         <TabsContent value="livros"><LivrosTab /></TabsContent>
