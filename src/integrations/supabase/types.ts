@@ -521,18 +521,21 @@ export type Database = {
       }
       leitura_aplicacoes: {
         Row: {
+          created_at: string | null
           descricao: string
           id: string
           leitura_id: string | null
           plano_acao: Json | null
         }
         Insert: {
+          created_at?: string | null
           descricao: string
           id?: string
           leitura_id?: string | null
           plano_acao?: Json | null
         }
         Update: {
+          created_at?: string | null
           descricao?: string
           id?: string
           leitura_id?: string | null
@@ -550,18 +553,21 @@ export type Database = {
       }
       leitura_citacoes: {
         Row: {
+          created_at: string | null
           id: string
           leitura_id: string | null
           pagina: number | null
           texto: string
         }
         Insert: {
+          created_at?: string | null
           id?: string
           leitura_id?: string | null
           pagina?: number | null
           texto: string
         }
         Update: {
+          created_at?: string | null
           id?: string
           leitura_id?: string | null
           pagina?: number | null
@@ -580,18 +586,21 @@ export type Database = {
       leitura_conteudo: {
         Row: {
           conceito_principal: string | null
+          created_at: string | null
           id: string
           leitura_id: string | null
           resumo: string | null
         }
         Insert: {
           conceito_principal?: string | null
+          created_at?: string | null
           id?: string
           leitura_id?: string | null
           resumo?: string | null
         }
         Update: {
           conceito_principal?: string | null
+          created_at?: string | null
           id?: string
           leitura_id?: string | null
           resumo?: string | null
@@ -608,6 +617,7 @@ export type Database = {
       }
       leitura_links: {
         Row: {
+          created_at: string | null
           descricao: string | null
           id: string
           leitura_id: string | null
@@ -615,6 +625,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          created_at?: string | null
           descricao?: string | null
           id?: string
           leitura_id?: string | null
@@ -622,6 +633,7 @@ export type Database = {
           url: string
         }
         Update: {
+          created_at?: string | null
           descricao?: string | null
           id?: string
           leitura_id?: string | null
@@ -641,79 +653,61 @@ export type Database = {
       leitura_pos: {
         Row: {
           created_at: string | null
-          id: string
           ideia_principal: string | null
+          leitura_id: string
           publica: boolean | null
           resenha: string | null
           resumo_geral: string | null
           tem_spoiler: boolean | null
-          usuario_livro_id: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string
           ideia_principal?: string | null
+          leitura_id: string
           publica?: boolean | null
           resenha?: string | null
           resumo_geral?: string | null
           tem_spoiler?: boolean | null
-          usuario_livro_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string
           ideia_principal?: string | null
+          leitura_id?: string
           publica?: boolean | null
           resenha?: string | null
           resumo_geral?: string | null
           tem_spoiler?: boolean | null
-          usuario_livro_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "usuario_livros"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_leitura_detalhada"
-            referencedColumns: ["usuario_livro_id"]
-          },
-          {
-            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_livros_lendo"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leitura_pos_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_ultimos_lidos"
+            foreignKeyName: "leitura_pos_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: true
+            referencedRelation: "leituras"
             referencedColumns: ["id"]
           },
         ]
       }
       leitura_pre: {
         Row: {
+          created_at: string | null
           dominio_previo: string | null
           intencao: string
           leitura_id: string
           observacao: string | null
         }
         Insert: {
+          created_at?: string | null
           dominio_previo?: string | null
           intencao: string
           leitura_id: string
           observacao?: string | null
         }
         Update: {
+          created_at?: string | null
           dominio_previo?: string | null
           intencao?: string
           leitura_id?: string
@@ -729,16 +723,57 @@ export type Database = {
           },
         ]
       }
+      leitura_progresso: {
+        Row: {
+          created_at: string | null
+          data_registro: string | null
+          id: string
+          leitura_id: string | null
+          paginas_lidas: number | null
+          percentual_lido: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_registro?: string | null
+          id?: string
+          leitura_id?: string | null
+          paginas_lidas?: number | null
+          percentual_lido?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_registro?: string | null
+          id?: string
+          leitura_id?: string | null
+          paginas_lidas?: number | null
+          percentual_lido?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_progresso_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leitura_tags: {
         Row: {
+          created_at: string | null
           leitura_id: string
           tag_id: string
         }
         Insert: {
+          created_at?: string | null
           leitura_id: string
           tag_id: string
         }
         Update: {
+          created_at?: string | null
           leitura_id?: string
           tag_id?: string
         }
@@ -762,64 +797,40 @@ export type Database = {
       leituras: {
         Row: {
           created_at: string | null
+          data_fim: string | null
+          data_inicio: string | null
           id: string
-          pagina_fim: number | null
-          pagina_inicio: number | null
-          paginas_lidas: number | null
-          percentual_lido: number | null
           tipo: string
+          updated_at: string | null
           user_id: string
-          usuario_livro_id: string | null
+          usuario_leitura_id: string | null
         }
         Insert: {
           created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
           id?: string
-          pagina_fim?: number | null
-          pagina_inicio?: number | null
-          paginas_lidas?: number | null
-          percentual_lido?: number | null
           tipo: string
+          updated_at?: string | null
           user_id: string
-          usuario_livro_id?: string | null
+          usuario_leitura_id?: string | null
         }
         Update: {
           created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
           id?: string
-          pagina_fim?: number | null
-          pagina_inicio?: number | null
-          paginas_lidas?: number | null
-          percentual_lido?: number | null
           tipo?: string
+          updated_at?: string | null
           user_id?: string
-          usuario_livro_id?: string | null
+          usuario_leitura_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "leituras_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
+            foreignKeyName: "leituras_usuario_leitura_id_fkey"
+            columns: ["usuario_leitura_id"]
             isOneToOne: false
-            referencedRelation: "usuario_livros"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leituras_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_leitura_detalhada"
-            referencedColumns: ["usuario_livro_id"]
-          },
-          {
-            foreignKeyName: "leituras_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_livros_lendo"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leituras_usuario_livro_id_fkey"
-            columns: ["usuario_livro_id"]
-            isOneToOne: false
-            referencedRelation: "vw_ultimos_lidos"
+            referencedRelation: "usuario_leituras"
             referencedColumns: ["id"]
           },
         ]
@@ -991,14 +1002,17 @@ export type Database = {
       }
       tags: {
         Row: {
+          created_at: string | null
           id: string
           nome: string
         }
         Insert: {
+          created_at?: string | null
           id?: string
           nome: string
         }
         Update: {
+          created_at?: string | null
           id?: string
           nome?: string
         }
@@ -1047,6 +1061,74 @@ export type Database = {
             columns: ["conquista_id"]
             isOneToOne: false
             referencedRelation: "conquistas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuario_leituras: {
+        Row: {
+          clube_id: string | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          id: string
+          nota: number | null
+          status: string
+          tipo_origem: string
+          updated_at: string | null
+          usuario_livro_id: string
+        }
+        Insert: {
+          clube_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          nota?: number | null
+          status?: string
+          tipo_origem?: string
+          updated_at?: string | null
+          usuario_livro_id: string
+        }
+        Update: {
+          clube_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          nota?: number | null
+          status?: string
+          tipo_origem?: string
+          updated_at?: string | null
+          usuario_livro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_leituras_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "usuario_livros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_livros_lendo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_leituras_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: false
+            referencedRelation: "vw_ultimos_lidos"
             referencedColumns: ["id"]
           },
         ]
@@ -1161,17 +1243,6 @@ export type Database = {
           },
         ]
       }
-      vw_leitura_detalhada: {
-        Row: {
-          ideia_principal: string | null
-          publica: boolean | null
-          resenha: string | null
-          resumo_geral: string | null
-          titulo_original: string | null
-          usuario_livro_id: string | null
-        }
-        Relationships: []
-      }
       vw_livros_lendo: {
         Row: {
           data_fim: string | null
@@ -1262,6 +1333,15 @@ export type Database = {
       }
     }
     Functions: {
+      criar_usuario_leitura: {
+        Args: {
+          p_clube_id: string
+          p_edicao_id: string
+          p_obra_id: string
+          p_tipo_origem: string
+        }
+        Returns: string
+      }
       dar_xp: {
         Args: {
           p_acao: string
@@ -1272,6 +1352,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      finalizar_leitura: {
+        Args: { p_usuario_leitura_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1279,7 +1363,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      iniciar_leitura: {
+        Args: { p_tipo: string; p_usuario_leitura_id: string }
+        Returns: string
+      }
       refresh_ranking: { Args: never; Returns: undefined }
+      registrar_progresso: {
+        Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

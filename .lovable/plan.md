@@ -1,64 +1,94 @@
+# Migração para a nova modelagem de leitura
+
 ## Objetivo
+Trocar todo o controle de "leitura ativa" de `usuario_livros.status` para `usuario_leituras`, usando RPCs (`criar_usuario_leitura`, `iniciar_leitura`, `registrar_progresso`, `finalizar_leitura`) e cálculo de progresso via `leitura_progresso`.
 
-Habilitar **CRUD completo (criar, editar, excluir)** no painel admin para todas as entidades:
+## Conceito
+- `usuario_livros` = item da estante do usuário (1 por edição/obra).
+- `usuario_leituras` = uma experiência de leitura (releituras geram novos registros). Liga-se ao `usuario_livro_id` e opcionalmente a `clube_id`.
+- `leituras` = sessões dentro da experiência (`pre_leitura`, `leitura`, `pos_leitura`), ligadas a `usuario_leitura_id`.
+- `leitura_progresso` = registros granulares de páginas/percentual por sessão.
 
-- **Usuários** — editar nome/email/senha, excluir conta (via edge function com service role)
-- **Livros (obras)** — editar título, ano, sinopse, capa
-- **Autores** — editar nome
-- **Clubes** — editar todos os campos + excluir
-- **Metas (missões)** — editar todos os campos
-- **Conquistas** — editar todos os campos
+## Mudanças por arquivo
 
-A criação e exclusão já existem na maioria das tabs; falta o **editar** em todas e **excluir/editar** em usuários e clubes.
+### Hook `src/hooks/leituras/useLivroDetalhe.ts` (refatoração central)
+- Renomear/redefinir para receber `usuarioLeituraId` (id de `usuario_leituras`) em vez de `usuarioLivroId`.
+- Buscar `usuario_leituras` + join com `usuario_livros(*, obras(*), edicoes(...))`.
+- Buscar `leituras` por `usuario_leitura_id` (em vez de `usuario_livro_id`).
+- Remover campos `paginas_lidas`/`percentual_lido` de `leituras` (não existem mais nessa tabela). Substituir por agregação de `leitura_progresso` (sum por `leitura_id`).
+- `leitura_pos` agora é por `leitura_id` (sessão tipo `pos_leitura`), não por `usuario_livro_id`.
+- `calcularProgresso`: soma `leitura_progresso.paginas_lidas` de todas as sessões `tipo='leitura'` da experiência; total = `edicoes.num_paginas`.
 
-## Implementação
+### `src/pages/Leituras.tsx`
+- `useLivrosLendo`: trocar query para
+  ```
+  from('usuario_leituras')
+    .select('id, status, data_fim, clube_id, usuario_livros!inner(id, obra_id, obras(titulo_original, capa_padrao_url), edicoes(num_paginas))')
+    .eq('status','lendo')
+  ```
+  filtrando `user_id` via join (`usuario_livros.user_id = auth.uid()`).
+- Agregar páginas via `leitura_progresso` joinando `leituras.usuario_leitura_id IN (...)`.
+- `useUltimosLidos`: idem, `status in ('concluido')` ordenado por `data_fim`.
+- Navegar para `/leituras/:usuarioLeituraId`.
 
-### 1. Edge Function `admin-manage-user`
+### `src/pages/LeituraDetalhe.tsx`
+- `id` agora é `usuarioLeituraId`.
+- `updateStatus`:
+  - "Começar" → criar via RPC se ainda não existir, ou apenas marcar `status='lendo'`.
+  - "Concluir" → `supabase.rpc('finalizar_leitura', { p_usuario_leitura_id: id })`.
+- Passar `usuarioLeituraId` (não `usuarioLivroId`) para componentes filhos.
 
-Cria nova função com `verify_jwt = false` (validação manual do JWT em código), que verifica se o caller é admin via `user_roles` e suporta:
+### `src/pages/Home.tsx`
+- "Lendo agora" e contagens passam a vir de `usuario_leituras` filtrando via join `usuario_livros.user_id = auth.uid()` e `status='lendo'`.
+- Últimos concluídos: `usuario_leituras.status='concluido'` ordenando por `data_fim`.
 
-- `action: "update"` → atualiza email, senha e/ou `user_metadata.full_name` via `auth.admin.updateUserById`
-- `action: "delete"` → remove a conta via `auth.admin.deleteUser` (bloqueia auto-exclusão)
+### `src/pages/Livros.tsx` (estante)
+- Continua listando `usuario_livros` (estante), MAS o status visual ("lendo/lido/quero ler") deve vir do estado mais recente de `usuario_leituras` daquele `usuario_livro_id` (LEFT JOIN). Quando não houver experiência, status = `quero_ler`.
+- Botão "Começar leitura" → cria `usuario_leituras` via RPC e navega para `/leituras/:novoId`.
 
-### 2. Componente reutilizável `EditDialog`
+### `src/pages/Busca.tsx` e `src/pages/CadastroManual.tsx`
+- "Adicionar à estante" continua inserindo em `usuario_livros` (sem `status`).
+- "Começar a ler agora" → após inserir `usuario_livros`, chamar `rpc('criar_usuario_leitura', { p_usuario_livro_id, p_tipo_origem:'individual', p_clube_id:null })` e redirecionar para `/leituras/:id`.
+- Remover gravação de `status='lendo'` em `usuario_livros`.
 
-Pequeno wrapper de Dialog com botão lápis na linha da tabela. Cada tab passa o registro atual e os campos editáveis.
+### `src/pages/ObraDetalhe.tsx`
+- Igual à busca: "Adicionar à estante" cria `usuario_livros`; "Começar leitura" chama RPC `criar_usuario_leitura`.
+- Substituir consultas que usam `usuario_livro_id` em leituras por `usuario_leitura_id` agregando via `leitura_progresso`.
 
-### 3. Tabs atualizadas
+### `src/components/leituras/PreLeituraForm.tsx`
+- Receber `usuarioLeituraId`.
+- Criar sessão via `rpc('iniciar_leitura', { p_usuario_leitura_id, p_tipo:'pre_leitura' })` e depois inserir em `leitura_pre`.
 
-Em cada tab adiciono botão **Editar** (ícone Pencil) ao lado do Excluir, abrindo um dialog pré-preenchido. Salvar faz `update` na tabela. Para **Usuários** e **Clubes**, também adiciono o botão Excluir.
+### `src/components/leituras/PreLeituraView.tsx`
+- Apenas trocar prop `usuarioLivroId` → `usuarioLeituraId` para invalidação de cache.
 
-| Tab | Editar | Excluir |
-|---|---|---|
-| Usuários | nome, email, senha (opcional) | sim (via edge function) |
-| Livros | título, ano, sinopse, capa, idioma | já existe |
-| Autores | nome completo (recalcula ordenação/normalizado) | já existe |
-| Clubes | todos os campos + ativo | adicionar |
-| Metas | todos os campos | já existe |
-| Conquistas | todos os campos | já existe |
+### `src/components/leituras/RegistrarLeituraDialog.tsx`
+- Receber `usuarioLeituraId`.
+- Criar sessão via `rpc('iniciar_leitura', { p_usuario_leitura_id, p_tipo:'leitura' })`.
+- Em vez de salvar `paginas_lidas`/`percentual_lido` em `leituras`, chamar `rpc('registrar_progresso', { p_leitura_id, p_paginas, p_percentual })`.
+- Modo edição: `update` em `leitura_progresso` da sessão (mais recente) ou inserir novo registro de progresso.
+- Filhos (`leitura_conteudo`, `leitura_citacoes`, etc.) continuam ligados a `leitura_id`.
 
-### 4. Confirmação de exclusão
+### `src/components/leituras/LeiturasList.tsx`
+- Trocar prop `usuarioLivroId` → `usuarioLeituraId`.
+- Mostrar `paginas_lidas` agregadas a partir de `leitura_progresso` (já vindo do hook).
 
-Mantenho `confirm()` simples nas existentes; para usuários adiciono confirmação extra ("Esta ação é irreversível e remove os dados do auth.users").
+### `src/components/leituras/PosLeituraBlock.tsx`
+- `leitura_pos` agora referencia `leitura_id` (sessão `pos_leitura`).
+- Ao salvar: garantir que existe uma `leituras` do tipo `pos_leitura` (criar via `iniciar_leitura` se faltar) e gravar `leitura_pos` com `leitura_id`.
+- Botão habilitado somente quando `usuario_leituras.status='concluido'`.
 
-## Arquivos
+### `src/App.tsx`
+- Rota `/leituras/:id` continua, mas o `:id` agora é `usuarioLeituraId`.
 
-**Criar:**
-- `supabase/functions/admin-manage-user/index.ts`
-- `src/components/admin/EditDialog.tsx` (wrapper genérico)
+## Validações
+- Bloquear criação de sessão sem `usuario_leitura_id`.
+- Bloquear `pos_leitura` se `usuario_leituras.status !== 'concluido'`.
+- Todas as RPCs já usam `auth.uid()` internamente.
 
-**Editar:**
-- `supabase/config.toml` — declarar `[functions.admin-manage-user] verify_jwt = false`
-- `src/pages/admin/tabs/UsuariosTab.tsx` — botões Editar e Excluir + dialog
-- `src/pages/admin/tabs/LivrosTab.tsx` — botão Editar + dialog
-- `src/pages/admin/tabs/AutoresTab.tsx` — botão Editar + dialog
-- `src/pages/admin/tabs/ClubesTab.tsx` — botão Editar e Excluir + dialog (mantém o toggle ativo)
-- `src/pages/admin/tabs/MetasTab.tsx` — botão Editar + dialog
-- `src/pages/admin/tabs/ConquistasTab.tsx` — botão Editar + dialog
+## RLS / Banco
+- As RPCs e tabelas já existem (vistas em `<db-functions>` e schema). Não há migração nova necessária.
+- Se faltar policy de INSERT em `usuario_leituras` para o usuário (hoje a tabela está sem RLS visível), avaliar adicionar policies "user owns via usuario_livros". **Confirmar com o usuário se devo criar essas policies.**
 
-## Detalhes técnicos
-
-- A edge function valida o token JWT manualmente e checa `user_roles.role = 'admin'` antes de aceitar qualquer operação.
-- O service role key é lido apenas no servidor via `Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')` — nunca exposto ao frontend.
-- Updates nas tabelas (obras, autores, clubes, missoes, conquistas) usam as RLS já existentes ("Admin escreve …") com `has_role(auth.uid(),'admin')`, então funcionam diretamente do cliente para usuários admin.
-- Excluir clube: remove o registro em `clubes`. Pode quebrar se houver FKs — neste caso oferecemos apenas desativar (já existente). Vou tentar `delete` e, em erro de FK, sugerir desativar via toast.
+## Itens fora do escopo
+- Reaproveitamento de dados antigos onde `leituras` foi gravada com `usuario_livro_id` legado: serão migradas separadamente se solicitado.
