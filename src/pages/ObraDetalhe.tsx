@@ -115,13 +115,20 @@ const ObraDetalhe = () => {
       const { data: uls } = await supabase
         .from("usuario_livros")
         .select("id")
-        .eq("obra_id", id!);
+        .eq("obra_id", id!)
+        .eq("user_id", user!.id);
       const ulIds = (uls ?? []).map((u: any) => u.id);
       if (ulIds.length === 0) return [];
+      const { data: exps } = await supabase
+        .from("usuario_leituras")
+        .select("id")
+        .in("usuario_livro_id", ulIds);
+      const expIds = (exps ?? []).map((e: any) => e.id);
+      if (expIds.length === 0) return [];
       const { data: leituras } = await supabase
         .from("leituras")
         .select("id")
-        .in("usuario_livro_id", ulIds);
+        .in("usuario_leitura_id", expIds);
       const leituraIds = (leituras ?? []).map((l: any) => l.id);
       if (leituraIds.length === 0) return [];
       const { data: cits } = await supabase
