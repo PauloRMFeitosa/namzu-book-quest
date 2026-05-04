@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { iniciarLeitura, registrarProgresso } from "@/hooks/leituras/useLeituraActions";
 
 type Citacao = { texto: string; pagina: string };
 type Aplicacao = { descricao: string; plano_acao: any };
@@ -37,7 +38,7 @@ const gerarPlanoAcao = (descricao: string) => ({
 });
 
 interface Props {
-  usuarioLivroId: string;
+  usuarioLeituraId: string;
   totalPaginas: number | null;
   disabled?: boolean;
   /** Quando passado, abre em modo edição com os valores iniciais */
@@ -49,7 +50,7 @@ interface Props {
 }
 
 export const RegistrarLeituraDialog = ({
-  usuarioLivroId,
+  usuarioLeituraId,
   totalPaginas,
   disabled,
   leitura,
@@ -138,14 +139,6 @@ export const RegistrarLeituraDialog = ({
       let lid: string;
       if (isEdit) {
         lid = leitura!.id;
-        const { error } = await supabase
-          .from("leituras")
-          .update({
-            paginas_lidas: paginasLidas ? Number(paginasLidas) : null,
-            percentual_lido: percentual ? Number(percentual) : null,
-          })
-          .eq("id", lid);
-        if (error) throw error;
         // Apaga filhos para reinserir
         await Promise.all([
           supabase.from("leitura_conteudo").delete().eq("leitura_id", lid),
@@ -153,21 +146,24 @@ export const RegistrarLeituraDialog = ({
           supabase.from("leitura_aplicacoes").delete().eq("leitura_id", lid),
           supabase.from("leitura_links").delete().eq("leitura_id", lid),
           supabase.from("leitura_tags").delete().eq("leitura_id", lid),
+          supabase.from("leitura_progresso").delete().eq("leitura_id", lid),
         ]);
       } else {
-        const { data: novaLeitura, error } = await supabase
-          .from("leituras")
-          .insert({
-            user_id: user!.id,
-            usuario_livro_id: usuarioLivroId,
-            tipo: "leitura",
-            paginas_lidas: paginasLidas ? Number(paginasLidas) : null,
-            percentual_lido: percentual ? Number(percentual) : null,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        lid = novaLeitura.id;
+        lid = await iniciarLeitura({
+          usuario_leitura_id: usuarioLeituraId,
+          tipo: "leitura",
+          user_id: user!.id,
+        });
+      }
+
+      // Progresso
+      if (paginasLidas || percentual) {
+        await registrarProgresso({
+          leitura_id: lid,
+          user_id: user!.id,
+          paginas: paginasLidas ? Number(paginasLidas) : null,
+          percentual: percentual ? Number(percentual) : null,
+        });
       }
 
       if (resumo.trim() || conceito.trim()) {
