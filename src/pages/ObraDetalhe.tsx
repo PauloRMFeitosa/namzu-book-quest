@@ -257,7 +257,24 @@ const ObraDetalhe = () => {
               Status: {meuLivro.status.replace("_", " ")}
             </span>
             <Button
-              onClick={() => navigate(`/leituras/${meuLivro.id}`)}
+              onClick={async () => {
+                // Busca experiência ativa para essa estante
+                const { data: exp } = await supabase
+                  .from("usuario_leituras")
+                  .select("id")
+                  .eq("usuario_livro_id", meuLivro.id)
+                  .order("updated_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (exp?.id) navigate(`/leituras/${exp.id}`);
+                else {
+                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
+                  try {
+                    const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
+                    navigate(`/leituras/${novoId}`);
+                  } catch (e: any) { toast.error(e.message); }
+                }
+              }}
               className="rounded-xl bg-primary hover:bg-primary-hover"
             >
               Abrir minha leitura

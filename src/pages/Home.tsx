@@ -18,14 +18,22 @@ const Home = () => {
     queryKey: ["leitura-atual", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: uls } = await supabase
         .from("usuario_livros")
-        .select("*, obras(*)")
-        .eq("user_id", user!.id)
+        .select("id")
+        .eq("user_id", user!.id);
+      const ulIds = (uls ?? []).map((u: any) => u.id);
+      if (!ulIds.length) return null;
+      const { data } = await supabase
+        .from("usuario_leituras")
+        .select("id, usuario_livros!inner(obra_id, obras(*))")
+        .in("usuario_livro_id", ulIds)
         .eq("status", "lendo")
+        .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      if (!data) return null;
+      return { id: (data as any).id, obras: (data as any).usuario_livros?.obras };
     },
   });
 
