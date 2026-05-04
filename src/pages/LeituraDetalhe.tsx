@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpen, Check, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLivroDetalhe, calcularProgresso } from "@/hooks/leituras/useLivroDetalhe";
@@ -11,6 +10,8 @@ import { PreLeituraView } from "@/components/leituras/PreLeituraView";
 import { RegistrarLeituraDialog } from "@/components/leituras/RegistrarLeituraDialog";
 import { LeiturasList } from "@/components/leituras/LeiturasList";
 import { PosLeituraBlock } from "@/components/leituras/PosLeituraBlock";
+import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { supabase } from "@/integrations/supabase/client";
 
 const LeituraDetalhe = () => {
   const { id } = useParams();
@@ -23,16 +24,23 @@ const LeituraDetalhe = () => {
 
   const preLeitura = livro.leituras.find((l) => l.tipo === "pre_leitura");
   const progresso = calcularProgresso(livro);
-  const isLido = livro.status === "lido" || livro.status === "concluido";
+  const isLido = livro.status === "concluido";
 
-  const updateStatus = async (status: string) => {
-    const patch: any = { status };
-    if (status === "lendo" && !livro.data_inicio) patch.data_inicio = new Date().toISOString().slice(0, 10);
-    if (status === "lido") patch.data_fim = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("usuario_livros").update(patch).eq("id", livro.id);
+  const reabrir = async () => {
+    const { error } = await supabase.from("usuario_leituras").update({ status: "lendo", data_fim: null }).eq("id", livro.id);
     if (error) return toast.error(error.message);
-    toast.success("Atualizado!");
+    toast.success("Leitura retomada");
     qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+  };
+
+  const concluir = async () => {
+    try {
+      await finalizarLeitura(livro.id);
+      toast.success("Leitura concluída!");
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   return (
@@ -56,13 +64,12 @@ const LeituraDetalhe = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {livro.status !== "lendo" && !isLido && (
-          <Button onClick={() => updateStatus("lendo")} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-            <Play className="w-4 h-4" /> Começar
+        {isLido ? (
+          <Button onClick={reabrir} variant="outline" className="h-11 rounded-2xl border-2">
+            <Play className="w-4 h-4" /> Retomar
           </Button>
-        )}
-        {!isLido && (
-          <Button onClick={() => updateStatus("lido")} variant="outline" className="h-11 rounded-2xl border-2">
+        ) : (
+          <Button onClick={concluir} variant="outline" className="h-11 rounded-2xl border-2">
             <Check className="w-4 h-4" /> Concluir
           </Button>
         )}
@@ -70,9 +77,9 @@ const LeituraDetalhe = () => {
 
       {/* Bloco A: Pré-leitura */}
       {preLeitura?.leitura_pre ? (
-        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLivroId={livro.id} />
+        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLeituraId={livro.id} />
       ) : (
-        <PreLeituraForm usuarioLivroId={livro.id} />
+        <PreLeituraForm usuarioLeituraId={livro.id} />
       )}
 
       {/* Bloco B: Leituras */}
@@ -80,7 +87,7 @@ const LeituraDetalhe = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Sessões de leitura</h3>
           <RegistrarLeituraDialog
-            usuarioLivroId={livro.id}
+            usuarioLeituraId={livro.id}
             totalPaginas={livro.edicoes?.num_paginas ?? null}
             disabled={!preLeitura}
           />
@@ -88,7 +95,7 @@ const LeituraDetalhe = () => {
         {!preLeitura && (
           <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
         )}
-        <LeiturasList leituras={livro.leituras} usuarioLivroId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
+        <LeiturasList leituras={livro.leituras} usuarioLeituraId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
       </div>
 
       {/* Bloco C: Pós-leitura */}

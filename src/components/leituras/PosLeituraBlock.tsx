@@ -17,10 +17,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 
 export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const pos = livro.leitura_pos;
+  const posSessao = livro.pos_leitura;
   const leiturasReais = livro.leituras.filter((l) => l.tipo === "leitura");
 
   const resumoConcat = leiturasReais
@@ -47,10 +51,11 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [removing, setRemoving] = useState(false);
 
   const excluir = async () => {
-    if (!pos?.id) return;
+    if (!posSessao?.id) return;
     setRemoving(true);
     try {
-      const { error } = await supabase.from("leitura_pos").delete().eq("id", pos.id);
+      await supabase.from("leitura_pos").delete().eq("leitura_id", posSessao.id);
+      const { error } = await supabase.from("leituras").delete().eq("id", posSessao.id);
       if (error) throw error;
       toast.success("Pós-leitura excluída");
       setConfirmDel(false);
@@ -73,10 +78,21 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   }, [pos]);
 
   const salvar = async () => {
+    if (livro.status !== "concluido") {
+      return toast.error("Finalize a leitura antes de registrar a pós-leitura");
+    }
     setLoading(true);
     try {
+      let leituraId = posSessao?.id;
+      if (!leituraId) {
+        leituraId = await iniciarLeitura({
+          usuario_leitura_id: livro.id,
+          tipo: "pos_leitura",
+          user_id: user!.id,
+        });
+      }
       const payload = {
-        usuario_livro_id: livro.id,
+        leitura_id: leituraId,
         resumo_geral: resumoGeral || null,
         ideia_principal: ideia || null,
         resenha: resenha || null,
@@ -84,8 +100,8 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
         publica,
       };
       let error;
-      if (pos?.id) {
-        ({ error } = await supabase.from("leitura_pos").update(payload).eq("id", pos.id));
+      if (pos) {
+        ({ error } = await supabase.from("leitura_pos").update(payload).eq("leitura_id", leituraId));
       } else {
         ({ error } = await supabase.from("leitura_pos").insert(payload));
       }
@@ -119,11 +135,11 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-primary" />
             <h3 className="font-semibold">Pós-leitura</h3>
-            {pos?.id && (
+            {pos && (
               <span className="text-[10px] uppercase tracking-wider bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">Editando</span>
             )}
           </div>
-          {pos?.id && (
+          {pos && (
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -150,7 +166,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
           </label>
         </div>
         <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          {loading ? "Salvando..." : pos?.id ? "Salvar alterações" : "Salvar pós-leitura"}
+          {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
         </Button>
       </div>
 

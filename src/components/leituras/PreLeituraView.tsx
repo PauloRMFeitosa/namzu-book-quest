@@ -19,10 +19,10 @@ import { PreLeituraForm } from "./PreLeituraForm";
 interface Props {
   pre: { intencao: string; dominio_previo: string | null; observacao: string | null };
   leituraId: string;
-  usuarioLivroId: string;
+  usuarioLeituraId: string;
 }
 
-export const PreLeituraView = ({ pre, leituraId, usuarioLivroId }: Props) => {
+export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -31,7 +31,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLivroId }: Props) => {
   if (editing) {
     return (
       <PreLeituraForm
-        usuarioLivroId={usuarioLivroId}
+        usuarioLeituraId={usuarioLeituraId}
         leituraId={leituraId}
         initial={pre}
         onCancel={() => setEditing(false)}
@@ -48,7 +48,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLivroId }: Props) => {
       if (error) throw error;
       toast.success("Pré-leitura excluída");
       setConfirmDel(false);
-      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLivroId] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
