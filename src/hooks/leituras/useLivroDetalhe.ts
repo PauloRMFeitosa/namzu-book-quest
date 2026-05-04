@@ -5,11 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 export type LeituraFull = {
   id: string;
   tipo: string;
+  data_inicio: string | null;
+  data_fim: string | null;
+  created_at: string | null;
+  /** agregado via leitura_progresso */
   paginas_lidas: number | null;
   percentual_lido: number | null;
-  pagina_inicio: number | null;
-  pagina_fim: number | null;
-  created_at: string | null;
   leitura_pre: { intencao: string; dominio_previo: string | null; observacao: string | null } | null;
   leitura_conteudo: { id: string; resumo: string | null; conceito_principal: string | null }[];
   leitura_citacoes: { id: string; texto: string; pagina: number | null }[];
@@ -19,59 +20,96 @@ export type LeituraFull = {
 };
 
 export type LivroDetalhe = {
+  /** id da experiência (usuario_leituras.id) */
   id: string;
   status: string;
   data_inicio: string | null;
   data_fim: string | null;
-  obra_id: string;
+  clube_id: string | null;
+  tipo_origem: string;
+  usuario_livro_id: string;
   obras: any;
   edicoes: { id: string; num_paginas: number | null; capa_url: string | null } | null;
   leituras: LeituraFull[];
+  /** sessão pos_leitura + leitura_pos */
+  pos_leitura: LeituraFull | null;
   leitura_pos: any | null;
 };
 
-export function useLivroDetalhe(usuarioLivroId: string | undefined) {
+export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["livro-detalhe", usuarioLivroId],
-    enabled: !!usuarioLivroId && !!user,
+    queryKey: ["livro-detalhe", usuarioLeituraId],
+    enabled: !!usuarioLeituraId && !!user,
     queryFn: async (): Promise<LivroDetalhe | null> => {
       const { data: ul, error } = await supabase
-        .from("usuario_livros")
-        .select("*, obras(*), edicoes(id, num_paginas, capa_url)")
-        .eq("id", usuarioLivroId!)
-        .eq("user_id", user!.id)
+        .from("usuario_leituras")
+        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*), edicoes(id, num_paginas, capa_url))")
+        .eq("id", usuarioLeituraId!)
         .maybeSingle();
       if (error) throw error;
       if (!ul) return null;
+      if ((ul as any).usuario_livros?.user_id !== user!.id) return null;
 
-      const { data: leituras, error: e2 } = await supabase
+      const { data: leiturasRaw, error: e2 } = await supabase
         .from("leituras")
         .select(`
-          id, tipo, paginas_lidas, percentual_lido, pagina_inicio, pagina_fim, created_at,
+          id, tipo, data_inicio, data_fim, created_at,
           leitura_pre(intencao, dominio_previo, observacao),
           leitura_conteudo(id, resumo, conceito_principal),
           leitura_citacoes(id, texto, pagina),
           leitura_aplicacoes(id, descricao, plano_acao),
           leitura_links(id, tipo, url, descricao),
-          leitura_tags(tag_id, tags(id, nome))
+          leitura_tags(tag_id, tags(id, nome)),
+          leitura_progresso(paginas_lidas, percentual_lido)
         `)
-        .eq("usuario_livro_id", usuarioLivroId!)
+        .eq("usuario_leitura_id", usuarioLeituraId!)
         .order("created_at", { ascending: true });
       if (e2) throw e2;
 
-      const { data: pos } = await supabase
-        .from("leitura_pos")
-        .select("*")
-        .eq("usuario_livro_id", usuarioLivroId!)
-        .maybeSingle();
+      const leituras: LeituraFull[] = (leiturasRaw ?? []).map((l: any) => {
+        const progressos = l.leitura_progresso ?? [];
+        const paginas_lidas = progressos.reduce((a: number, p: any) => a + (p.paginas_lidas ?? 0), 0) || null;
+        const last = progressos[progressos.length - 1];
+        return {
+          id: l.id,
+          tipo: l.tipo,
+          data_inicio: l.data_inicio,
+          data_fim: l.data_fim,
+          created_at: l.created_at,
+          paginas_lidas,
+          percentual_lido: last?.percentual_lido ?? null,
+          leitura_pre: Array.isArray(l.leitura_pre) ? l.leitura_pre[0] ?? null : l.leitura_pre,
+          leitura_conteudo: l.leitura_conteudo ?? [],
+          leitura_citacoes: l.leitura_citacoes ?? [],
+          leitura_aplicacoes: l.leitura_aplicacoes ?? [],
+          leitura_links: l.leitura_links ?? [],
+          leitura_tags: l.leitura_tags ?? [],
+        };
+      });
 
-      const normalized = (leituras ?? []).map((l: any) => ({
-        ...l,
-        leitura_pre: Array.isArray(l.leitura_pre) ? l.leitura_pre[0] ?? null : l.leitura_pre,
-      })) as LeituraFull[];
+      const pos_leitura = leituras.find((l) => l.tipo === "pos_leitura") ?? null;
+      let leitura_pos: any = null;
+      if (pos_leitura) {
+        const { data } = await supabase.from("leitura_pos").select("*").eq("leitura_id", pos_leitura.id).maybeSingle();
+        leitura_pos = data;
+      }
 
-      return { ...(ul as any), leituras: normalized, leitura_pos: pos };
+      const ul_any = ul as any;
+      return {
+        id: ul_any.id,
+        status: ul_any.status,
+        data_inicio: ul_any.data_inicio,
+        data_fim: ul_any.data_fim,
+        clube_id: ul_any.clube_id,
+        tipo_origem: ul_any.tipo_origem,
+        usuario_livro_id: ul_any.usuario_livro_id,
+        obras: ul_any.usuario_livros?.obras,
+        edicoes: ul_any.usuario_livros?.edicoes,
+        leituras,
+        pos_leitura,
+        leitura_pos,
+      };
     },
   });
 }
