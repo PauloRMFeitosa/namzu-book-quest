@@ -7,9 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles, X } from "lucide-react";
+import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 
 interface Props {
-  usuarioLivroId: string;
+  usuarioLeituraId: string;
   /** Quando passado, entra em modo edição da leitura_pre vinculada */
   leituraId?: string;
   initial?: { intencao: string; dominio_previo: string | null; observacao: string | null };
@@ -17,7 +18,7 @@ interface Props {
   onSaved?: () => void;
 }
 
-export const PreLeituraForm = ({ usuarioLivroId, leituraId, initial, onCancel, onSaved }: Props) => {
+export const PreLeituraForm = ({ usuarioLeituraId, leituraId, initial, onCancel, onSaved }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const isEdit = !!leituraId;
@@ -43,14 +44,13 @@ export const PreLeituraForm = ({ usuarioLivroId, leituraId, initial, onCancel, o
         if (error) throw error;
         toast.success("Pré-leitura atualizada!");
       } else {
-        const { data: leitura, error } = await supabase
-          .from("leituras")
-          .insert({ user_id: user!.id, usuario_livro_id: usuarioLivroId, tipo: "pre_leitura" })
-          .select("id")
-          .single();
-        if (error) throw error;
+        const newLeituraId = await iniciarLeitura({
+          usuario_leitura_id: usuarioLeituraId,
+          tipo: "pre_leitura",
+          user_id: user!.id,
+        });
         const { error: e2 } = await supabase.from("leitura_pre").insert({
-          leitura_id: leitura.id,
+          leitura_id: newLeituraId,
           intencao: intencao.trim(),
           dominio_previo: dominio.trim() || null,
           observacao: obs.trim() || null,
@@ -58,7 +58,7 @@ export const PreLeituraForm = ({ usuarioLivroId, leituraId, initial, onCancel, o
         if (e2) throw e2;
         toast.success("Pré-leitura salva!");
       }
-      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLivroId] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
       onSaved?.();
     } catch (err: any) {
       toast.error(err.message);
