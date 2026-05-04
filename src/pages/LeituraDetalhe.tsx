@@ -70,9 +70,9 @@ const LeituraDetalhe = () => {
 
       {/* Bloco A: Pré-leitura */}
       {preLeitura?.leitura_pre ? (
-        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLivroId={livro.id} />
+        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLeituraId={livro.id} />
       ) : (
-        <PreLeituraForm usuarioLivroId={livro.id} />
+        <PreLeituraForm usuarioLeituraId={livro.id} />
       )}
 
       {/* Bloco B: Leituras */}
@@ -80,7 +80,7 @@ const LeituraDetalhe = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Sessões de leitura</h3>
           <RegistrarLeituraDialog
-            usuarioLivroId={livro.id}
+            usuarioLeituraId={livro.id}
             totalPaginas={livro.edicoes?.num_paginas ?? null}
             disabled={!preLeitura}
           />
@@ -88,7 +88,7 @@ const LeituraDetalhe = () => {
         {!preLeitura && (
           <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
         )}
-        <LeiturasList leituras={livro.leituras} usuarioLivroId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
+        <LeiturasList leituras={livro.leituras} usuarioLeituraId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
       </div>
 
       {/* Bloco C: Pós-leitura */}

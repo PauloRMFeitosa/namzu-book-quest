@@ -20,11 +20,11 @@ import { RegistrarLeituraDialog } from "./RegistrarLeituraDialog";
 
 interface Props {
   leituras: LeituraFull[];
-  usuarioLivroId: string;
+  usuarioLeituraId: string;
   totalPaginas: number | null;
 }
 
-export const LeiturasList = ({ leituras, usuarioLivroId, totalPaginas }: Props) => {
+export const LeiturasList = ({ leituras, usuarioLeituraId, totalPaginas }: Props) => {
   const qc = useQueryClient();
   const items = leituras.filter((l) => l.tipo === "leitura");
   const [editing, setEditing] = useState<LeituraFull | null>(null);
@@ -47,7 +47,7 @@ export const LeiturasList = ({ leituras, usuarioLivroId, totalPaginas }: Props) 
       if (error) throw error;
       toast.success("Sessão excluída");
       setDeleting(null);
-      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLivroId] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -150,7 +150,7 @@ export const LeiturasList = ({ leituras, usuarioLivroId, totalPaginas }: Props) 
       {editing && (
         <RegistrarLeituraDialog
           key={editing.id}
-          usuarioLivroId={usuarioLivroId}
+          usuarioLeituraId={usuarioLeituraId}
           totalPaginas={totalPaginas}
           leitura={editing}
           open={!!editing}
