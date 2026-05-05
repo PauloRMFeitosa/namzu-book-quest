@@ -23,17 +23,21 @@ interface BookResult {
   isbn13: string | null;
   fonte: "google" | "openlibrary";
   descricao?: string | null;
-}
-
-function isIsbn(s: string) {
-  const digits = s.replace(/[-\s]/g, "");
-  return /^\d{13}$/.test(digits) || /^\d{10}$/.test(digits);
+  editora?: string | null;
+  num_paginas?: number | null;
+  idioma?: string | null;
 }
 
 function parseYear(v: any): number | null {
   if (!v) return null;
   const m = String(v).match(/\d{4}/);
   return m ? parseInt(m[0]) : null;
+}
+
+function normalizeIsbn(s?: string | null): string | null {
+  if (!s) return null;
+  const d = String(s).replace(/[-\s]/g, "");
+  return /^\d{10}$|^\d{13}$/.test(d) ? d : null;
 }
 
 async function safeJson(url: string): Promise<any | null> {
@@ -46,9 +50,19 @@ async function safeJson(url: string): Promise<any | null> {
   }
 }
 
-async function searchGoogle(query: string): Promise<BookResult[]> {
-  const isbn = isIsbn(query) ? query.replace(/[-\s]/g, "") : null;
-  const q = isbn ? `isbn:${isbn}` : query;
+function buildGoogleQuery({ titulo, autor, isbn, query }: any): string | null {
+  if (isbn) return `isbn:${isbn}`;
+  const parts: string[] = [];
+  if (titulo) parts.push(`intitle:${titulo}`);
+  if (autor) parts.push(`inauthor:${autor}`);
+  if (parts.length) return parts.join("+");
+  if (query) return query;
+  return null;
+}
+
+async function searchGoogle(params: any): Promise<BookResult[]> {
+  const q = buildGoogleQuery(params);
+  if (!q) return [];
   const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`;
   const data = await safeJson(url);
   if (!data?.items?.length) return [];
@@ -70,13 +84,15 @@ async function searchGoogle(query: string): Promise<BookResult[]> {
         isbn13,
         fonte: "google",
         descricao: info.description ?? null,
+        editora: info.publisher ?? null,
+        num_paginas: info.pageCount ?? null,
+        idioma: info.language ?? null,
       };
     })
     .filter(Boolean) as BookResult[];
 }
 
-async function searchOpenLibrary(query: string): Promise<BookResult[]> {
-  const isbn = isIsbn(query) ? query.replace(/[-\s]/g, "") : null;
+async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<BookResult[]> {
   if (isbn) {
     const data = await safeJson(`https://openlibrary.org/isbn/${isbn}.json`);
     if (!data?.title) return [];
@@ -88,11 +104,17 @@ async function searchOpenLibrary(query: string): Promise<BookResult[]> {
         capa_url: `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`,
         isbn13: isbn,
         fonte: "openlibrary",
+        num_paginas: data.number_of_pages ?? null,
       },
     ];
   }
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`;
-  const data = await safeJson(url);
+  const params = new URLSearchParams();
+  if (titulo) params.set("title", titulo);
+  if (autor) params.set("author", autor);
+  if (!titulo && !autor && query) params.set("q", query);
+  if (![...params.keys()].length) return [];
+  params.set("limit", "10");
+  const data = await safeJson(`https://openlibrary.org/search.json?${params.toString()}`);
   if (!data?.docs?.length) return [];
   return data.docs
     .map((doc: any): BookResult | null => {
@@ -109,6 +131,7 @@ async function searchOpenLibrary(query: string): Promise<BookResult[]> {
           : null,
         isbn13,
         fonte: "openlibrary",
+        editora: doc.publisher?.[0] ?? null,
       };
     })
     .filter(Boolean) as BookResult[];
@@ -135,17 +158,21 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const titulo = String(body?.titulo ?? "").trim();
+    const autor = String(body?.autor ?? "").trim();
+    const isbn = normalizeIsbn(body?.isbn ?? body?.isbn13);
     const query = String(body?.query ?? "").trim();
-    if (query.length < 3) {
-      return json({ results: [] });
-    }
+
+    const hasAny = titulo.length >= 2 || autor.length >= 2 || isbn || query.length >= 3;
+    if (!hasAny) return json({ results: [] });
+
+    const params = { titulo, autor, isbn, query };
 
     const [google, ol] = await Promise.all([
-      searchGoogle(query).catch(() => []),
-      searchOpenLibrary(query).catch(() => []),
+      searchGoogle(params).catch(() => []),
+      searchOpenLibrary(params).catch(() => []),
     ]);
 
-    // Prioriza Google (geralmente capas/metadata melhores) e completa com Open Library
     const results = dedupe([...google, ...ol]).slice(0, 20);
     return json({ results });
   } catch (err: any) {
