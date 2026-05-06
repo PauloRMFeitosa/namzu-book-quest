@@ -84,6 +84,141 @@ async function vincularAutor(obraId: string, autorId: string, ordem: number) {
 }
 
 // =========================
+// REGISTRAR A PARTIR DE RESULTADO EXTERNO (Obra → Edição)
+// =========================
+async function upsertObraComAutores(input: {
+  titulo: string;
+  autores: string[];
+  ano: number | null;
+  idioma: string | null;
+  sinopse: string | null;
+  capa_url: string | null;
+  sourceId?: string | null;
+}) {
+  const slug = makeSlug(input.titulo, input.sourceId ?? undefined);
+
+  // tenta achar obra existente por slug
+  const { data: existente } = await supabase
+    .from("obras")
+    .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  let obra = existente;
+  if (!obra) {
+    const { data, error } = await supabase
+      .from("obras")
+      .insert({
+        titulo_original: input.titulo,
+        titulo_ordenacao: input.titulo.toLowerCase(),
+        idioma_original: input.idioma || "pt-BR",
+        ano_primeira_publicacao: input.ano,
+        sinopse_padrao: input.sinopse,
+        capa_padrao_url: input.capa_url,
+        slug,
+      })
+      .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
+      .single();
+    if (error || !data) throw new Error(error?.message ?? "Falha ao criar obra");
+    obra = data;
+  }
+
+  let ordem = 1;
+  for (const nome of input.autores ?? []) {
+    if (!nome) continue;
+    const a = await upsertAutor(nome);
+    if (a) await vincularAutor(obra.id, a.id, ordem++);
+  }
+
+  return obra;
+}
+
+async function upsertEdicaoParaObra(
+  obraId: string,
+  input: {
+    titulo: string;
+    isbn13?: string | null;
+    editora?: string | null;
+    num_paginas?: number | null;
+    capa_url?: string | null;
+    idioma?: string | null;
+    formato?: string;
+  },
+) {
+  if (input.isbn13) {
+    const { data: existente } = await supabase
+      .from("edicoes")
+      .select("id")
+      .eq("isbn_13", input.isbn13)
+      .maybeSingle();
+    if (existente) return { id: existente.id, criada: false };
+  }
+
+  // só cria edição se houver pelo menos ISBN ou editora
+  if (!input.isbn13 && !input.editora) return null;
+
+  const { data, error } = await supabase
+    .from("edicoes")
+    .insert({
+      obra_id: obraId,
+      titulo_edicao: input.titulo,
+      editora: input.editora || "Desconhecida",
+      formato: input.formato || "ebook",
+      idioma: input.idioma || "pt-BR",
+      isbn_13: input.isbn13 || null,
+      num_paginas: input.num_paginas ?? null,
+      capa_url: input.capa_url ?? null,
+      fonte_dados: "api",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id, criada: true };
+}
+
+async function handleRegistrarResultado(payload: any) {
+  const titulo = String(payload.titulo ?? "").trim();
+  if (!titulo) return json({ error: "Título obrigatório" }, 400);
+
+  const obra = await upsertObraComAutores({
+    titulo,
+    autores: Array.isArray(payload.autores) ? payload.autores : [],
+    ano: payload.ano ?? null,
+    idioma: payload.idioma ?? null,
+    sinopse: payload.descricao ?? payload.sinopse ?? null,
+    capa_url: payload.capa_url ?? null,
+    sourceId: payload.sourceId ?? payload.isbn13 ?? null,
+  });
+
+  let edicao = null;
+  try {
+    edicao = await upsertEdicaoParaObra(obra.id, {
+      titulo,
+      isbn13: payload.isbn13 ?? null,
+      editora: payload.editora ?? null,
+      num_paginas: payload.num_paginas ?? null,
+      capa_url: payload.capa_url ?? null,
+      idioma: payload.idioma ?? null,
+      formato: payload.formato,
+    });
+  } catch (e) {
+    console.warn("edicao step failed", e);
+  }
+
+  return json({
+    success: true,
+    obra: {
+      id: obra.id,
+      titulo_original: obra.titulo_original,
+      capa_padrao_url: obra.capa_padrao_url,
+      ano_primeira_publicacao: obra.ano_primeira_publicacao,
+      autor: (payload.autores ?? [])[0] ?? null,
+    },
+    edicao,
+  });
+}
+
+// =========================
 // MODOS MANUAIS
 // =========================
 async function handleManualAutor(payload: any) {
@@ -266,6 +401,7 @@ serve(async (req) => {
     if (mode === "manual_autor") return await handleManualAutor(payload);
     if (mode === "manual_obra") return await handleManualObra(payload);
     if (mode === "manual_edicao") return await handleManualEdicao(payload);
+    if (mode === "registrar_resultado") return await handleRegistrarResultado(payload);
 
     // ----- Modo padrão: busca em APIs externas -----
     const { isbn13, titulo, autor } = payload;

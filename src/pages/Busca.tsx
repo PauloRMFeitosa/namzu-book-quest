@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,10 @@ interface ExternalResult {
   capa_url: string | null;
   isbn13: string | null;
   fonte: string;
+  editora?: string | null;
+  num_paginas?: number | null;
+  idioma?: string | null;
+  descricao?: string | null;
 }
 
 const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
@@ -88,7 +92,14 @@ const Busca = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [q, setQ] = useState("");
+
+  // Campos de busca separados
+  const [fTitulo, setFTitulo] = useState("");
+  const [fAutor, setFAutor] = useState("");
+  const [fIsbn, setFIsbn] = useState("");
+  // Termo "submetido" — só muda ao clicar em Buscar
+  const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
+
   const [local, setLocal] = useState<LocalResult[]>([]);
   const [externo, setExterno] = useState<ExternalResult[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(false);
@@ -96,7 +107,6 @@ const Busca = () => {
   const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
-  const lastQuery = useRef<string>("");
 
   // Controles do acervo
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
@@ -104,9 +114,7 @@ const Busca = () => {
   const [filtroEditora, setFiltroEditora] = useState<string>("todos");
   const [visiveis, setVisiveis] = useState(PAGE_SIZE);
 
-  const term = q.trim();
-  const tooShort = term.length > 0 && term.length < 3;
-  const mostrandoAcervo = term.length === 0;
+  const mostrandoAcervo = !submitted;
 
   // Lista de autores para o filtro
   const { data: autoresOpts = [] } = useQuery({
@@ -227,110 +235,126 @@ const Busca = () => {
     setVisiveis(PAGE_SIZE);
   }, [ordenacao, filtroAutor, filtroEditora, mostrandoAcervo]);
 
-  // Busca textual (mantida)
+  // Busca disparada por submit
   useEffect(() => {
-    if (term.length < 3) {
+    if (!submitted) {
       setLocal([]);
       setExterno([]);
       setLoadingLocal(false);
       setLoadingExterno(false);
       setErroExterno(false);
-      lastQuery.current = "";
       return;
     }
 
-    const t = setTimeout(async () => {
-      if (term === lastQuery.current) return;
-      lastQuery.current = term;
+    const { titulo, autor, isbn } = submitted;
+    const cacheKey = `t:${titulo}|a:${autor}|i:${isbn}`.toLowerCase();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      setLocal(cached.local);
+      setExterno(cached.externo);
+      setLoadingLocal(false);
+      setLoadingExterno(false);
+      setErroExterno(false);
+      return;
+    }
 
-      const cached = cache.get(term.toLowerCase());
-      if (cached) {
-        setLocal(cached.local);
-        setExterno(cached.externo);
-        setLoadingLocal(false);
-        setLoadingExterno(false);
-        setErroExterno(false);
-        return;
-      }
-
+    let cancelado = false;
+    (async () => {
       setLoadingLocal(true);
       setExterno([]);
       setErroExterno(false);
       setLoadingExterno(false);
 
-      const termLow = term.toLowerCase();
-      const termNorm = normalize(term);
-
-      const [{ data: porTitulo }, { data: porAutor }, { data: porIsbn }] = await Promise.all([
-        supabase
-          .from("obras")
-          .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
-          .ilike("titulo_ordenacao", `%${termLow}%`)
-          .limit(20),
-        supabase
-          .from("obra_autores")
-          .select(
-            "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
-          )
-          .ilike("autores.nome_ordenacao", `%${termNorm}%`)
-          .limit(20),
-        supabase
-          .from("edicoes")
-          .select(
-            "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
-          )
-          .ilike("isbn_13", `%${term.replace(/[-\s]/g, "")}%`)
-          .limit(10),
-      ]);
-
       const map = new Map<string, LocalResult>();
-      (porTitulo ?? []).forEach((o: any) =>
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-        }),
-      );
-      (porAutor ?? []).forEach((row: any) => {
-        const o = row.obras;
-        if (!o || map.has(o.id)) return;
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          autor: row.autores?.nome_completo,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-        });
-      });
-      (porIsbn ?? []).forEach((row: any) => {
-        const o = row.obras;
-        if (!o || map.has(o.id)) return;
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-          isbn13: row.isbn_13,
-        });
-      });
+      const promises: PromiseLike<any>[] = [];
+
+      if (titulo) {
+        promises.push(
+          supabase
+            .from("obras")
+            .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
+            .ilike("titulo_ordenacao", `%${titulo.toLowerCase()}%`)
+            .limit(20)
+            .then(({ data }) => {
+              (data ?? []).forEach((o: any) =>
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                }),
+              );
+            }),
+        );
+      }
+      if (autor) {
+        promises.push(
+          supabase
+            .from("obra_autores")
+            .select(
+              "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+            )
+            .ilike("autores.nome_ordenacao", `%${normalize(autor)}%`)
+            .limit(20)
+            .then(({ data }) => {
+              (data ?? []).forEach((row: any) => {
+                const o = row.obras;
+                if (!o || map.has(o.id)) return;
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  autor: row.autores?.nome_completo,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                });
+              });
+            }),
+        );
+      }
+      if (isbn) {
+        promises.push(
+          supabase
+            .from("edicoes")
+            .select(
+              "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+            )
+            .ilike("isbn_13", `%${isbn}%`)
+            .limit(10)
+            .then(({ data }) => {
+              (data ?? []).forEach((row: any) => {
+                const o = row.obras;
+                if (!o || map.has(o.id)) return;
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                  isbn13: row.isbn_13,
+                });
+              });
+            }),
+        );
+      }
+
+      await Promise.all(promises);
+      if (cancelado) return;
 
       const locais = Array.from(map.values());
       setLocal(locais);
       setLoadingLocal(false);
 
       if (locais.length > 0) {
-        cache.set(termLow, { local: locais, externo: [] });
+        cache.set(cacheKey, { local: locais, externo: [] });
         return;
       }
 
       setLoadingExterno(true);
       try {
         const { data, error } = await supabase.functions.invoke("search-books", {
-          body: { query: term },
+          body: { titulo, autor, isbn },
         });
         if (error) throw error;
         const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
@@ -346,19 +370,52 @@ const Busca = () => {
           capa_url: b.capa_url ?? null,
           isbn13: b.isbn13 ?? null,
           fonte: b.fonte ?? "externo",
+          editora: b.editora ?? null,
+          num_paginas: b.num_paginas ?? null,
+          idioma: b.idioma ?? null,
+          descricao: b.descricao ?? null,
         }));
+        if (cancelado) return;
         setExterno(results);
-        cache.set(termLow, { local: [], externo: results });
+        cache.set(cacheKey, { local: [], externo: results });
       } catch (e: any) {
         console.error("search-books failed", e);
-        setErroExterno(true);
-        toast.error("Erro ao buscar em fontes externas");
+        if (!cancelado) {
+          setErroExterno(true);
+          toast.error("Erro ao buscar em fontes externas");
+        }
       } finally {
-        setLoadingExterno(false);
+        if (!cancelado) setLoadingExterno(false);
       }
-    }, 500);
-    return () => clearTimeout(t);
-  }, [term]);
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [submitted]);
+
+  const handleBuscar = () => {
+    const t = fTitulo.trim();
+    const a = fAutor.trim();
+    const i = fIsbn.replace(/[-\s]/g, "");
+    if (!t && !a && !i) {
+      toast.info("Preencha ao menos um campo");
+      return;
+    }
+    if (i && !/^\d{10}$|^\d{13}$/.test(i)) {
+      toast.error("ISBN deve ter 10 ou 13 dígitos");
+      return;
+    }
+    setSubmitted({ titulo: t, autor: a, isbn: i });
+  };
+
+  const handleLimpar = () => {
+    setFTitulo("");
+    setFAutor("");
+    setFIsbn("");
+    setSubmitted(null);
+  };
+
 
   const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
@@ -398,9 +455,17 @@ const Busca = () => {
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
+          mode: "registrar_resultado",
           titulo: b.titulo,
-          autor: b.autores?.[0] ?? null,
+          autores: b.autores ?? [],
+          ano: b.ano,
           isbn13: b.isbn13 ?? null,
+          capa_url: b.capa_url ?? null,
+          editora: b.editora ?? null,
+          num_paginas: b.num_paginas ?? null,
+          idioma: b.idioma ?? null,
+          descricao: b.descricao ?? null,
+          sourceId: b.isbn13 ?? b.key,
         },
       });
       if (error) throw error;
@@ -530,7 +595,7 @@ const Busca = () => {
 
 
   const semResultadosBusca =
-    term.length >= 3 &&
+    !!submitted &&
     !loadingLocal &&
     !loadingExterno &&
     !erroExterno &&
@@ -552,14 +617,46 @@ const Busca = () => {
           <Plus className="w-5 h-5" />
         </Button>
       </div>
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Título, autor ou ISBN"
-          className="h-[52px] pl-12 rounded-2xl text-base"
-        />
+      <div className="flex flex-col gap-2 card-soft p-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Input
+            value={fTitulo}
+            onChange={(e) => setFTitulo(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="Título"
+            className="h-11 rounded-xl"
+          />
+          <Input
+            value={fAutor}
+            onChange={(e) => setFAutor(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="Autor"
+            className="h-11 rounded-xl"
+          />
+          <Input
+            value={fIsbn}
+            onChange={(e) => setFIsbn(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="ISBN (10 ou 13 dígitos)"
+            inputMode="numeric"
+            className="h-11 rounded-xl"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleBuscar}
+            disabled={loadingLocal || loadingExterno}
+            className="flex-1 rounded-xl bg-primary hover:bg-primary-hover"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Buscar
+          </Button>
+          {(submitted || fTitulo || fAutor || fIsbn) && (
+            <Button variant="outline" onClick={handleLimpar} className="rounded-xl">
+              <X className="w-4 h-4 mr-1" /> Limpar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Controles de ordenação e filtros */}
@@ -621,9 +718,6 @@ const Busca = () => {
         )}
       </div>
 
-      {tooShort && (
-        <p className="text-sm text-muted-foreground">Digite ao menos 3 caracteres…</p>
-      )}
 
       {/* Acervo (sem termo) */}
       {mostrandoAcervo && (
@@ -670,7 +764,7 @@ const Busca = () => {
       )}
 
       {/* Busca textual */}
-      {term.length >= 3 && loadingLocal && (
+      {!!submitted && loadingLocal && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Buscando no acervo…
         </p>
@@ -698,7 +792,7 @@ const Busca = () => {
         </section>
       )}
 
-      {term.length >= 3 && !loadingLocal && local.length === 0 && loadingExterno && (
+      {!!submitted && !loadingLocal && local.length === 0 && loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
         </p>
