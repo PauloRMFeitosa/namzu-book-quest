@@ -587,7 +587,7 @@ const Busca = () => {
 
 
   const semResultadosBusca =
-    term.length >= 3 &&
+    !!submitted &&
     !loadingLocal &&
     !loadingExterno &&
     !erroExterno &&
