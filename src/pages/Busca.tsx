@@ -65,6 +65,10 @@ interface ExternalResult {
   capa_url: string | null;
   isbn13: string | null;
   fonte: string;
+  editora?: string | null;
+  num_paginas?: number | null;
+  idioma?: string | null;
+  descricao?: string | null;
 }
 
 const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
