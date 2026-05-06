@@ -401,6 +401,7 @@ serve(async (req) => {
     if (mode === "manual_autor") return await handleManualAutor(payload);
     if (mode === "manual_obra") return await handleManualObra(payload);
     if (mode === "manual_edicao") return await handleManualEdicao(payload);
+    if (mode === "registrar_resultado") return await handleRegistrarResultado(payload);
 
     // ----- Modo padrão: busca em APIs externas -----
     const { isbn13, titulo, autor } = payload;
