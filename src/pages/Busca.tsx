@@ -756,7 +756,7 @@ const Busca = () => {
       )}
 
       {/* Busca textual */}
-      {term.length >= 3 && loadingLocal && (
+      {!!submitted && loadingLocal && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Buscando no acervo…
         </p>
