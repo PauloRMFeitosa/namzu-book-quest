@@ -710,9 +710,6 @@ const Busca = () => {
         )}
       </div>
 
-      {tooShort && (
-        <p className="text-sm text-muted-foreground">Digite ao menos 3 caracteres…</p>
-      )}
 
       {/* Acervo (sem termo) */}
       {mostrandoAcervo && (
