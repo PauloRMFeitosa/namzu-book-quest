@@ -73,24 +73,36 @@ const Home = () => {
         {flags.show_gamificacao_home && <StatsChips />}
       </header>
 
-      {lendo ? (
-        <section className="card-soft p-5 hover-lift cursor-pointer" onClick={() => navigate(`/leituras/${lendo.id}`)}>
-          <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Leitura atual</p>
-          <div className="flex gap-4">
-            {lendo.obras?.capa_padrao_url ? (
-              <img src={lendo.obras.capa_padrao_url} alt="" className="w-20 h-28 rounded-lg object-cover shadow-soft" />
-            ) : (
-              <div className="w-20 h-28 rounded-lg bg-secondary flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-primary" />
-              </div>
-            )}
-            <div className="flex-1 flex flex-col">
-              <h2 className="font-semibold text-lg leading-tight line-clamp-2">{lendo.obras?.titulo_original}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{lendo.obras?.ano_primeira_publicacao}</p>
-              <Button className="mt-auto h-10 rounded-xl bg-primary hover:bg-primary-hover">
-                Continuar lendo <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+      {lendoList.length > 0 ? (
+        <section>
+          <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
+            Lendo agora {lendoList.length > 1 && `(${lendoList.length})`}
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+            {lendoList.map((l: any) => (
+              <button
+                key={l.id}
+                onClick={() => navigate(`/leituras/${l.id}`)}
+                className="card-soft p-4 hover-lift text-left flex-shrink-0 w-[85%] snap-start"
+              >
+                <div className="flex gap-4">
+                  {l.obras?.capa_padrao_url ? (
+                    <img src={l.obras.capa_padrao_url} alt="" className="w-20 h-28 rounded-lg object-cover shadow-soft" />
+                  ) : (
+                    <div className="w-20 h-28 rounded-lg bg-secondary flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-primary" />
+                    </div>
+                  )}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <h2 className="font-semibold text-lg leading-tight line-clamp-2">{l.obras?.titulo_original}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{l.obras?.ano_primeira_publicacao}</p>
+                    <span className="mt-auto inline-flex items-center gap-1 text-sm text-primary font-medium">
+                      Continuar lendo <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         </section>
       ) : (
@@ -106,7 +118,7 @@ const Home = () => {
 
       <section>
         <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Progresso do dia</p>
-        <Progress value={lendo ? 35 : 0} className="h-3" />
+        <Progress value={lendoList.length > 0 ? 35 : 0} className="h-3" />
       </section>
 
       <section>
