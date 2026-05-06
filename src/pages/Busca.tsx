@@ -266,7 +266,7 @@ const Busca = () => {
       setLoadingExterno(false);
 
       const map = new Map<string, LocalResult>();
-      const promises: Promise<any>[] = [];
+      const promises: PromiseLike<any>[] = [];
 
       if (titulo) {
         promises.push(
