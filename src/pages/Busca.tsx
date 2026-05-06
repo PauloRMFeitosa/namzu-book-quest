@@ -88,7 +88,14 @@ const Busca = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [q, setQ] = useState("");
+
+  // Campos de busca separados
+  const [fTitulo, setFTitulo] = useState("");
+  const [fAutor, setFAutor] = useState("");
+  const [fIsbn, setFIsbn] = useState("");
+  // Termo "submetido" — só muda ao clicar em Buscar
+  const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
+
   const [local, setLocal] = useState<LocalResult[]>([]);
   const [externo, setExterno] = useState<ExternalResult[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(false);
@@ -96,7 +103,6 @@ const Busca = () => {
   const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
-  const lastQuery = useRef<string>("");
 
   // Controles do acervo
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
@@ -104,9 +110,7 @@ const Busca = () => {
   const [filtroEditora, setFiltroEditora] = useState<string>("todos");
   const [visiveis, setVisiveis] = useState(PAGE_SIZE);
 
-  const term = q.trim();
-  const tooShort = term.length > 0 && term.length < 3;
-  const mostrandoAcervo = term.length === 0;
+  const mostrandoAcervo = !submitted;
 
   // Lista de autores para o filtro
   const { data: autoresOpts = [] } = useQuery({
