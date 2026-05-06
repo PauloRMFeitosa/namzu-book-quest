@@ -235,110 +235,126 @@ const Busca = () => {
     setVisiveis(PAGE_SIZE);
   }, [ordenacao, filtroAutor, filtroEditora, mostrandoAcervo]);
 
-  // Busca textual (mantida)
+  // Busca disparada por submit
   useEffect(() => {
-    if (term.length < 3) {
+    if (!submitted) {
       setLocal([]);
       setExterno([]);
       setLoadingLocal(false);
       setLoadingExterno(false);
       setErroExterno(false);
-      lastQuery.current = "";
       return;
     }
 
-    const t = setTimeout(async () => {
-      if (term === lastQuery.current) return;
-      lastQuery.current = term;
+    const { titulo, autor, isbn } = submitted;
+    const cacheKey = `t:${titulo}|a:${autor}|i:${isbn}`.toLowerCase();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      setLocal(cached.local);
+      setExterno(cached.externo);
+      setLoadingLocal(false);
+      setLoadingExterno(false);
+      setErroExterno(false);
+      return;
+    }
 
-      const cached = cache.get(term.toLowerCase());
-      if (cached) {
-        setLocal(cached.local);
-        setExterno(cached.externo);
-        setLoadingLocal(false);
-        setLoadingExterno(false);
-        setErroExterno(false);
-        return;
-      }
-
+    let cancelado = false;
+    (async () => {
       setLoadingLocal(true);
       setExterno([]);
       setErroExterno(false);
       setLoadingExterno(false);
 
-      const termLow = term.toLowerCase();
-      const termNorm = normalize(term);
-
-      const [{ data: porTitulo }, { data: porAutor }, { data: porIsbn }] = await Promise.all([
-        supabase
-          .from("obras")
-          .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
-          .ilike("titulo_ordenacao", `%${termLow}%`)
-          .limit(20),
-        supabase
-          .from("obra_autores")
-          .select(
-            "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
-          )
-          .ilike("autores.nome_ordenacao", `%${termNorm}%`)
-          .limit(20),
-        supabase
-          .from("edicoes")
-          .select(
-            "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
-          )
-          .ilike("isbn_13", `%${term.replace(/[-\s]/g, "")}%`)
-          .limit(10),
-      ]);
-
       const map = new Map<string, LocalResult>();
-      (porTitulo ?? []).forEach((o: any) =>
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-        }),
-      );
-      (porAutor ?? []).forEach((row: any) => {
-        const o = row.obras;
-        if (!o || map.has(o.id)) return;
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          autor: row.autores?.nome_completo,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-        });
-      });
-      (porIsbn ?? []).forEach((row: any) => {
-        const o = row.obras;
-        if (!o || map.has(o.id)) return;
-        map.set(o.id, {
-          origem: "local",
-          obra_id: o.id,
-          titulo: o.titulo_original,
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
-          isbn13: row.isbn_13,
-        });
-      });
+      const promises: Promise<any>[] = [];
+
+      if (titulo) {
+        promises.push(
+          supabase
+            .from("obras")
+            .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
+            .ilike("titulo_ordenacao", `%${titulo.toLowerCase()}%`)
+            .limit(20)
+            .then(({ data }) => {
+              (data ?? []).forEach((o: any) =>
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                }),
+              );
+            }),
+        );
+      }
+      if (autor) {
+        promises.push(
+          supabase
+            .from("obra_autores")
+            .select(
+              "obra_id, autores!inner(nome_completo, nome_ordenacao), obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+            )
+            .ilike("autores.nome_ordenacao", `%${normalize(autor)}%`)
+            .limit(20)
+            .then(({ data }) => {
+              (data ?? []).forEach((row: any) => {
+                const o = row.obras;
+                if (!o || map.has(o.id)) return;
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  autor: row.autores?.nome_completo,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                });
+              });
+            }),
+        );
+      }
+      if (isbn) {
+        promises.push(
+          supabase
+            .from("edicoes")
+            .select(
+              "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+            )
+            .ilike("isbn_13", `%${isbn}%`)
+            .limit(10)
+            .then(({ data }) => {
+              (data ?? []).forEach((row: any) => {
+                const o = row.obras;
+                if (!o || map.has(o.id)) return;
+                map.set(o.id, {
+                  origem: "local",
+                  obra_id: o.id,
+                  titulo: o.titulo_original,
+                  ano: o.ano_primeira_publicacao,
+                  capa_url: o.capa_padrao_url,
+                  isbn13: row.isbn_13,
+                });
+              });
+            }),
+        );
+      }
+
+      await Promise.all(promises);
+      if (cancelado) return;
 
       const locais = Array.from(map.values());
       setLocal(locais);
       setLoadingLocal(false);
 
       if (locais.length > 0) {
-        cache.set(termLow, { local: locais, externo: [] });
+        cache.set(cacheKey, { local: locais, externo: [] });
         return;
       }
 
       setLoadingExterno(true);
       try {
         const { data, error } = await supabase.functions.invoke("search-books", {
-          body: { query: term },
+          body: { titulo, autor, isbn },
         });
         if (error) throw error;
         const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
@@ -354,19 +370,52 @@ const Busca = () => {
           capa_url: b.capa_url ?? null,
           isbn13: b.isbn13 ?? null,
           fonte: b.fonte ?? "externo",
+          editora: b.editora ?? null,
+          num_paginas: b.num_paginas ?? null,
+          idioma: b.idioma ?? null,
+          descricao: b.descricao ?? null,
         }));
+        if (cancelado) return;
         setExterno(results);
-        cache.set(termLow, { local: [], externo: results });
+        cache.set(cacheKey, { local: [], externo: results });
       } catch (e: any) {
         console.error("search-books failed", e);
-        setErroExterno(true);
-        toast.error("Erro ao buscar em fontes externas");
+        if (!cancelado) {
+          setErroExterno(true);
+          toast.error("Erro ao buscar em fontes externas");
+        }
       } finally {
-        setLoadingExterno(false);
+        if (!cancelado) setLoadingExterno(false);
       }
-    }, 500);
-    return () => clearTimeout(t);
-  }, [term]);
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [submitted]);
+
+  const handleBuscar = () => {
+    const t = fTitulo.trim();
+    const a = fAutor.trim();
+    const i = fIsbn.replace(/[-\s]/g, "");
+    if (!t && !a && !i) {
+      toast.info("Preencha ao menos um campo");
+      return;
+    }
+    if (i && !/^\d{10}$|^\d{13}$/.test(i)) {
+      toast.error("ISBN deve ter 10 ou 13 dígitos");
+      return;
+    }
+    setSubmitted({ titulo: t, autor: a, isbn: i });
+  };
+
+  const handleLimpar = () => {
+    setFTitulo("");
+    setFAutor("");
+    setFIsbn("");
+    setSubmitted(null);
+  };
+
 
   const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
