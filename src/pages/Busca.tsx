@@ -455,9 +455,17 @@ const Busca = () => {
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
+          mode: "registrar_resultado",
           titulo: b.titulo,
-          autor: b.autores?.[0] ?? null,
+          autores: b.autores ?? [],
+          ano: b.ano,
           isbn13: b.isbn13 ?? null,
+          capa_url: b.capa_url ?? null,
+          editora: b.editora ?? null,
+          num_paginas: b.num_paginas ?? null,
+          idioma: b.idioma ?? null,
+          descricao: b.descricao ?? null,
+          sourceId: b.isbn13 ?? b.key,
         },
       });
       if (error) throw error;
