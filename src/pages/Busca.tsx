@@ -784,7 +784,7 @@ const Busca = () => {
         </section>
       )}
 
-      {term.length >= 3 && !loadingLocal && local.length === 0 && loadingExterno && (
+      {!!submitted && !loadingLocal && local.length === 0 && loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
         </p>
