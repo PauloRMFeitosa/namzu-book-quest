@@ -14,8 +14,8 @@ const Home = () => {
   const { flags } = useFeatureFlags();
   const firstName = (user?.user_metadata?.full_name as string)?.split(" ")[0] || user?.email?.split("@")[0] || "leitor";
 
-  const { data: lendo } = useQuery({
-    queryKey: ["leitura-atual", user?.id],
+  const { data: lendoList = [] } = useQuery({
+    queryKey: ["leituras-lendo", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data: uls } = await supabase
@@ -23,17 +23,17 @@ const Home = () => {
         .select("id")
         .eq("user_id", user!.id);
       const ulIds = (uls ?? []).map((u: any) => u.id);
-      if (!ulIds.length) return null;
+      if (!ulIds.length) return [];
       const { data } = await supabase
         .from("usuario_leituras")
         .select("id, usuario_livros!inner(obra_id, obras(*))")
         .in("usuario_livro_id", ulIds)
         .eq("status", "lendo")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!data) return null;
-      return { id: (data as any).id, obras: (data as any).usuario_livros?.obras };
+        .order("updated_at", { ascending: false });
+      return (data ?? []).map((d: any) => ({
+        id: d.id,
+        obras: d.usuario_livros?.obras,
+      }));
     },
   });
 
