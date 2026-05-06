@@ -609,14 +609,46 @@ const Busca = () => {
           <Plus className="w-5 h-5" />
         </Button>
       </div>
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Título, autor ou ISBN"
-          className="h-[52px] pl-12 rounded-2xl text-base"
-        />
+      <div className="flex flex-col gap-2 card-soft p-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Input
+            value={fTitulo}
+            onChange={(e) => setFTitulo(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="Título"
+            className="h-11 rounded-xl"
+          />
+          <Input
+            value={fAutor}
+            onChange={(e) => setFAutor(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="Autor"
+            className="h-11 rounded-xl"
+          />
+          <Input
+            value={fIsbn}
+            onChange={(e) => setFIsbn(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            placeholder="ISBN (10 ou 13 dígitos)"
+            inputMode="numeric"
+            className="h-11 rounded-xl"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleBuscar}
+            disabled={loadingLocal || loadingExterno}
+            className="flex-1 rounded-xl bg-primary hover:bg-primary-hover"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Buscar
+          </Button>
+          {(submitted || fTitulo || fAutor || fIsbn) && (
+            <Button variant="outline" onClick={handleLimpar} className="rounded-xl">
+              <X className="w-4 h-4 mr-1" /> Limpar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Controles de ordenação e filtros */}
