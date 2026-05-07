@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      clube_canais: {
+        Row: {
+          clube_id: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          privado: boolean | null
+          tipo: string | null
+        }
+        Insert: {
+          clube_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          privado?: boolean | null
+          tipo?: string | null
+        }
+        Update: {
+          clube_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          privado?: boolean | null
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_canais_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_conteudo_acessos: {
         Row: {
           acessado_em: string | null
@@ -147,6 +188,95 @@ export type Database = {
             foreignKeyName: "clube_membros_clube_id_fkey"
             columns: ["clube_id"]
             isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_mensagens: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          editado: boolean | null
+          id: string
+          mensagem: string
+          reply_to_id: string | null
+          thread_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          editado?: boolean | null
+          id?: string
+          mensagem: string
+          reply_to_id?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          editado?: boolean | null
+          id?: string
+          mensagem?: string
+          reply_to_id?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_mensagens_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "clube_mensagens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_mensagens_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "clube_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_metricas: {
+        Row: {
+          ativos_30d: number | null
+          ativos_7d: number | null
+          clube_id: string
+          engagement_score: number | null
+          membros_count: number | null
+          profundidade_score: number | null
+          retention_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativos_30d?: number | null
+          ativos_7d?: number | null
+          clube_id: string
+          engagement_score?: number | null
+          membros_count?: number | null
+          profundidade_score?: number | null
+          retention_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativos_30d?: number | null
+          ativos_7d?: number | null
+          clube_id?: string
+          engagement_score?: number | null
+          membros_count?: number | null
+          profundidade_score?: number | null
+          retention_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_metricas_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: true
             referencedRelation: "clubes"
             referencedColumns: ["id"]
           },
@@ -284,6 +414,74 @@ export type Database = {
           },
         ]
       }
+      clube_tags: {
+        Row: {
+          clube_id: string
+          tag_id: string
+        }
+        Insert: {
+          clube_id: string
+          tag_id: string
+        }
+        Update: {
+          clube_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_tags_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_threads: {
+        Row: {
+          canal_id: string | null
+          created_at: string | null
+          criado_por: string | null
+          fixado: boolean | null
+          id: string
+          locked: boolean | null
+          titulo: string
+        }
+        Insert: {
+          canal_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          fixado?: boolean | null
+          id?: string
+          locked?: boolean | null
+          titulo: string
+        }
+        Update: {
+          canal_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          fixado?: boolean | null
+          id?: string
+          locked?: boolean | null
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_threads_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "clube_canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_trilhas: {
         Row: {
           clube_id: string
@@ -368,6 +566,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conexoes: {
+        Row: {
+          created_at: string | null
+          seguido_id: string
+          seguidor_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          seguido_id: string
+          seguidor_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          seguido_id?: string
+          seguidor_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conexoes_seguido_id_fkey"
+            columns: ["seguido_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conexoes_seguidor_id_fkey"
+            columns: ["seguidor_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       conquistas: {
         Row: {
           codigo: string
@@ -392,6 +626,145 @@ export type Database = {
           id?: string
           nome?: string
           xp_recompensa?: number | null
+        }
+        Relationships: []
+      }
+      convites: {
+        Row: {
+          clube_id: string | null
+          codigo: string
+          created_at: string | null
+          criado_por: string | null
+          expira_em: string | null
+          id: string
+          max_usos: number | null
+          usos: number | null
+        }
+        Insert: {
+          clube_id?: string | null
+          codigo: string
+          created_at?: string | null
+          criado_por?: string | null
+          expira_em?: string | null
+          id?: string
+          max_usos?: number | null
+          usos?: number | null
+        }
+        Update: {
+          clube_id?: string | null
+          codigo?: string
+          created_at?: string | null
+          criado_por?: string | null
+          expira_em?: string | null
+          id?: string
+          max_usos?: number | null
+          usos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_assinantes: {
+        Row: {
+          assinatura_id: string
+          fim_em: string | null
+          inicio_em: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          assinatura_id: string
+          fim_em?: string | null
+          inicio_em?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          assinatura_id?: string
+          fim_em?: string | null
+          inicio_em?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_assinantes_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "creator_assinaturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_assinaturas: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          creator_id: string | null
+          descricao: string | null
+          id: string
+          nome_plano: string
+          periodo: string | null
+          preco_centavos: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          creator_id?: string | null
+          descricao?: string | null
+          id?: string
+          nome_plano: string
+          periodo?: string | null
+          preco_centavos: number
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          creator_id?: string | null
+          descricao?: string | null
+          id?: string
+          nome_plano?: string
+          periodo?: string | null
+          preco_centavos?: number
+        }
+        Relationships: []
+      }
+      denuncias: {
+        Row: {
+          created_at: string | null
+          denunciado_user_id: string | null
+          denunciante_user_id: string | null
+          entidade_id: string | null
+          entidade_tipo: string | null
+          id: string
+          motivo: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          denunciado_user_id?: string | null
+          denunciante_user_id?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          motivo?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          denunciado_user_id?: string | null
+          denunciante_user_id?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          motivo?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -444,6 +817,88 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evento_participantes: {
+        Row: {
+          evento_id: string
+          joined_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          evento_id: string
+          joined_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          evento_id?: string
+          joined_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_participantes_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eventos: {
+        Row: {
+          clube_id: string | null
+          created_at: string | null
+          criador_id: string | null
+          descricao: string | null
+          fim_em: string | null
+          gravado: boolean | null
+          id: string
+          inicio_em: string
+          limite_participantes: number | null
+          tipo: string | null
+          titulo: string
+          url_evento: string | null
+        }
+        Insert: {
+          clube_id?: string | null
+          created_at?: string | null
+          criador_id?: string | null
+          descricao?: string | null
+          fim_em?: string | null
+          gravado?: boolean | null
+          id?: string
+          inicio_em: string
+          limite_participantes?: number | null
+          tipo?: string | null
+          titulo: string
+          url_evento?: string | null
+        }
+        Update: {
+          clube_id?: string | null
+          created_at?: string | null
+          criador_id?: string | null
+          descricao?: string | null
+          fim_em?: string | null
+          gravado?: boolean | null
+          id?: string
+          inicio_em?: string
+          limite_participantes?: number | null
+          tipo?: string | null
+          titulo?: string
+          url_evento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
             referencedColumns: ["id"]
           },
         ]
@@ -518,6 +973,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ia_interacoes: {
+        Row: {
+          contexto: Json | null
+          created_at: string | null
+          id: string
+          input_text: string | null
+          output_text: string | null
+          tipo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contexto?: Json | null
+          created_at?: string | null
+          id?: string
+          input_text?: string | null
+          output_text?: string | null
+          tipo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contexto?: Json | null
+          created_at?: string | null
+          id?: string
+          input_text?: string | null
+          output_text?: string | null
+          tipo?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      interesses: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
       }
       leitura_aplicacoes: {
         Row: {
@@ -856,6 +1362,109 @@ export type Database = {
         }
         Relationships: []
       }
+      matches_intelectuais: {
+        Row: {
+          compatibilidade: number | null
+          created_at: string | null
+          id: string
+          motivos: Json | null
+          status: string | null
+          user_a: string | null
+          user_b: string | null
+        }
+        Insert: {
+          compatibilidade?: number | null
+          created_at?: string | null
+          id?: string
+          motivos?: Json | null
+          status?: string | null
+          user_a?: string | null
+          user_b?: string | null
+        }
+        Update: {
+          compatibilidade?: number | null
+          created_at?: string | null
+          id?: string
+          motivos?: Json | null
+          status?: string | null
+          user_a?: string | null
+          user_b?: string | null
+        }
+        Relationships: []
+      }
+      microgrupo_membros: {
+        Row: {
+          joined_at: string | null
+          microgrupo_id: string
+          papel: string | null
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string | null
+          microgrupo_id: string
+          papel?: string | null
+          user_id: string
+        }
+        Update: {
+          joined_at?: string | null
+          microgrupo_id?: string
+          papel?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "microgrupo_membros_microgrupo_id_fkey"
+            columns: ["microgrupo_id"]
+            isOneToOne: false
+            referencedRelation: "microgrupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      microgrupos: {
+        Row: {
+          clube_id: string | null
+          created_at: string | null
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          limite_membros: number | null
+          nome: string
+          privado: boolean | null
+          tipo: string | null
+        }
+        Insert: {
+          clube_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          limite_membros?: number | null
+          nome: string
+          privado?: boolean | null
+          tipo?: string | null
+        }
+        Update: {
+          clube_id?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          limite_membros?: number | null
+          nome?: string
+          privado?: boolean | null
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "microgrupos_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       missoes: {
         Row: {
           ativo_ate: string
@@ -892,6 +1501,36 @@ export type Database = {
           tipo?: string
           titulo?: string
           xp_recompensa?: number
+        }
+        Relationships: []
+      }
+      moderacao_logs: {
+        Row: {
+          acao: string
+          created_at: string | null
+          entidade_id: string | null
+          entidade_tipo: string | null
+          id: string
+          moderador_id: string | null
+          motivo: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          moderador_id?: string | null
+          motivo?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          moderador_id?: string | null
+          motivo?: string | null
         }
         Relationships: []
       }
@@ -1000,6 +1639,206 @@ export type Database = {
         }
         Relationships: []
       }
+      pagamentos: {
+        Row: {
+          created_at: string | null
+          gateway: string | null
+          gateway_transaction_id: string | null
+          id: string
+          referencia_id: string | null
+          status: string | null
+          tipo: string | null
+          user_id: string | null
+          valor_centavos: number
+        }
+        Insert: {
+          created_at?: string | null
+          gateway?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          referencia_id?: string | null
+          status?: string | null
+          tipo?: string | null
+          user_id?: string | null
+          valor_centavos: number
+        }
+        Update: {
+          created_at?: string | null
+          gateway?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          referencia_id?: string | null
+          status?: string | null
+          tipo?: string | null
+          user_id?: string | null
+          valor_centavos?: number
+        }
+        Relationships: []
+      }
+      perfil_interesses: {
+        Row: {
+          interesse_id: string
+          peso: number | null
+          user_id: string
+        }
+        Insert: {
+          interesse_id: string
+          peso?: number | null
+          user_id: string
+        }
+        Update: {
+          interesse_id?: string
+          peso?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfil_interesses_interesse_id_fkey"
+            columns: ["interesse_id"]
+            isOneToOne: false
+            referencedRelation: "interesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perfil_interesses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      perfis: {
+        Row: {
+          avatar_url: string | null
+          banner_url: string | null
+          bio: string | null
+          cidade: string | null
+          created_at: string | null
+          instagram_url: string | null
+          nivel_intelectual: number | null
+          nome_exibicao: string
+          pais: string | null
+          score_consistencia: number | null
+          score_empatia: number | null
+          score_reputacao: number | null
+          score_social: number | null
+          site_url: string | null
+          tiktok_url: string | null
+          tipo_perfil: string
+          updated_at: string | null
+          user_id: string
+          username: string
+          verificado: boolean | null
+          youtube_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          instagram_url?: string | null
+          nivel_intelectual?: number | null
+          nome_exibicao: string
+          pais?: string | null
+          score_consistencia?: number | null
+          score_empatia?: number | null
+          score_reputacao?: number | null
+          score_social?: number | null
+          site_url?: string | null
+          tiktok_url?: string | null
+          tipo_perfil?: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+          verificado?: boolean | null
+          youtube_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          instagram_url?: string | null
+          nivel_intelectual?: number | null
+          nome_exibicao?: string
+          pais?: string | null
+          score_consistencia?: number | null
+          score_empatia?: number | null
+          score_reputacao?: number | null
+          score_social?: number | null
+          site_url?: string | null
+          tiktok_url?: string | null
+          tipo_perfil?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+          verificado?: boolean | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      reacoes: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: string
+          mensagem_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: string
+          mensagem_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          mensagem_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reacoes_mensagem_id_fkey"
+            columns: ["mensagem_id"]
+            isOneToOne: false
+            referencedRelation: "clube_mensagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reputacao_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          origem: string
+          referencia_id: string | null
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          origem: string
+          referencia_id?: string | null
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          origem?: string
+          referencia_id?: string | null
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           created_at: string | null
@@ -1015,6 +1854,27 @@ export type Database = {
           created_at?: string | null
           id?: string
           nome?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          last_seen: string | null
+          online_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          last_seen?: string | null
+          online_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          last_seen?: string | null
+          online_status?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
