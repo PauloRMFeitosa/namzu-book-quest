@@ -14,8 +14,8 @@ import Home from "./pages/Home";
 import Busca from "./pages/Busca";
 import Livros from "./pages/Livros";
 import Leituras from "./pages/Leituras";
-import Clubes from "./pages/Clubes";
 import ClubesMarketplace from "./pages/clubes/Marketplace";
+import ClubeDetalhe from "./pages/clubes/ClubeDetalhe";
 import Perfil from "./pages/Perfil";
 import Metas from "./pages/Metas";
 import Historico from "./pages/Historico";
@@ -49,7 +49,7 @@ const App = () => (
             <Route path="/leituras" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
             <Route path="/leituras/:id" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
-            <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><Clubes /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/metas" element={<ProtectedRoute><FeatureRoute flag="show_metas"><Metas /></FeatureRoute></ProtectedRoute>} />
             <Route path="/historico" element={<ProtectedRoute><FeatureRoute flag="show_historico"><Historico /></FeatureRoute></ProtectedRoute>} />
