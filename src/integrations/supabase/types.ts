@@ -2227,6 +2227,14 @@ export type Database = {
         Args: { p_tipo: string; p_usuario_leitura_id: string }
         Returns: string
       }
+      is_clube_curador: {
+        Args: { _clube: string; _user: string }
+        Returns: boolean
+      }
+      is_clube_membro: {
+        Args: { _clube: string; _user: string }
+        Returns: boolean
+      }
       refresh_ranking: { Args: never; Returns: undefined }
       registrar_progresso: {
         Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
