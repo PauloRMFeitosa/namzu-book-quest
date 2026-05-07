@@ -1,0 +1,146 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+export type ClubeSecao =
+  | "todos"
+  | "em_alta"
+  | "novos"
+  | "mais_profundos"
+  | "mais_ativos"
+  | "pequenos"
+  | "para_voce";
+
+export interface ClubeCardData {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  imagem_capa_url: string | null;
+  curador_id: string;
+  is_ativo: boolean;
+  duracao_tipo: string;
+  created_at: string;
+  // métricas (opcional)
+  membros_count: number;
+  ativos_7d: number;
+  engagement_score: number;
+  profundidade_score: number;
+  // tags
+  tags: string[];
+  // creator
+  curador?: { username: string | null; nome_exibicao: string | null; avatar_url: string | null } | null;
+}
+
+interface UseClubesParams {
+  busca?: string;
+  categoria?: string | null;
+  secao?: ClubeSecao;
+}
+
+export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: UseClubesParams = {}) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["clubes-marketplace", busca, categoria, secao, user?.id],
+    queryFn: async (): Promise<ClubeCardData[]> => {
+      // Base clubes ativos
+      let q = supabase
+        .from("clubes")
+        .select("id, nome, descricao, imagem_capa_url, curador_id, is_ativo, duracao_tipo, created_at")
+        .eq("is_ativo", true);
+
+      if (busca.trim()) {
+        q = q.ilike("nome", `%${busca.trim()}%`);
+      }
+
+      const { data: clubes, error } = await q;
+      if (error) throw error;
+      const list = clubes ?? [];
+      if (!list.length) return [];
+
+      const ids = list.map((c) => c.id);
+
+      // Métricas
+      const { data: metricas } = await supabase
+        .from("clube_metricas")
+        .select("clube_id, membros_count, ativos_7d, engagement_score, profundidade_score")
+        .in("clube_id", ids);
+      const metricasMap = new Map((metricas ?? []).map((m: any) => [m.clube_id, m]));
+
+      // Tags
+      const { data: clubeTags } = await supabase
+        .from("clube_tags")
+        .select("clube_id, tags(nome)")
+        .in("clube_id", ids);
+      const tagsMap = new Map<string, string[]>();
+      (clubeTags ?? []).forEach((ct: any) => {
+        const arr = tagsMap.get(ct.clube_id) ?? [];
+        if (ct.tags?.nome) arr.push(ct.tags.nome);
+        tagsMap.set(ct.clube_id, arr);
+      });
+
+      // Curadores
+      const curadorIds = Array.from(new Set(list.map((c) => c.curador_id).filter(Boolean)));
+      const { data: perfis } = await supabase
+        .from("perfis")
+        .select("user_id, username, nome_exibicao, avatar_url")
+        .in("user_id", curadorIds);
+      const perfisMap = new Map((perfis ?? []).map((p: any) => [p.user_id, p]));
+
+      let enriched: ClubeCardData[] = list.map((c) => {
+        const m: any = metricasMap.get(c.id) ?? {};
+        return {
+          ...c,
+          membros_count: m.membros_count ?? 0,
+          ativos_7d: m.ativos_7d ?? 0,
+          engagement_score: Number(m.engagement_score ?? 0),
+          profundidade_score: Number(m.profundidade_score ?? 0),
+          tags: tagsMap.get(c.id) ?? [],
+          curador: perfisMap.get(c.curador_id) ?? null,
+        };
+      });
+
+      // Filtro por categoria (via tags)
+      if (categoria) {
+        const cat = categoria.toLowerCase();
+        enriched = enriched.filter((c) => c.tags.some((t) => t.toLowerCase().includes(cat)));
+      }
+
+      // Ordenação por seção
+      switch (secao) {
+        case "em_alta":
+          enriched.sort((a, b) => b.engagement_score - a.engagement_score);
+          break;
+        case "novos":
+          enriched.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+          break;
+        case "mais_profundos":
+          enriched.sort((a, b) => b.profundidade_score - a.profundidade_score);
+          break;
+        case "mais_ativos":
+          enriched.sort((a, b) => b.ativos_7d - a.ativos_7d);
+          break;
+        case "pequenos":
+          enriched = enriched.filter((c) => c.membros_count > 0 && c.membros_count <= 30);
+          enriched.sort((a, b) => a.membros_count - b.membros_count);
+          break;
+        case "para_voce":
+          enriched.sort((a, b) => b.engagement_score - a.engagement_score);
+          break;
+        default:
+          enriched.sort((a, b) => b.membros_count - a.membros_count);
+      }
+
+      return enriched;
+    },
+  });
+};
+
+export const CATEGORIAS: { value: string; label: string }[] = [
+  { value: "ficcao", label: "Ficção" },
+  { value: "filosofia", label: "Filosofia" },
+  { value: "negocios", label: "Negócios" },
+  { value: "espiritualidade", label: "Espiritualidade" },
+  { value: "fantasia", label: "Fantasia" },
+  { value: "classico", label: "Clássicos" },
+  { value: "desenvolvimento", label: "Desenvolvimento Pessoal" },
+];
