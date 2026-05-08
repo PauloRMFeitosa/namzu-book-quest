@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AppLayout } from "@/components/AppLayout";
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
+import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import {
   useClube,
   useClubeMembership,
@@ -76,11 +77,7 @@ const ClubeDetalhe = () => {
                 </div>
 
                 <TabsContent value="feed" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Feed social"
-                    descricao="Insights, citações, reflexões e debates dos membros."
-                    fase="Fase 3"
-                  />
+                  <FeedClube clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
                 <TabsContent value="leituras" className="mt-5">
                   <PlaceholderTab
