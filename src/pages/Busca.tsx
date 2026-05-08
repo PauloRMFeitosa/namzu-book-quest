@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PageHero } from "@/components/PageHero";
 import {
   Search,
   Plus,
@@ -13,6 +14,7 @@ import {
   CheckCheck,
   ArrowUpDown,
   X,
+  Compass,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -606,8 +608,13 @@ const Busca = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Buscar livros</h1>
+      <PageHero
+        icon={Compass}
+        badge="Descobrir"
+        title={<>Encontre seu próximo <span className="text-gradient-warm">livro</span></>}
+        description="Busque no acervo do NAMZU ou em fontes externas."
+      />
+      <div className="flex items-center justify-end gap-3">
         <Button
           size="icon"
           onClick={() => navigate("/cadastro-manual")}
