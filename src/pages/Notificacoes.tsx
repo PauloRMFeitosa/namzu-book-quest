@@ -21,7 +21,12 @@ const Notificacoes = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Notificações</h1>
+      <PageHero
+        icon={BellRing}
+        badge="Alertas"
+        title={<>Notifica<span className="text-gradient-warm">ções</span></>}
+        description="Mensagens e atualizações da comunidade."
+      />
       {data.length === 0 ? (
         <div className="card-soft p-8 text-center">
           <Bell className="w-10 h-10 mx-auto text-primary mb-3" />

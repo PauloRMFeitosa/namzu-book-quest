@@ -22,7 +22,12 @@ const Historico = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Histórico</h1>
+      <PageHero
+        icon={ScrollText}
+        badge="Registro"
+        title={<>Seu <span className="text-gradient-warm">histórico</span></>}
+        description="Todas as suas atividades e ganhos de XP."
+      />
       {data.length === 0 ? (
         <div className="card-soft p-8 text-center">
           <History className="w-10 h-10 mx-auto text-primary mb-3" />

@@ -68,7 +68,12 @@ const LeiturasList = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Minhas leituras</h1>
+      <PageHero
+        icon={BookMarked}
+        badge="Jornada"
+        title={<>Minhas <span className="text-gradient-warm">leituras</span></>}
+        description="Acompanhe o progresso das suas experiências de leitura."
+      />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Lendo</h2>

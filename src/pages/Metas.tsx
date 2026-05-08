@@ -34,7 +34,12 @@ const Metas = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Metas</h1>
+      <PageHero
+        icon={Trophy}
+        badge="Desafios"
+        title={<>Suas <span className="text-gradient-warm">metas</span></>}
+        description="Missões ativas e progresso de recompensas."
+      />
       {missoes.length === 0 ? (
         <div className="card-soft p-8 text-center">
           <Target className="w-10 h-10 mx-auto text-primary mb-3" />

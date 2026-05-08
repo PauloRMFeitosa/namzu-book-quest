@@ -66,13 +66,16 @@ const Home = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">Olá,</p>
-          <h1 className="text-2xl font-bold capitalize">{firstName} 👋</h1>
-        </div>
+      <PageHero
+        icon={HomeIcon}
+        badge="Início"
+        title={<>Olá, <span className="text-gradient-warm">{firstName}</span></>}
+        description="Acompanhe suas leituras, conquistas e clubes."
+      />
+
+      <div className="flex items-start justify-between gap-3">
         {flags.show_gamificacao_home && <StatsChips />}
-      </header>
+      </div>
 
       {lendoList.length > 0 ? (
         <section>
