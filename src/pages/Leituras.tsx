@@ -2,8 +2,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, BookMarked } from "lucide-react";
 import LeituraDetalhe from "./LeituraDetalhe";
 import { ProgressoBar } from "@/components/leituras/ProgressoBar";
 

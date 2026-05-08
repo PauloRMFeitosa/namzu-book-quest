@@ -3,6 +3,7 @@ import { StatsChips } from "@/components/StatsChips";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGamificacao } from "@/hooks/useGamificacao";
+import { PageHero } from "@/components/PageHero";
 import { Award, User as UserIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 

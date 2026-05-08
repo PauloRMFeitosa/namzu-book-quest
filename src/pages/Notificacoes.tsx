@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Bell } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+import { Bell, BellRing } from "lucide-react";
 
 const Notificacoes = () => {
   const { user } = useAuth();

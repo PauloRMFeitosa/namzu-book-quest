@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { History } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+import { History, ScrollText } from "lucide-react";
 
 const Historico = () => {
   const { user } = useAuth();
