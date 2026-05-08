@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FontSizeToggle } from "@/components/FontSizeToggle";
 
@@ -16,7 +17,12 @@ const Configuracoes = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Configurações</h1>
+      <PageHero
+        icon={Settings2}
+        badge="Ajustes"
+        title={<>Configura<span className="text-gradient-warm">ções</span></>}
+        description="Personalize sua experiência no NAMZU."
+      />
       <div className="card-soft p-4">
         <p className="text-xs text-muted-foreground">Conta</p>
         <p className="font-semibold mt-1">{user?.email}</p>

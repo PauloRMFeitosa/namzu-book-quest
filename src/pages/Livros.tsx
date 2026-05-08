@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Plus } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+import { BookOpen, Plus, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +78,12 @@ const Livros = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Meus livros</h1>
+      <PageHero
+        icon={Library}
+        badge="Biblioteca"
+        title={<>Meus <span className="text-gradient-warm">livros</span></>}
+        description="Sua coleção organizada por status."
+      />
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
         {chips.map((c) => {
           const ativo = filtro === c.key;

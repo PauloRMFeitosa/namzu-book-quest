@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StatsChips } from "@/components/StatsChips";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Plus, ArrowRight } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon } from "lucide-react";
 
 const Home = () => {
   const { user } = useAuth();
@@ -65,13 +66,16 @@ const Home = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">Olá,</p>
-          <h1 className="text-2xl font-bold capitalize">{firstName} 👋</h1>
-        </div>
+      <PageHero
+        icon={HomeIcon}
+        badge="Início"
+        title={<>Olá, <span className="text-gradient-warm">{firstName}</span></>}
+        description="Acompanhe suas leituras, conquistas e clubes."
+      />
+
+      <div className="flex items-start justify-between gap-3">
         {flags.show_gamificacao_home && <StatsChips />}
-      </header>
+      </div>
 
       {lendoList.length > 0 ? (
         <section>

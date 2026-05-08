@@ -3,6 +3,7 @@ import { StatsChips } from "@/components/StatsChips";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGamificacao } from "@/hooks/useGamificacao";
+import { PageHero } from "@/components/PageHero";
 import { Award, User as UserIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -28,6 +29,13 @@ const Perfil = () => {
 
   return (
     <div className="flex flex-col gap-5">
+      <PageHero
+        icon={UserIcon}
+        badge="Você"
+        title={<>Seu <span className="text-gradient-warm">perfil</span></>}
+        description="Estatísticas, nível e conquistas."
+      />
+
       <div className="card-soft p-5 flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
           <UserIcon className="w-8 h-8 text-primary" />

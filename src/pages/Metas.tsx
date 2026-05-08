@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHero } from "@/components/PageHero";
 import { Progress } from "@/components/ui/progress";
-import { Target } from "lucide-react";
+import { Target, Trophy } from "lucide-react";
 
 const Metas = () => {
   const { user } = useAuth();
@@ -33,7 +34,12 @@ const Metas = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Metas</h1>
+      <PageHero
+        icon={Trophy}
+        badge="Desafios"
+        title={<>Suas <span className="text-gradient-warm">metas</span></>}
+        description="Missões ativas e progresso de recompensas."
+      />
       {missoes.length === 0 ? (
         <div className="card-soft p-8 text-center">
           <Target className="w-10 h-10 mx-auto text-primary mb-3" />
