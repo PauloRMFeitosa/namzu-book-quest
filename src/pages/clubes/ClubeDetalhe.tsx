@@ -5,6 +5,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
+import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import {
   useClube,
   useClubeMembership,
@@ -80,11 +81,7 @@ const ClubeDetalhe = () => {
                   <FeedClube clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
                 <TabsContent value="leituras" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Leituras do clube"
-                    descricao="Trilha atual, progresso coletivo e checkpoints."
-                    fase="Fase 4"
-                  />
+                  <LeiturasTab clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
                 <TabsContent value="canais" className="mt-5">
                   <PlaceholderTab
