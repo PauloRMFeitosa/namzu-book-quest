@@ -5,6 +5,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
+import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import {
   useClube,
   useClubeMembership,
