@@ -36,6 +36,8 @@
 
     --destructive: 4 73% 50%;            /* #D93025 */
     --destructive-foreground: 0 0% 100%;
+    --success: 138 65% 34%;              /* #1E8E3E */
+    --success-foreground: 0 0% 100%;
 
     --border: 213 20% 85%;
     --input: 213 20% 85%;
