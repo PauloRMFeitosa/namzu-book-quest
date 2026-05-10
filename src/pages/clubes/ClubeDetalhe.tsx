@@ -6,6 +6,7 @@ import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
+import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
 import {
   useClube,
   useClubeMembership,
@@ -84,10 +85,10 @@ const ClubeDetalhe = () => {
                   <LeiturasTab clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
                 <TabsContent value="canais" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Canais"
-                    descricao="Conversas em tempo real organizadas por tema."
-                    fase="Fase 5"
+                  <CanaisTab
+                    clubeId={clube.id}
+                    curadorId={clube.curador_id}
+                    isMembro={!!membership}
                   />
                 </TabsContent>
                 <TabsContent value="eventos" className="mt-5">
