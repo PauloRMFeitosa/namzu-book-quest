@@ -8,6 +8,7 @@ import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
 import { EventosTab } from "@/components/clubes/eventos/EventosTab";
+import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import {
   useClube,
   useClubeMembership,
@@ -114,11 +115,7 @@ const ClubeDetalhe = () => {
                   />
                 </TabsContent>
                 <TabsContent value="microgrupos" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Microgrupos"
-                    descricao="Tribos pequenas e íntimas dentro do clube."
-                    fase="Fase 7"
-                  />
+                  <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
               </Tabs>
 
