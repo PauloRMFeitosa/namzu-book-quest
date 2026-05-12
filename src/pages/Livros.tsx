@@ -19,18 +19,38 @@ const Livros = () => {
     queryKey: ["meus-livros", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: livros } = await supabase
         .from("usuario_livros")
         .select("id, status, obra_id, obras(*)")
         .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
-      return data ?? [];
+      const list = livros ?? [];
+      const ids = list.map((l: any) => l.id);
+      let lendoIds = new Set<string>();
+      let concluidoIds = new Set<string>();
+      if (ids.length) {
+        const { data: exps } = await supabase
+          .from("usuario_leituras")
+          .select("usuario_livro_id, status")
+          .in("usuario_livro_id", ids);
+        for (const e of exps ?? []) {
+          if (e.status === "lendo") lendoIds.add(e.usuario_livro_id);
+          if (e.status === "concluido") concluidoIds.add(e.usuario_livro_id);
+        }
+      }
+      return list.map((l: any) => ({
+        ...l,
+        statusEfetivo: lendoIds.has(l.id)
+          ? "lendo"
+          : l.status === "lido" || l.status === "concluido" || concluidoIds.has(l.id)
+          ? "lido"
+          : l.status,
+      }));
     },
   });
 
   const matchFiltro = (status: string, f: Filtro) => {
     if (f === "todos") return true;
-    if (f === "lido") return status === "lido" || status === "concluido";
     return status === f;
   };
 
