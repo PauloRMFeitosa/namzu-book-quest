@@ -56,12 +56,12 @@ const Livros = () => {
 
   const counts = {
     todos: data.length,
-    lendo: data.filter((l: any) => matchFiltro(l.status, "lendo")).length,
-    quero_ler: data.filter((l: any) => matchFiltro(l.status, "quero_ler")).length,
-    lido: data.filter((l: any) => matchFiltro(l.status, "lido")).length,
+    lendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lendo")).length,
+    quero_ler: data.filter((l: any) => matchFiltro(l.statusEfetivo, "quero_ler")).length,
+    lido: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lido")).length,
   };
 
-  const filtrados = data.filter((l: any) => matchFiltro(l.status, filtro));
+  const filtrados = data.filter((l: any) => matchFiltro(l.statusEfetivo, filtro));
 
   const chips: { key: Filtro; label: string }[] = [
     { key: "todos", label: "Todos" },
