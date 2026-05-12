@@ -9,6 +9,8 @@ import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
 import { EventosTab } from "@/components/clubes/eventos/EventosTab";
 import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
+import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
+import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
 import {
   useClube,
   useClubeMembership,
@@ -101,17 +103,17 @@ const ClubeDetalhe = () => {
                   />
                 </TabsContent>
                 <TabsContent value="membros" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Membros"
-                    descricao="Quem faz parte desta tribo intelectual."
-                    fase="Fase 8"
+                  <MembrosTab
+                    clubeId={clube.id}
+                    curadorId={clube.curador_id}
+                    isMembro={!!membership}
                   />
                 </TabsContent>
                 <TabsContent value="conteudos" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Conteúdos"
-                    descricao="Material exclusivo curado para os membros."
-                    fase="Fase 8"
+                  <ConteudosTab
+                    clubeId={clube.id}
+                    curadorId={clube.curador_id}
+                    isMembro={!!membership}
                   />
                 </TabsContent>
                 <TabsContent value="microgrupos" className="mt-5">
