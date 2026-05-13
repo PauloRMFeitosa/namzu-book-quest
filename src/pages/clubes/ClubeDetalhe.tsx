@@ -11,14 +11,16 @@ import { EventosTab } from "@/components/clubes/eventos/EventosTab";
 import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
+import { GestaoTab } from "@/components/clubes/gestao/GestaoTab";
 import {
   useClube,
   useClubeMembership,
   useEntrarClube,
   useSairClube,
 } from "@/hooks/clubes/useClube";
+import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
 
-const TABS = [
+const BASE_TABS = [
   { value: "feed", label: "Feed" },
   { value: "leituras", label: "Leituras" },
   { value: "canais", label: "Canais" },
