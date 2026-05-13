@@ -123,6 +123,11 @@ const ClubeDetalhe = () => {
                 <TabsContent value="microgrupos" className="mt-5">
                   <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
+                {canManage && (
+                  <TabsContent value="gestao" className="mt-5">
+                    <GestaoTab clubeId={clube.id} curadorId={clube.curador_id} />
+                  </TabsContent>
+                )}
               </Tabs>
 
               <ClubeSidebar
