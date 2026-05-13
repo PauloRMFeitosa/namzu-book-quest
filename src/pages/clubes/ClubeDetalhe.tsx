@@ -39,6 +39,8 @@ const ClubeDetalhe = () => {
   const { data: membership } = useClubeMembership(id);
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
+  const { canManage } = useIsCurador(id, clube?.curador_id);
+  const TABS = canManage ? [...BASE_TABS, { value: "gestao", label: "Gestão" }] : BASE_TABS;
 
   if (!id) return <Navigate to="/clubes" replace />;
 
