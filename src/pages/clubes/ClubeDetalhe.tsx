@@ -11,14 +11,16 @@ import { EventosTab } from "@/components/clubes/eventos/EventosTab";
 import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
+import { GestaoTab } from "@/components/clubes/gestao/GestaoTab";
 import {
   useClube,
   useClubeMembership,
   useEntrarClube,
   useSairClube,
 } from "@/hooks/clubes/useClube";
+import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
 
-const TABS = [
+const BASE_TABS = [
   { value: "feed", label: "Feed" },
   { value: "leituras", label: "Leituras" },
   { value: "canais", label: "Canais" },
@@ -37,6 +39,8 @@ const ClubeDetalhe = () => {
   const { data: membership } = useClubeMembership(id);
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
+  const { canManage } = useIsCurador(id, clube?.curador_id);
+  const TABS = canManage ? [...BASE_TABS, { value: "gestao", label: "Gestão" }] : BASE_TABS;
 
   if (!id) return <Navigate to="/clubes" replace />;
 
@@ -119,6 +123,11 @@ const ClubeDetalhe = () => {
                 <TabsContent value="microgrupos" className="mt-5">
                   <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
                 </TabsContent>
+                {canManage && (
+                  <TabsContent value="gestao" className="mt-5">
+                    <GestaoTab clubeId={clube.id} curadorId={clube.curador_id} />
+                  </TabsContent>
+                )}
               </Tabs>
 
               <ClubeSidebar
