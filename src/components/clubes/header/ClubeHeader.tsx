@@ -120,14 +120,9 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
         {/* CTA */}
         <div className="pt-2">
           {isMembro ? (
-            <Button
-              onClick={onSair}
-              disabled={loading}
-              variant="outline"
-              className="w-full h-11 rounded-2xl border-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair do clube"}
-            </Button>
+            <div className="w-full h-11 rounded-2xl border-2 border-border/60 bg-muted/40 flex items-center justify-center text-sm text-muted-foreground font-medium">
+              Você faz parte deste clube
+            </div>
           ) : (
             <Button
               onClick={onEntrar}
