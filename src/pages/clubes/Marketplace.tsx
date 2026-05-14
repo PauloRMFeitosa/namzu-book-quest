@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
 import { PageHero } from "@/components/PageHero";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { FiltrosBar } from "@/components/clubes/marketplace/FiltrosBar";
