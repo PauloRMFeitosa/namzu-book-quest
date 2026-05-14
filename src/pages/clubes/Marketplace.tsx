@@ -37,8 +37,7 @@ const Marketplace = () => {
   }, [clubes]);
 
   return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 pb-8">
+    <div className="flex flex-col gap-6 pb-8">
         {/* Hero editorial */}
         <PageHero
           icon={Sparkles}
