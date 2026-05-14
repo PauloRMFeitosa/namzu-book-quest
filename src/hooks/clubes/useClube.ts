@@ -13,6 +13,7 @@ export interface ClubeDetalhe {
   duracao_tipo: string;
   objetivo: string | null;
   regras: string | null;
+  categoria: string | null;
   created_at: string;
   curador?: {
     user_id: string;
