@@ -59,12 +59,31 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
 
       const ids = list.map((c) => c.id);
 
-      // Métricas
-      const { data: metricas } = await supabase
-        .from("clube_metricas")
-        .select("clube_id, membros_count, ativos_7d, engagement_score, profundidade_score")
-        .in("clube_id", ids);
-      const metricasMap = new Map((metricas ?? []).map((m: any) => [m.clube_id, m]));
+      // Métricas computadas em tempo real
+      const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const [membrosRes, posts7Res, posts30Res, metricasRes] = await Promise.all([
+        supabase.from("clube_membros").select("clube_id, user_id").in("clube_id", ids).eq("status", "ativo"),
+        supabase.from("clube_posts").select("clube_id, user_id").in("clube_id", ids).gte("created_at", since7),
+        supabase.from("clube_posts").select("clube_id, user_id").in("clube_id", ids).gte("created_at", since30),
+        supabase.from("clube_metricas").select("clube_id, profundidade_score").in("clube_id", ids),
+      ]);
+      const membrosCount = new Map<string, number>();
+      const membros30 = new Map<string, Set<string>>();
+      (membrosRes.data ?? []).forEach((m: any) => {
+        membrosCount.set(m.clube_id, (membrosCount.get(m.clube_id) ?? 0) + 1);
+      });
+      const ativos7Map = new Map<string, Set<string>>();
+      const ativos30Map = new Map<string, Set<string>>();
+      (posts7Res.data ?? []).forEach((p: any) => {
+        if (!ativos7Map.has(p.clube_id)) ativos7Map.set(p.clube_id, new Set());
+        ativos7Map.get(p.clube_id)!.add(p.user_id);
+      });
+      (posts30Res.data ?? []).forEach((p: any) => {
+        if (!ativos30Map.has(p.clube_id)) ativos30Map.set(p.clube_id, new Set());
+        ativos30Map.get(p.clube_id)!.add(p.user_id);
+      });
+      const profundidadeMap = new Map((metricasRes.data ?? []).map((m: any) => [m.clube_id, Number(m.profundidade_score ?? 0)]));
 
       // Tags
       const { data: clubeTags } = await supabase
