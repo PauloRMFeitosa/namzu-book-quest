@@ -92,6 +92,28 @@ export const VisibilidadeTab = () => {
           </div>
         ))}
       </div>
+
+      <div>
+        <h2 className="text-lg font-semibold">Abas do Clube de Leitura</h2>
+        <p className="text-sm text-muted-foreground">
+          Controle quais abas internas aparecem em cada clube. Admins sempre veem tudo.
+        </p>
+      </div>
+      <div className="card-soft p-4 space-y-4">
+        {CLUBE_FLAGS.map((f) => (
+          <div key={f.key} className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <Label htmlFor={f.key} className="font-semibold">{f.label}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+            </div>
+            <Switch
+              id={f.key}
+              checked={!!values[f.key]}
+              onCheckedChange={(v) => toggle(f.key, v)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
