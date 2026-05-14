@@ -106,13 +106,16 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
       const perfisMap = new Map((perfis ?? []).map((p: any) => [p.user_id, p]));
 
       let enriched: ClubeCardData[] = list.map((c) => {
-        const m: any = metricasMap.get(c.id) ?? {};
+        const total = membrosCount.get(c.id) ?? 0;
+        const ativos7 = ativos7Map.get(c.id)?.size ?? 0;
+        const ativos30 = ativos30Map.get(c.id)?.size ?? 0;
+        const engagement = total > 0 ? Math.round((ativos7 / total) * 100) : 0;
         return {
           ...c,
-          membros_count: m.membros_count ?? 0,
-          ativos_7d: m.ativos_7d ?? 0,
-          engagement_score: Number(m.engagement_score ?? 0),
-          profundidade_score: Number(m.profundidade_score ?? 0),
+          membros_count: total,
+          ativos_7d: ativos7,
+          engagement_score: engagement,
+          profundidade_score: profundidadeMap.get(c.id) ?? 0,
           tags: tagsMap.get(c.id) ?? [],
           curador: perfisMap.get(c.curador_id) ?? null,
         };
