@@ -1,7 +1,7 @@
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppLayout } from "@/components/AppLayout";
+
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
@@ -52,8 +52,7 @@ const ClubeDetalhe = () => {
   if (!id) return <Navigate to="/clubes" replace />;
 
   return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 pb-8">
+    <div className="flex flex-col gap-6 pb-8">
         {isLoading || !clube ? (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-44 sm:h-56 rounded-[var(--radius)]" />
@@ -160,8 +159,7 @@ const ClubeDetalhe = () => {
             </div>
           </>
         )}
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 
