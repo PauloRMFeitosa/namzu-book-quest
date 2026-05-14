@@ -45,7 +45,7 @@ export const VisibilidadeTab = () => {
         map[row.key] = typeof v === "boolean" ? v : v === "true" || v === true;
       }
       // defaults
-      FLAGS.forEach((f) => {
+      [...FLAGS, ...CLUBE_FLAGS].forEach((f) => {
         if (!(f.key in map)) map[f.key] = true;
       });
       setValues(map);
