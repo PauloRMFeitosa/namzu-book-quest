@@ -44,7 +44,7 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
     queryKey: ["clubes-marketplace", busca, categoria, secao, user?.id],
     queryFn: async (): Promise<ClubeCardData[]> => {
       // Base clubes ativos
-      let q = supabase
+      let q = (supabase as any)
         .from("clubes")
         .select("id, nome, descricao, imagem_capa_url, curador_id, is_ativo, duracao_tipo, categoria, created_at")
         .eq("is_ativo", true);
@@ -58,10 +58,10 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
 
       const { data: clubes, error } = await q;
       if (error) throw error;
-      const list = clubes ?? [];
+      const list: any[] = clubes ?? [];
       if (!list.length) return [];
 
-      const ids = list.map((c) => c.id);
+      const ids = list.map((c: any) => c.id);
 
       // Métricas computadas em tempo real
       const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -102,14 +102,14 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
       });
 
       // Curadores
-      const curadorIds = Array.from(new Set(list.map((c) => c.curador_id).filter(Boolean)));
+      const curadorIds = Array.from(new Set(list.map((c: any) => c.curador_id).filter(Boolean)));
       const { data: perfis } = await supabase
         .from("perfis")
         .select("user_id, username, nome_exibicao, avatar_url")
         .in("user_id", curadorIds);
       const perfisMap = new Map((perfis ?? []).map((p: any) => [p.user_id, p]));
 
-      let enriched: ClubeCardData[] = list.map((c) => {
+      let enriched: ClubeCardData[] = list.map((c: any) => {
         const total = membrosCount.get(c.id) ?? 0;
         const ativos7 = ativos7Map.get(c.id)?.size ?? 0;
         const ativos30 = ativos30Map.get(c.id)?.size ?? 0;
@@ -125,11 +125,7 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
         };
       });
 
-      // Filtro por categoria (via tags)
-      if (categoria) {
-        const cat = categoria.toLowerCase();
-        enriched = enriched.filter((c) => c.tags.some((t) => t.toLowerCase().includes(cat)));
-      }
+      // Filtro por categoria já aplicado na query (coluna `categoria`)
 
       // Ordenação por seção
       switch (secao) {
