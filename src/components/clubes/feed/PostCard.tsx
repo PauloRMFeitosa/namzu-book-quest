@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCurtirPost, type FeedPost } from "@/hooks/clubes/useFeed";
 import { cn } from "@/lib/utils";
+import { PerguntasProfundasButton } from "@/components/clubes/ai/PerguntasProfundasButton";
 
 interface Props {
   post: FeedPost;
@@ -76,6 +77,7 @@ export const PostCard = ({ post, clubeId }: Props) => {
           <MessageCircle className="w-3.5 h-3.5" />
           {post.respostas_count}
         </button>
+        <PerguntasProfundasButton postId={post.id} />
       </footer>
     </motion.article>
   );

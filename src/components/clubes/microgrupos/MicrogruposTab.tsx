@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMicrogrupos } from "@/hooks/clubes/useMicrogrupos";
 import { MicrogrupoCard } from "./MicrogrupoCard";
 import { CriarMicrogrupoDialog } from "./CriarMicrogrupoDialog";
+import { MatchmakingIA } from "@/components/clubes/ai/MatchmakingIA";
 
 export const MicrogruposTab = ({
   clubeId,
@@ -38,13 +39,16 @@ export const MicrogruposTab = ({
             Tribos pequenas e íntimas para conversas mais profundas.
           </p>
         </div>
-        <Button
-          onClick={() => setCriarOpen(true)}
-          size="sm"
-          className="rounded-xl bg-primary hover:bg-primary-hover shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Criar
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <MatchmakingIA clubeId={clubeId} />
+          <Button
+            onClick={() => setCriarOpen(true)}
+            size="sm"
+            className="rounded-xl bg-primary hover:bg-primary-hover"
+          >
+            <Plus className="w-4 h-4" /> Criar
+          </Button>
+        </div>
       </header>
 
       {isLoading ? (
