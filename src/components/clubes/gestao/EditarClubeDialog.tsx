@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAtualizarClube } from "@/hooks/clubes/useClubeGestao";
+import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
 
 export const EditarClubeDialog = ({
@@ -33,6 +35,7 @@ export const EditarClubeDialog = ({
     regras: clube.regras ?? "",
     imagem_capa_url: clube.imagem_capa_url ?? "",
     is_ativo: clube.is_ativo,
+    categoria: clube.categoria ?? "",
   });
 
   const submit = async () => {
@@ -43,6 +46,7 @@ export const EditarClubeDialog = ({
       regras: form.regras.trim() || null,
       imagem_capa_url: form.imagem_capa_url.trim() || null,
       is_ativo: form.is_ativo,
+      categoria: form.categoria || null,
     });
     onOpenChange(false);
   };
