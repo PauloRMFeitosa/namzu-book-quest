@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0 };
+const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "" };
 
 export const ClubesTab = () => {
   const { user } = useAuth();
@@ -21,7 +23,7 @@ export const ClubesTab = () => {
   const [editing, setEditing] = useState<any | null>(null);
 
   const load = async () => {
-    const { data } = await supabase.from("clubes").select("id, nome, descricao, objetivo, regras, imagem_capa_url, is_ativo, duracao_tipo, preco_centavos").order("created_at", { ascending: false });
+    const { data } = await (supabase as any).from("clubes").select("id, nome, descricao, objetivo, regras, imagem_capa_url, is_ativo, duracao_tipo, preco_centavos, categoria").order("created_at", { ascending: false });
     setRows(data ?? []);
   };
   useEffect(() => { load(); }, []);
@@ -37,6 +39,7 @@ export const ClubesTab = () => {
       imagem_capa_url: form.capa || null,
       duracao_tipo: form.duracao_tipo,
       preco_centavos: Number(form.preco) || 0,
+      categoria: form.categoria || null,
       curador_id: user.id,
       is_ativo: true,
     });
@@ -57,6 +60,7 @@ export const ClubesTab = () => {
       capa: r.imagem_capa_url ?? "",
       duracao_tipo: r.duracao_tipo ?? "continuo",
       preco: r.preco_centavos ?? 0,
+      categoria: r.categoria ?? "",
     });
   };
 
@@ -70,6 +74,7 @@ export const ClubesTab = () => {
       imagem_capa_url: form.capa || null,
       duracao_tipo: form.duracao_tipo,
       preco_centavos: Number(form.preco) || 0,
+      categoria: form.categoria || null,
     }).eq("id", editing.id);
     if (error) return toast.error(error.message);
     toast.success("Clube atualizado");
@@ -109,6 +114,18 @@ export const ClubesTab = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Duração</Label><Input value={form.duracao_tipo} onChange={(e) => setForm({ ...form, duracao_tipo: e.target.value })} placeholder="continuo / temporada" /></div>
                 <div><Label>Preço (centavos)</Label><Input type="number" value={form.preco} onChange={(e) => setForm({ ...form, preco: Number(e.target.value) })} /></div>
+              </div>
+              <div>
+                <Label>Categoria</Label>
+                <Select value={form.categoria || "_none"} onValueChange={(v) => setForm({ ...form, categoria: v === "_none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Sem categoria</SelectItem>
+                    {CATEGORIAS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button onClick={create} className="w-full">Criar</Button>
             </div>
@@ -151,6 +168,18 @@ export const ClubesTab = () => {
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Duração</Label><Input value={form.duracao_tipo} onChange={(e) => setForm({ ...form, duracao_tipo: e.target.value })} /></div>
               <div><Label>Preço (centavos)</Label><Input type="number" value={form.preco} onChange={(e) => setForm({ ...form, preco: Number(e.target.value) })} /></div>
+            </div>
+            <div>
+              <Label>Categoria</Label>
+              <Select value={form.categoria || "_none"} onValueChange={(v) => setForm({ ...form, categoria: v === "_none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Sem categoria</SelectItem>
+                  {CATEGORIAS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button onClick={saveEdit} className="w-full">Salvar</Button>
           </div>

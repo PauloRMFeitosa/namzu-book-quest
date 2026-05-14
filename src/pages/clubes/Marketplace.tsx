@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
 import { PageHero } from "@/components/PageHero";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { FiltrosBar } from "@/components/clubes/marketplace/FiltrosBar";
@@ -38,8 +37,7 @@ const Marketplace = () => {
   }, [clubes]);
 
   return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 pb-8">
+    <div className="flex flex-col gap-6 pb-8">
         {/* Hero editorial */}
         <PageHero
           icon={Sparkles}
@@ -102,8 +100,7 @@ const Marketplace = () => {
             />
           </div>
         ) : null}
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 
