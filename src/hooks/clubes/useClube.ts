@@ -80,7 +80,8 @@ export const useClube = (id: string | undefined) => {
         : 0;
 
       return {
-        ...c,
+        ...(c as any),
+        categoria: (c as any).categoria ?? null,
         curador: perfilRes.data ?? null,
         membros_count: membrosCount,
         ativos_7d: ativos7d,
