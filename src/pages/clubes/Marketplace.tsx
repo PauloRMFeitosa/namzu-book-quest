@@ -100,8 +100,7 @@ const Marketplace = () => {
             />
           </div>
         ) : null}
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 
