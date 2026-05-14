@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.admin-manage-user]
 verify_jwt = false
+
+[functions.clube-ai]
+verify_jwt = true
+
+[functions.leitura-copiloto]
+verify_jwt = true

@@ -12,6 +12,7 @@ import { LeiturasList } from "@/components/leituras/LeiturasList";
 import { PosLeituraBlock } from "@/components/leituras/PosLeituraBlock";
 import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { supabase } from "@/integrations/supabase/client";
+import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 
 const LeituraDetalhe = () => {
   const { id } = useParams();
@@ -73,6 +74,7 @@ const LeituraDetalhe = () => {
             <Check className="w-4 h-4" /> Concluir
           </Button>
         )}
+        <LeituraCopilotoButton usuarioLeituraId={livro.id} />
       </div>
 
       {/* Bloco A: Pré-leitura */}

@@ -7,6 +7,7 @@ import { SecaoCarrossel } from "@/components/clubes/marketplace/SecaoCarrossel";
 import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles } from "lucide-react";
+import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
 
 const Marketplace = () => {
   const [busca, setBusca] = useState("");
@@ -67,6 +68,8 @@ const Marketplace = () => {
           categoria={categoria}
           onCategoria={setCategoria}
         />
+
+        <RecomendacoesIA />
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
