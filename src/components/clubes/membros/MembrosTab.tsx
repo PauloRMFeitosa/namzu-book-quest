@@ -115,6 +115,35 @@ export const MembrosTab = ({
                       <Crown className="w-3 h-3" /> Curador
                     </Badge>
                   )}
+                  {user?.id === m.user_id && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                          title="Sair do clube"
+                        >
+                          <LogOut className="w-3 h-3" /> Sair
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair deste clube?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você perderá acesso ao feed, canais, eventos e demais conteúdos exclusivos. Pode voltar a qualquer momento.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => sair.mutate()}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {sair.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
                 {m.perfil?.username && (
                   <span className="text-[11px] text-muted-foreground">@{m.perfil.username}</span>
