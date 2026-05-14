@@ -41,31 +41,50 @@ export const useClube = (id: string | undefined) => {
       if (error) throw error;
       if (!c) return null;
 
-      const [perfilRes, metricasRes, tagsRes] = await Promise.all([
+      const since7 = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const since30 = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+
+      const [perfilRes, membrosRes, posts7Res, posts30Res, tagsRes] = await Promise.all([
         supabase
           .from("perfis")
           .select("user_id, username, nome_exibicao, avatar_url, bio")
           .eq("user_id", c.curador_id)
           .maybeSingle(),
         supabase
-          .from("clube_metricas")
-          .select("membros_count, ativos_7d, ativos_30d, engagement_score")
+          .from("clube_membros")
+          .select("user_id", { count: "exact" })
           .eq("clube_id", c.id)
-          .maybeSingle(),
+          .eq("status", "ativo"),
+        supabase
+          .from("clube_posts")
+          .select("user_id")
+          .eq("clube_id", c.id)
+          .gte("created_at", since7),
+        supabase
+          .from("clube_posts")
+          .select("user_id")
+          .eq("clube_id", c.id)
+          .gte("created_at", since30),
         supabase
           .from("clube_tags")
           .select("tags(nome)")
           .eq("clube_id", c.id),
       ]);
 
-      const m: any = metricasRes.data ?? {};
+      const membrosCount = membrosRes.count ?? (membrosRes.data?.length ?? 0);
+      const ativos7d = new Set((posts7Res.data ?? []).map((p: any) => p.user_id)).size;
+      const ativos30d = new Set((posts30Res.data ?? []).map((p: any) => p.user_id)).size;
+      const engagement = membrosCount > 0
+        ? Math.round((ativos7d / membrosCount) * 100)
+        : 0;
+
       return {
         ...c,
         curador: perfilRes.data ?? null,
-        membros_count: m.membros_count ?? 0,
-        ativos_7d: m.ativos_7d ?? 0,
-        ativos_30d: m.ativos_30d ?? 0,
-        engagement_score: Number(m.engagement_score ?? 0),
+        membros_count: membrosCount,
+        ativos_7d: ativos7d,
+        ativos_30d: ativos30d,
+        engagement_score: engagement,
         tags: (tagsRes.data ?? []).map((r: any) => r.tags?.nome).filter(Boolean),
       } as ClubeDetalhe;
     },
