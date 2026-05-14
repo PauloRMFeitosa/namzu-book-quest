@@ -118,12 +118,8 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
         </div>
 
         {/* CTA */}
-        <div className="pt-2">
-          {isMembro ? (
-            <div className="w-full h-11 rounded-2xl border-2 border-border/60 bg-muted/40 flex items-center justify-center text-sm text-muted-foreground font-medium">
-              Você faz parte deste clube
-            </div>
-          ) : (
+        {!isMembro && (
+          <div className="pt-2">
             <Button
               onClick={onEntrar}
               disabled={loading}
@@ -131,8 +127,8 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar no clube"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </motion.section>
   );

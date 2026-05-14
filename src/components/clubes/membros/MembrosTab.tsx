@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMembrosClube } from "@/hooks/clubes/useMembrosClube";
 import { useSairClube } from "@/hooks/clubes/useClube";
+import { useAuth } from "@/hooks/useAuth";
 
 export const MembrosTab = ({
   clubeId,
@@ -32,6 +33,7 @@ export const MembrosTab = ({
 }) => {
   const { data: membros, isLoading } = useMembrosClube(clubeId, curadorId);
   const sair = useSairClube(clubeId);
+  const { user } = useAuth();
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
@@ -68,34 +70,6 @@ export const MembrosTab = ({
             Quem dá vida a esta tribo intelectual.
           </p>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-xl gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5"
-            >
-              <LogOut className="w-3.5 h-3.5" /> Sair do clube
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Sair deste clube?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Você perderá acesso ao feed, canais, eventos e demais conteúdos exclusivos. Pode voltar a qualquer momento.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => sair.mutate()}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {sair.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </header>
 
       <div className="relative">
@@ -140,6 +114,35 @@ export const MembrosTab = ({
                     <Badge className="h-5 px-1.5 gap-1 bg-accent/15 text-accent border-0 text-[10px]">
                       <Crown className="w-3 h-3" /> Curador
                     </Badge>
+                  )}
+                  {user?.id === m.user_id && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                          title="Sair do clube"
+                        >
+                          <LogOut className="w-3 h-3" /> Sair
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair deste clube?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você perderá acesso ao feed, canais, eventos e demais conteúdos exclusivos. Pode voltar a qualquer momento.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => sair.mutate()}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {sair.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
                 {m.perfil?.username && (
