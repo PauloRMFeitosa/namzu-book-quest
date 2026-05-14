@@ -19,15 +19,17 @@ import {
   useSairClube,
 } from "@/hooks/clubes/useClube";
 import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
+import { useFeatureFlags, type FeatureFlagKey } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-const BASE_TABS = [
-  { value: "feed", label: "Feed" },
-  { value: "leituras", label: "Leituras" },
-  { value: "canais", label: "Canais" },
-  { value: "eventos", label: "Eventos" },
-  { value: "membros", label: "Membros" },
-  { value: "conteudos", label: "Conteúdos" },
-  { value: "microgrupos", label: "Microgrupos" },
+const BASE_TABS: { value: string; label: string; flag: FeatureFlagKey }[] = [
+  { value: "feed", label: "Feed", flag: "show_clube_feed" },
+  { value: "leituras", label: "Leituras", flag: "show_clube_leituras" },
+  { value: "canais", label: "Canais", flag: "show_clube_canais" },
+  { value: "eventos", label: "Eventos", flag: "show_clube_eventos" },
+  { value: "membros", label: "Membros", flag: "show_clube_membros" },
+  { value: "conteudos", label: "Conteúdos", flag: "show_clube_conteudos" },
+  { value: "microgrupos", label: "Microgrupos", flag: "show_clube_microgrupos" },
 ];
 
 const ClubeDetalhe = () => {
@@ -40,7 +42,12 @@ const ClubeDetalhe = () => {
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
   const { canManage } = useIsCurador(id, clube?.curador_id);
-  const TABS = canManage ? [...BASE_TABS, { value: "gestao", label: "Gestão" }] : BASE_TABS;
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
+  const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
+  const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
+  const activeTab = isTabVisible(tab) ? tab : (TABS[0]?.value ?? "feed");
 
   if (!id) return <Navigate to="/clubes" replace />;
 
@@ -65,7 +72,7 @@ const ClubeDetalhe = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
               <Tabs
-                value={tab}
+                value={activeTab}
                 onValueChange={(v) => {
                   const next = new URLSearchParams(search);
                   next.set("tab", v);
@@ -86,43 +93,57 @@ const ClubeDetalhe = () => {
                   </TabsList>
                 </div>
 
-                <TabsContent value="feed" className="mt-5">
-                  <FeedClube clubeId={clube.id} isMembro={!!membership} />
-                </TabsContent>
-                <TabsContent value="leituras" className="mt-5">
-                  <LeiturasTab clubeId={clube.id} isMembro={!!membership} />
-                </TabsContent>
-                <TabsContent value="canais" className="mt-5">
-                  <CanaisTab
-                    clubeId={clube.id}
-                    curadorId={clube.curador_id}
-                    isMembro={!!membership}
-                  />
-                </TabsContent>
-                <TabsContent value="eventos" className="mt-5">
-                  <EventosTab
-                    clubeId={clube.id}
-                    curadorId={clube.curador_id}
-                    isMembro={!!membership}
-                  />
-                </TabsContent>
-                <TabsContent value="membros" className="mt-5">
-                  <MembrosTab
-                    clubeId={clube.id}
-                    curadorId={clube.curador_id}
-                    isMembro={!!membership}
-                  />
-                </TabsContent>
-                <TabsContent value="conteudos" className="mt-5">
-                  <ConteudosTab
-                    clubeId={clube.id}
-                    curadorId={clube.curador_id}
-                    isMembro={!!membership}
-                  />
-                </TabsContent>
-                <TabsContent value="microgrupos" className="mt-5">
-                  <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
-                </TabsContent>
+                {isTabVisible("feed") && (
+                  <TabsContent value="feed" className="mt-5">
+                    <FeedClube clubeId={clube.id} isMembro={!!membership} />
+                  </TabsContent>
+                )}
+                {isTabVisible("leituras") && (
+                  <TabsContent value="leituras" className="mt-5">
+                    <LeiturasTab clubeId={clube.id} isMembro={!!membership} />
+                  </TabsContent>
+                )}
+                {isTabVisible("canais") && (
+                  <TabsContent value="canais" className="mt-5">
+                    <CanaisTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={!!membership}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("eventos") && (
+                  <TabsContent value="eventos" className="mt-5">
+                    <EventosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={!!membership}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("membros") && (
+                  <TabsContent value="membros" className="mt-5">
+                    <MembrosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={!!membership}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("conteudos") && (
+                  <TabsContent value="conteudos" className="mt-5">
+                    <ConteudosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={!!membership}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("microgrupos") && (
+                  <TabsContent value="microgrupos" className="mt-5">
+                    <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
+                  </TabsContent>
+                )}
                 {canManage && (
                   <TabsContent value="gestao" className="mt-5">
                     <GestaoTab clubeId={clube.id} curadorId={clube.curador_id} />

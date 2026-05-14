@@ -14,6 +14,16 @@ const FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_gamificacao_home", label: "Gamificação na Home", desc: "Exibir XP, nível e streak no topo da Home." },
 ];
 
+const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
+  { key: "show_clube_feed", label: "Aba Feed", desc: "Exibir a aba Feed dentro do clube." },
+  { key: "show_clube_leituras", label: "Aba Leituras", desc: "Exibir a aba Leituras dentro do clube." },
+  { key: "show_clube_canais", label: "Aba Canais", desc: "Exibir a aba Canais dentro do clube." },
+  { key: "show_clube_eventos", label: "Aba Eventos", desc: "Exibir a aba Eventos dentro do clube." },
+  { key: "show_clube_membros", label: "Aba Membros", desc: "Exibir a aba Membros dentro do clube." },
+  { key: "show_clube_conteudos", label: "Aba Conteúdos", desc: "Exibir a aba Conteúdos dentro do clube." },
+  { key: "show_clube_microgrupos", label: "Aba Microgrupos", desc: "Exibir a aba Microgrupos dentro do clube." },
+];
+
 export const VisibilidadeTab = () => {
   const [values, setValues] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -35,7 +45,7 @@ export const VisibilidadeTab = () => {
         map[row.key] = typeof v === "boolean" ? v : v === "true" || v === true;
       }
       // defaults
-      FLAGS.forEach((f) => {
+      [...FLAGS, ...CLUBE_FLAGS].forEach((f) => {
         if (!(f.key in map)) map[f.key] = true;
       });
       setValues(map);
@@ -69,6 +79,28 @@ export const VisibilidadeTab = () => {
       </div>
       <div className="card-soft p-4 space-y-4">
         {FLAGS.map((f) => (
+          <div key={f.key} className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <Label htmlFor={f.key} className="font-semibold">{f.label}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+            </div>
+            <Switch
+              id={f.key}
+              checked={!!values[f.key]}
+              onCheckedChange={(v) => toggle(f.key, v)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold">Abas do Clube de Leitura</h2>
+        <p className="text-sm text-muted-foreground">
+          Controle quais abas internas aparecem em cada clube. Admins sempre veem tudo.
+        </p>
+      </div>
+      <div className="card-soft p-4 space-y-4">
+        {CLUBE_FLAGS.map((f) => (
           <div key={f.key} className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <Label htmlFor={f.key} className="font-semibold">{f.label}</Label>
