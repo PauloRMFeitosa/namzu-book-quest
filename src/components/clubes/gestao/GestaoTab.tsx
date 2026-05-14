@@ -36,6 +36,7 @@ import {
 import { useMembrosClube } from "@/hooks/clubes/useMembrosClube";
 import { useClube } from "@/hooks/clubes/useClube";
 import { EditarClubeDialog } from "./EditarClubeDialog";
+import { TrilhaGestao } from "./TrilhaGestao";
 
 export const GestaoTab = ({ clubeId, curadorId }: { clubeId: string; curadorId: string }) => {
   const { canManage } = useIsCurador(clubeId, curadorId);
@@ -110,6 +111,9 @@ export const GestaoTab = ({ clubeId, curadorId }: { clubeId: string; curadorId: 
           </div>
         ))}
       </section>
+
+      {/* Trilha de leituras */}
+      <TrilhaGestao clubeId={clubeId} />
 
       {/* Top contribuidores */}
       <section className="flex flex-col gap-3">
