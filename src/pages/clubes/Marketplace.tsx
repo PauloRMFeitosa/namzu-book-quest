@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
+import { PageHero } from "@/components/PageHero";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { FiltrosBar } from "@/components/clubes/marketplace/FiltrosBar";
 import { SecaoCarrossel } from "@/components/clubes/marketplace/SecaoCarrossel";
@@ -39,28 +39,14 @@ const Marketplace = () => {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-8 pb-8">
+      <div className="flex flex-col gap-6 pb-8">
         {/* Hero editorial */}
-        <motion.header
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative overflow-hidden rounded-[var(--radius)] border border-border/60 bg-gradient-paper px-5 py-7"
-        >
-          <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
-          <div className="relative flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-accent uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Clubes de leitura</span>
-            </div>
-            <h1 className="font-display text-3xl md:text-4xl font-semibold leading-tight text-foreground">
-              Encontre sua <span className="text-gradient-warm">tribo intelectual</span>
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-md mt-1">
-              Comunidades vivas para mergulhar fundo em livros, ideias e conversas que importam.
-            </p>
-          </div>
-        </motion.header>
+        <PageHero
+          icon={Sparkles}
+          badge="Clubes de leitura"
+          title={<>Encontre sua <span className="text-gradient-warm">tribo intelectual</span></>}
+          description="Comunidades vivas para mergulhar fundo em livros, ideias e conversas que importam."
+        />
 
         <FiltrosBar
           busca={busca}
