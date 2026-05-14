@@ -19,15 +19,17 @@ import {
   useSairClube,
 } from "@/hooks/clubes/useClube";
 import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
+import { useFeatureFlags, type FeatureFlagKey } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-const BASE_TABS = [
-  { value: "feed", label: "Feed" },
-  { value: "leituras", label: "Leituras" },
-  { value: "canais", label: "Canais" },
-  { value: "eventos", label: "Eventos" },
-  { value: "membros", label: "Membros" },
-  { value: "conteudos", label: "Conteúdos" },
-  { value: "microgrupos", label: "Microgrupos" },
+const BASE_TABS: { value: string; label: string; flag: FeatureFlagKey }[] = [
+  { value: "feed", label: "Feed", flag: "show_clube_feed" },
+  { value: "leituras", label: "Leituras", flag: "show_clube_leituras" },
+  { value: "canais", label: "Canais", flag: "show_clube_canais" },
+  { value: "eventos", label: "Eventos", flag: "show_clube_eventos" },
+  { value: "membros", label: "Membros", flag: "show_clube_membros" },
+  { value: "conteudos", label: "Conteúdos", flag: "show_clube_conteudos" },
+  { value: "microgrupos", label: "Microgrupos", flag: "show_clube_microgrupos" },
 ];
 
 const ClubeDetalhe = () => {
@@ -40,7 +42,12 @@ const ClubeDetalhe = () => {
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
   const { canManage } = useIsCurador(id, clube?.curador_id);
-  const TABS = canManage ? [...BASE_TABS, { value: "gestao", label: "Gestão" }] : BASE_TABS;
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
+  const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
+  const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
+  const activeTab = isTabVisible(tab) ? tab : (TABS[0]?.value ?? "feed");
 
   if (!id) return <Navigate to="/clubes" replace />;
 
