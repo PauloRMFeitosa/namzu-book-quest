@@ -84,6 +84,23 @@ export const EditarClubeDialog = ({
             />
           </div>
           <div className="grid gap-1.5">
+            <Label>Categoria</Label>
+            <Select
+              value={form.categoria || "_none"}
+              onValueChange={(v) => setForm((f) => ({ ...f, categoria: v === "_none" ? "" : v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">Sem categoria</SelectItem>
+                {CATEGORIAS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
             <Label>Objetivo</Label>
             <Textarea
               rows={2}
