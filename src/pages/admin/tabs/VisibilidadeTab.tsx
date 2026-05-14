@@ -14,6 +14,16 @@ const FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_gamificacao_home", label: "Gamificação na Home", desc: "Exibir XP, nível e streak no topo da Home." },
 ];
 
+const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
+  { key: "show_clube_feed", label: "Aba Feed", desc: "Exibir a aba Feed dentro do clube." },
+  { key: "show_clube_leituras", label: "Aba Leituras", desc: "Exibir a aba Leituras dentro do clube." },
+  { key: "show_clube_canais", label: "Aba Canais", desc: "Exibir a aba Canais dentro do clube." },
+  { key: "show_clube_eventos", label: "Aba Eventos", desc: "Exibir a aba Eventos dentro do clube." },
+  { key: "show_clube_membros", label: "Aba Membros", desc: "Exibir a aba Membros dentro do clube." },
+  { key: "show_clube_conteudos", label: "Aba Conteúdos", desc: "Exibir a aba Conteúdos dentro do clube." },
+  { key: "show_clube_microgrupos", label: "Aba Microgrupos", desc: "Exibir a aba Microgrupos dentro do clube." },
+];
+
 export const VisibilidadeTab = () => {
   const [values, setValues] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
