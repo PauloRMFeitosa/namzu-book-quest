@@ -6,7 +6,14 @@ export type FeatureFlagKey =
   | "show_metas"
   | "show_historico"
   | "show_notificacoes"
-  | "show_gamificacao_home";
+  | "show_gamificacao_home"
+  | "show_clube_feed"
+  | "show_clube_leituras"
+  | "show_clube_canais"
+  | "show_clube_eventos"
+  | "show_clube_membros"
+  | "show_clube_conteudos"
+  | "show_clube_microgrupos";
 
 const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clubes: true,
@@ -14,6 +21,13 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_historico: true,
   show_notificacoes: true,
   show_gamificacao_home: true,
+  show_clube_feed: true,
+  show_clube_leituras: true,
+  show_clube_canais: true,
+  show_clube_eventos: true,
+  show_clube_membros: true,
+  show_clube_conteudos: true,
+  show_clube_microgrupos: true,
 };
 
 export const useFeatureFlags = () => {
