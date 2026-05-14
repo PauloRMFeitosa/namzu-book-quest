@@ -8,10 +8,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { usePerguntasProfundasIA } from "@/hooks/clubes/useClubeAI";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const PerguntasProfundasButton = ({ postId }: { postId: string }) => {
   const [open, setOpen] = useState(false);
   const m = usePerguntasProfundasIA();
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  if (!isAdmin && !flags.show_clube_ai_provocacao) return null;
 
   const trigger = () => {
     setOpen(true);

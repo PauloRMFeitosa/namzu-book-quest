@@ -12,6 +12,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useLeituraCopiloto } from "@/hooks/clubes/useClubeAI";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const LeituraCopilotoButton = ({
   usuarioLeituraId,
@@ -22,6 +24,9 @@ export const LeituraCopilotoButton = ({
   const [pergunta, setPergunta] = useState("");
   const [historico, setHistorico] = useState<{ q: string; a: string }[]>([]);
   const m = useLeituraCopiloto();
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  if (!isAdmin && !flags.show_clube_ai_copiloto) return null;
 
   const acao = async (
     modo: "perguntas_guia" | "explicar_conceito" | "resumo_capitulo" | "livre",

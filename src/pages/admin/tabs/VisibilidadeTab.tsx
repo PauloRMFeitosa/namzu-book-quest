@@ -22,6 +22,8 @@ const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_clube_membros", label: "Aba Membros", desc: "Exibir a aba Membros dentro do clube." },
   { key: "show_clube_conteudos", label: "Aba Conteúdos", desc: "Exibir a aba Conteúdos dentro do clube." },
   { key: "show_clube_microgrupos", label: "Aba Microgrupos", desc: "Exibir a aba Microgrupos dentro do clube." },
+  { key: "show_clube_ai_copiloto", label: "IA · Copiloto de leitura", desc: "Exibir o botão Copiloto IA na página de leitura." },
+  { key: "show_clube_ai_provocacao", label: "IA · Provocar discussão", desc: "Exibir o botão Provocar (perguntas profundas) nos posts do feed." },
 ];
 
 export const VisibilidadeTab = () => {
