@@ -1,12 +1,25 @@
 import { useState, useMemo } from "react";
-import { Search, Crown, Flame, Sparkles, Users } from "lucide-react";
+import { Search, Crown, Flame, Sparkles, Users, LogOut, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMembrosClube } from "@/hooks/clubes/useMembrosClube";
+import { useSairClube } from "@/hooks/clubes/useClube";
 
 export const MembrosTab = ({
   clubeId,
@@ -18,6 +31,7 @@ export const MembrosTab = ({
   isMembro: boolean;
 }) => {
   const { data: membros, isLoading } = useMembrosClube(clubeId, curadorId);
+  const sair = useSairClube(clubeId);
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
