@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, Calendar, Flame, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface Props {
   clubeId: string;
@@ -14,6 +16,9 @@ interface Props {
 export const ClubeSidebar = ({ clubeId, membrosCount, ativos7d, ativos30d }: Props) => {
   const { data: ranking = [] } = useRankingClube(clubeId);
   const { data: eventos = [] } = useProximosEventos(clubeId);
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const showEventos = isAdmin || flags.show_clube_eventos;
   const pctAtivos = membrosCount > 0 ? Math.round((ativos7d / membrosCount) * 100) : 0;
 
   return (
@@ -79,26 +84,28 @@ export const ClubeSidebar = ({ clubeId, membrosCount, ativos7d, ativos30d }: Pro
       </div>
 
       {/* Próximos eventos */}
-      <div className="card-soft p-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-accent" />
-          <h3 className="font-display font-semibold text-sm">Próximos eventos</h3>
+      {showEventos && (
+        <div className="card-soft p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-accent" />
+            <h3 className="font-display font-semibold text-sm">Próximos eventos</h3>
+          </div>
+          {eventos.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhum evento marcado.</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {eventos.map((e: any) => (
+                <li key={e.id} className="flex flex-col gap-0.5">
+                  <span className="text-xs font-medium truncate">{e.titulo}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {format(new Date(e.inicio_em), "dd 'de' MMM, HH:mm", { locale: ptBR })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        {eventos.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Nenhum evento marcado.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {eventos.map((e: any) => (
-              <li key={e.id} className="flex flex-col gap-0.5">
-                <span className="text-xs font-medium truncate">{e.titulo}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {format(new Date(e.inicio_em), "dd 'de' MMM, HH:mm", { locale: ptBR })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
     </aside>
   );
 };
