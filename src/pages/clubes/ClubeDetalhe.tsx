@@ -64,6 +64,7 @@ const ClubeDetalhe = () => {
             <ClubeHeader
               clube={clube}
               isMembro={membership?.status === "ativo"}
+              isPendente={membership?.status === "pendente"}
               onEntrar={() => entrar.mutate()}
               onSair={() => sair.mutate()}
               loading={entrar.isPending || sair.isPending}
