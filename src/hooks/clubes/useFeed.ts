@@ -13,6 +13,7 @@ export interface FeedPost {
   is_destaque_curador: boolean;
   curtidas_count: number;
   created_at: string;
+  imagem_url: string | null;
   autor: {
     user_id: string;
     username: string | null;
@@ -22,6 +23,46 @@ export interface FeedPost {
   curtido_por_mim: boolean;
   respostas_count: number;
 }
+
+export const useRespostasPost = (postId: string | undefined, enabled: boolean) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["clube-post-respostas", postId, user?.id],
+    enabled: !!postId && enabled,
+    queryFn: async (): Promise<FeedPost[]> => {
+      const { data: posts, error } = await supabase
+        .from("clube_posts")
+        .select("*")
+        .eq("parent_post_id", postId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      if (!posts || posts.length === 0) return [];
+      const userIds = Array.from(new Set(posts.map((p: any) => p.user_id)));
+      const postIds = posts.map((p: any) => p.id);
+      const [perfisRes, curtidasMinhasRes] = await Promise.all([
+        supabase
+          .from("perfis")
+          .select("user_id, username, nome_exibicao, avatar_url")
+          .in("user_id", userIds),
+        user
+          ? supabase
+              .from("clube_post_curtidas")
+              .select("post_id")
+              .in("post_id", postIds)
+              .eq("user_id", user.id)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const perfisMap = new Map((perfisRes.data ?? []).map((p: any) => [p.user_id, p]));
+      const curtidasSet = new Set(((curtidasMinhasRes as any).data ?? []).map((c: any) => c.post_id));
+      return posts.map((p: any) => ({
+        ...p,
+        autor: perfisMap.get(p.user_id) ?? null,
+        curtido_por_mim: curtidasSet.has(p.id),
+        respostas_count: 0,
+      })) as FeedPost[];
+    },
+  });
+};
 
 const PAGE_SIZE = 10;
 
