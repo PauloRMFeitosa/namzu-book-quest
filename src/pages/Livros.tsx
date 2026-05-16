@@ -8,7 +8,7 @@ import { BookOpen, Plus, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Filtro = "todos" | "lendo" | "quero_ler" | "lido";
+type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo";
 
 const Livros = () => {
   const { user } = useAuth();
@@ -40,11 +40,14 @@ const Livros = () => {
       }
       return list.map((l: any) => ({
         ...l,
-        statusEfetivo: lendoIds.has(l.id)
-          ? "lendo"
-          : l.status === "lido" || l.status === "concluido" || concluidoIds.has(l.id)
-          ? "lido"
-          : l.status,
+        statusEfetivo:
+          l.status === "relendo"
+            ? "relendo"
+            : lendoIds.has(l.id)
+            ? "lendo"
+            : l.status === "lido" || l.status === "concluido" || concluidoIds.has(l.id)
+            ? "lido"
+            : l.status,
       }));
     },
   });
@@ -59,6 +62,7 @@ const Livros = () => {
     lendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lendo")).length,
     quero_ler: data.filter((l: any) => matchFiltro(l.statusEfetivo, "quero_ler")).length,
     lido: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lido")).length,
+    relendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "relendo")).length,
   };
 
   const filtrados = data.filter((l: any) => matchFiltro(l.statusEfetivo, filtro));
@@ -66,6 +70,7 @@ const Livros = () => {
   const chips: { key: Filtro; label: string }[] = [
     { key: "todos", label: "Todos" },
     { key: "lendo", label: "Lendo" },
+    { key: "relendo", label: "Relendo" },
     { key: "quero_ler", label: "Quero ler" },
     { key: "lido", label: "Lidos" },
   ];
