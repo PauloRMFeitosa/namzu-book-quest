@@ -9,12 +9,13 @@ import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
 interface Props {
   clube: ClubeDetalhe;
   isMembro: boolean;
+  isPendente?: boolean;
   onEntrar: () => void;
   onSair: () => void;
   loading?: boolean;
 }
 
-export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Props) => {
+export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loading }: Props) => {
   const navigate = useNavigate();
 
   const compartilhar = async () => {
