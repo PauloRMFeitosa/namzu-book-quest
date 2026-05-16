@@ -189,12 +189,39 @@ const ProgressoDialog = ({
   trigger: React.ReactNode;
 }) => {
   const [open, setOpen] = useState(false);
-  const [percentual, setPercentual] = useState(trilha.meu_progresso?.percentual ?? 0);
-  const [capitulo, setCapitulo] = useState(trilha.meu_progresso?.capitulo_atual ?? "");
-  const [pagina, setPagina] = useState<string>(
-    trilha.meu_progresso?.pagina_atual?.toString() ?? ""
-  );
+  const [percentual, setPercentual] = useState<number>(0);
+  const [capitulo, setCapitulo] = useState<string>("");
+  const [pagina, setPagina] = useState<string>("");
+  const totalPaginas = trilha.total_paginas ?? null;
   const salvar = useSalvarProgresso(clubeId);
+
+  // Sempre que abrir o diálogo, limpa os campos (em branco)
+  const handleOpenChange = (v: boolean) => {
+    setOpen(v);
+    if (v) {
+      setPercentual(0);
+      setCapitulo("");
+      setPagina("");
+    }
+  };
+
+  const handlePaginaChange = (val: string) => {
+    setPagina(val);
+    if (totalPaginas && val) {
+      const n = Number(val);
+      if (!Number.isNaN(n)) {
+        const pct = Math.max(0, Math.min(100, Math.round((n / totalPaginas) * 100)));
+        setPercentual(pct);
+      }
+    }
+  };
+
+  const handlePercentualChange = (val: number) => {
+    setPercentual(val);
+    if (totalPaginas) {
+      setPagina(Math.round((val / 100) * totalPaginas).toString());
+    }
+  };
 
   const handleSave = async () => {
     await salvar.mutateAsync({
@@ -207,7 +234,7 @@ const ProgressoDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -223,7 +250,7 @@ const ProgressoDialog = ({
             </Label>
             <Slider
               value={[percentual]}
-              onValueChange={(v) => setPercentual(v[0])}
+              onValueChange={(v) => handlePercentualChange(v[0])}
               min={0}
               max={100}
               step={5}
@@ -241,13 +268,17 @@ const ProgressoDialog = ({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="pag" className="text-xs">Página atual</Label>
+              <Label htmlFor="pag" className="text-xs">
+                Página atual{totalPaginas ? ` / ${totalPaginas}` : ""}
+              </Label>
               <Input
                 id="pag"
                 type="number"
+                min={0}
+                max={totalPaginas ?? undefined}
                 value={pagina}
-                onChange={(e) => setPagina(e.target.value)}
-                placeholder="ex: 87"
+                onChange={(e) => handlePaginaChange(e.target.value)}
+                placeholder={totalPaginas ? `0 a ${totalPaginas}` : "ex: 87"}
               />
             </div>
           </div>
@@ -257,7 +288,10 @@ const ProgressoDialog = ({
               variant="ghost"
               size="sm"
               className="rounded-xl"
-              onClick={() => setPercentual(100)}
+              onClick={() => {
+                setPercentual(100);
+                if (totalPaginas) setPagina(totalPaginas.toString());
+              }}
             >
               <CheckCircle2 className="w-4 h-4" /> Marcar como concluído
             </Button>
