@@ -1,10 +1,16 @@
 import { useState, useMemo } from "react";
-import { Search, Crown, Flame, Sparkles, Users, LogOut, Loader2 } from "lucide-react";
+import { Search, Crown, Flame, Sparkles, Users, LogOut, Loader2, Shield, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +22,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMembrosClube } from "@/hooks/clubes/useMembrosClube";
-import { useSairClube } from "@/hooks/clubes/useClube";
+import {
+  useSairClube,
+  useAprovarMembro,
+  useRejeitarMembro,
+  useDefinirPapelMembro,
+} from "@/hooks/clubes/useClube";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const MembrosTab = ({
   clubeId,
@@ -33,21 +46,32 @@ export const MembrosTab = ({
 }) => {
   const { data: membros, isLoading } = useMembrosClube(clubeId, curadorId);
   const sair = useSairClube(clubeId);
+  const aprovar = useAprovarMembro(clubeId);
+  const rejeitar = useRejeitarMembro(clubeId);
+  const definirPapel = useDefinirPapelMembro(clubeId);
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [q, setQ] = useState("");
 
+  const isCurador = !!user && user.id === curadorId;
+  const meuPapel = membros?.find((m) => m.user_id === user?.id)?.papel;
+  const isModerador = meuPapel === "moderador";
+  const canManage = isCurador || isAdmin || isModerador;
+
+  const ativos = useMemo(() => (membros ?? []).filter((m) => m.status === "ativo"), [membros]);
+  const pendentes = useMemo(() => (membros ?? []).filter((m) => m.status === "pendente"), [membros]);
+
   const filtered = useMemo(() => {
-    if (!membros) return [];
     const term = q.trim().toLowerCase();
-    if (!term) return membros;
-    return membros.filter((m) =>
+    if (!term) return ativos;
+    return ativos.filter((m) =>
       [m.perfil?.nome_exibicao, m.perfil?.username, m.perfil?.bio]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(term))
     );
-  }, [membros, q]);
+  }, [ativos, q]);
 
-  if (!isMembro) {
+  if (!isMembro && !canManage) {
     return (
       <div className="card-soft p-8 flex flex-col items-center text-center gap-2 border border-dashed border-border/60">
         <Users className="w-8 h-8 text-muted-foreground" />
@@ -64,13 +88,61 @@ export const MembrosTab = ({
       <header className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-semibold">
-            Membros {membros ? <span className="text-muted-foreground font-normal">· {membros.length}</span> : null}
+            Membros <span className="text-muted-foreground font-normal">· {ativos.length}</span>
           </h2>
           <p className="text-xs text-muted-foreground">
             Quem dá vida a esta tribo intelectual.
           </p>
         </div>
       </header>
+
+      {canManage && pendentes.length > 0 && (
+        <section className="card-soft p-4 border border-accent/30 bg-accent/5 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-accent" />
+            <h3 className="font-display font-semibold text-sm">
+              Solicitações pendentes <span className="text-muted-foreground font-normal">· {pendentes.length}</span>
+            </h3>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {pendentes.map((m) => (
+              <li key={m.user_id} className="flex items-center gap-3 bg-background rounded-xl p-2.5">
+                <Avatar className="w-9 h-9">
+                  <AvatarImage src={m.perfil?.avatar_url ?? undefined} />
+                  <AvatarFallback>
+                    {(m.perfil?.nome_exibicao ?? m.perfil?.username ?? "U").slice(0, 1).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro"}
+                  </p>
+                  {m.perfil?.username && (
+                    <p className="text-[11px] text-muted-foreground truncate">@{m.perfil.username}</p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-lg gap-1"
+                  disabled={rejeitar.isPending}
+                  onClick={() => rejeitar.mutate(m.user_id)}
+                >
+                  <X className="w-3.5 h-3.5" /> Recusar
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 rounded-lg bg-primary hover:bg-primary-hover gap-1"
+                  disabled={aprovar.isPending}
+                  onClick={() => aprovar.mutate(m.user_id)}
+                >
+                  <Check className="w-3.5 h-3.5" /> Aprovar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -113,6 +185,11 @@ export const MembrosTab = ({
                   {m.is_curador && (
                     <Badge className="h-5 px-1.5 gap-1 bg-accent/15 text-accent border-0 text-[10px]">
                       <Crown className="w-3 h-3" /> Curador
+                    </Badge>
+                  )}
+                  {!m.is_curador && m.papel === "moderador" && (
+                    <Badge className="h-5 px-1.5 gap-1 bg-primary/15 text-primary border-0 text-[10px]">
+                      <Shield className="w-3 h-3" /> Moderador
                     </Badge>
                   )}
                   {user?.id === m.user_id && (
@@ -160,6 +237,24 @@ export const MembrosTab = ({
                   </span>
                   <span>· entrou {format(new Date(m.data_entrada), "dd MMM yy", { locale: ptBR })}</span>
                 </div>
+                {canManage && !m.is_curador && user?.id !== m.user_id && (
+                  <div className="mt-2">
+                    <Select
+                      value={m.papel}
+                      onValueChange={(v) =>
+                        definirPapel.mutate({ userId: m.user_id, papel: v as "membro" | "moderador" })
+                      }
+                    >
+                      <SelectTrigger className="h-7 text-[11px] rounded-lg w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="membro">Membro</SelectItem>
+                        <SelectItem value="moderador">Moderador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </li>
           ))}
