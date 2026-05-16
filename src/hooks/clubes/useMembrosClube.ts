@@ -24,13 +24,13 @@ export const useMembrosClube = (clubeId: string | undefined, curadorId?: string)
     queryKey: ["clube-membros-list", clubeId],
     enabled: !!clubeId,
     queryFn: async (): Promise<MembroClube[]> => {
-      const { data: membros, error } = await supabase
+      const { data: membros, error } = await (supabase as any)
         .from("clube_membros")
         .select("user_id, data_entrada, status, papel")
         .eq("clube_id", clubeId!)
         .order("data_entrada", { ascending: false });
       if (error) throw error;
-      const ids = (membros ?? []).map((m) => m.user_id);
+      const ids = (membros ?? []).map((m: any) => m.user_id);
       if (!ids.length) return [];
 
       const [perfis, gam] = await Promise.all([
