@@ -50,7 +50,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
 
       const obraIds = trilhas.map((t) => t.obra_id);
 
-      const [obrasRes, progRes, membrosRes] = await Promise.all([
+      const [obrasRes, progRes, membrosRes, edicoesRes] = await Promise.all([
         supabase
           .from("obras")
           .select("id, titulo_original, capa_padrao_url, sinopse_padrao")
@@ -65,7 +65,19 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
           .select("user_id", { count: "exact", head: true })
           .eq("clube_id", clubeId!)
           .eq("status", "ativo"),
+        supabase
+          .from("edicoes")
+          .select("obra_id, num_paginas")
+          .in("obra_id", obraIds)
+          .not("num_paginas", "is", null),
       ]);
+
+      const paginasPorObra = new Map<string, number>();
+      (edicoesRes.data ?? []).forEach((e: any) => {
+        if (e.num_paginas && !paginasPorObra.has(e.obra_id)) {
+          paginasPorObra.set(e.obra_id, e.num_paginas);
+        }
+      });
 
       const obraMap = new Map((obrasRes.data ?? []).map((o: any) => [o.id, o]));
       const progPorObra = new Map<string, any[]>();
