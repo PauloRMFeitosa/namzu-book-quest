@@ -16,6 +16,8 @@ export interface TrilhaItem {
     capa_padrao_url: string | null;
     sinopse_padrao: string | null;
   } | null;
+  /** total de páginas (da primeira edição encontrada) */
+  total_paginas: number | null;
   /** progresso coletivo médio (0-100) */
   progresso_coletivo: number;
   /** quantos membros já concluíram */
