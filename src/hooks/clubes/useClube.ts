@@ -153,22 +153,6 @@ async function sincronizarLivrosClube(userId: string, clubeId: string) {
       }
     }
     if (!usuarioLivroId) continue;
-
-    const { data: jaExiste } = await supabase
-      .from("usuario_leituras")
-      .select("id")
-      .eq("usuario_livro_id", usuarioLivroId)
-      .eq("clube_id", clubeId)
-      .maybeSingle();
-    if (!jaExiste) {
-      await supabase.from("usuario_leituras").insert({
-        usuario_livro_id: usuarioLivroId,
-        tipo_origem: "clube",
-        clube_id: clubeId,
-        status: "lendo",
-        data_inicio: today,
-      });
-    }
   }
 }
 
