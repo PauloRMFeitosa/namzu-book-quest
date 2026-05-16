@@ -133,21 +133,29 @@ export const useCriarPost = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { conteudo: string; parent_post_id?: string | null }) => {
+    mutationFn: async (input: {
+      conteudo: string;
+      parent_post_id?: string | null;
+      imagem_url?: string | null;
+    }) => {
       if (!user || !clubeId) throw new Error("Não autenticado");
       const conteudo = input.conteudo.trim();
-      if (!conteudo) throw new Error("Escreva algo antes de publicar");
+      if (!conteudo && !input.imagem_url) throw new Error("Escreva algo ou adicione uma imagem");
       const { error } = await supabase.from("clube_posts").insert({
         clube_id: clubeId,
         user_id: user.id,
-        conteudo,
+        conteudo: conteudo || "",
         parent_post_id: input.parent_post_id ?? null,
-      });
+        imagem_url: input.imagem_url ?? null,
+      } as any);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Publicado");
+    onSuccess: (_d, vars) => {
+      toast.success(vars.parent_post_id ? "Comentário enviado" : "Publicado");
       qc.invalidateQueries({ queryKey: ["clube-feed", clubeId] });
+      if (vars.parent_post_id) {
+        qc.invalidateQueries({ queryKey: ["clube-post-respostas", vars.parent_post_id] });
+      }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao publicar"),
   });
