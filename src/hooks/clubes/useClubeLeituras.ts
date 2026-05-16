@@ -210,6 +210,8 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
     onSuccess: () => {
       toast.success("Progresso atualizado");
       qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      qc.invalidateQueries({ queryKey: ["livros"] });
+      qc.invalidateQueries({ queryKey: ["leituras"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
   });
