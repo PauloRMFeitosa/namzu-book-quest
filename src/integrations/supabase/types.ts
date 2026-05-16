@@ -526,6 +526,7 @@ export type Database = {
       }
       clubes: {
         Row: {
+          categoria: string | null
           created_at: string | null
           curador_id: string
           descricao: string | null
@@ -539,6 +540,7 @@ export type Database = {
           regras: string | null
         }
         Insert: {
+          categoria?: string | null
           created_at?: string | null
           curador_id: string
           descricao?: string | null
@@ -552,6 +554,7 @@ export type Database = {
           regras?: string | null
         }
         Update: {
+          categoria?: string | null
           created_at?: string | null
           curador_id?: string
           descricao?: string | null

@@ -120,11 +120,72 @@ export const useEntrarClube = (clubeId: string | undefined) => {
         .from("clube_membros")
         .insert({ clube_id: clubeId, user_id: user.id, status: "ativo" });
       if (error) throw error;
+
+      // Sincroniza trilha do clube com livros e leituras do usuário
+      const { data: trilhas } = await supabase
+        .from("clube_trilhas")
+        .select("obra_id")
+        .eq("clube_id", clubeId);
+      const obraIds = Array.from(new Set((trilhas ?? []).map((t: any) => t.obra_id)));
+      if (!obraIds.length) return;
+
+      const { data: existentes } = await supabase
+        .from("usuario_livros")
+        .select("id, obra_id, status")
+        .eq("user_id", user.id)
+        .in("obra_id", obraIds);
+      const byObra = new Map<string, { id: string; status: string }>(
+        (existentes ?? []).map((r: any) => [r.obra_id, { id: r.id, status: r.status }])
+      );
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      for (const obra_id of obraIds) {
+        let usuarioLivroId: string | undefined;
+        const ex = byObra.get(obra_id);
+        if (!ex) {
+          const { data: novo } = await supabase
+            .from("usuario_livros")
+            .insert({ user_id: user.id, obra_id, status: "quero_ler" })
+            .select("id")
+            .single();
+          usuarioLivroId = novo?.id;
+        } else {
+          usuarioLivroId = ex.id;
+          // Se já leu antes, marca como relendo
+          if (ex.status === "lido" || ex.status === "concluido") {
+            await supabase
+              .from("usuario_livros")
+              .update({ status: "relendo", updated_at: new Date().toISOString() })
+              .eq("id", ex.id);
+          }
+        }
+        if (!usuarioLivroId) continue;
+
+        // Cria experiência de leitura vinculada ao clube se ainda não existir
+        const { data: jaExiste } = await supabase
+          .from("usuario_leituras")
+          .select("id")
+          .eq("usuario_livro_id", usuarioLivroId)
+          .eq("clube_id", clubeId)
+          .maybeSingle();
+        if (!jaExiste) {
+          await supabase.from("usuario_leituras").insert({
+            usuario_livro_id: usuarioLivroId,
+            tipo_origem: "clube",
+            clube_id: clubeId,
+            status: "lendo",
+            data_inicio: today,
+          });
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Bem-vindo ao clube!");
+      toast.success("Bem-vindo ao clube! Os livros foram adicionados à sua biblioteca.");
       qc.invalidateQueries({ queryKey: ["clube-membership", clubeId] });
       qc.invalidateQueries({ queryKey: ["clube", clubeId] });
+      qc.invalidateQueries({ queryKey: ["meus-livros"] });
+      qc.invalidateQueries({ queryKey: ["experiencias"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
   });
