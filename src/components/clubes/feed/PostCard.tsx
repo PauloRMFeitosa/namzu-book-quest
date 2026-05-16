@@ -1,21 +1,28 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Heart, MessageCircle, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCurtirPost, type FeedPost } from "@/hooks/clubes/useFeed";
+import { useCurtirPost, useRespostasPost, type FeedPost } from "@/hooks/clubes/useFeed";
 import { cn } from "@/lib/utils";
 import { PerguntasProfundasButton } from "@/components/clubes/ai/PerguntasProfundasButton";
+import { PostComposer } from "./PostComposer";
 
 interface Props {
   post: FeedPost;
   clubeId: string;
+  isMembro?: boolean;
+  isReply?: boolean;
 }
 
-export const PostCard = ({ post, clubeId }: Props) => {
+export const PostCard = ({ post, clubeId, isMembro = true, isReply }: Props) => {
   const curtir = useCurtirPost(clubeId);
+  const [openRespostas, setOpenRespostas] = useState(false);
+  const respostas = useRespostasPost(post.id, openRespostas);
+
   const nome = post.autor?.nome_exibicao || post.autor?.username || "Membro";
   const initials = nome
     .split(" ")
@@ -29,20 +36,20 @@ export const PostCard = ({ post, clubeId }: Props) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       className={cn(
-        "card-soft p-4 border transition-all",
-        post.is_destaque_curador
+        isReply ? "p-3 border-l-2 border-border/40 ml-2" : "card-soft p-4 border",
+        !isReply && (post.is_destaque_curador
           ? "border-accent/50 bg-accent/5"
-          : "border-border/60 hover:border-border",
+          : "border-border/60 hover:border-border"),
       )}
     >
-      {post.is_destaque_curador && (
+      {post.is_destaque_curador && !isReply && (
         <div className="flex items-center gap-1.5 mb-2 text-[10px] uppercase tracking-wider font-semibold text-accent">
           <Sparkles className="w-3 h-3" /> Destaque do curador
         </div>
       )}
 
       <header className="flex items-center gap-3 mb-3">
-        <Avatar className="w-9 h-9 border border-border">
+        <Avatar className={cn("border border-border", isReply ? "w-7 h-7" : "w-9 h-9")}>
           <AvatarImage src={post.autor?.avatar_url ?? undefined} />
           <AvatarFallback className="bg-secondary text-xs">{initials || "M"}</AvatarFallback>
         </Avatar>
@@ -54,9 +61,22 @@ export const PostCard = ({ post, clubeId }: Props) => {
         </div>
       </header>
 
-      <div className="prose prose-sm max-w-none text-foreground/90 leading-relaxed [&_p]:my-2 [&_a]:text-primary [&_blockquote]:border-l-2 [&_blockquote]:border-accent [&_blockquote]:pl-3 [&_blockquote]:italic">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.conteudo}</ReactMarkdown>
-      </div>
+      {post.conteudo && (
+        <div className="prose prose-sm max-w-none text-foreground/90 leading-relaxed [&_p]:my-2 [&_a]:text-primary [&_blockquote]:border-l-2 [&_blockquote]:border-accent [&_blockquote]:pl-3 [&_blockquote]:italic">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.conteudo}</ReactMarkdown>
+        </div>
+      )}
+
+      {post.imagem_url && (
+        <a href={post.imagem_url} target="_blank" rel="noreferrer" className="block mt-2">
+          <img
+            src={post.imagem_url}
+            alt=""
+            loading="lazy"
+            className="rounded-lg border border-border/40 max-h-96 w-full object-cover"
+          />
+        </a>
+      )}
 
       <footer className="flex items-center gap-1 pt-3 mt-3 border-t border-border/40">
         <button
@@ -68,17 +88,52 @@ export const PostCard = ({ post, clubeId }: Props) => {
               : "text-muted-foreground hover:bg-muted",
           )}
         >
-          <Heart
-            className={cn("w-3.5 h-3.5", post.curtido_por_mim && "fill-current")}
-          />
+          <Heart className={cn("w-3.5 h-3.5", post.curtido_por_mim && "fill-current")} />
           {post.curtidas_count}
         </button>
-        <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
-          <MessageCircle className="w-3.5 h-3.5" />
-          {post.respostas_count}
-        </button>
-        <PerguntasProfundasButton postId={post.id} />
+        {!isReply && (
+          <button
+            onClick={() => setOpenRespostas((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+              openRespostas ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            {post.respostas_count}
+          </button>
+        )}
+        {!isReply && <PerguntasProfundasButton postId={post.id} />}
       </footer>
+
+      <AnimatePresence>
+        {openRespostas && !isReply && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 pt-3 border-t border-border/40 flex flex-col gap-3">
+              {respostas.isLoading ? (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                (respostas.data ?? []).map((r) => (
+                  <PostCard key={r.id} post={r} clubeId={clubeId} isMembro={isMembro} isReply />
+                ))
+              )}
+              <PostComposer
+                clubeId={clubeId}
+                isMembro={isMembro}
+                parentPostId={post.id}
+                compact
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.article>
   );
 };
