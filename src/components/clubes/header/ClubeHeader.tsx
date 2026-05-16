@@ -123,10 +123,16 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
           <div className="pt-2">
             <Button
               onClick={onEntrar}
-              disabled={loading}
-              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
+              disabled={loading || isPendente}
+              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow disabled:opacity-70"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar no clube"}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isPendente ? (
+                "Aguardando aprovação"
+              ) : (
+                "Solicitar entrada"
+              )}
             </Button>
           </div>
         )}
