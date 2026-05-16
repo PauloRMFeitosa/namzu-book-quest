@@ -98,6 +98,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
         return {
           ...t,
           obra: obraMap.get(t.obra_id) ?? null,
+          total_paginas: paginasPorObra.get(t.obra_id) ?? null,
           progresso_coletivo: media,
           concluidos,
           total_membros: totalMembros,
