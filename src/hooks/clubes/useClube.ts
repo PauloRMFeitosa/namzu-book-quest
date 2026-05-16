@@ -175,7 +175,7 @@ export const useEntrarClube = (clubeId: string | undefined) => {
       if (!user || !clubeId) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("clube_membros")
-        .insert({ clube_id: clubeId, user_id: user.id, status: "pendente", papel: "membro" } as any);
+        .insert({ clube_id: clubeId, user_id: user.id, status: "pendente" } as any);
       if (error) throw error;
     },
     onSuccess: () => {

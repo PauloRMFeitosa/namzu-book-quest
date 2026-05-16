@@ -44,6 +44,7 @@ const ClubeDetalhe = () => {
   const { canManage } = useIsCurador(id, clube?.curador_id);
   const { flags } = useFeatureFlags();
   const { isAdmin } = useIsAdmin();
+  const acessoTotal = membership?.status === "ativo" || canManage;
   const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
   const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
   const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
