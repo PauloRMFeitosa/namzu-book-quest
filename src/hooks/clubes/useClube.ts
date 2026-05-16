@@ -105,6 +105,11 @@ export const useClubeMembership = (clubeId: string | undefined) => {
         .eq("clube_id", clubeId!)
         .eq("user_id", user!.id)
         .maybeSingle();
+      // Se o usuário já está ativo, garante que os livros da trilha estejam
+      // sincronizados na biblioteca dele (executa sob o próprio auth — passa RLS).
+      if (data?.status === "ativo" && user && clubeId) {
+        try { await sincronizarLivrosClube(user.id, clubeId); } catch (e) { console.warn("sync livros (membership) falhou", e); }
+      }
       return data;
     },
   });
