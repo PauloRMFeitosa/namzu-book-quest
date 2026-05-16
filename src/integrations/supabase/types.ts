@@ -168,18 +168,21 @@ export type Database = {
         Row: {
           clube_id: string
           data_entrada: string | null
+          papel: string
           status: string
           user_id: string
         }
         Insert: {
           clube_id: string
           data_entrada?: string | null
+          papel?: string
           status?: string
           user_id: string
         }
         Update: {
           clube_id?: string
           data_entrada?: string | null
+          papel?: string
           status?: string
           user_id?: string
         }
