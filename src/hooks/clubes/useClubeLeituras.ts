@@ -146,10 +146,72 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
         { onConflict: "user_id,clube_id,obra_id" }
       );
       if (error) throw error;
+
+      // Sincroniza com a biblioteca do usuário: marca o livro como "lendo"
+      // e garante uma entrada em usuario_leituras vinculada ao clube.
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const novoStatusLivro = status === "concluido" ? "lido" : "lendo";
+
+        const { data: ul } = await supabase
+          .from("usuario_livros")
+          .select("id, status")
+          .eq("user_id", user.id)
+          .eq("obra_id", input.obra_id)
+          .maybeSingle();
+
+        let usuarioLivroId = ul?.id as string | undefined;
+        if (!usuarioLivroId) {
+          const { data: novo } = await supabase
+            .from("usuario_livros")
+            .insert({ user_id: user.id, obra_id: input.obra_id, status: novoStatusLivro })
+            .select("id")
+            .single();
+          usuarioLivroId = novo?.id;
+        } else if (ul?.status !== novoStatusLivro && ul?.status !== "lido") {
+          await supabase
+            .from("usuario_livros")
+            .update({ status: novoStatusLivro, updated_at: new Date().toISOString() })
+            .eq("id", usuarioLivroId);
+        }
+
+        if (usuarioLivroId) {
+          const { data: jaExiste } = await supabase
+            .from("usuario_leituras")
+            .select("id, status")
+            .eq("usuario_livro_id", usuarioLivroId)
+            .eq("clube_id", clubeId)
+            .maybeSingle();
+          if (!jaExiste) {
+            await supabase.from("usuario_leituras").insert({
+              usuario_livro_id: usuarioLivroId,
+              tipo_origem: "clube",
+              clube_id: clubeId,
+              status: status === "concluido" ? "concluido" : "lendo",
+              data_inicio: today,
+              data_fim: status === "concluido" ? today : null,
+            });
+          } else if (status === "concluido" && jaExiste.status !== "concluido") {
+            await supabase
+              .from("usuario_leituras")
+              .update({ status: "concluido", data_fim: today, updated_at: new Date().toISOString() })
+              .eq("id", jaExiste.id);
+          } else if (status !== "concluido" && jaExiste.status === "nao_iniciado") {
+            await supabase
+              .from("usuario_leituras")
+              .update({ status: "lendo", updated_at: new Date().toISOString() })
+              .eq("id", jaExiste.id);
+          }
+        }
+      } catch (e) {
+        console.warn("sync biblioteca falhou", e);
+      }
     },
     onSuccess: () => {
       toast.success("Progresso atualizado");
       qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      qc.invalidateQueries({ queryKey: ["livros"] });
+      qc.invalidateQueries({ queryKey: ["leituras"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
   });
