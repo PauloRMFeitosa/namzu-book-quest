@@ -44,6 +44,7 @@ const ClubeDetalhe = () => {
   const { canManage } = useIsCurador(id, clube?.curador_id);
   const { flags } = useFeatureFlags();
   const { isAdmin } = useIsAdmin();
+  const acessoTotal = membership?.status === "ativo" || canManage;
   const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
   const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
   const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
@@ -63,7 +64,7 @@ const ClubeDetalhe = () => {
           <>
             <ClubeHeader
               clube={clube}
-              isMembro={membership?.status === "ativo"}
+              isMembro={acessoTotal}
               isPendente={membership?.status === "pendente"}
               onEntrar={() => entrar.mutate()}
               onSair={() => sair.mutate()}
@@ -95,12 +96,12 @@ const ClubeDetalhe = () => {
 
                 {isTabVisible("feed") && (
                   <TabsContent value="feed" className="mt-5">
-                    <FeedClube clubeId={clube.id} isMembro={membership?.status === "ativo"} />
+                    <FeedClube clubeId={clube.id} isMembro={acessoTotal} />
                   </TabsContent>
                 )}
                 {isTabVisible("leituras") && (
                   <TabsContent value="leituras" className="mt-5">
-                    <LeiturasTab clubeId={clube.id} isMembro={membership?.status === "ativo"} />
+                    <LeiturasTab clubeId={clube.id} isMembro={acessoTotal} />
                   </TabsContent>
                 )}
                 {isTabVisible("canais") && (
@@ -108,7 +109,7 @@ const ClubeDetalhe = () => {
                     <CanaisTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={membership?.status === "ativo"}
+                      isMembro={acessoTotal}
                     />
                   </TabsContent>
                 )}
@@ -117,7 +118,7 @@ const ClubeDetalhe = () => {
                     <EventosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={membership?.status === "ativo"}
+                      isMembro={acessoTotal}
                     />
                   </TabsContent>
                 )}
@@ -126,7 +127,7 @@ const ClubeDetalhe = () => {
                     <MembrosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={membership?.status === "ativo"}
+                      isMembro={acessoTotal}
                     />
                   </TabsContent>
                 )}
@@ -135,13 +136,13 @@ const ClubeDetalhe = () => {
                     <ConteudosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={membership?.status === "ativo"}
+                      isMembro={acessoTotal}
                     />
                   </TabsContent>
                 )}
                 {isTabVisible("microgrupos") && (
                   <TabsContent value="microgrupos" className="mt-5">
-                    <MicrogruposTab clubeId={clube.id} isMembro={membership?.status === "ativo"} />
+                    <MicrogruposTab clubeId={clube.id} isMembro={acessoTotal} />
                   </TabsContent>
                 )}
                 {canManage && (
