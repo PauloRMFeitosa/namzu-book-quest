@@ -64,7 +64,7 @@ export const FeedClube = ({ clubeId, isMembro }: Props) => {
       ) : (
         <div className="flex flex-col gap-3">
           {posts.map((p) => (
-            <PostCard key={p.id} post={p} clubeId={clubeId} />
+            <PostCard key={p.id} post={p} clubeId={clubeId} isMembro={isMembro} />
           ))}
           <div ref={sentinel} />
           {hasNextPage && (
