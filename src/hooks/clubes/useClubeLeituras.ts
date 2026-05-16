@@ -176,31 +176,117 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
         }
 
         if (usuarioLivroId) {
+          // Busca nome do clube para usar como intenção da pré-leitura
+          const { data: clubeInfo } = await supabase
+            .from("clubes")
+            .select("nome")
+            .eq("id", clubeId)
+            .maybeSingle();
+          const nomeClube = clubeInfo?.nome ?? "clube de leitura";
+
           const { data: jaExiste } = await supabase
             .from("usuario_leituras")
             .select("id, status")
             .eq("usuario_livro_id", usuarioLivroId)
             .eq("clube_id", clubeId)
             .maybeSingle();
-          if (!jaExiste) {
-            await supabase.from("usuario_leituras").insert({
-              usuario_livro_id: usuarioLivroId,
-              tipo_origem: "clube",
-              clube_id: clubeId,
-              status: status === "concluido" ? "concluido" : "lendo",
-              data_inicio: today,
-              data_fim: status === "concluido" ? today : null,
-            });
+
+          let usuarioLeituraId = jaExiste?.id as string | undefined;
+          if (!usuarioLeituraId) {
+            const { data: novaUL } = await supabase
+              .from("usuario_leituras")
+              .insert({
+                usuario_livro_id: usuarioLivroId,
+                tipo_origem: "clube",
+                clube_id: clubeId,
+                status: status === "concluido" ? "concluido" : "lendo",
+                data_inicio: today,
+                data_fim: status === "concluido" ? today : null,
+              })
+              .select("id")
+              .single();
+            usuarioLeituraId = novaUL?.id;
           } else if (status === "concluido" && jaExiste.status !== "concluido") {
             await supabase
               .from("usuario_leituras")
               .update({ status: "concluido", data_fim: today, updated_at: new Date().toISOString() })
-              .eq("id", jaExiste.id);
+              .eq("id", usuarioLeituraId);
           } else if (status !== "concluido" && jaExiste.status === "nao_iniciado") {
             await supabase
               .from("usuario_leituras")
               .update({ status: "lendo", updated_at: new Date().toISOString() })
-              .eq("id", jaExiste.id);
+              .eq("id", usuarioLeituraId);
+          }
+
+          if (usuarioLeituraId) {
+            const nowIso = new Date().toISOString();
+
+            // Garante pré-leitura registrada
+            const { data: preExist } = await supabase
+              .from("leituras")
+              .select("id")
+              .eq("usuario_leitura_id", usuarioLeituraId)
+              .eq("tipo", "pre_leitura")
+              .maybeSingle();
+            if (!preExist) {
+              const { data: preLeitura } = await supabase
+                .from("leituras")
+                .insert({
+                  user_id: user.id,
+                  usuario_leitura_id: usuarioLeituraId,
+                  tipo: "pre_leitura",
+                  data_inicio: nowIso,
+                  data_fim: nowIso,
+                })
+                .select("id")
+                .single();
+              if (preLeitura?.id) {
+                await supabase.from("leitura_pre").insert({
+                  leitura_id: preLeitura.id,
+                  intencao: `A partir do ${nomeClube}`,
+                });
+              }
+            }
+
+            // Garante sessão de leitura aberta (ou cria uma nova) e registra progresso
+            const { data: sessaoExist } = await supabase
+              .from("leituras")
+              .select("id, data_fim")
+              .eq("usuario_leitura_id", usuarioLeituraId)
+              .eq("tipo", "leitura")
+              .order("data_inicio", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            let leituraId = sessaoExist?.id as string | undefined;
+            if (!leituraId) {
+              const { data: novaLeitura } = await supabase
+                .from("leituras")
+                .insert({
+                  user_id: user.id,
+                  usuario_leitura_id: usuarioLeituraId,
+                  tipo: "leitura",
+                  data_inicio: nowIso,
+                  data_fim: status === "concluido" ? nowIso : null,
+                })
+                .select("id")
+                .single();
+              leituraId = novaLeitura?.id;
+            } else if (status === "concluido" && !sessaoExist?.data_fim) {
+              await supabase
+                .from("leituras")
+                .update({ data_fim: nowIso, updated_at: nowIso })
+                .eq("id", leituraId);
+            }
+
+            if (leituraId) {
+              await supabase.from("leitura_progresso").insert({
+                leitura_id: leituraId,
+                user_id: user.id,
+                paginas_lidas: input.pagina_atual ?? null,
+                percentual_lido: input.percentual ?? null,
+              });
+            }
           }
         }
       } catch (e) {
