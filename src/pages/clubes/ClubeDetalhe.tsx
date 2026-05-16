@@ -63,7 +63,8 @@ const ClubeDetalhe = () => {
           <>
             <ClubeHeader
               clube={clube}
-              isMembro={!!membership}
+              isMembro={membership?.status === "ativo"}
+              isPendente={membership?.status === "pendente"}
               onEntrar={() => entrar.mutate()}
               onSair={() => sair.mutate()}
               loading={entrar.isPending || sair.isPending}
@@ -94,12 +95,12 @@ const ClubeDetalhe = () => {
 
                 {isTabVisible("feed") && (
                   <TabsContent value="feed" className="mt-5">
-                    <FeedClube clubeId={clube.id} isMembro={!!membership} />
+                    <FeedClube clubeId={clube.id} isMembro={membership?.status === "ativo"} />
                   </TabsContent>
                 )}
                 {isTabVisible("leituras") && (
                   <TabsContent value="leituras" className="mt-5">
-                    <LeiturasTab clubeId={clube.id} isMembro={!!membership} />
+                    <LeiturasTab clubeId={clube.id} isMembro={membership?.status === "ativo"} />
                   </TabsContent>
                 )}
                 {isTabVisible("canais") && (
@@ -107,7 +108,7 @@ const ClubeDetalhe = () => {
                     <CanaisTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={!!membership}
+                      isMembro={membership?.status === "ativo"}
                     />
                   </TabsContent>
                 )}
@@ -116,7 +117,7 @@ const ClubeDetalhe = () => {
                     <EventosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={!!membership}
+                      isMembro={membership?.status === "ativo"}
                     />
                   </TabsContent>
                 )}
@@ -125,7 +126,7 @@ const ClubeDetalhe = () => {
                     <MembrosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={!!membership}
+                      isMembro={membership?.status === "ativo"}
                     />
                   </TabsContent>
                 )}
@@ -134,13 +135,13 @@ const ClubeDetalhe = () => {
                     <ConteudosTab
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
-                      isMembro={!!membership}
+                      isMembro={membership?.status === "ativo"}
                     />
                   </TabsContent>
                 )}
                 {isTabVisible("microgrupos") && (
                   <TabsContent value="microgrupos" className="mt-5">
-                    <MicrogruposTab clubeId={clube.id} isMembro={!!membership} />
+                    <MicrogruposTab clubeId={clube.id} isMembro={membership?.status === "ativo"} />
                   </TabsContent>
                 )}
                 {canManage && (

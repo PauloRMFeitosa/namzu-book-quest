@@ -9,12 +9,13 @@ import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
 interface Props {
   clube: ClubeDetalhe;
   isMembro: boolean;
+  isPendente?: boolean;
   onEntrar: () => void;
   onSair: () => void;
   loading?: boolean;
 }
 
-export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Props) => {
+export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loading }: Props) => {
   const navigate = useNavigate();
 
   const compartilhar = async () => {
@@ -122,10 +123,16 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
           <div className="pt-2">
             <Button
               onClick={onEntrar}
-              disabled={loading}
-              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
+              disabled={loading || isPendente}
+              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow disabled:opacity-70"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar no clube"}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isPendente ? (
+                "Aguardando aprovação"
+              ) : (
+                "Solicitar entrada"
+              )}
             </Button>
           </div>
         )}

@@ -5,6 +5,7 @@ export interface MembroClube {
   user_id: string;
   data_entrada: string;
   status: string;
+  papel: "membro" | "moderador";
   is_curador: boolean;
   perfil: {
     user_id: string;
@@ -23,13 +24,13 @@ export const useMembrosClube = (clubeId: string | undefined, curadorId?: string)
     queryKey: ["clube-membros-list", clubeId],
     enabled: !!clubeId,
     queryFn: async (): Promise<MembroClube[]> => {
-      const { data: membros, error } = await supabase
+      const { data: membros, error } = await (supabase as any)
         .from("clube_membros")
-        .select("user_id, data_entrada, status")
+        .select("user_id, data_entrada, status, papel")
         .eq("clube_id", clubeId!)
         .order("data_entrada", { ascending: false });
       if (error) throw error;
-      const ids = (membros ?? []).map((m) => m.user_id);
+      const ids = (membros ?? []).map((m: any) => m.user_id);
       if (!ids.length) return [];
 
       const [perfis, gam] = await Promise.all([
@@ -51,6 +52,7 @@ export const useMembrosClube = (clubeId: string | undefined, curadorId?: string)
           user_id: m.user_id,
           data_entrada: m.data_entrada,
           status: m.status,
+          papel: (m.papel ?? "membro") as "membro" | "moderador",
           is_curador: curadorId === m.user_id,
           perfil: pMap.get(m.user_id) ?? null,
           xp: g.xp_total ?? 0,
