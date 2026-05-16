@@ -248,7 +248,7 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
               }
             }
 
-            // Garante sessão de leitura aberta (ou cria uma nova) e registra progresso
+            // Sessão de leitura: busca a mais recente
             const { data: sessaoExist } = await supabase
               .from("leituras")
               .select("id, data_fim")
@@ -272,11 +272,6 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
                 .select("id")
                 .single();
               leituraId = novaLeitura?.id;
-            } else if (status === "concluido" && !sessaoExist?.data_fim) {
-              await supabase
-                .from("leituras")
-                .update({ data_fim: nowIso, updated_at: nowIso })
-                .eq("id", leituraId);
             }
 
             if (leituraId) {
@@ -286,6 +281,16 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
                 paginas_lidas: input.pagina_atual ?? null,
                 percentual_lido: input.percentual ?? null,
               });
+            }
+
+            // Ao concluir: fecha TODAS as sessões de leitura abertas
+            if (status === "concluido") {
+              await supabase
+                .from("leituras")
+                .update({ data_fim: nowIso, updated_at: nowIso })
+                .eq("usuario_leitura_id", usuarioLeituraId)
+                .eq("tipo", "leitura")
+                .is("data_fim", null);
             }
           }
         }
