@@ -26,6 +26,8 @@ export const RecomendacoesIA = () => {
     },
   });
 
+  if (!isAdmin && !flags.show_clube_ai_recomendacoes) return null;
+
   return (
     <section className="rounded-[var(--radius)] border border-accent/30 bg-gradient-to-br from-accent/5 to-transparent p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
