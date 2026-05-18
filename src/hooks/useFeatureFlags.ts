@@ -35,6 +35,9 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clube_microgrupos: true,
   show_clube_ai_copiloto: true,
   show_clube_ai_provocacao: true,
+  show_clube_ai_resumo: true,
+  show_clube_ai_matchmaking: true,
+  show_clube_ai_recomendacoes: true,
 };
 
 export const useFeatureFlags = () => {
