@@ -1,7 +1,18 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import type { InfiniteData, QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+type ClubePostRow = Database["public"]["Tables"]["clube_posts"]["Row"];
+type AutorPerfil = Pick<
+  Database["public"]["Tables"]["perfis"]["Row"],
+  "user_id" | "username" | "nome_exibicao" | "avatar_url"
+>;
+type CurtidaPost = Pick<Database["public"]["Tables"]["clube_post_curtidas"]["Row"], "post_id">;
+type RespostaPost = Pick<Database["public"]["Tables"]["clube_posts"]["Row"], "parent_post_id">;
+type FeedInfiniteData = InfiniteData<FeedPost[], number>;
 
 export interface FeedPost {
   id: string;
@@ -31,6 +42,39 @@ const countCurtidasByPost = (curtidas: Array<{ post_id: string }>) => {
   });
   return counts;
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
+const toFeedPost = (
+  post: ClubePostRow,
+  perfisMap: Map<string, AutorPerfil>,
+  curtidasSet: Set<string>,
+  curtidasMap: Map<string, number>,
+  respostasCount: number,
+): FeedPost => ({
+  id: post.id,
+  clube_id: post.clube_id,
+  user_id: post.user_id,
+  conteudo: post.conteudo,
+  obra_id: post.obra_id,
+  parent_post_id: post.parent_post_id,
+  is_destaque_curador: post.is_destaque_curador ?? false,
+  curtidas_count: curtidasMap.get(post.id) ?? post.curtidas_count ?? 0,
+  created_at: post.created_at ?? new Date().toISOString(),
+  autor: perfisMap.get(post.user_id) ?? null,
+  curtido_por_mim: curtidasSet.has(post.id),
+  respostas_count: respostasCount,
+});
+
+const withUpdatedLike = (postId: string, curtido: boolean) => (post: FeedPost): FeedPost =>
+  post.id === postId
+    ? {
+        ...post,
+        curtido_por_mim: !curtido,
+        curtidas_count: Math.max(0, post.curtidas_count + (curtido ? -1 : 1)),
+      }
+    : post;
 
 export const useRespostasPost = (postId: string | undefined, enabled: boolean) => {
   const { user } = useAuth();
