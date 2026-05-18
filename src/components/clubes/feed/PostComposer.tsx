@@ -13,6 +13,16 @@ import { useCriarPost } from "@/hooks/clubes/useFeed";
 const markdownUrlTransform = (value: string) =>
   /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value) ? value : defaultUrlTransform(value);
 
+const isHeic = (file: File) =>
+  /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+
+const convertHeicToJpegFile = async (file: File): Promise<File> => {
+  const { default: heic2any } = await import("heic2any");
+  const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+  const blob = Array.isArray(converted) ? converted[0] : converted;
+  return new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+};
+
 const imageFileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
@@ -89,13 +99,11 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     }
     setUploading(true);
     try {
-      setImagemUrl(await imageFileToDataUrl(file));
+      const source = isHeic(file) ? await convertHeicToJpegFile(file) : file;
+      setImagemUrl(await imageFileToDataUrl(source));
     } catch (e: any) {
       console.error("[PostComposer] erro imagem:", e, { name: file.name, type: file.type, size: file.size });
-      toast.error(
-        e?.message ??
-          "Não foi possível processar esta foto. Tente outra (formato HEIC do iPhone pode não funcionar).",
-      );
+      toast.error(e?.message ?? "Não foi possível processar esta foto. Tente outra.");
     } finally {
       setUploading(false);
     }
