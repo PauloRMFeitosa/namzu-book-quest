@@ -89,8 +89,8 @@ export const useRespostasPost = (postId: string | undefined, enabled: boolean) =
         .order("created_at", { ascending: true });
       if (error) throw error;
       if (!posts || posts.length === 0) return [];
-      const userIds = Array.from(new Set(posts.map((p: any) => p.user_id)));
-      const postIds = posts.map((p: any) => p.id);
+      const userIds = Array.from(new Set(posts.map((p) => p.user_id)));
+      const postIds = posts.map((p) => p.id);
       const [perfisRes, curtidasMinhasRes, curtidasRes] = await Promise.all([
         supabase
           .from("perfis")
@@ -102,22 +102,16 @@ export const useRespostasPost = (postId: string | undefined, enabled: boolean) =
               .select("post_id")
               .in("post_id", postIds)
               .eq("user_id", user.id)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as CurtidaPost[] }),
         supabase
           .from("clube_post_curtidas")
           .select("post_id")
           .in("post_id", postIds),
       ]);
-      const perfisMap = new Map((perfisRes.data ?? []).map((p: any) => [p.user_id, p]));
-      const curtidasSet = new Set(((curtidasMinhasRes as any).data ?? []).map((c: any) => c.post_id));
-      const curtidasMap = countCurtidasByPost(((curtidasRes as any).data ?? []) as Array<{ post_id: string }>);
-      return posts.map((p: any) => ({
-        ...p,
-        curtidas_count: curtidasMap.get(p.id) ?? p.curtidas_count ?? 0,
-        autor: perfisMap.get(p.user_id) ?? null,
-        curtido_por_mim: curtidasSet.has(p.id),
-        respostas_count: 0,
-      })) as FeedPost[];
+      const perfisMap = new Map<string, AutorPerfil>((perfisRes.data ?? []).map((p) => [p.user_id, p]));
+      const curtidasSet = new Set((curtidasMinhasRes.data ?? []).map((c) => c.post_id));
+      const curtidasMap = countCurtidasByPost(curtidasRes.data ?? []);
+      return posts.map((p) => toFeedPost(p, perfisMap, curtidasSet, curtidasMap, 0));
     },
   });
 };
@@ -161,7 +155,7 @@ export const useFeedClube = (clubeId: string | undefined) => {
               .select("post_id")
               .in("post_id", postIds)
               .eq("user_id", user.id)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as CurtidaPost[] }),
         supabase
           .from("clube_post_curtidas")
           .select("post_id")
@@ -172,23 +166,20 @@ export const useFeedClube = (clubeId: string | undefined) => {
           .in("parent_post_id", postIds),
       ]);
 
-      const perfisMap = new Map((perfisRes.data ?? []).map((p: any) => [p.user_id, p]));
+      const perfisMap = new Map<string, AutorPerfil>((perfisRes.data ?? []).map((p) => [p.user_id, p]));
       const curtidasSet = new Set(
-        ((curtidasMinhasRes as any).data ?? []).map((c: any) => c.post_id),
+        (curtidasMinhasRes.data ?? []).map((c) => c.post_id),
       );
-      const curtidasMap = countCurtidasByPost(((curtidasRes as any).data ?? []) as Array<{ post_id: string }>);
+      const curtidasMap = countCurtidasByPost(curtidasRes.data ?? []);
       const respostasMap = new Map<string, number>();
-      ((respostasRes as any).data ?? []).forEach((r: any) => {
+      ((respostasRes.data ?? []) as RespostaPost[]).forEach((r) => {
+        if (!r.parent_post_id) return;
         respostasMap.set(r.parent_post_id, (respostasMap.get(r.parent_post_id) ?? 0) + 1);
       });
 
-      return posts.map((p: any) => ({
-        ...p,
-        curtidas_count: curtidasMap.get(p.id) ?? p.curtidas_count ?? 0,
-        autor: perfisMap.get(p.user_id) ?? null,
-        curtido_por_mim: curtidasSet.has(p.id),
-        respostas_count: respostasMap.get(p.id) ?? 0,
-      })) as FeedPost[];
+      return posts.map((p) =>
+        toFeedPost(p, perfisMap, curtidasSet, curtidasMap, respostasMap.get(p.id) ?? 0),
+      );
     },
   });
 };
