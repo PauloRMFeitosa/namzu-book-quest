@@ -8,6 +8,7 @@ import type { FeatureFlagKey } from "@/hooks/useFeatureFlags";
 
 const FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_clubes", label: "Página Clubes", desc: "Exibir o item Clubes na navegação." },
+  { key: "show_leituras", label: "Página Leituras", desc: "Exibir Leituras no menu principal." },
   { key: "show_metas", label: "Página Metas", desc: "Exibir Metas no menu Mais." },
   { key: "show_historico", label: "Página Histórico", desc: "Exibir Histórico no menu Mais." },
   { key: "show_notificacoes", label: "Página Notificações", desc: "Exibir Notificações no menu Mais." },
