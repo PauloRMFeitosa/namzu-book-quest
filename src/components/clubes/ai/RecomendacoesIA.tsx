@@ -5,8 +5,12 @@ import { useRecomendacoesIA } from "@/hooks/clubes/useClubeAI";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const RecomendacoesIA = () => {
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
   const reco = useRecomendacoesIA();
   const ids = reco.data?.recomendacoes.map((r) => r.clube_id) ?? [];
 
