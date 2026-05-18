@@ -9,10 +9,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useMatchmakingIA } from "@/hooks/clubes/useClubeAI";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const MatchmakingIA = ({ clubeId }: { clubeId: string }) => {
   const [open, setOpen] = useState(false);
   const m = useMatchmakingIA();
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  if (!isAdmin && !flags.show_clube_ai_matchmaking) return null;
 
   const trigger = () => {
     setOpen(true);
