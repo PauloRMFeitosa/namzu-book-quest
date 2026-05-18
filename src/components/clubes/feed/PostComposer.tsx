@@ -99,13 +99,11 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     }
     setUploading(true);
     try {
-      setImagemUrl(await imageFileToDataUrl(file));
+      const source = isHeic(file) ? await convertHeicToJpegFile(file) : file;
+      setImagemUrl(await imageFileToDataUrl(source));
     } catch (e: any) {
       console.error("[PostComposer] erro imagem:", e, { name: file.name, type: file.type, size: file.size });
-      toast.error(
-        e?.message ??
-          "Não foi possível processar esta foto. Tente outra (formato HEIC do iPhone pode não funcionar).",
-      );
+      toast.error(e?.message ?? "Não foi possível processar esta foto. Tente outra.");
     } finally {
       setUploading(false);
     }
