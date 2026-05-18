@@ -19,7 +19,7 @@ const imageFileToDataUrl = (file: File) =>
     const img = new Image();
 
     img.onload = () => {
-      const maxSize = 1400;
+      const maxSize = 1200;
       const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(img.width * scale));
