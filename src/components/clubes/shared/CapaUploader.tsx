@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Loader2, ImagePlus, Camera, X } from "lucide-react";
+import { Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -50,7 +50,6 @@ interface Props {
 export const CapaUploader = ({ value, onChange }: Props) => {
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File | null) => {
     if (!file) return;
@@ -90,22 +89,10 @@ export const CapaUploader = ({ value, onChange }: Props) => {
         className="hidden"
         onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
       />
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
-      />
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" disabled={uploading} onClick={() => galleryRef.current?.click()} className="gap-1.5">
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-          Galeria
-        </Button>
-        <Button type="button" size="sm" variant="outline" disabled={uploading} onClick={() => cameraRef.current?.click()} className="gap-1.5">
-          <Camera className="w-3.5 h-3.5" />
-          Câmera
+          Escolher imagem
         </Button>
       </div>
     </div>
