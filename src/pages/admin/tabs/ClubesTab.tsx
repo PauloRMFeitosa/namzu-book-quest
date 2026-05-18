@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { CapaUploader } from "@/components/clubes/shared/CapaUploader";
 
 const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "" };
 
