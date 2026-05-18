@@ -50,7 +50,6 @@ interface Props {
 export const CapaUploader = ({ value, onChange }: Props) => {
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File | null) => {
     if (!file) return;
