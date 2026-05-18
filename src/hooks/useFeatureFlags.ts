@@ -6,6 +6,7 @@ export type FeatureFlagKey =
   | "show_metas"
   | "show_historico"
   | "show_notificacoes"
+  | "show_leituras"
   | "show_gamificacao_home"
   | "show_clube_feed"
   | "show_clube_leituras"
