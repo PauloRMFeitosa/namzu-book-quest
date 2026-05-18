@@ -11,10 +11,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useResumoDiscussaoIA } from "@/hooks/clubes/useClubeAI";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const ResumoDiscussaoButton = ({ clubeId }: { clubeId: string }) => {
   const [open, setOpen] = useState(false);
   const m = useResumoDiscussaoIA();
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  if (!isAdmin && !flags.show_clube_ai_resumo) return null;
 
   const onOpen = (v: boolean) => {
     setOpen(v);

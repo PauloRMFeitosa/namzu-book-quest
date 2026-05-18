@@ -15,7 +15,10 @@ export type FeatureFlagKey =
   | "show_clube_conteudos"
   | "show_clube_microgrupos"
   | "show_clube_ai_copiloto"
-  | "show_clube_ai_provocacao";
+  | "show_clube_ai_provocacao"
+  | "show_clube_ai_resumo"
+  | "show_clube_ai_matchmaking"
+  | "show_clube_ai_recomendacoes";
 
 const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clubes: true,
@@ -32,6 +35,9 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clube_microgrupos: true,
   show_clube_ai_copiloto: true,
   show_clube_ai_provocacao: true,
+  show_clube_ai_resumo: true,
+  show_clube_ai_matchmaking: true,
+  show_clube_ai_recomendacoes: true,
 };
 
 export const useFeatureFlags = () => {
