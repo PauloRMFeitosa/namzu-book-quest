@@ -200,7 +200,7 @@ export const useCriarPost = (clubeId: string | undefined) => {
         user_id: user.id,
         conteudo: conteudo || "",
         parent_post_id: input.parent_post_id ?? null,
-      } as any);
+      });
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
@@ -210,7 +210,7 @@ export const useCriarPost = (clubeId: string | undefined) => {
         qc.invalidateQueries({ queryKey: ["clube-post-respostas", vars.parent_post_id] });
       }
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao publicar"),
+    onError: (e) => toast.error(getErrorMessage(e, "Erro ao publicar")),
   });
 };
 
@@ -236,32 +236,31 @@ export const useCurtirPost = (clubeId: string | undefined) => {
     },
     onMutate: async ({ postId, curtido }) => {
       await qc.cancelQueries({ queryKey: ["clube-feed", clubeId] });
+      await qc.cancelQueries({ queryKey: ["clube-post-respostas"] });
       const prev = qc.getQueriesData({ queryKey: ["clube-feed", clubeId] });
-      qc.setQueriesData({ queryKey: ["clube-feed", clubeId] }, (old: any) => {
+      const prevRespostas = qc.getQueriesData({ queryKey: ["clube-post-respostas"] });
+      qc.setQueriesData<FeedInfiniteData>({ queryKey: ["clube-feed", clubeId] }, (old) => {
         if (!old) return old;
         return {
           ...old,
           pages: old.pages.map((page: FeedPost[]) =>
-            page.map((p) =>
-              p.id === postId
-                ? {
-                    ...p,
-                    curtido_por_mim: !curtido,
-                    curtidas_count: Math.max(0, p.curtidas_count + (curtido ? -1 : 1)),
-                  }
-                : p,
-            ),
+            page.map(withUpdatedLike(postId, curtido)),
           ),
         };
       });
-      return { prev };
+      qc.setQueriesData<FeedPost[]>({ queryKey: ["clube-post-respostas"] }, (old) =>
+        old ? old.map(withUpdatedLike(postId, curtido)) : old,
+      );
+      return { prev, prevRespostas };
     },
-    onError: (e: any, _v, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
-      toast.error(e.message ?? "Erro");
+    onError: (e, _v, ctx) => {
+      ctx?.prev?.forEach(([key, data]) => qc.setQueryData(key as QueryKey, data));
+      ctx?.prevRespostas?.forEach(([key, data]) => qc.setQueryData(key as QueryKey, data));
+      toast.error(getErrorMessage(e, "Erro"));
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["clube-feed", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-post-respostas"] });
     },
   });
 };
