@@ -26,6 +26,7 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_metas: true,
   show_historico: true,
   show_notificacoes: true,
+  show_leituras: true,
   show_gamificacao_home: true,
   show_clube_feed: true,
   show_clube_leituras: true,
