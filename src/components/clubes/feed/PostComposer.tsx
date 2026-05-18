@@ -40,6 +40,7 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
   const handleFile = async (file: File | null) => {
     if (!file || !user) return;
+    if (parentPostId) return;
     if (file.size > 8 * 1024 * 1024) {
       toast.error("Imagem máxima de 8MB");
       return;
@@ -61,12 +62,15 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     }
   };
 
+  const postContent = parentPostId || !imagemUrl
+    ? conteudo
+    : `${conteudo.trim()}\n\n![Imagem do post](${imagemUrl})`;
+
   const submit = async () => {
-    if (!conteudo.trim() && !imagemUrl) return;
+    if (!postContent.trim()) return;
     await criar.mutateAsync({
-      conteudo,
+      conteudo: postContent,
       parent_post_id: parentPostId ?? null,
-      imagem_url: imagemUrl,
     });
     setConteudo("");
     setImagemUrl(null);
