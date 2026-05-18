@@ -165,7 +165,7 @@ export const ClubesTab = () => {
             <div><Label>Descrição</Label><Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} /></div>
             <div><Label>Objetivo</Label><Input value={form.objetivo} onChange={(e) => setForm({ ...form, objetivo: e.target.value })} /></div>
             <div><Label>Regras</Label><Textarea value={form.regras} onChange={(e) => setForm({ ...form, regras: e.target.value })} /></div>
-            <div><Label>Capa (URL)</Label><Input value={form.capa} onChange={(e) => setForm({ ...form, capa: e.target.value })} /></div>
+            <div><Label>Capa</Label><CapaUploader value={form.capa} onChange={(v) => setForm({ ...form, capa: v })} /></div>
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Duração</Label><Input value={form.duracao_tipo} onChange={(e) => setForm({ ...form, duracao_tipo: e.target.value })} /></div>
               <div><Label>Preço (centavos)</Label><Input type="number" value={form.preco} onChange={(e) => setForm({ ...form, preco: Number(e.target.value) })} /></div>
