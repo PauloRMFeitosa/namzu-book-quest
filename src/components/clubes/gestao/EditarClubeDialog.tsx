@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAtualizarClube } from "@/hooks/clubes/useClubeGestao";
 import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
+import { CapaUploader } from "@/components/clubes/shared/CapaUploader";
 
 export const EditarClubeDialog = ({
   clube,
