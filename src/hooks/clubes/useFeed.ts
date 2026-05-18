@@ -1,7 +1,18 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import type { InfiniteData, QueryKey } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+type ClubePostRow = Database["public"]["Tables"]["clube_posts"]["Row"];
+type AutorPerfil = Pick<
+  Database["public"]["Tables"]["perfis"]["Row"],
+  "user_id" | "username" | "nome_exibicao" | "avatar_url"
+>;
+type CurtidaPost = Pick<Database["public"]["Tables"]["clube_post_curtidas"]["Row"], "post_id">;
+type RespostaPost = Pick<Database["public"]["Tables"]["clube_posts"]["Row"], "parent_post_id">;
+type FeedInfiniteData = InfiniteData<FeedPost[], number>;
 
 export interface FeedPost {
   id: string;
@@ -24,6 +35,47 @@ export interface FeedPost {
   respostas_count: number;
 }
 
+const countCurtidasByPost = (curtidas: Array<{ post_id: string }>) => {
+  const counts = new Map<string, number>();
+  curtidas.forEach((curtida) => {
+    counts.set(curtida.post_id, (counts.get(curtida.post_id) ?? 0) + 1);
+  });
+  return counts;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
+const toFeedPost = (
+  post: ClubePostRow,
+  perfisMap: Map<string, AutorPerfil>,
+  curtidasSet: Set<string>,
+  curtidasMap: Map<string, number>,
+  respostasCount: number,
+): FeedPost => ({
+  id: post.id,
+  clube_id: post.clube_id,
+  user_id: post.user_id,
+  conteudo: post.conteudo,
+  obra_id: post.obra_id,
+  parent_post_id: post.parent_post_id,
+  is_destaque_curador: post.is_destaque_curador ?? false,
+  curtidas_count: curtidasMap.get(post.id) ?? post.curtidas_count ?? 0,
+  created_at: post.created_at ?? new Date().toISOString(),
+  autor: perfisMap.get(post.user_id) ?? null,
+  curtido_por_mim: curtidasSet.has(post.id),
+  respostas_count: respostasCount,
+});
+
+const withUpdatedLike = (postId: string, curtido: boolean) => (post: FeedPost): FeedPost =>
+  post.id === postId
+    ? {
+        ...post,
+        curtido_por_mim: !curtido,
+        curtidas_count: Math.max(0, post.curtidas_count + (curtido ? -1 : 1)),
+      }
+    : post;
+
 export const useRespostasPost = (postId: string | undefined, enabled: boolean) => {
   const { user } = useAuth();
   return useQuery({
@@ -37,9 +89,9 @@ export const useRespostasPost = (postId: string | undefined, enabled: boolean) =
         .order("created_at", { ascending: true });
       if (error) throw error;
       if (!posts || posts.length === 0) return [];
-      const userIds = Array.from(new Set(posts.map((p: any) => p.user_id)));
-      const postIds = posts.map((p: any) => p.id);
-      const [perfisRes, curtidasMinhasRes] = await Promise.all([
+      const userIds = Array.from(new Set(posts.map((p) => p.user_id)));
+      const postIds = posts.map((p) => p.id);
+      const [perfisRes, curtidasMinhasRes, curtidasRes] = await Promise.all([
         supabase
           .from("perfis")
           .select("user_id, username, nome_exibicao, avatar_url")
@@ -50,16 +102,16 @@ export const useRespostasPost = (postId: string | undefined, enabled: boolean) =
               .select("post_id")
               .in("post_id", postIds)
               .eq("user_id", user.id)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as CurtidaPost[] }),
+        supabase
+          .from("clube_post_curtidas")
+          .select("post_id")
+          .in("post_id", postIds),
       ]);
-      const perfisMap = new Map((perfisRes.data ?? []).map((p: any) => [p.user_id, p]));
-      const curtidasSet = new Set(((curtidasMinhasRes as any).data ?? []).map((c: any) => c.post_id));
-      return posts.map((p: any) => ({
-        ...p,
-        autor: perfisMap.get(p.user_id) ?? null,
-        curtido_por_mim: curtidasSet.has(p.id),
-        respostas_count: 0,
-      })) as FeedPost[];
+      const perfisMap = new Map<string, AutorPerfil>((perfisRes.data ?? []).map((p) => [p.user_id, p]));
+      const curtidasSet = new Set((curtidasMinhasRes.data ?? []).map((c) => c.post_id));
+      const curtidasMap = countCurtidasByPost(curtidasRes.data ?? []);
+      return posts.map((p) => toFeedPost(p, perfisMap, curtidasSet, curtidasMap, 0));
     },
   });
 };
@@ -92,7 +144,7 @@ export const useFeedClube = (clubeId: string | undefined) => {
       const userIds = Array.from(new Set(posts.map((p) => p.user_id)));
       const postIds = posts.map((p) => p.id);
 
-      const [perfisRes, curtidasMinhasRes, respostasRes] = await Promise.all([
+      const [perfisRes, curtidasMinhasRes, curtidasRes, respostasRes] = await Promise.all([
         supabase
           .from("perfis")
           .select("user_id, username, nome_exibicao, avatar_url")
@@ -103,28 +155,31 @@ export const useFeedClube = (clubeId: string | undefined) => {
               .select("post_id")
               .in("post_id", postIds)
               .eq("user_id", user.id)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as CurtidaPost[] }),
+        supabase
+          .from("clube_post_curtidas")
+          .select("post_id")
+          .in("post_id", postIds),
         supabase
           .from("clube_posts")
           .select("parent_post_id")
           .in("parent_post_id", postIds),
       ]);
 
-      const perfisMap = new Map((perfisRes.data ?? []).map((p: any) => [p.user_id, p]));
+      const perfisMap = new Map<string, AutorPerfil>((perfisRes.data ?? []).map((p) => [p.user_id, p]));
       const curtidasSet = new Set(
-        ((curtidasMinhasRes as any).data ?? []).map((c: any) => c.post_id),
+        (curtidasMinhasRes.data ?? []).map((c) => c.post_id),
       );
+      const curtidasMap = countCurtidasByPost(curtidasRes.data ?? []);
       const respostasMap = new Map<string, number>();
-      ((respostasRes as any).data ?? []).forEach((r: any) => {
+      ((respostasRes.data ?? []) as RespostaPost[]).forEach((r) => {
+        if (!r.parent_post_id) return;
         respostasMap.set(r.parent_post_id, (respostasMap.get(r.parent_post_id) ?? 0) + 1);
       });
 
-      return posts.map((p: any) => ({
-        ...p,
-        autor: perfisMap.get(p.user_id) ?? null,
-        curtido_por_mim: curtidasSet.has(p.id),
-        respostas_count: respostasMap.get(p.id) ?? 0,
-      })) as FeedPost[];
+      return posts.map((p) =>
+        toFeedPost(p, perfisMap, curtidasSet, curtidasMap, respostasMap.get(p.id) ?? 0),
+      );
     },
   });
 };
@@ -145,7 +200,7 @@ export const useCriarPost = (clubeId: string | undefined) => {
         user_id: user.id,
         conteudo: conteudo || "",
         parent_post_id: input.parent_post_id ?? null,
-      } as any);
+      });
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
@@ -155,7 +210,7 @@ export const useCriarPost = (clubeId: string | undefined) => {
         qc.invalidateQueries({ queryKey: ["clube-post-respostas", vars.parent_post_id] });
       }
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao publicar"),
+    onError: (e) => toast.error(getErrorMessage(e, "Erro ao publicar")),
   });
 };
 
@@ -181,32 +236,31 @@ export const useCurtirPost = (clubeId: string | undefined) => {
     },
     onMutate: async ({ postId, curtido }) => {
       await qc.cancelQueries({ queryKey: ["clube-feed", clubeId] });
+      await qc.cancelQueries({ queryKey: ["clube-post-respostas"] });
       const prev = qc.getQueriesData({ queryKey: ["clube-feed", clubeId] });
-      qc.setQueriesData({ queryKey: ["clube-feed", clubeId] }, (old: any) => {
+      const prevRespostas = qc.getQueriesData({ queryKey: ["clube-post-respostas"] });
+      qc.setQueriesData<FeedInfiniteData>({ queryKey: ["clube-feed", clubeId] }, (old) => {
         if (!old) return old;
         return {
           ...old,
           pages: old.pages.map((page: FeedPost[]) =>
-            page.map((p) =>
-              p.id === postId
-                ? {
-                    ...p,
-                    curtido_por_mim: !curtido,
-                    curtidas_count: Math.max(0, p.curtidas_count + (curtido ? -1 : 1)),
-                  }
-                : p,
-            ),
+            page.map(withUpdatedLike(postId, curtido)),
           ),
         };
       });
-      return { prev };
+      qc.setQueriesData<FeedPost[]>({ queryKey: ["clube-post-respostas"] }, (old) =>
+        old ? old.map(withUpdatedLike(postId, curtido)) : old,
+      );
+      return { prev, prevRespostas };
     },
-    onError: (e: any, _v, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
-      toast.error(e.message ?? "Erro");
+    onError: (e, _v, ctx) => {
+      ctx?.prev?.forEach(([key, data]) => qc.setQueryData(key as QueryKey, data));
+      ctx?.prevRespostas?.forEach(([key, data]) => qc.setQueryData(key as QueryKey, data));
+      toast.error(getErrorMessage(e, "Erro"));
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["clube-feed", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-post-respostas"] });
     },
   });
 };
