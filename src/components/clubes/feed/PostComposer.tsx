@@ -170,7 +170,10 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              handleFile(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
           />
           <input
             ref={cameraRef}
@@ -178,7 +181,10 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              handleFile(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
           />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
