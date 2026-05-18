@@ -77,22 +77,19 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
   const handleFile = async (file: File | null) => {
     if (!file || !user) return;
     if (parentPostId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem válida");
+      return;
+    }
     if (file.size > 8 * 1024 * 1024) {
       toast.error("Imagem máxima de 8MB");
       return;
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("post-imagens")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-      const { data } = supabase.storage.from("post-imagens").getPublicUrl(path);
-      setImagemUrl(data.publicUrl);
+      setImagemUrl(await imageFileToDataUrl(file));
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao enviar imagem");
+      toast.error(e.message ?? "Erro ao preparar imagem");
     } finally {
       setUploading(false);
     }
@@ -133,7 +130,7 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
           {preview ? (
             <div className="prose prose-sm max-w-none min-h-[80px] px-3 py-2 rounded-md bg-muted/30 border border-border/40">
               {conteudo.trim() ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{conteudo}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={markdownUrlTransform}>{conteudo}</ReactMarkdown>
               ) : (
                 <p className="text-muted-foreground text-sm m-0">Nada para visualizar…</p>
               )}
