@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Heart, MessageCircle, Sparkles, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -10,6 +10,9 @@ import { useCurtirPost, useRespostasPost, type FeedPost } from "@/hooks/clubes/u
 import { cn } from "@/lib/utils";
 import { PerguntasProfundasButton } from "@/components/clubes/ai/PerguntasProfundasButton";
 import { PostComposer } from "./PostComposer";
+
+const markdownUrlTransform = (value: string) =>
+  /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value) ? value : defaultUrlTransform(value);
 
 interface Props {
   post: FeedPost;
@@ -63,7 +66,7 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply }: Props) => 
 
       {post.conteudo && (
         <div className="prose prose-sm max-w-none text-foreground/90 leading-relaxed [&_p]:my-2 [&_a]:text-primary [&_blockquote]:border-l-2 [&_blockquote]:border-accent [&_blockquote]:pl-3 [&_blockquote]:italic">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.conteudo}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={markdownUrlTransform}>{post.conteudo}</ReactMarkdown>
         </div>
       )}
 

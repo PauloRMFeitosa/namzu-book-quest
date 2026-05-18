@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, Send, Eye, Pencil, ImagePlus, Camera, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,43 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useCriarPost } from "@/hooks/clubes/useFeed";
-import { supabase } from "@/integrations/supabase/client";
+
+const markdownUrlTransform = (value: string) =>
+  /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value) ? value : defaultUrlTransform(value);
+
+const imageFileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      const maxSize = 1400;
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Não foi possível preparar a imagem"));
+        return;
+      }
+
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Não foi possível carregar esta imagem"));
+    };
+
+    img.src = objectUrl;
+  });
 
 interface Props {
   clubeId: string;
@@ -40,33 +76,34 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
   const handleFile = async (file: File | null) => {
     if (!file || !user) return;
+    if (parentPostId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem válida");
+      return;
+    }
     if (file.size > 8 * 1024 * 1024) {
       toast.error("Imagem máxima de 8MB");
       return;
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("post-imagens")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-      const { data } = supabase.storage.from("post-imagens").getPublicUrl(path);
-      setImagemUrl(data.publicUrl);
+      setImagemUrl(await imageFileToDataUrl(file));
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao enviar imagem");
+      toast.error(e.message ?? "Erro ao preparar imagem");
     } finally {
       setUploading(false);
     }
   };
 
+  const postContent = parentPostId || !imagemUrl
+    ? conteudo
+    : `${conteudo.trim()}\n\n![Imagem do post](${imagemUrl})`;
+
   const submit = async () => {
-    if (!conteudo.trim() && !imagemUrl) return;
+    if (!postContent.trim()) return;
     await criar.mutateAsync({
-      conteudo,
+      conteudo: postContent,
       parent_post_id: parentPostId ?? null,
-      imagem_url: imagemUrl,
     });
     setConteudo("");
     setImagemUrl(null);
@@ -93,7 +130,7 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
           {preview ? (
             <div className="prose prose-sm max-w-none min-h-[80px] px-3 py-2 rounded-md bg-muted/30 border border-border/40">
               {conteudo.trim() ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{conteudo}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={markdownUrlTransform}>{conteudo}</ReactMarkdown>
               ) : (
                 <p className="text-muted-foreground text-sm m-0">Nada para visualizar…</p>
               )}
