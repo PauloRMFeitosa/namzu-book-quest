@@ -19,7 +19,7 @@ const imageFileToDataUrl = (file: File) =>
     const img = new Image();
 
     img.onload = () => {
-      const maxSize = 1400;
+      const maxSize = 1200;
       const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(img.width * scale));
@@ -77,19 +77,25 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
   const handleFile = async (file: File | null) => {
     if (!file || !user) return;
     if (parentPostId) return;
-    if (!file.type.startsWith("image/")) {
+    const isImage =
+      file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+    if (!isImage) {
       toast.error("Selecione uma imagem válida");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("Imagem máxima de 8MB");
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Imagem máxima de 25MB");
       return;
     }
     setUploading(true);
     try {
       setImagemUrl(await imageFileToDataUrl(file));
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao preparar imagem");
+      console.error("[PostComposer] erro imagem:", e, { name: file.name, type: file.type, size: file.size });
+      toast.error(
+        e?.message ??
+          "Não foi possível processar esta foto. Tente outra (formato HEIC do iPhone pode não funcionar).",
+      );
     } finally {
       setUploading(false);
     }
@@ -164,7 +170,10 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              handleFile(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
           />
           <input
             ref={cameraRef}
@@ -172,7 +181,10 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              handleFile(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
           />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
