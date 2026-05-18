@@ -45,9 +45,9 @@ const App = () => (
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/busca" element={<ProtectedRoute><Busca /></ProtectedRoute>} />
-            <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />
-            <Route path="/leituras" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
-            <Route path="/leituras/:id" element={<ProtectedRoute><Leituras /></ProtectedRoute>} />
+        <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />
+        <Route path="/leituras" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
+        <Route path="/leituras/:id" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />

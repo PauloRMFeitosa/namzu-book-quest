@@ -35,6 +35,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;
     if (i.to === "/clubes") return flags.show_clubes;
+    if (i.to === "/leituras") return flags.show_leituras;
     return true;
   });
   const visibleDrawer = drawerItems.filter((i) => {

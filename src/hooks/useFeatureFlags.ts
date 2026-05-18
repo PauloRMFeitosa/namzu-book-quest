@@ -6,6 +6,7 @@ export type FeatureFlagKey =
   | "show_metas"
   | "show_historico"
   | "show_notificacoes"
+  | "show_leituras"
   | "show_gamificacao_home"
   | "show_clube_feed"
   | "show_clube_leituras"
@@ -25,6 +26,7 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_metas: true,
   show_historico: true,
   show_notificacoes: true,
+  show_leituras: true,
   show_gamificacao_home: true,
   show_clube_feed: true,
   show_clube_leituras: true,
