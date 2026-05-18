@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, Send, Eye, Pencil, ImagePlus, Camera, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,43 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useCriarPost } from "@/hooks/clubes/useFeed";
-import { supabase } from "@/integrations/supabase/client";
+
+const markdownUrlTransform = (value: string) =>
+  /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value) ? value : defaultUrlTransform(value);
+
+const imageFileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      const maxSize = 1400;
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Não foi possível preparar a imagem"));
+        return;
+      }
+
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Não foi possível carregar esta imagem"));
+    };
+
+    img.src = objectUrl;
+  });
 
 interface Props {
   clubeId: string;
