@@ -69,11 +69,10 @@ export const EditarClubeDialog = ({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>Imagem de capa (URL)</Label>
-            <Input
+            <Label>Imagem de capa</Label>
+            <CapaUploader
               value={form.imagem_capa_url}
-              onChange={(e) => setForm((f) => ({ ...f, imagem_capa_url: e.target.value }))}
-              placeholder="https://..."
+              onChange={(v) => setForm((f) => ({ ...f, imagem_capa_url: v }))}
             />
           </div>
           <div className="grid gap-1.5">
