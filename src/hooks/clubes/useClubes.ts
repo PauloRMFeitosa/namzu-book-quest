@@ -44,12 +44,35 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
   return useQuery({
     queryKey: ["clubes-marketplace", busca, categoria, secao, user?.id],
     queryFn: async (): Promise<ClubeCardData[]> => {
-      // Base clubes ativos
+      // IDs de clubes privados que o usuário pode ver (curador ou moderador)
+      let allowedPrivadoIds: string[] = [];
+      if (user) {
+        const [curadorRes, modRes] = await Promise.all([
+          supabase.from("clubes").select("id").eq("curador_id", user.id),
+          supabase
+            .from("clube_membros")
+            .select("clube_id")
+            .eq("user_id", user.id)
+            .eq("papel", "moderador")
+            .eq("status", "ativo"),
+        ]);
+        const ids = new Set<string>();
+        (curadorRes.data ?? []).forEach((c: any) => ids.add(c.id));
+        (modRes.data ?? []).forEach((m: any) => ids.add(m.clube_id));
+        allowedPrivadoIds = Array.from(ids);
+      }
+
+      // Base clubes ativos: públicos OU privados que o usuário gerencia
       let q = (supabase as any)
         .from("clubes")
         .select("id, nome, descricao, imagem_capa_url, curador_id, is_ativo, duracao_tipo, categoria, visibilidade, created_at")
-        .eq("is_ativo", true)
-        .neq("visibilidade", "privado");
+        .eq("is_ativo", true);
+
+      if (allowedPrivadoIds.length) {
+        q = q.or(`visibilidade.neq.privado,id.in.(${allowedPrivadoIds.join(",")})`);
+      } else {
+        q = q.neq("visibilidade", "privado");
+      }
 
       if (busca.trim()) {
         q = q.ilike("nome", `%${busca.trim()}%`);
