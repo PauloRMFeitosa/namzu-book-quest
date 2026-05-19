@@ -103,6 +103,24 @@ export const EditarClubeDialog = ({
             </Select>
           </div>
           <div className="grid gap-1.5">
+            <Label>Visibilidade</Label>
+            <Select
+              value={form.visibilidade}
+              onValueChange={(v) => setForm((f) => ({ ...f, visibilidade: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="publico">Público — qualquer pessoa pode entrar</SelectItem>
+                <SelectItem value="privado">Privado — só por link, com pedido de entrada</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Clubes privados não aparecem no marketplace. Compartilhe o link para que peçam para entrar.
+            </p>
+          </div>
+          <div className="grid gap-1.5">
             <Label>Objetivo</Label>
             <Textarea
               rows={2}
