@@ -20,6 +20,7 @@ export interface ClubeCardData {
   is_ativo: boolean;
   duracao_tipo: string;
   categoria: string | null;
+  visibilidade: string | null;
   created_at: string;
   // métricas (opcional)
   membros_count: number;
