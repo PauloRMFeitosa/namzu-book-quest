@@ -37,6 +37,7 @@ export const EditarClubeDialog = ({
     imagem_capa_url: clube.imagem_capa_url ?? "",
     is_ativo: clube.is_ativo,
     categoria: clube.categoria ?? "",
+    visibilidade: clube.visibilidade ?? "publico",
   });
 
   const submit = async () => {
