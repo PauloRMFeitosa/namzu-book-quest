@@ -541,6 +541,7 @@ export type Database = {
           objetivo: string | null
           preco_centavos: number | null
           regras: string | null
+          visibilidade: string
         }
         Insert: {
           categoria?: string | null
@@ -555,6 +556,7 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          visibilidade?: string
         }
         Update: {
           categoria?: string | null
@@ -569,6 +571,7 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          visibilidade?: string
         }
         Relationships: []
       }
