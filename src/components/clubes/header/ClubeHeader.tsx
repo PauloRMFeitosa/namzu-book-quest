@@ -75,18 +75,19 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
 
       {/* Identidade */}
       <div className="px-1 pt-4 flex flex-col gap-3">
-        {clube.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {clube.tags.map((t) => (
-              <span
-                key={t}
-                className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-1.5">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${clube.visibilidade === "privado" ? "bg-accent/20 text-accent" : "bg-primary/15 text-primary"}`}>
+            {clube.visibilidade === "privado" ? "Privado" : "Público"}
+          </span>
+          {clube.tags.map((t) => (
+            <span
+              key={t}
+              className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
 
         <h1 className="font-display text-2xl sm:text-3xl font-semibold leading-tight">{clube.nome}</h1>
 
