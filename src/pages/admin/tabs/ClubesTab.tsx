@@ -14,7 +14,7 @@ import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { CapaUploader } from "@/components/clubes/shared/CapaUploader";
 
-const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "" };
+const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "", visibilidade: "publico" };
 
 export const ClubesTab = () => {
   const { user } = useAuth();
