@@ -49,7 +49,8 @@ export const EditarClubeDialog = ({
       imagem_capa_url: form.imagem_capa_url.trim() || null,
       is_ativo: form.is_ativo,
       categoria: form.categoria || null,
-    });
+      visibilidade: form.visibilidade,
+    } as any);
     onOpenChange(false);
   };
 
