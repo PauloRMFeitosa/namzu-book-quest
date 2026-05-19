@@ -190,7 +190,10 @@ const TrilhaCard = ({
               <p className="text-[10px] uppercase tracking-wider text-accent font-semibold">
                 Etapa {trilha.ordem}
               </p>
-              <h3 className="font-display text-base sm:text-lg font-semibold leading-tight line-clamp-2">
+              <h3
+                onClick={canEdit ? abrirLivro : undefined}
+                className={`font-display text-base sm:text-lg font-semibold leading-tight line-clamp-2 ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+              >
                 {trilha.obra?.titulo_original ?? "Obra"}
               </h3>
             </div>
