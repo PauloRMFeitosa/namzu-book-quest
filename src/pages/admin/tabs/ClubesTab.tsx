@@ -131,6 +131,16 @@ export const ClubesTab = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Visibilidade</Label>
+                <Select value={form.visibilidade} onValueChange={(v) => setForm({ ...form, visibilidade: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="publico">Público — qualquer pessoa pode entrar</SelectItem>
+                    <SelectItem value="privado">Privado — só por link, com pedido de entrada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Button onClick={create} className="w-full">Criar</Button>
             </div>
           </DialogContent>
