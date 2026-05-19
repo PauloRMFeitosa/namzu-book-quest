@@ -161,19 +161,24 @@ export const useEntrarClube = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (status: "ativo" | "pendente" = "pendente") => {
       if (!user || !clubeId) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("clube_membros")
-        .insert({ clube_id: clubeId, user_id: user.id, status: "pendente" } as any);
+        .insert({ clube_id: clubeId, user_id: user.id, status } as any);
       if (error) throw error;
+      return status;
     },
-    onSuccess: () => {
-      toast.success("Solicitação enviada! Aguarde aprovação do curador.");
+    onSuccess: (status) => {
+      if (status === "ativo") {
+        toast.success("Bem-vindo ao clube!");
+      } else {
+        toast.success("Solicitação enviada! Aguarde aprovação do curador.");
+      }
       qc.invalidateQueries({ queryKey: ["clube-membership", clubeId] });
       qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao solicitar entrada"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
   });
 };
 
