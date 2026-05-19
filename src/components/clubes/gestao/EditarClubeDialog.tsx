@@ -37,6 +37,7 @@ export const EditarClubeDialog = ({
     imagem_capa_url: clube.imagem_capa_url ?? "",
     is_ativo: clube.is_ativo,
     categoria: clube.categoria ?? "",
+    visibilidade: clube.visibilidade ?? "publico",
   });
 
   const submit = async () => {
@@ -48,7 +49,8 @@ export const EditarClubeDialog = ({
       imagem_capa_url: form.imagem_capa_url.trim() || null,
       is_ativo: form.is_ativo,
       categoria: form.categoria || null,
-    });
+      visibilidade: form.visibilidade,
+    } as any);
     onOpenChange(false);
   };
 
@@ -99,6 +101,24 @@ export const EditarClubeDialog = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Visibilidade</Label>
+            <Select
+              value={form.visibilidade}
+              onValueChange={(v) => setForm((f) => ({ ...f, visibilidade: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="publico">Público — qualquer pessoa pode entrar</SelectItem>
+                <SelectItem value="privado">Privado — só por link, com pedido de entrada</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Clubes privados não aparecem no marketplace. Compartilhe o link para que peçam para entrar.
+            </p>
           </div>
           <div className="grid gap-1.5">
             <Label>Objetivo</Label>

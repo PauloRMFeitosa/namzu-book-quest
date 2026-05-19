@@ -20,6 +20,7 @@ export interface ClubeCardData {
   is_ativo: boolean;
   duracao_tipo: string;
   categoria: string | null;
+  visibilidade: string | null;
   created_at: string;
   // métricas (opcional)
   membros_count: number;
@@ -46,8 +47,9 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
       // Base clubes ativos
       let q = (supabase as any)
         .from("clubes")
-        .select("id, nome, descricao, imagem_capa_url, curador_id, is_ativo, duracao_tipo, categoria, created_at")
-        .eq("is_ativo", true);
+        .select("id, nome, descricao, imagem_capa_url, curador_id, is_ativo, duracao_tipo, categoria, visibilidade, created_at")
+        .eq("is_ativo", true)
+        .neq("visibilidade", "privado");
 
       if (busca.trim()) {
         q = q.ilike("nome", `%${busca.trim()}%`);

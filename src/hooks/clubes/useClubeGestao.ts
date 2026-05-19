@@ -93,6 +93,7 @@ export const useAtualizarClube = (clubeId: string | undefined) => {
       imagem_capa_url?: string | null;
       is_ativo?: boolean;
       categoria?: string | null;
+      visibilidade?: string | null;
     }) => {
       const { error } = await (supabase as any).from("clubes").update(patch).eq("id", clubeId!);
       if (error) throw error;
