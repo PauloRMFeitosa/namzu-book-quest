@@ -131,8 +131,10 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : isPendente ? (
                 "Aguardando aprovação"
-              ) : (
+              ) : clube.visibilidade === "privado" ? (
                 "Solicitar entrada"
+              ) : (
+                "Entrar no clube"
               )}
             </Button>
           </div>
