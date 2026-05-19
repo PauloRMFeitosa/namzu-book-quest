@@ -164,6 +164,41 @@ export const RegistrarLeituraDialog = ({
           paginas: paginasLidas ? Number(paginasLidas) : null,
           percentual: percentual ? Number(percentual) : null,
         });
+
+        // Sincroniza com clube_progresso quando a leitura está vinculada a um clube
+        try {
+          const { data: ul } = await supabase
+            .from("usuario_leituras")
+            .select("clube_id, usuario_livros!inner(obra_id)")
+            .eq("id", usuarioLeituraId)
+            .maybeSingle();
+          const clubeId = (ul as any)?.clube_id as string | null;
+          const obraId = (ul as any)?.usuario_livros?.obra_id as string | undefined;
+          if (clubeId && obraId) {
+            // calcula percentual final: usa o informado, ou deriva de páginas
+            let pct: number | null = percentual ? Number(percentual) : null;
+            if (pct == null && paginasLidas && totalPaginas) {
+              pct = Math.max(0, Math.min(100, Math.round((Number(paginasLidas) / totalPaginas) * 100)));
+            }
+            if (pct == null) pct = 0;
+            const status = pct >= 100 ? "concluido" : pct > 0 ? "lendo" : "nao_iniciado";
+            await supabase.from("clube_progresso").upsert(
+              {
+                user_id: user!.id,
+                clube_id: clubeId,
+                obra_id: obraId,
+                percentual: pct,
+                status,
+                pagina_atual: paginasLidas ? Number(paginasLidas) : null,
+                data_conclusao: status === "concluido" ? new Date().toISOString() : null,
+              },
+              { onConflict: "user_id,clube_id,obra_id" }
+            );
+            qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+          }
+        } catch (e) {
+          console.warn("sync clube_progresso falhou", e);
+        }
       }
 
       if (resumo.trim() || conceito.trim()) {
