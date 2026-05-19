@@ -19,7 +19,8 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
   const navigate = useNavigate();
 
   const compartilhar = async () => {
-    const url = window.location.href;
+    const path = window.location.pathname + window.location.search + window.location.hash;
+    const url = `https://nazum.com.br${path}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: clube.nome, url });
