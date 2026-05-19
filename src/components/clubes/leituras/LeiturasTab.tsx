@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, Calendar, CheckCircle2, Users, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
@@ -20,6 +21,9 @@ import {
   useClubeLeituras,
   useSalvarProgresso,
 } from "@/hooks/clubes/useClubeLeituras";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface Props {
   clubeId: string;
@@ -86,6 +90,62 @@ const TrilhaCard = ({
 }) => {
   const meu = trilha.meu_progresso;
   const concluido = meu?.status === "concluido";
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [navLoading, setNavLoading] = useState(false);
+
+  const abrirLivro = async () => {
+    if (!user || !trilha.obra) return;
+    setNavLoading(true);
+    try {
+      // 1. usuario_livros (criar se necessário)
+      const { data: ul } = await supabase
+        .from("usuario_livros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("obra_id", trilha.obra_id)
+        .maybeSingle();
+      let usuarioLivroId = ul?.id as string | undefined;
+      if (!usuarioLivroId) {
+        const { data: novo, error } = await supabase
+          .from("usuario_livros")
+          .insert({ user_id: user.id, obra_id: trilha.obra_id, status: "lendo" })
+          .select("id")
+          .single();
+        if (error) throw error;
+        usuarioLivroId = novo.id;
+      }
+      // 2. usuario_leituras vinculada ao clube
+      const { data: existing } = await supabase
+        .from("usuario_leituras")
+        .select("id")
+        .eq("usuario_livro_id", usuarioLivroId)
+        .eq("clube_id", clubeId)
+        .maybeSingle();
+      let usuarioLeituraId = existing?.id as string | undefined;
+      if (!usuarioLeituraId) {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: novaUL, error } = await supabase
+          .from("usuario_leituras")
+          .insert({
+            usuario_livro_id: usuarioLivroId,
+            tipo_origem: "clube",
+            clube_id: clubeId,
+            status: "lendo",
+            data_inicio: today,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        usuarioLeituraId = novaUL.id;
+      }
+      navigate(`/leituras/${usuarioLeituraId}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao abrir livro");
+    } finally {
+      setNavLoading(false);
+    }
+  };
 
   return (
     <motion.li
@@ -104,17 +164,25 @@ const TrilhaCard = ({
         }`}
       />
       <article className="card-soft p-4 flex gap-4">
-        {trilha.obra?.capa_padrao_url ? (
-          <img
-            src={trilha.obra.capa_padrao_url}
-            alt={trilha.obra.titulo_original}
-            className="w-20 h-28 sm:w-24 sm:h-32 rounded-md object-cover shadow-sm flex-shrink-0"
-          />
-        ) : (
-          <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-md bg-secondary flex items-center justify-center flex-shrink-0">
-            <BookOpen className="w-6 h-6 text-primary" />
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={abrirLivro}
+          disabled={navLoading || !canEdit}
+          className="flex-shrink-0 rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70"
+          aria-label={`Abrir ${trilha.obra?.titulo_original ?? "obra"}`}
+        >
+          {trilha.obra?.capa_padrao_url ? (
+            <img
+              src={trilha.obra.capa_padrao_url}
+              alt={trilha.obra.titulo_original}
+              className="w-20 h-28 sm:w-24 sm:h-32 rounded-md object-cover shadow-sm"
+            />
+          ) : (
+            <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-md bg-secondary flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-primary" />
+            </div>
+          )}
+        </button>
 
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
@@ -122,7 +190,10 @@ const TrilhaCard = ({
               <p className="text-[10px] uppercase tracking-wider text-accent font-semibold">
                 Etapa {trilha.ordem}
               </p>
-              <h3 className="font-display text-base sm:text-lg font-semibold leading-tight line-clamp-2">
+              <h3
+                onClick={canEdit ? abrirLivro : undefined}
+                className={`font-display text-base sm:text-lg font-semibold leading-tight line-clamp-2 ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+              >
                 {trilha.obra?.titulo_original ?? "Obra"}
               </h3>
             </div>
