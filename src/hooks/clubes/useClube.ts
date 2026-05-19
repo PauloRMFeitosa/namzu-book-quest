@@ -14,6 +14,7 @@ export interface ClubeDetalhe {
   objetivo: string | null;
   regras: string | null;
   categoria: string | null;
+  visibilidade: string | null;
   created_at: string;
   curador?: {
     user_id: string;
