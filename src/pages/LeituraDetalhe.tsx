@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpen, Check, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { RegistrarLeituraDialog } from "@/components/leituras/RegistrarLeituraDi
 import { LeiturasList } from "@/components/leituras/LeiturasList";
 import { PosLeituraBlock } from "@/components/leituras/PosLeituraBlock";
 import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 
@@ -19,6 +21,7 @@ const LeituraDetalhe = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: livro, isLoading } = useLivroDetalhe(id);
+  const [openConcluir, setOpenConcluir] = useState(false);
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
   if (!livro) return <p className="text-muted-foreground">Leitura não encontrada.</p>;
@@ -34,11 +37,12 @@ const LeituraDetalhe = () => {
     qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
   };
 
-  const concluir = async () => {
+  const concluir = async (dataFim: string) => {
     try {
-      await finalizarLeitura(livro.id);
+      await finalizarLeitura(livro.id, dataFim);
       toast.success("Leitura concluída!");
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      qc.invalidateQueries({ queryKey: ["clube-leituras"] });
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -70,7 +74,7 @@ const LeituraDetalhe = () => {
             <Play className="w-4 h-4" /> Retomar
           </Button>
         ) : (
-          <Button onClick={concluir} variant="outline" className="h-11 rounded-2xl border-2">
+          <Button onClick={() => setOpenConcluir(true)} variant="outline" className="h-11 rounded-2xl border-2">
             <Check className="w-4 h-4" /> Concluir
           </Button>
         )}
@@ -102,6 +106,8 @@ const LeituraDetalhe = () => {
 
       {/* Bloco C: Pós-leitura */}
       {isLido && <PosLeituraBlock livro={livro} />}
+
+      <ConcluirLeituraDialog open={openConcluir} onOpenChange={setOpenConcluir} onConfirm={concluir} />
     </div>
   );
 };
