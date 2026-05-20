@@ -81,39 +81,41 @@ const Marketplace = () => {
                 clubes={meusAtivos}
               />
             )}
-            <SecaoCarrossel
-              titulo="Em alta"
-              legenda="O que está movimentando a comunidade agora"
-              clubes={secoes.em_alta}
-            />
-            <SecaoCarrossel
-              titulo="Para você"
-              legenda="Selecionados com base no seu perfil"
-              clubes={secoes.em_alta}
-            />
-            <SecaoCarrossel
-              titulo="Mais profundos"
-              legenda="Discussões densas e leitura atenta"
-              clubes={secoes.profundos}
-            />
-            <SecaoCarrossel
-              titulo="Mais ativos"
-              legenda="Membros que aparecem todo dia"
-              clubes={secoes.ativos}
-            />
-            <SecaoCarrossel
-              titulo="Pequenos clubes"
-              legenda="Tribos íntimas, até 30 membros"
-              clubes={secoes.pequenos}
-              emptyText="Nenhum clube pequeno disponível agora."
-            />
-            <SecaoCarrossel
-              titulo="Recém-chegados"
-              legenda="Acabaram de abrir as portas"
-              clubes={secoes.novos}
-            />
-          </div>
-        ) : null}
+            {secoes && (
+              <>
+                <SecaoCarrossel
+                  titulo="Em alta"
+                  legenda="O que está movimentando a comunidade agora"
+                  clubes={secoes.em_alta}
+                />
+                <SecaoCarrossel
+                  titulo="Para você"
+                  legenda="Selecionados com base no seu perfil"
+                  clubes={secoes.em_alta}
+                />
+                <SecaoCarrossel
+                  titulo="Mais profundos"
+                  legenda="Discussões densas e leitura atenta"
+                  clubes={secoes.profundos}
+                />
+                <SecaoCarrossel
+                  titulo="Mais ativos"
+                  legenda="Membros que aparecem todo dia"
+                  clubes={secoes.ativos}
+                />
+                <SecaoCarrossel
+                  titulo="Pequenos clubes"
+                  legenda="Tribos íntimas, até 30 membros"
+                  clubes={secoes.pequenos}
+                  emptyText="Nenhum clube pequeno disponível agora."
+                />
+                <SecaoCarrossel
+                  titulo="Recém-chegados"
+                  legenda="Acabaram de abrir as portas"
+                  clubes={secoes.novos}
+                />
+              </>
+            )}
     </div>
   );
 };
