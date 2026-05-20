@@ -31,6 +31,8 @@ export interface ClubeCardData {
   tags: string[];
   // creator
   curador?: { username: string | null; nome_exibicao: string | null; avatar_url: string | null } | null;
+  // membership do usuário atual
+  is_membro?: boolean;
 }
 
 interface UseClubesParams {
@@ -44,10 +46,11 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
   return useQuery({
     queryKey: ["clubes-marketplace", busca, categoria, secao, user?.id],
     queryFn: async (): Promise<ClubeCardData[]> => {
-      // IDs de clubes privados que o usuário pode ver (curador ou moderador)
+      // IDs de clubes privados que o usuário pode ver (curador, moderador ou membro ativo)
       let allowedPrivadoIds: string[] = [];
+      let membroIds = new Set<string>();
       if (user) {
-        const [curadorRes, modRes] = await Promise.all([
+        const [curadorRes, modRes, membroRes] = await Promise.all([
           supabase.from("clubes").select("id").eq("curador_id", user.id),
           supabase
             .from("clube_membros")
@@ -55,12 +58,22 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
             .eq("user_id", user.id)
             .eq("papel", "moderador")
             .eq("status", "ativo"),
+          supabase
+            .from("clube_membros")
+            .select("clube_id")
+            .eq("user_id", user.id)
+            .eq("status", "ativo"),
         ]);
         const ids = new Set<string>();
         (curadorRes.data ?? []).forEach((c: any) => ids.add(c.id));
         (modRes.data ?? []).forEach((m: any) => ids.add(m.clube_id));
+        (membroRes.data ?? []).forEach((m: any) => {
+          ids.add(m.clube_id);
+          membroIds.add(m.clube_id);
+        });
         allowedPrivadoIds = Array.from(ids);
       }
+
 
       // Base clubes ativos: públicos OU privados que o usuário gerencia
       let q = (supabase as any)
@@ -147,6 +160,7 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
           profundidade_score: profundidadeMap.get(c.id) ?? 0,
           tags: tagsMap.get(c.id) ?? [],
           curador: perfisMap.get(c.curador_id) ?? null,
+          is_membro: membroIds.has(c.id),
         };
       });
 
