@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpen, Check, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
