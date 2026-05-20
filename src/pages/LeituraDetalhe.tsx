@@ -12,6 +12,7 @@ import { RegistrarLeituraDialog } from "@/components/leituras/RegistrarLeituraDi
 import { LeiturasList } from "@/components/leituras/LeiturasList";
 import { PosLeituraBlock } from "@/components/leituras/PosLeituraBlock";
 import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 
