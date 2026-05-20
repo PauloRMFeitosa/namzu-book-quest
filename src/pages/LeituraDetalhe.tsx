@@ -21,6 +21,7 @@ const LeituraDetalhe = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: livro, isLoading } = useLivroDetalhe(id);
+  const [openConcluir, setOpenConcluir] = useState(false);
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
   if (!livro) return <p className="text-muted-foreground">Leitura não encontrada.</p>;
