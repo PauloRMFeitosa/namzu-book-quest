@@ -74,6 +74,13 @@ const Marketplace = () => {
           <ResultadosFiltrados clubes={clubes} />
         ) : secoes ? (
           <div className="flex flex-col gap-10">
+            {meusAtivos.length > 0 && (
+              <SecaoCarrossel
+                titulo="Meus clubes ativos"
+                legenda="Comunidades das quais você faz parte"
+                clubes={meusAtivos}
+              />
+            )}
             <SecaoCarrossel
               titulo="Em alta"
               legenda="O que está movimentando a comunidade agora"
