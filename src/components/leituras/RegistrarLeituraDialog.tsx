@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { iniciarLeitura, registrarProgresso } from "@/hooks/leituras/useLeituraActions";
+import { PercentualProgressoControl } from "./PercentualProgressoControl";
 
 type Citacao = { texto: string; pagina: string };
 type Aplicacao = { descricao: string; plano_acao: any };
@@ -320,16 +321,13 @@ export const RegistrarLeituraDialog = ({
 
           <TabsContent value="progresso" className="flex flex-col gap-3 mt-0">
             <p className="text-xs text-muted-foreground">Salvo em <code>leituras</code></p>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-muted-foreground">Páginas lidas</label>
-                <Input type="number" min={0} max={totalPaginas ?? undefined} value={paginasLidas} onChange={(e) => setPaginasLidas(e.target.value)} className="h-11 rounded-xl mt-1" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Ou %</label>
-                <Input type="number" min={0} max={100} value={percentual} onChange={(e) => setPercentual(e.target.value)} className="h-11 rounded-xl mt-1" />
-              </div>
-            </div>
+            <PercentualProgressoControl
+              percentual={percentual ? Number(percentual) : 0}
+              onPercentualChange={(value) => setPercentual(value.toString())}
+              pagina={paginasLidas}
+              onPaginaChange={setPaginasLidas}
+              totalPaginas={totalPaginas}
+            />
           </TabsContent>
 
           <TabsContent value="citacoes" className="flex flex-col gap-2 mt-0">
