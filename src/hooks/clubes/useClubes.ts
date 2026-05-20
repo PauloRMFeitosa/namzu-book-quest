@@ -160,6 +160,7 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
           profundidade_score: profundidadeMap.get(c.id) ?? 0,
           tags: tagsMap.get(c.id) ?? [],
           curador: perfisMap.get(c.curador_id) ?? null,
+          is_membro: membroIds.has(c.id),
         };
       });
 
