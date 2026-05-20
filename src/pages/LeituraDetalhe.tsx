@@ -37,11 +37,12 @@ const LeituraDetalhe = () => {
     qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
   };
 
-  const concluir = async () => {
+  const concluir = async (dataFim: string) => {
     try {
-      await finalizarLeitura(livro.id);
+      await finalizarLeitura(livro.id, dataFim);
       toast.success("Leitura concluída!");
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      qc.invalidateQueries({ queryKey: ["clube-leituras"] });
     } catch (e: any) {
       toast.error(e.message);
     }
