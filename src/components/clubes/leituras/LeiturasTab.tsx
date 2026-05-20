@@ -4,7 +4,6 @@ import { BookOpen, Calendar, CheckCircle2, Users, Sparkles } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -14,8 +13,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { PercentualProgressoControl } from "@/components/leituras/PercentualProgressoControl";
 import {
   TrilhaItem,
   useClubeLeituras,
@@ -276,24 +274,6 @@ const ProgressoDialog = ({
     }
   };
 
-  const handlePaginaChange = (val: string) => {
-    setPagina(val);
-    if (totalPaginas && val) {
-      const n = Number(val);
-      if (!Number.isNaN(n)) {
-        const pct = Math.max(0, Math.min(100, Math.round((n / totalPaginas) * 100)));
-        setPercentual(pct);
-      }
-    }
-  };
-
-  const handlePercentualChange = (val: number) => {
-    setPercentual(val);
-    if (totalPaginas) {
-      setPagina(Math.round((val / 100) * totalPaginas).toString());
-    }
-  };
-
   const handleSave = async () => {
     await salvar.mutateAsync({
       obra_id: trilha.obra_id,
@@ -314,59 +294,16 @@ const ProgressoDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-2">
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Percentual lido · {percentual}%
-            </Label>
-            <Slider
-              value={[percentual]}
-              onValueChange={(v) => handlePercentualChange(v[0])}
-              min={0}
-              max={100}
-              step={5}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cap" className="text-xs">Capítulo atual</Label>
-              <Input
-                id="cap"
-                value={capitulo}
-                onChange={(e) => setCapitulo(e.target.value)}
-                placeholder="ex: 4"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="pag" className="text-xs">
-                Página atual{totalPaginas ? ` / ${totalPaginas}` : ""}
-              </Label>
-              <Input
-                id="pag"
-                type="number"
-                min={0}
-                max={totalPaginas ?? undefined}
-                value={pagina}
-                onChange={(e) => handlePaginaChange(e.target.value)}
-                placeholder={totalPaginas ? `0 a ${totalPaginas}` : "ex: 87"}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-xl"
-              onClick={() => {
-                setPercentual(100);
-                if (totalPaginas) setPagina(totalPaginas.toString());
-              }}
-            >
-              <CheckCircle2 className="w-4 h-4" /> Marcar como concluído
-            </Button>
-          </div>
+        <div className="py-2">
+          <PercentualProgressoControl
+            percentual={percentual}
+            onPercentualChange={setPercentual}
+            pagina={pagina}
+            onPaginaChange={setPagina}
+            totalPaginas={totalPaginas}
+            capitulo={capitulo}
+            onCapituloChange={setCapitulo}
+          />
         </div>
 
         <DialogFooter>

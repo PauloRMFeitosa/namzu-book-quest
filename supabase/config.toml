@@ -18,5 +18,8 @@ verify_jwt = true
 [functions.leitura-copiloto]
 verify_jwt = true
 
+[functions.salvar-progresso-leitura]
+verify_jwt = true
+
 [functions.ensure-profiles]
 verify_jwt = false
