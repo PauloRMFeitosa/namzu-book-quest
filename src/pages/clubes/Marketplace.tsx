@@ -72,7 +72,7 @@ const Marketplace = () => {
           <EmptyState busca={busca} categoria={categoria} />
         ) : (busca || categoria) ? (
           <ResultadosFiltrados clubes={clubes} />
-        ) : secoes ? (
+        ) : (secoes || meusAtivos.length > 0) ? (
           <div className="flex flex-col gap-10">
             {meusAtivos.length > 0 && (
               <SecaoCarrossel
