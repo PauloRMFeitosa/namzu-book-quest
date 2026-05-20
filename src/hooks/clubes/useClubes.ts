@@ -31,6 +31,8 @@ export interface ClubeCardData {
   tags: string[];
   // creator
   curador?: { username: string | null; nome_exibicao: string | null; avatar_url: string | null } | null;
+  // membership do usuário atual
+  is_membro?: boolean;
 }
 
 interface UseClubesParams {
