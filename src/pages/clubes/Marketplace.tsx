@@ -14,10 +14,17 @@ const Marketplace = () => {
 
   const { data: clubes = [], isLoading } = useClubes({ busca, categoria });
 
+  const meusAtivos = useMemo(
+    () => clubes.filter((c) => c.is_membro),
+    [clubes]
+  );
+
   const secoes = useMemo(() => {
-    if (!clubes.length) return null;
-    const sortBy = <K extends keyof typeof clubes[number]>(k: K, asc = false) =>
-      [...clubes].sort((a, b) => {
+    // Clubes privados só aparecem em "Meus clubes ativos"
+    const publicos = clubes.filter((c) => c.visibilidade !== "privado");
+    if (!publicos.length) return null;
+    const sortBy = <K extends keyof typeof publicos[number]>(k: K, asc = false) =>
+      [...publicos].sort((a, b) => {
         const av = Number(a[k] ?? 0);
         const bv = Number(b[k] ?? 0);
         return asc ? av - bv : bv - av;
@@ -25,12 +32,12 @@ const Marketplace = () => {
 
     return {
       em_alta: sortBy("engagement_score").slice(0, 8),
-      novos: [...clubes]
+      novos: [...publicos]
         .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
         .slice(0, 8),
       profundos: sortBy("profundidade_score").slice(0, 8),
       ativos: sortBy("ativos_7d").slice(0, 8),
-      pequenos: clubes
+      pequenos: publicos
         .filter((c) => c.membros_count > 0 && c.membros_count <= 30)
         .slice(0, 8),
     };
