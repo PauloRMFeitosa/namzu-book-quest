@@ -106,6 +106,8 @@ const LeituraDetalhe = () => {
 
       {/* Bloco C: Pós-leitura */}
       {isLido && <PosLeituraBlock livro={livro} />}
+
+      <ConcluirLeituraDialog open={openConcluir} onOpenChange={setOpenConcluir} onConfirm={concluir} />
     </div>
   );
 };
