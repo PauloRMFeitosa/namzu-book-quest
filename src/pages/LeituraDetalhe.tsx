@@ -74,7 +74,7 @@ const LeituraDetalhe = () => {
             <Play className="w-4 h-4" /> Retomar
           </Button>
         ) : (
-          <Button onClick={concluir} variant="outline" className="h-11 rounded-2xl border-2">
+          <Button onClick={() => setOpenConcluir(true)} variant="outline" className="h-11 rounded-2xl border-2">
             <Check className="w-4 h-4" /> Concluir
           </Button>
         )}
