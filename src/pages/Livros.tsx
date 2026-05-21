@@ -1,19 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
-import { BookOpen, Plus, Library } from "lucide-react";
+import { BookOpen, Plus, Library, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo";
 
 const Livros = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [removerAlvo, setRemoverAlvo] = useState<{ id: string; titulo: string } | null>(null);
+  const [removendo, setRemovendo] = useState(false);
 
   const { data = [] } = useQuery({
     queryKey: ["meus-livros", user?.id],
@@ -52,6 +66,24 @@ const Livros = () => {
     },
   });
 
+  const confirmarRemocao = async () => {
+    if (!removerAlvo) return;
+    setRemovendo(true);
+    const { error } = await supabase
+      .from("usuario_livros")
+      .delete()
+      .eq("id", removerAlvo.id)
+      .eq("user_id", user!.id);
+    setRemovendo(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Livro removido da biblioteca");
+    setRemoverAlvo(null);
+    qc.invalidateQueries({ queryKey: ["meus-livros", user?.id] });
+  };
+
   const matchFiltro = (status: string, f: Filtro) => {
     if (f === "todos") return true;
     return status === f;
@@ -87,16 +119,29 @@ const Livros = () => {
     ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
         {items.map((l: any) => (
-          <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="text-left hover-lift">
-            {l.obras?.capa_padrao_url ? (
-              <img src={l.obras.capa_padrao_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
-            ) : (
-              <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-primary" />
-              </div>
-            )}
-            <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
-          </button>
+          <div key={l.id} className="relative group">
+            <button onClick={() => navigate(`/obras/${l.obra_id}`)} className="text-left hover-lift w-full">
+              {l.obras?.capa_padrao_url ? (
+                <img src={l.obras.capa_padrao_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
+              ) : (
+                <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-primary" />
+                </div>
+              )}
+              <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setRemoverAlvo({ id: l.id, titulo: l.obras?.titulo_original ?? "este livro" });
+              }}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center text-destructive shadow-soft opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+              aria-label="Remover da biblioteca"
+              title="Remover da biblioteca"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         ))}
       </div>
     );
@@ -129,6 +174,27 @@ const Livros = () => {
         })}
       </div>
       <Grid items={filtrados} />
+
+      <AlertDialog open={!!removerAlvo} onOpenChange={(o) => !o && setRemoverAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover da biblioteca?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{removerAlvo?.titulo}" será removido da sua biblioteca, junto com leituras e progresso vinculados. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removendo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmarRemocao(); }}
+              disabled={removendo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removendo ? "Removendo…" : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
