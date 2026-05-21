@@ -25,11 +25,24 @@ export const UsuariosTab = () => {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: perfis }, { data: roles }] = await Promise.all([
-      supabase.from("gamificacao_perfis").select("user_id, xp_total, nivel, streak_atual").order("xp_total", { ascending: false }),
+    const [{ data: listData, error: listErr }, { data: perfis }, { data: roles }] = await Promise.all([
+      supabase.functions.invoke("admin-list-users"),
+      supabase.from("gamificacao_perfis").select("user_id, xp_total, nivel, streak_atual"),
       (supabase as any).from("user_roles").select("user_id, role").eq("role", "admin"),
     ]);
-    setRows(perfis ?? []);
+    if (listErr || (listData as any)?.error) {
+      toast.error((listData as any)?.error ?? listErr?.message ?? "Erro ao listar usuários");
+      setLoading(false);
+      return;
+    }
+    const perfilMap = new Map((perfis ?? []).map((p: any) => [p.user_id, p]));
+    const merged = ((listData as any).users ?? []).map((u: any) => ({
+      ...u,
+      ...(perfilMap.get(u.id) ?? { xp_total: 0, nivel: 1, streak_atual: 0 }),
+      user_id: u.id,
+    }));
+    merged.sort((a: any, b: any) => (b.xp_total ?? 0) - (a.xp_total ?? 0));
+    setRows(merged);
     setAdmins(new Set((roles ?? []).map((r: any) => r.user_id)));
     setLoading(false);
   };
@@ -120,15 +133,16 @@ export const UsuariosTab = () => {
         <CardContent>
           {loading ? <p className="text-sm text-muted-foreground">Carregando…</p> : (
             <Table>
-              <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Nível</TableHead><TableHead>XP</TableHead><TableHead>Admin</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Email</TableHead><TableHead>Nível</TableHead><TableHead>XP</TableHead><TableHead>Admin</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {rows.map((u) => {
                   const isAdmin = admins.has(u.user_id);
                   return (
                     <TableRow key={u.user_id}>
-                      <TableCell className="font-mono text-xs">{u.user_id.slice(0, 8)}…</TableCell>
-                      <TableCell>{u.nivel}</TableCell>
-                      <TableCell>{u.xp_total}</TableCell>
+                      <TableCell>{u.full_name ?? "—"}</TableCell>
+                      <TableCell className="text-xs">{u.email ?? "—"}</TableCell>
+                      <TableCell>{u.nivel ?? 1}</TableCell>
+                      <TableCell>{u.xp_total ?? 0}</TableCell>
                       <TableCell>{isAdmin ? "Sim" : "—"}</TableCell>
                       <TableCell className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => toggleAdmin(u.user_id, isAdmin)} title={isAdmin ? "Remover admin" : "Tornar admin"}>
