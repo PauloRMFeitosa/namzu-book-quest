@@ -7,6 +7,7 @@ import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles } from "lucide-react";
 import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
+import { CriarClubeDialog } from "@/components/clubes/marketplace/CriarClubeDialog";
 
 const Marketplace = () => {
   const [busca, setBusca] = useState("");
