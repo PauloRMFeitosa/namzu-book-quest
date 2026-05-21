@@ -92,8 +92,8 @@ export const CriarClubeDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-2xl bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4" /> Criar clube
+        <Button size="lg" className="h-12 px-8 rounded-2xl text-base font-semibold bg-primary hover:bg-primary/90 shadow-md">
+          <Plus className="w-5 h-5" /> Criar meu clube de leitura
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
