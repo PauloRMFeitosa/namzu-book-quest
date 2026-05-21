@@ -54,15 +54,13 @@ const Marketplace = () => {
           description="Comunidades vivas para mergulhar fundo em livros, ideias e conversas que importam."
         />
 
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex-1 min-w-[240px]">
-            <FiltrosBar
-              busca={busca}
-              onBusca={setBusca}
-              categoria={categoria}
-              onCategoria={setCategoria}
-            />
-          </div>
+        <FiltrosBar
+          busca={busca}
+          onBusca={setBusca}
+          categoria={categoria}
+          onCategoria={setCategoria}
+        />
+        <div className="flex justify-center">
           <CriarClubeDialog />
         </div>
 
