@@ -198,45 +198,20 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1">
               {!parentPostId && (
-                <>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => galleryRef.current?.click()}
-                    disabled={uploading}
-                    className="text-xs gap-1.5 h-8"
-                    aria-label="Galeria"
-                  >
-                    {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-                    Galeria
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => cameraRef.current?.click()}
-                    disabled={uploading}
-                    className="text-xs gap-1.5 h-8"
-                    aria-label="Câmera"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    Câmera
-                  </Button>
-                </>
-              )}
-              {!parentPostId && (
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={() => setPreview((p) => !p)}
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={uploading}
                   className="text-xs gap-1.5 h-8"
+                  aria-label="Imagem"
                 >
-                  {preview ? <Pencil className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  {preview ? "Editar" : "Preview"}
+                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+                  Imagem
                 </Button>
               )}
+
             </div>
             <Button
               type="button"
