@@ -80,6 +80,43 @@ const Home = () => {
         {flags.show_gamificacao_home && <StatsChips />}
       </div>
 
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-primary font-semibold">Meus clubes ativos</p>
+            <h2 className="font-display text-xl font-semibold">Continue a conversa</h2>
+          </div>
+          <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
+        </div>
+        {clubes.length === 0 ? (
+          <div className="card-soft p-6 text-center">
+            <Users className="w-10 h-10 mx-auto text-primary mb-3" />
+            <p className="font-semibold">Você ainda não participa de nenhum clube ativo</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-4">Encontre uma comunidade que combina com você.</p>
+            <Button onClick={() => navigate("/clubes")} className="h-[48px] rounded-2xl bg-primary hover:bg-primary-hover">
+              Explorar clubes
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {clubes.map((c: any) => (
+              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
+                {c.imagem_capa_url ? (
+                  <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold text-lg">{c.nome[0]}</div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{c.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
       {lendoList.length > 0 ? (
         <section>
           <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
