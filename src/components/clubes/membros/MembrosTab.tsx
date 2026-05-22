@@ -165,97 +165,102 @@ export const MembrosTab = ({
           <p className="text-sm text-muted-foreground">Nenhum membro encontrado.</p>
         </div>
       ) : (
-        <ul className="grid sm:grid-cols-2 gap-3">
+        <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((m) => (
             <li
               key={m.user_id}
-              className="card-soft p-4 flex items-start gap-3 hover:shadow-md transition-shadow"
+              className="card-soft p-4 flex flex-col gap-3 hover:shadow-md transition-shadow min-w-0"
             >
-              <Avatar className="w-12 h-12 ring-2 ring-background">
-                <AvatarImage src={m.perfil?.avatar_url ?? undefined} />
-                <AvatarFallback>
-                  {(m.perfil?.nome_exibicao ?? m.perfil?.username ?? "U").slice(0, 1).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 flex flex-col gap-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-display font-semibold text-sm truncate">
-                    {m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro"}
-                  </span>
-                  {m.is_curador && (
-                    <Badge className="h-5 px-1.5 gap-1 bg-accent/15 text-accent border-0 text-[10px]">
-                      <Crown className="w-3 h-3" /> Curador
-                    </Badge>
-                  )}
-                  {!m.is_curador && m.papel === "moderador" && (
-                    <Badge className="h-5 px-1.5 gap-1 bg-primary/15 text-primary border-0 text-[10px]">
-                      <Shield className="w-3 h-3" /> Moderador
-                    </Badge>
-                  )}
-                  {user?.id === m.user_id && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-                          title="Sair do clube"
-                        >
-                          <LogOut className="w-3 h-3" /> Sair
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Sair deste clube?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Você perderá acesso ao feed, canais, eventos e demais conteúdos exclusivos. Pode voltar a qualquer momento.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => sair.mutate()}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {sair.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-                {m.perfil?.username && (
-                  <span className="text-[11px] text-muted-foreground">@{m.perfil.username}</span>
-                )}
-                {m.perfil?.bio && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{m.perfil.bio}</p>
-                )}
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-1">
-                  <span className="flex items-center gap-1 font-medium text-foreground">
-                    <Sparkles className="w-3 h-3 text-accent" /> Nv {m.nivel}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-accent" /> {m.xp} XP
-                  </span>
-                  <span>· entrou {format(new Date(m.data_entrada), "dd MMM yy", { locale: ptBR })}</span>
-                </div>
-                {canManage && !m.is_curador && user?.id !== m.user_id && (
-                  <div className="mt-2">
-                    <Select
-                      value={m.papel}
-                      onValueChange={(v) =>
-                        definirPapel.mutate({ userId: m.user_id, papel: v as "membro" | "moderador" })
-                      }
-                    >
-                      <SelectTrigger className="h-7 text-[11px] rounded-lg w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="membro">Membro</SelectItem>
-                        <SelectItem value="moderador">Moderador</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <div className="flex items-start gap-3 min-w-0">
+                <Avatar className="w-12 h-12 ring-2 ring-background shrink-0">
+                  <AvatarImage src={m.perfil?.avatar_url ?? undefined} />
+                  <AvatarFallback>
+                    {(m.perfil?.nome_exibicao ?? m.perfil?.username ?? "U").slice(0, 1).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-display font-semibold text-sm truncate flex-1 min-w-0">
+                      {m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro"}
+                    </span>
+                    {m.is_curador && (
+                      <Badge className="h-5 px-1.5 gap-1 bg-accent/15 text-accent border-0 text-[10px] shrink-0">
+                        <Crown className="w-3 h-3" /> Curador
+                      </Badge>
+                    )}
+                    {!m.is_curador && m.papel === "moderador" && (
+                      <Badge className="h-5 px-1.5 gap-1 bg-primary/15 text-primary border-0 text-[10px] shrink-0">
+                        <Shield className="w-3 h-3" /> Mod
+                      </Badge>
+                    )}
                   </div>
+                  {m.perfil?.username && (
+                    <span className="text-[11px] text-muted-foreground truncate">@{m.perfil.username}</span>
+                  )}
+                </div>
+                {user?.id === m.user_id && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                        title="Sair do clube"
+                      >
+                        <LogOut className="w-3 h-3" /> Sair
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Sair deste clube?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Você perderá acesso ao feed, canais, eventos e demais conteúdos exclusivos. Pode voltar a qualquer momento.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => sair.mutate()}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {sair.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
+
+              {m.perfil?.bio && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{m.perfil.bio}</p>
+              )}
+
+              <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground mt-auto">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/60 font-medium text-foreground whitespace-nowrap">
+                  <Sparkles className="w-3 h-3 text-accent" /> Nv {m.nivel}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/60 whitespace-nowrap">
+                  <Flame className="w-3 h-3 text-accent" /> {m.xp} XP
+                </span>
+                <span className="whitespace-nowrap">
+                  entrou {format(new Date(m.data_entrada), "dd MMM yy", { locale: ptBR })}
+                </span>
+              </div>
+
+              {canManage && !m.is_curador && user?.id !== m.user_id && (
+                <Select
+                  value={m.papel}
+                  onValueChange={(v) =>
+                    definirPapel.mutate({ userId: m.user_id, papel: v as "membro" | "moderador" })
+                  }
+                >
+                  <SelectTrigger className="h-7 text-[11px] rounded-lg w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="membro">Membro</SelectItem>
+                    <SelectItem value="moderador">Moderador</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </li>
           ))}
         </ul>
