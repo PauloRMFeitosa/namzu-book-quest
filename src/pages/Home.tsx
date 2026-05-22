@@ -7,7 +7,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Plus, ArrowRight, HomeIcon } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users } from "lucide-react";
 
 const Home = () => {
   const { user } = useAuth();
