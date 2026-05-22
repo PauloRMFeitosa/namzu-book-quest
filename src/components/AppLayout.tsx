@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
@@ -69,14 +70,17 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
           </Link>
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
-          <Link to="/perfil" aria-label="Ver perfil" className="ml-auto hover-lift">
-            <Avatar className="w-9 h-9 border border-border">
-              <AvatarImage src={avatarUrl} alt={fullName} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <InstallPWAButton />
+            <Link to="/perfil" aria-label="Ver perfil" className="hover-lift">
+              <Avatar className="w-9 h-9 border border-border">
+                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </div>
       </header>
 
