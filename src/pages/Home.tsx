@@ -84,7 +84,6 @@ const Home = () => {
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-xs uppercase tracking-wider text-primary font-semibold">Meus clubes ativos</p>
-            <h2 className="font-display text-xl font-semibold">Continue a conversa</h2>
           </div>
           <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
         </div>
