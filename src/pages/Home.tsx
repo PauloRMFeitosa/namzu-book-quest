@@ -53,14 +53,17 @@ const Home = () => {
   });
 
   const { data: clubes = [] } = useQuery({
-    queryKey: ["meus-clubes", user?.id],
+    queryKey: ["meus-clubes-ativos", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("clube_membros")
         .select("clubes(*)")
-        .eq("user_id", user!.id);
-      return (data ?? []).map((r: any) => r.clubes).filter(Boolean);
+        .eq("user_id", user!.id)
+        .eq("status", "ativo");
+      return (data ?? [])
+        .map((r: any) => r.clubes)
+        .filter((c: any) => c && c.is_ativo);
     },
   });
 
