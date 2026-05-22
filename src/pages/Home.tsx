@@ -153,34 +153,6 @@ const Home = () => {
         )}
       </section>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Clubes ativos</h3>
-          <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
-        </div>
-        {clubes.length === 0 ? (
-          <div className="card-soft p-5 text-center">
-            <p className="text-sm text-muted-foreground mb-3">Você ainda não participa de nenhum clube.</p>
-            <Button variant="outline" onClick={() => navigate("/clubes")} className="rounded-2xl">Explorar clubes</Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {clubes.map((c: any) => (
-              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
-                {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold">{c.nome[0]}</div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 };
