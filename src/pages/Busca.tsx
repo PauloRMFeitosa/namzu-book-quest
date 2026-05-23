@@ -101,6 +101,7 @@ const Busca = () => {
   const [fTitulo, setFTitulo] = useState("");
   const [fAutor, setFAutor] = useState("");
   const [fIsbn, setFIsbn] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   // Termo "submetido" — só muda ao clicar em Buscar
   const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
 
