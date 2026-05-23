@@ -63,8 +63,17 @@ function buildGoogleQuery({ titulo, autor, isbn, query }: any): string | null {
 async function searchGoogle(params: any): Promise<BookResult[]> {
   const q = buildGoogleQuery(params);
   if (!q) return [];
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`;
-  const data = await safeJson(url);
+  const key = Deno.env.get("GOOGLE_BOOKS_API_KEY");
+  const keyParam = key ? `&key=${encodeURIComponent(key)}` : "";
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10${keyParam}`;
+  const res = await fetch(url).catch(() => null);
+  if (!res) return [];
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    console.warn("Google Books error", res.status, txt.slice(0, 200));
+    return [];
+  }
+  const data = await res.json().catch(() => null);
   if (!data?.items?.length) return [];
   return data.items
     .map((item: any): BookResult | null => {
