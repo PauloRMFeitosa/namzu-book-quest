@@ -643,14 +643,26 @@ const Busca = () => {
             placeholder="Autor"
             className="h-11 rounded-xl"
           />
-          <Input
-            value={fIsbn}
-            onChange={(e) => setFIsbn(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-            placeholder="ISBN (10 ou 13 dígitos)"
-            inputMode="numeric"
-            className="h-11 rounded-xl"
-          />
+          <div className="flex gap-2">
+            <Input
+              value={fIsbn}
+              onChange={(e) => setFIsbn(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+              placeholder="ISBN (10 ou 13 dígitos)"
+              inputMode="numeric"
+              className="h-11 rounded-xl flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-xl shrink-0"
+              onClick={() => setScannerOpen(true)}
+              title="Ler código de barras"
+            >
+              <ScanLine className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
