@@ -13,8 +13,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
-        serif: ["Fraunces", "Georgia", "serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Inter", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-warm": "var(--gradient-warm)",
