@@ -15,7 +15,9 @@ import {
   ArrowUpDown,
   X,
   Compass,
+  ScanLine,
 } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -99,6 +101,7 @@ const Busca = () => {
   const [fTitulo, setFTitulo] = useState("");
   const [fAutor, setFAutor] = useState("");
   const [fIsbn, setFIsbn] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   // Termo "submetido" — só muda ao clicar em Buscar
   const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
 
@@ -640,14 +643,26 @@ const Busca = () => {
             placeholder="Autor"
             className="h-11 rounded-xl"
           />
-          <Input
-            value={fIsbn}
-            onChange={(e) => setFIsbn(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-            placeholder="ISBN (10 ou 13 dígitos)"
-            inputMode="numeric"
-            className="h-11 rounded-xl"
-          />
+          <div className="flex gap-2">
+            <Input
+              value={fIsbn}
+              onChange={(e) => setFIsbn(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+              placeholder="ISBN (10 ou 13 dígitos)"
+              inputMode="numeric"
+              className="h-11 rounded-xl flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-xl shrink-0"
+              onClick={() => setScannerOpen(true)}
+              title="Ler código de barras"
+            >
+              <ScanLine className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
@@ -846,6 +861,15 @@ const Busca = () => {
           </Button>
         </div>
       )}
+
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onDetected={(isbn) => {
+          setFIsbn(isbn);
+          setSubmitted({ titulo: fTitulo.trim(), autor: fAutor.trim(), isbn });
+        }}
+      />
     </div>
   );
 };
