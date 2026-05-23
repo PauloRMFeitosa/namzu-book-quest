@@ -861,6 +861,15 @@ const Busca = () => {
           </Button>
         </div>
       )}
+
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onDetected={(isbn) => {
+          setFIsbn(isbn);
+          setSubmitted({ titulo: fTitulo.trim(), autor: fAutor.trim(), isbn });
+        }}
+      />
     </div>
   );
 };
