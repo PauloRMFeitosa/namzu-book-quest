@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Check, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Play, Sparkles, Plus, Award, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ const LeituraDetalhe = () => {
   const qc = useQueryClient();
   const { data: livro, isLoading } = useLivroDetalhe(id);
   const [openConcluir, setOpenConcluir] = useState(false);
+  const [showPreForm, setShowPreForm] = useState(false);
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
   if (!livro) return <p className="text-muted-foreground">Leitura não encontrada.</p>;
@@ -81,31 +82,77 @@ const LeituraDetalhe = () => {
         <LeituraCopilotoButton usuarioLeituraId={livro.id} />
       </div>
 
-      {/* Bloco A: Pré-leitura */}
-      {preLeitura?.leitura_pre ? (
-        <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLeituraId={livro.id} />
-      ) : (
-        <PreLeituraForm usuarioLeituraId={livro.id} />
-      )}
+      {/* Card unificado: Pré / Sessões / Pós (vinculados ao mesmo usuario_leitura_id) */}
+      <div className="card-soft p-4 flex flex-col gap-4">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Leitura · {livro.id.slice(0, 8)}
+        </p>
 
-      {/* Bloco B: Leituras */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Sessões de leitura</h3>
-          <RegistrarLeituraDialog
-            usuarioLeituraId={livro.id}
-            totalPaginas={livro.edicoes?.num_paginas ?? null}
-            disabled={!preLeitura}
-          />
-        </div>
-        {!preLeitura && (
-          <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
-        )}
-        <LeiturasList leituras={livro.leituras} usuarioLeituraId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
+        {/* Pré-leitura */}
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" /> Pré-leitura
+            </h3>
+            {!preLeitura?.leitura_pre && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setShowPreForm((v) => !v)}
+              >
+                {showPreForm ? <><X className="w-3 h-3" /> Cancelar</> : <><Plus className="w-3 h-3" /> Adicionar pré-leitura</>}
+              </Button>
+            )}
+          </div>
+          {preLeitura?.leitura_pre ? (
+            <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLeituraId={livro.id} />
+          ) : showPreForm ? (
+            <PreLeituraForm
+              usuarioLeituraId={livro.id}
+              onCancel={() => setShowPreForm(false)}
+              onSaved={() => setShowPreForm(false)}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">Defina sua intenção antes de começar.</p>
+          )}
+        </section>
+
+        <div className="h-px bg-border" />
+
+        {/* Sessões de leitura */}
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" /> Sessões de leitura
+            </h3>
+            <RegistrarLeituraDialog
+              usuarioLeituraId={livro.id}
+              totalPaginas={livro.edicoes?.num_paginas ?? null}
+              disabled={!preLeitura}
+            />
+          </div>
+          {!preLeitura && (
+            <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
+          )}
+          <LeiturasList leituras={livro.leituras} usuarioLeituraId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
+        </section>
+
+        <div className="h-px bg-border" />
+
+        {/* Pós-leitura */}
+        <section className="flex flex-col gap-2">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Award className="w-4 h-4 text-primary" /> Pós-leitura
+          </h3>
+          {isLido ? (
+            <PosLeituraBlock livro={livro} />
+          ) : (
+            <p className="text-xs text-muted-foreground">Conclua a leitura para registrar a pós-leitura.</p>
+          )}
+        </section>
       </div>
 
-      {/* Bloco C: Pós-leitura */}
-      {isLido && <PosLeituraBlock livro={livro} />}
 
       <ConcluirLeituraDialog open={openConcluir} onOpenChange={setOpenConcluir} onConfirm={concluir} />
     </div>

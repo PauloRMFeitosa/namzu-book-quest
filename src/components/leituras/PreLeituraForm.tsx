@@ -68,19 +68,18 @@ export const PreLeituraForm = ({ usuarioLeituraId, leituraId, initial, onCancel,
   };
 
   return (
-    <form onSubmit={submit} className="card-soft p-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">{isEdit ? "Editar pré-leitura" : "Pré-leitura"}</h3>
-        </div>
-        {isEdit && onCancel && (
+    <form onSubmit={submit} className="flex flex-col gap-3 p-3 rounded-xl bg-muted/30">
+      {onCancel && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            {isEdit ? "Editando pré-leitura" : "Nova pré-leitura"}
+          </span>
           <Button type="button" size="icon" variant="ghost" onClick={onCancel} className="h-8 w-8">
             <X className="w-4 h-4" />
           </Button>
-        )}
-      </div>
-      {!isEdit && <p className="text-xs text-muted-foreground">Defina sua intenção antes de começar.</p>}
+        </div>
+      )}
+      {!isEdit && !onCancel && <p className="text-xs text-muted-foreground">Defina sua intenção antes de começar.</p>}
       <div>
         <label className="text-xs text-muted-foreground">Intenção *</label>
         <Input value={intencao} onChange={(e) => setIntencao(e.target.value)} placeholder="O que busca neste livro?" className="h-11 rounded-xl mt-1" />
