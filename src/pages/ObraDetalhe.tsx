@@ -224,7 +224,7 @@ const ObraDetalhe = () => {
           <div className="flex items-center gap-2 mt-1">
             <Stars value={mediaNota} />
             <span className="text-xs text-muted-foreground">
-              {notas.length > 0 ? `${mediaNota.toFixed(1)} (${notas.length})` : "Sem avaliações"}
+              {totalAvaliacoes > 0 ? `${mediaNota.toFixed(1)} (${totalAvaliacoes})` : "Sem avaliações"}
             </span>
           </div>
         </div>
