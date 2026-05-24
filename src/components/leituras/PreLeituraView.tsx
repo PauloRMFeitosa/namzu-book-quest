@@ -57,37 +57,33 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
   };
 
   return (
-    <div className="card-soft p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Pré-leitura</h3>
-        </div>
-        <div className="flex gap-1">
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
-            <Pencil className="w-4 h-4" />
-          </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-end gap-1 -mt-1">
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
-      <div>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Intenção</p>
-        <p className="text-sm">{pre.intencao}</p>
+      <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-2">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Intenção</p>
+          <p className="text-sm">{pre.intencao}</p>
+        </div>
+        {pre.dominio_previo && (
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Domínio prévio</p>
+            <p className="text-sm">{pre.dominio_previo}</p>
+          </div>
+        )}
+        {pre.observacao && (
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Observação</p>
+            <p className="text-sm">{pre.observacao}</p>
+          </div>
+        )}
       </div>
-      {pre.dominio_previo && (
-        <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Domínio prévio</p>
-          <p className="text-sm">{pre.dominio_previo}</p>
-        </div>
-      )}
-      {pre.observacao && (
-        <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Observação</p>
-          <p className="text-sm">{pre.observacao}</p>
-        </div>
-      )}
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
