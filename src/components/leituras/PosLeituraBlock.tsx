@@ -131,45 +131,46 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="card-soft p-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold">Pós-leitura</h3>
-            {pos && (
-              <span className="text-[10px] uppercase tracking-wider bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">Editando</span>
-            )}
-          </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-end gap-1">
           {pos && (
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
               <Trash2 className="w-4 h-4" />
             </Button>
           )}
+          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setExpanded((v) => !v)}>
+            {expanded ? (<><ChevronUp className="w-3 h-3" /> Recolher</>) : (<><Plus className="w-3 h-3" /> {pos ? "Editar" : "Adicionar pós-leitura"}</>)}
+          </Button>
         </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Resumo geral</label>
-          <Textarea value={resumoGeral} onChange={(e) => setResumoGeral(e.target.value)} rows={4} className="rounded-xl mt-1" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Ideia principal</label>
-          <Textarea value={ideia} onChange={(e) => setIdeia(e.target.value)} rows={2} className="rounded-xl mt-1" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Resenha</label>
-          <Textarea value={resenha} onChange={(e) => setResenha(e.target.value)} rows={4} className="rounded-xl mt-1" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={spoiler} onCheckedChange={(v) => setSpoiler(!!v)} /> Contém spoiler
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={publica} onCheckedChange={(v) => setPublica(!!v)} /> Tornar público
-          </label>
-        </div>
-        <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-          {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
-        </Button>
+        {expanded && (
+          <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Resumo geral</label>
+              <Textarea value={resumoGeral} onChange={(e) => setResumoGeral(e.target.value)} rows={4} className="rounded-xl mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Ideia principal</label>
+              <Textarea value={ideia} onChange={(e) => setIdeia(e.target.value)} rows={2} className="rounded-xl mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Resenha</label>
+              <Textarea value={resenha} onChange={(e) => setResenha(e.target.value)} rows={4} className="rounded-xl mt-1" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={spoiler} onCheckedChange={(v) => setSpoiler(!!v)} /> Contém spoiler
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={publica} onCheckedChange={(v) => setPublica(!!v)} /> Tornar público
+              </label>
+            </div>
+            <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
+              {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
+            </Button>
+          </div>
+        )}
       </div>
+
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
