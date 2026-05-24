@@ -16,7 +16,7 @@ import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2 } from "lucide-react";
+import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 
