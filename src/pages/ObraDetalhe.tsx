@@ -76,7 +76,26 @@ const ObraDetalhe = () => {
     },
   });
 
-  // Avaliações / resenhas (limitado pela RLS — atualmente vê apenas as do próprio usuário)
+  // Estatísticas agregadas de TODOS os usuários (via edge function, bypassa RLS)
+  const { data: estatisticas } = useQuery({
+    queryKey: ["obra-estatisticas", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("obra-estatisticas", {
+        body: { obra_id: id },
+      });
+      if (error) throw error;
+      return data as {
+        lidos: number;
+        lendo: number;
+        quero: number;
+        total_avaliacoes: number;
+        media_nota: number;
+      };
+    },
+  });
+
+  // Resenhas (limitado pela RLS — atualmente vê apenas as do próprio usuário)
   const { data: avaliacoes = [] } = useQuery({
     queryKey: ["obra-avaliacoes", id],
     enabled: !!id,
@@ -89,23 +108,14 @@ const ObraDetalhe = () => {
     },
   });
 
-  const notas = avaliacoes.filter((a: any) => a.nota != null);
-  const mediaNota = notas.length
-    ? notas.reduce((s: number, a: any) => s + Number(a.nota), 0) / notas.length
-    : 0;
+  const mediaNota = estatisticas?.media_nota ?? 0;
+  const totalAvaliacoes = estatisticas?.total_avaliacoes ?? 0;
   const resenhas = avaliacoes.filter((a: any) => a.review_texto?.trim());
-
-  // Estatísticas (apenas do próprio usuário devido à RLS — somatório real exigiria view pública)
-  const stats = avaliacoes.reduce(
-    (acc: any, a: any) => {
-      const s = a.status;
-      if (s === "lido" || s === "lido") acc.lidos++;
-      else if (s === "lendo") acc.lendo++;
-      else if (s === "quero_ler") acc.quero++;
-      return acc;
-    },
-    { lidos: 0, lendo: 0, quero: 0 },
-  );
+  const stats = {
+    lidos: estatisticas?.lidos ?? 0,
+    lendo: estatisticas?.lendo ?? 0,
+    quero: estatisticas?.quero ?? 0,
+  };
 
   // Citações
   const { data: citacoes = [] } = useQuery({
