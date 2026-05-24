@@ -29,7 +29,7 @@ const imageFileToDataUrl = (file: File) =>
     const img = new Image();
 
     img.onload = () => {
-      const maxSize = 1200;
+      const maxSize = 900;
       const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(img.width * scale));
@@ -46,7 +46,7 @@ const imageFileToDataUrl = (file: File) =>
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(objectUrl);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
+      resolve(canvas.toDataURL("image/jpeg", 0.72));
     };
 
     img.onerror = () => {
@@ -93,8 +93,8 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
       toast.error("Selecione uma imagem válida");
       return;
     }
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error("Imagem máxima de 25MB");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Imagem máxima de 15MB");
       return;
     }
     setUploading(true);

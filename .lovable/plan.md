@@ -1,43 +1,19 @@
-# Gestão de trilha de leituras do clube
+## Reduzir tamanho de imagens no PostComposer
 
-Permitir que o curador (e admin) adicione, reordene e remova obras da trilha de leituras de um clube, diretamente pelo painel de Gestão.
+Aplicar a redução proposta apenas no `src/components/clubes/feed/PostComposer.tsx` (feed dos clubes). `CapaUploader` fica como está.
 
-## Escopo
+### Mudanças
 
-- Nova seção **"Trilha de leituras"** dentro da aba **Gestão** do clube.
-- Listar obras já cadastradas em `clube_trilhas`, ordenadas por `ordem`.
-- Botão **"Adicionar obra"** abrindo dialog com:
-  - Busca de obra (autocomplete reaproveitando `ObraAutocomplete`).
-  - Campos opcionais: `data_inicio_sugerida`, `data_fim_sugerida`.
-- Para cada item da trilha:
-  - Capa, título, datas e ordem.
-  - Botões **subir / descer** (reordenar `ordem`).
-  - Botão **remover** (com confirmação).
-- Sem mudanças no schema — `clube_trilhas` já suporta tudo. RLS já permite curador/admin gerenciar.
+Em `imageFileToDataUrl`:
+- `maxSize`: `1200` → **`900`** (maior lado da imagem)
+- `canvas.toDataURL("image/jpeg", 0.82)` → **`0.72`**
 
-## Arquivos
+Em `handleFile`:
+- Limite de upload: `25 * 1024 * 1024` → **`15 * 1024 * 1024`** e mensagem do toast para "Imagem máxima de 15MB"
 
-**Novos**
-- `src/hooks/clubes/useClubeTrilhasGestao.ts` — hooks:
-  - `useTrilhasGestao(clubeId)` — lista com join em `obras`.
-  - `useAdicionarTrilha(clubeId)` — insert calculando próxima `ordem`.
-  - `useRemoverTrilha(clubeId)`.
-  - `useReordenarTrilha(clubeId)` — troca `ordem` entre dois itens.
-- `src/components/clubes/gestao/TrilhaGestao.tsx` — seção visual.
-- `src/components/clubes/gestao/AdicionarObraTrilhaDialog.tsx` — dialog de adicionar.
+### Impacto esperado
+- Imagens passam de ~200–400 KB para **~60–120 KB** em base64 dentro de `clube_posts.conteudo`
+- Redução de ~60–70% no peso de cada post com imagem
+- Perda visual mínima no feed (largura útil ≪ 900px na maioria dos dispositivos)
 
-**Editado**
-- `src/components/clubes/gestao/GestaoTab.tsx` — incluir `<TrilhaGestao clubeId={...} />` após o bloco de stats (antes de Top contribuidores).
-
-## Detalhes técnicos
-
-- Reutilizar `ObraAutocomplete` (já existe em `src/components/cadastro-manual/`) para escolher a obra.
-- Próxima `ordem` = `max(ordem) + 1` da trilha atual (ou 1).
-- Reordenação: trocar valor de `ordem` entre o item alvo e o vizinho via dois `update`.
-- Após mutações, invalidar `["clube-trilhas-gestao", clubeId]` e `["clube-leituras", clubeId]` para refletir imediatamente na aba Leituras.
-- Toasts de sucesso/erro via `sonner`.
-
-## Fora de escopo
-
-- Edição de datas após adicionado (pode ser feita removendo e reinserindo nesta primeira versão).
-- Drag-and-drop (usaremos botões ↑/↓ para simplicidade).
+Nenhuma outra alteração: o fluxo continua sendo base64 inline no markdown, sem Storage, sem migração de posts antigos.
