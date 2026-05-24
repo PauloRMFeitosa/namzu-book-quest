@@ -49,6 +49,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [loading, setLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [expanded, setExpanded] = useState<boolean>(!!pos);
 
   const excluir = async () => {
     if (!posSessao?.id) return;
