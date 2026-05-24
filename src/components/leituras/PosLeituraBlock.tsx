@@ -190,7 +190,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       </AlertDialog>
 
       {todasCitacoes.length > 0 && (
-        <div className="card-soft p-4">
+        <div className="p-3 rounded-xl bg-muted/30">
           <h4 className="font-semibold flex items-center gap-2 mb-2"><Quote className="w-4 h-4 text-primary" /> Todas as citações</h4>
           <ul className="flex flex-col gap-2">
             {todasCitacoes.map((c) => (
@@ -203,7 +203,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       )}
 
       {todasAplicacoes.length > 0 && (
-        <div className="card-soft p-4">
+        <div className="p-3 rounded-xl bg-muted/30">
           <h4 className="font-semibold flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-primary" /> Todas as aplicações</h4>
           <ul className="flex flex-col gap-3">
             {todasAplicacoes.map((a) => (
@@ -225,7 +225,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       )}
 
       {todasTags.length > 0 && (
-        <div className="card-soft p-4">
+        <div className="p-3 rounded-xl bg-muted/30">
           <h4 className="font-semibold flex items-center gap-2 mb-2"><Tag className="w-4 h-4 text-primary" /> Tags</h4>
           <div className="flex flex-wrap gap-1.5">
             {todasTags.map((t) => (
@@ -236,7 +236,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       )}
 
       {todosLinks.length > 0 && (
-        <div className="card-soft p-4">
+        <div className="p-3 rounded-xl bg-muted/30">
           <h4 className="font-semibold flex items-center gap-2 mb-2"><ExternalLink className="w-4 h-4 text-primary" /> Links</h4>
           <ul className="flex flex-col gap-1">
             {todosLinks.map((l) => (
