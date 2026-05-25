@@ -827,6 +827,7 @@ const Busca = () => {
               adicionados.has(r.obra_id),
               undefined,
               r.obra_id,
+            ),
           )}
         </section>
       )}
