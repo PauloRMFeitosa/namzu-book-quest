@@ -286,8 +286,8 @@ export const RegistrarLeituraDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       {!hideTrigger && (
         <DialogTrigger asChild>
-          <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-            <Plus className="w-4 h-4" /> Registrar leitura
+          <Button disabled={disabled} size="sm" variant="outline" className="rounded-xl">
+            <Plus className="w-3 h-3" /> Registrar leitura
           </Button>
         </DialogTrigger>
       )}
