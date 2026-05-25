@@ -112,6 +112,9 @@ const LeiturasList = () => {
                   )}
                   <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center">
                     <p className="font-semibold line-clamp-2">{l.usuario_livros?.obras?.titulo_original}</p>
+                    {l.experienciasCount > 1 && (
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{l.experienciasCount} leituras</p>
+                    )}
                     <ProgressoBar paginasLidas={l.paginasLidas} totalPaginas={total} percentual={percentual} restantes={restantes} compact />
                   </div>
                 </button>
