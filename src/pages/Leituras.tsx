@@ -56,7 +56,21 @@ const useExperiencias = (status: "lendo" | "concluido") => {
           }
         }
       }
-      return (experiencias ?? []).map((e: any) => ({ ...e, paginasLidas: agg[e.id] ?? 0 }));
+
+      // Agrupa por usuario_livro_id: mantém a experiência mais recente como
+      // representante (para navegação) e soma páginas de todas as experiências do livro.
+      const grouped: Record<string, any> = {};
+      for (const e of experiencias ?? []) {
+        const key = (e as any).usuario_livro_id;
+        const pages = agg[(e as any).id] ?? 0;
+        if (!grouped[key]) {
+          grouped[key] = { ...e, paginasLidas: pages, experienciasCount: 1 };
+        } else {
+          grouped[key].paginasLidas += pages;
+          grouped[key].experienciasCount += 1;
+        }
+      }
+      return Object.values(grouped);
     },
   });
 };
