@@ -351,46 +351,10 @@ const Busca = () => {
       setLocal(locais);
       setLoadingLocal(false);
 
-      if (locais.length > 0) {
+      if (locais.length === 0) {
+        await runExterno(titulo, autor, isbn, cacheKey, locais, () => cancelado);
+      } else {
         cache.set(cacheKey, { local: locais, externo: [] });
-        return;
-      }
-
-      setLoadingExterno(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("search-books", {
-          body: { titulo, autor, isbn },
-        });
-        if (error) throw error;
-        const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
-          origem: "externo" as const,
-          key: externalKey({
-            isbn13: b.isbn13 ?? null,
-            titulo: b.titulo,
-            autores: b.autores ?? [],
-          }),
-          titulo: b.titulo,
-          autores: b.autores ?? [],
-          ano: b.ano ?? null,
-          capa_url: b.capa_url ?? null,
-          isbn13: b.isbn13 ?? null,
-          fonte: b.fonte ?? "externo",
-          editora: b.editora ?? null,
-          num_paginas: b.num_paginas ?? null,
-          idioma: b.idioma ?? null,
-          descricao: b.descricao ?? null,
-        }));
-        if (cancelado) return;
-        setExterno(results);
-        cache.set(cacheKey, { local: [], externo: results });
-      } catch (e: any) {
-        console.error("search-books failed", e);
-        if (!cancelado) {
-          setErroExterno(true);
-          toast.error("Erro ao buscar em fontes externas");
-        }
-      } finally {
-        if (!cancelado) setLoadingExterno(false);
       }
     })();
 
@@ -398,6 +362,60 @@ const Busca = () => {
       cancelado = true;
     };
   }, [submitted]);
+
+  const runExterno = async (
+    titulo: string,
+    autor: string,
+    isbn: string,
+    cacheKey: string,
+    locais: LocalResult[],
+    isCancelado: () => boolean,
+  ) => {
+    setLoadingExterno(true);
+    setErroExterno(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("search-books", {
+        body: { titulo, autor, isbn },
+      });
+      if (error) throw error;
+      const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
+        origem: "externo" as const,
+        key: externalKey({
+          isbn13: b.isbn13 ?? null,
+          titulo: b.titulo,
+          autores: b.autores ?? [],
+        }),
+        titulo: b.titulo,
+        autores: b.autores ?? [],
+        ano: b.ano ?? null,
+        capa_url: b.capa_url ?? null,
+        isbn13: b.isbn13 ?? null,
+        fonte: b.fonte ?? "externo",
+        editora: b.editora ?? null,
+        num_paginas: b.num_paginas ?? null,
+        idioma: b.idioma ?? null,
+        descricao: b.descricao ?? null,
+      }));
+      if (isCancelado()) return;
+      setExterno(results);
+      cache.set(cacheKey, { local: locais, externo: results });
+    } catch (e: any) {
+      console.error("search-books failed", e);
+      if (!isCancelado()) {
+        setErroExterno(true);
+        toast.error("Erro ao buscar em fontes externas");
+      }
+    } finally {
+      if (!isCancelado()) setLoadingExterno(false);
+    }
+  };
+
+  const handleBuscarExterno = () => {
+    if (!submitted) return;
+    const { titulo, autor, isbn } = submitted;
+    const cacheKey = `t:${titulo}|a:${autor}|i:${isbn}`.toLowerCase();
+    runExterno(titulo, autor, isbn, cacheKey, local, () => false);
+  };
 
   const handleBuscar = () => {
     const t = fTitulo.trim();
@@ -812,6 +830,22 @@ const Busca = () => {
             ),
           )}
         </section>
+      )}
+
+      {local.length > 0 && externo.length === 0 && !loadingExterno && !erroExterno && (
+        <Button
+          variant="outline"
+          onClick={handleBuscarExterno}
+          className="rounded-xl self-center"
+        >
+          <Globe className="w-4 h-4 mr-2" /> Buscar também em fontes externas
+        </Button>
+      )}
+
+      {local.length > 0 && loadingExterno && (
+        <p className="text-sm text-muted-foreground flex items-center gap-2">
+          <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
+        </p>
       )}
 
       {!!submitted && !loadingLocal && local.length === 0 && loadingExterno && (
