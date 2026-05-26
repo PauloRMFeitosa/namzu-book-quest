@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { BookOpen, Check, Play, Sparkles, Plus, Award, Sparkle } from "lucide-react";
+import { BookOpen, Check, Play, Sparkles, Plus, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLivroDetalhe, calcularProgresso } from "@/hooks/leituras/useLivroDetalhe";
@@ -17,11 +18,9 @@ import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoBut
 
 interface Props {
   usuarioLeituraId: string;
-  /** Mostra capa/título do livro no topo do card. Use só no primeiro. */
-  showLivroHeader?: boolean;
 }
 
-export const LeituraExperienciaCard = ({ usuarioLeituraId, showLivroHeader }: Props) => {
+export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
   const qc = useQueryClient();
   const { data: livro, isLoading } = useLivroDetalhe(usuarioLeituraId);
   const [openConcluir, setOpenConcluir] = useState(false);
@@ -31,6 +30,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId, showLivroHeader }: Pr
   if (!livro) return null;
 
   const preLeitura = livro.leituras.find((l) => l.tipo === "pre_leitura");
+  const hasPre = !!preLeitura?.leitura_pre;
   const progresso = calcularProgresso(livro);
   const isLido = livro.status === "concluido";
 
@@ -60,20 +60,6 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId, showLivroHeader }: Pr
 
   return (
     <div className="card-soft p-4 flex flex-col gap-4">
-      {showLivroHeader && (
-        <div className="flex gap-4">
-          {livro.obras?.capa_padrao_url || livro.edicoes?.capa_url ? (
-            <img src={livro.edicoes?.capa_url || livro.obras.capa_padrao_url} alt="" className="w-24 h-36 rounded-xl object-cover shadow-elevated" />
-          ) : (
-            <div className="w-24 h-36 rounded-xl bg-secondary flex items-center justify-center"><BookOpen className="w-10 h-10 text-primary" /></div>
-          )}
-          <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-            <h1 className="text-lg font-bold leading-tight">{livro.obras?.titulo_original}</h1>
-            {livro.obras?.ano_primeira_publicacao && <p className="text-xs text-muted-foreground">{livro.obras.ano_primeira_publicacao}</p>}
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Leitura</p>
@@ -99,42 +85,42 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId, showLivroHeader }: Pr
         <LeituraCopilotoButton usuarioLeituraId={livro.id} />
       </div>
 
-      <div className="h-px bg-border" />
-
       {/* Pré-leitura */}
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold flex items-center gap-2 text-sm">
-            <Sparkles className="w-4 h-4 text-primary" /> Pré-leitura
-          </h3>
-          {!preLeitura?.leitura_pre && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-xl"
-              onClick={() => setShowPreForm((v) => !v)}
-            >
+      {hasPre ? (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="pre" className="card-soft border-none px-3">
+            <AccordionTrigger className="hover:no-underline py-3">
+              <span className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Pré-leitura
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3">
+              <PreLeituraView pre={preLeitura!.leitura_pre!} leituraId={preLeitura!.id} usuarioLeituraId={livro.id} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      ) : (
+        <div className="card-soft px-3 py-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" /> Pré-leitura
+            </span>
+            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setShowPreForm((v) => !v)}>
               <Plus className="w-3 h-3" /> {showPreForm ? "Cancelar" : "Adicionar pré-leitura"}
             </Button>
+          </div>
+          {showPreForm && (
+            <PreLeituraForm
+              usuarioLeituraId={livro.id}
+              onCancel={() => setShowPreForm(false)}
+              onSaved={() => setShowPreForm(false)}
+            />
           )}
         </div>
-        {preLeitura?.leitura_pre ? (
-          <PreLeituraView pre={preLeitura.leitura_pre} leituraId={preLeitura.id} usuarioLeituraId={livro.id} />
-        ) : showPreForm ? (
-          <PreLeituraForm
-            usuarioLeituraId={livro.id}
-            onCancel={() => setShowPreForm(false)}
-            onSaved={() => setShowPreForm(false)}
-          />
-        ) : (
-          <p className="text-xs text-muted-foreground">Defina sua intenção antes de começar.</p>
-        )}
-      </section>
-
-      <div className="h-px bg-border" />
+      )}
 
       {/* Sessões de leitura */}
-      <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold flex items-center gap-2 text-sm">
             <BookOpen className="w-4 h-4 text-primary" /> Sessões de leitura
@@ -149,21 +135,19 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId, showLivroHeader }: Pr
           <p className="text-xs text-muted-foreground">Crie a pré-leitura primeiro para registrar sessões.</p>
         )}
         <LeiturasList leituras={livro.leituras} usuarioLeituraId={livro.id} totalPaginas={livro.edicoes?.num_paginas ?? null} />
-      </section>
-
-      <div className="h-px bg-border" />
+      </div>
 
       {/* Pós-leitura */}
-      <section className="flex flex-col gap-2">
-        <h3 className="font-semibold flex items-center gap-2 text-sm">
-          <Award className="w-4 h-4 text-primary" /> Pós-leitura
-        </h3>
-        {isLido ? (
-          <PosLeituraBlock livro={livro} />
-        ) : (
-          <p className="text-xs text-muted-foreground">Conclua a leitura para registrar a pós-leitura.</p>
-        )}
-      </section>
+      {isLido ? (
+        <PosLeituraBlock livro={livro} />
+      ) : (
+        <div className="card-soft px-3 py-3 flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold flex items-center gap-2">
+            <Award className="w-4 h-4 text-primary" /> Pós-leitura
+          </span>
+          <span className="text-xs text-muted-foreground">Conclua a leitura para registrar.</span>
+        </div>
+      )}
 
       <ConcluirLeituraDialog open={openConcluir} onOpenChange={setOpenConcluir} onConfirm={concluir} />
     </div>

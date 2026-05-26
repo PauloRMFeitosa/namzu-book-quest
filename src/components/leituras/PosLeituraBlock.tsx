@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,7 @@ import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, ChevronUp } from "lucide-react";
+import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 
@@ -49,7 +50,18 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [loading, setLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [expanded, setExpanded] = useState<boolean>(!!pos);
+  const [editing, setEditing] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (pos) {
+      setResumoGeral(pos.resumo_geral ?? "");
+      setIdeia(pos.ideia_principal ?? "");
+      setResenha(pos.resenha ?? "");
+      setSpoiler(pos.tem_spoiler ?? false);
+      setPublica(pos.publica ?? false);
+    }
+  }, [pos]);
 
   const excluir = async () => {
     if (!posSessao?.id) return;
@@ -67,16 +79,6 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       setRemoving(false);
     }
   };
-
-  useEffect(() => {
-    if (pos) {
-      setResumoGeral(pos.resumo_geral ?? "");
-      setIdeia(pos.ideia_principal ?? "");
-      setResenha(pos.resenha ?? "");
-      setSpoiler(pos.tem_spoiler ?? false);
-      setPublica(pos.publica ?? false);
-    }
-  }, [pos]);
 
   const salvar = async () => {
     if (livro.status !== "concluido") {
@@ -108,6 +110,8 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       }
       if (error) throw error;
       toast.success("Pós-leitura salva!");
+      setAdding(false);
+      setEditing(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
     } catch (e: any) {
       toast.error(e.message);
@@ -129,48 +133,93 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
     qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
   };
 
+  const formBlock = (
+    <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-3">
+      <div>
+        <label className="text-xs text-muted-foreground">Resumo geral</label>
+        <Textarea value={resumoGeral} onChange={(e) => setResumoGeral(e.target.value)} rows={4} className="rounded-xl mt-1" />
+      </div>
+      <div>
+        <label className="text-xs text-muted-foreground">Ideia principal</label>
+        <Textarea value={ideia} onChange={(e) => setIdeia(e.target.value)} rows={2} className="rounded-xl mt-1" />
+      </div>
+      <div>
+        <label className="text-xs text-muted-foreground">Resenha</label>
+        <Textarea value={resenha} onChange={(e) => setResenha(e.target.value)} rows={4} className="rounded-xl mt-1" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={spoiler} onCheckedChange={(v) => setSpoiler(!!v)} /> Contém spoiler
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={publica} onCheckedChange={(v) => setPublica(!!v)} /> Tornar público
+        </label>
+      </div>
+      <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
+        {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-end gap-1">
-          {pos && (
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
-          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? (<><ChevronUp className="w-3 h-3" /> Recolher</>) : (<><Plus className="w-3 h-3" /> {pos ? "Editar" : "Adicionar pós-leitura"}</>)}
-          </Button>
-        </div>
-        {expanded && (
-          <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Resumo geral</label>
-              <Textarea value={resumoGeral} onChange={(e) => setResumoGeral(e.target.value)} rows={4} className="rounded-xl mt-1" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Ideia principal</label>
-              <Textarea value={ideia} onChange={(e) => setIdeia(e.target.value)} rows={2} className="rounded-xl mt-1" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Resenha</label>
-              <Textarea value={resenha} onChange={(e) => setResenha(e.target.value)} rows={4} className="rounded-xl mt-1" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={spoiler} onCheckedChange={(v) => setSpoiler(!!v)} /> Contém spoiler
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={publica} onCheckedChange={(v) => setPublica(!!v)} /> Tornar público
-              </label>
-            </div>
-            <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-              {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
+      {pos ? (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="pos" className="card-soft border-none px-3">
+            <AccordionTrigger className="hover:no-underline py-3">
+              <span className="text-sm font-semibold flex items-center gap-2">
+                <Award className="w-4 h-4 text-primary" /> Pós-leitura
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 flex flex-col gap-3">
+              {editing ? (
+                formBlock
+              ) : (
+                <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-2">
+                  {pos.resumo_geral && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground">Resumo geral</p>
+                      <p className="text-sm whitespace-pre-wrap">{pos.resumo_geral}</p>
+                    </div>
+                  )}
+                  {pos.ideia_principal && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Ideia principal</p>
+                      <p className="text-sm">{pos.ideia_principal}</p>
+                    </div>
+                  )}
+                  {pos.resenha && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Resenha</p>
+                      <p className="text-sm whitespace-pre-wrap">{pos.resenha}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex gap-2 pt-2 border-t border-border">
+                <Button size="sm" variant="outline" className="rounded-xl flex-1" onClick={() => setEditing((v) => !v)}>
+                  <Pencil className="w-3 h-3" /> {editing ? "Cancelar" : "Editar"}
+                </Button>
+                <Button size="sm" variant="ghost" className="rounded-xl text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+                  <Trash2 className="w-3 h-3" /> Excluir
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      ) : (
+        <div className="card-soft px-3 py-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold flex items-center gap-2">
+              <Award className="w-4 h-4 text-primary" /> Pós-leitura
+            </span>
+            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setAdding((v) => !v)}>
+              <Plus className="w-3 h-3" /> {adding ? "Cancelar" : "Adicionar pós-leitura"}
             </Button>
           </div>
-        )}
-      </div>
-
+          {adding && formBlock}
+        </div>
+      )}
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>

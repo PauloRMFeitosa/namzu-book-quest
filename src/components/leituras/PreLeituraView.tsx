@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -57,15 +57,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-end gap-1 -mt-1">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
-          <Pencil className="w-4 h-4" />
-        </Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+    <div className="flex flex-col gap-3">
       <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-2">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Intenção</p>
@@ -83,6 +75,15 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
             <p className="text-sm">{pre.observacao}</p>
           </div>
         )}
+      </div>
+
+      <div className="flex gap-2 pt-2 border-t border-border">
+        <Button size="sm" variant="outline" className="rounded-xl flex-1" onClick={() => setEditing(true)}>
+          <Pencil className="w-3 h-3" /> Editar
+        </Button>
+        <Button size="sm" variant="ghost" className="rounded-xl text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+          <Trash2 className="w-3 h-3" /> Excluir
+        </Button>
       </div>
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
