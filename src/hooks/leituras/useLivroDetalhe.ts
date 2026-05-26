@@ -101,7 +101,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
       const autoresArr = (obrasRaw?.obra_autores ?? [])
         .slice()
         .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
-        .map((oa: any) => oa.autores)
+        .map((oa: any) => oa.autores && { id: oa.autores.id, nome: oa.autores.nome_completo })
         .filter(Boolean);
       return {
         id: ul_any.id,
