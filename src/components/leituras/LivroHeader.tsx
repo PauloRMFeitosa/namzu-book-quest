@@ -31,7 +31,7 @@ export const LivroHeader = ({ usuarioLivroId }: Props) => {
     .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
     .map((oa: any) => oa.autores?.nome)
     .filter(Boolean);
-  const ano = edicao?.ano_publicacao ?? obra?.ano_primeira_publicacao;
+  const ano = obra?.ano_primeira_publicacao;
   const capa = edicao?.capa_url || obra?.capa_padrao_url;
 
   return (
