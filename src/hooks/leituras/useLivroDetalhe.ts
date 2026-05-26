@@ -29,7 +29,8 @@ export type LivroDetalhe = {
   tipo_origem: string;
   usuario_livro_id: string;
   obras: any;
-  edicoes: { id: string; num_paginas: number | null; capa_url: string | null } | null;
+  autores: { id: string; nome: string }[];
+  edicoes: { id: string; num_paginas: number | null; capa_url: string | null; editora: string | null } | null;
   leituras: LeituraFull[];
   /** sessão pos_leitura + leitura_pos */
   pos_leitura: LeituraFull | null;
@@ -44,7 +45,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
     queryFn: async (): Promise<LivroDetalhe | null> => {
       const { data: ul, error } = await supabase
         .from("usuario_leituras")
-        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*), edicoes(id, num_paginas, capa_url))")
+        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*, obra_autores(ordem, autores(id, nome))), edicoes(id, num_paginas, capa_url, editora))")
         .eq("id", usuarioLeituraId!)
         .maybeSingle();
       if (error) throw error;
