@@ -97,6 +97,12 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
       }
 
       const ul_any = ul as any;
+      const obrasRaw = ul_any.usuario_livros?.obras;
+      const autoresArr = (obrasRaw?.obra_autores ?? [])
+        .slice()
+        .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
+        .map((oa: any) => oa.autores)
+        .filter(Boolean);
       return {
         id: ul_any.id,
         status: ul_any.status,
@@ -105,7 +111,8 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         clube_id: ul_any.clube_id,
         tipo_origem: ul_any.tipo_origem,
         usuario_livro_id: ul_any.usuario_livro_id,
-        obras: ul_any.usuario_livros?.obras,
+        obras: obrasRaw,
+        autores: autoresArr,
         edicoes: ul_any.usuario_livros?.edicoes,
         leituras,
         pos_leitura,
