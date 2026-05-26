@@ -14,7 +14,7 @@ export const LivroHeader = ({ usuarioLivroId }: Props) => {
       const { data, error } = await supabase
         .from("usuario_livros")
         .select(
-          "obras(*, obra_autores(ordem, autores(id, nome))), edicoes(num_paginas, capa_url, editora)"
+          "obras(*, obra_autores(ordem, autores(id, nome_completo))), edicoes(num_paginas, capa_url, editora)"
         )
         .eq("id", usuarioLivroId)
         .maybeSingle();
