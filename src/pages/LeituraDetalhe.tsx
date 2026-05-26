@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LeituraExperienciaCard } from "@/components/leituras/LeituraExperienciaCard";
+import { LivroHeader } from "@/components/leituras/LivroHeader";
 
 /**
  * Página de detalhe que agrupa TODAS as experiências de leitura (usuario_leituras)
@@ -18,7 +19,6 @@ const LeituraDetalhe = () => {
     queryKey: ["livro-experiencias", id, user?.id],
     enabled: !!id && !!user,
     queryFn: async () => {
-      // 1. Descobre o usuario_livro_id a partir do id da rota
       const { data: ulBase, error } = await supabase
         .from("usuario_leituras")
         .select("usuario_livro_id, usuario_livros!inner(user_id)")
@@ -29,7 +29,6 @@ const LeituraDetalhe = () => {
 
       const usuarioLivroId = (ulBase as any).usuario_livro_id as string;
 
-      // 2. Busca todas as experiências (usuario_leituras) desse livro
       const { data: rows, error: e2 } = await supabase
         .from("usuario_leituras")
         .select("id, data_inicio, created_at")
@@ -50,8 +49,10 @@ const LeituraDetalhe = () => {
       {isLoading && <p className="text-muted-foreground">Carregando…</p>}
       {!isLoading && !data && <p className="text-muted-foreground">Leitura não encontrada.</p>}
 
-      {data?.ids.map((ulId, idx) => (
-        <LeituraExperienciaCard key={ulId} usuarioLeituraId={ulId} showLivroHeader={idx === 0} />
+      {data && <LivroHeader usuarioLivroId={data.usuarioLivroId} />}
+
+      {data?.ids.map((ulId) => (
+        <LeituraExperienciaCard key={ulId} usuarioLeituraId={ulId} />
       ))}
     </div>
   );
