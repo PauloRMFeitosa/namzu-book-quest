@@ -29,7 +29,7 @@ export const LivroHeader = ({ usuarioLivroId }: Props) => {
   const autores = (obra?.obra_autores ?? [])
     .slice()
     .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
-    .map((oa: any) => oa.autores?.nome)
+    .map((oa: any) => oa.autores?.nome_completo)
     .filter(Boolean);
   const ano = obra?.ano_primeira_publicacao;
   const capa = edicao?.capa_url || obra?.capa_padrao_url;
