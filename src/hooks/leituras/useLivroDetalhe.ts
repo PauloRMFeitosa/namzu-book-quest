@@ -45,7 +45,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
     queryFn: async (): Promise<LivroDetalhe | null> => {
       const { data: ul, error } = await supabase
         .from("usuario_leituras")
-        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*, obra_autores(ordem, autores(id, nome))), edicoes(id, num_paginas, capa_url, editora))")
+        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*, obra_autores(ordem, autores(id, nome_completo))), edicoes(id, num_paginas, capa_url, editora))")
         .eq("id", usuarioLeituraId!)
         .maybeSingle();
       if (error) throw error;
@@ -101,7 +101,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
       const autoresArr = (obrasRaw?.obra_autores ?? [])
         .slice()
         .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
-        .map((oa: any) => oa.autores)
+        .map((oa: any) => oa.autores && { id: oa.autores.id, nome: oa.autores.nome_completo })
         .filter(Boolean);
       return {
         id: ul_any.id,
