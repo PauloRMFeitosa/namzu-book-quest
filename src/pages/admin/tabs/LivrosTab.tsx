@@ -42,7 +42,7 @@ export const LivrosTab = () => {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("obras")
+    let q: any = (supabase as any).from("obras")
       .select("id, titulo_original, titulo_ordenacao, slug, ano_primeira_publicacao, capa_padrao_url, sinopse_padrao, idioma_original")
       .order("created_at", { ascending: false })
       .limit(200);

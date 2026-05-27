@@ -62,7 +62,7 @@ export const UsuariosTab = () => {
       return;
     }
     const gamMap = new Map((perfisGam ?? []).map((p: any) => [p.user_id, p]));
-    const pMap = new Map((perfisRows ?? []).map((p: any) => [p.user_id, p]));
+    const pMap = new Map<string, any>((perfisRows ?? []).map((p: any) => [p.user_id as string, p]));
     const merged = ((listData as any).users ?? []).map((u: any) => ({
       ...u,
       ...(gamMap.get(u.id) ?? { xp_total: 0, nivel: 1, streak_atual: 0, streak_maximo: 0 }),
