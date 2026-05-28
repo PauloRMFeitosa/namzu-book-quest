@@ -128,11 +128,19 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
 export function calcularProgresso(livro: LivroDetalhe | null | undefined) {
   if (!livro) return { paginasLidas: 0, totalPaginas: null as number | null, percentual: 0, restantes: null as number | null };
-  const paginasLidas = livro.leituras
-    .filter((l) => l.tipo === "leitura")
-    .reduce((acc, l) => acc + (l.paginas_lidas ?? 0), 0);
+  const sessions = livro.leituras.filter((l) => l.tipo === "leitura");
   const total = livro.edicoes?.num_paginas ?? null;
-  const percentual = total && total > 0 ? Math.min(100, Math.round((paginasLidas / total) * 100)) : 0;
+  const paginasLidas = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.paginas_lidas ?? 0))
+    : 0;
+  const percentualSalvo = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.percentual_lido ?? 0))
+    : 0;
+  const percentual = percentualSalvo > 0
+    ? Math.min(100, Math.round(percentualSalvo))
+    : total && total > 0
+      ? Math.min(100, Math.round((paginasLidas / total) * 100))
+      : 0;
   const restantes = total ? Math.max(0, total - paginasLidas) : null;
   return { paginasLidas, totalPaginas: total, percentual, restantes };
 }
