@@ -63,7 +63,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
           <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
             <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 object-contain" />
@@ -88,7 +88,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-elevated">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
         <div
           className="max-w-3xl mx-auto grid px-2 py-2"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
