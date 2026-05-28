@@ -88,7 +88,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-elevated">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
         <div
           className="max-w-3xl mx-auto grid px-2 py-2"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
