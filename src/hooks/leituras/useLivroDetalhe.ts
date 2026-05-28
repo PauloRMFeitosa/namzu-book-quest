@@ -70,8 +70,12 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
       const leituras: LeituraFull[] = (leiturasRaw ?? []).map((l: any) => {
         const progressos = l.leitura_progresso ?? [];
-        const paginas_lidas = progressos.reduce((a: number, p: any) => a + (p.paginas_lidas ?? 0), 0) || null;
-        const last = progressos[progressos.length - 1];
+        const paginas_lidas = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.paginas_lidas ?? 0))) || null
+          : null;
+        const percentual_lido = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.percentual_lido ?? 0))) || null
+          : null;
         return {
           id: l.id,
           tipo: l.tipo,
@@ -79,7 +83,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
           data_fim: l.data_fim,
           created_at: l.created_at,
           paginas_lidas,
-          percentual_lido: last?.percentual_lido ?? null,
+          percentual_lido,
           leitura_pre: Array.isArray(l.leitura_pre) ? l.leitura_pre[0] ?? null : l.leitura_pre,
           leitura_conteudo: l.leitura_conteudo ?? [],
           leitura_citacoes: l.leitura_citacoes ?? [],
