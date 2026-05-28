@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { PercentualProgressoControl } from "@/components/leituras/PercentualProgressoControl";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/hooks/clubes/useClubeLeituras";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface Props {
