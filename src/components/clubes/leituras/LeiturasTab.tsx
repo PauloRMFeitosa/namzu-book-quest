@@ -332,6 +332,28 @@ const TrilhaCard = ({
           )}
         </div>
       </article>
+
+      <Dialog open={escolhaOpen} onOpenChange={setEscolhaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Você já leu este livro</DialogTitle>
+            <DialogDescription>
+              Quer associar essa leitura concluída ao clube (a obra entra como concluída na sua trilha) ou prefere começar uma releitura?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEscolhaOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="outline" onClick={relerLivro}>
+              Reler
+            </Button>
+            <Button onClick={associarConcluida} className="bg-primary hover:bg-primary-hover">
+              Associar como concluído
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.li>
   );
 };
