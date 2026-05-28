@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { PercentualProgressoControl } from "@/components/leituras/PercentualProgressoControl";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/hooks/clubes/useClubeLeituras";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface Props {
@@ -90,58 +92,144 @@ const TrilhaCard = ({
   const concluido = meu?.status === "concluido";
   const navigate = useNavigate();
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [navLoading, setNavLoading] = useState(false);
+  const [escolhaOpen, setEscolhaOpen] = useState(false);
+  const [leituraConcluidaId, setLeituraConcluidaId] = useState<string | null>(null);
+  const [usuarioLivroIdCache, setUsuarioLivroIdCache] = useState<string | null>(null);
+
+  const ensureUsuarioLivro = async () => {
+    if (!user) throw new Error("Não autenticado");
+    const { data: ul } = await supabase
+      .from("usuario_livros")
+      .select("id, status")
+      .eq("user_id", user.id)
+      .eq("obra_id", trilha.obra_id)
+      .maybeSingle();
+    if (ul?.id) return ul.id as string;
+    const { data: novo, error } = await supabase
+      .from("usuario_livros")
+      .insert({ user_id: user.id, obra_id: trilha.obra_id, status: "lendo" })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return novo.id as string;
+  };
 
   const abrirLivro = async () => {
     if (!user || !trilha.obra) return;
     setNavLoading(true);
     try {
-      // 1. usuario_livros (criar se necessário)
-      const { data: ul } = await supabase
-        .from("usuario_livros")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("obra_id", trilha.obra_id)
-        .maybeSingle();
-      let usuarioLivroId = ul?.id as string | undefined;
-      if (!usuarioLivroId) {
-        const { data: novo, error } = await supabase
-          .from("usuario_livros")
-          .insert({ user_id: user.id, obra_id: trilha.obra_id, status: "lendo" })
-          .select("id")
-          .single();
-        if (error) throw error;
-        usuarioLivroId = novo.id;
-      }
-      // 2. usuario_leituras vinculada ao clube
-      const { data: existing } = await supabase
+      const usuarioLivroId = await ensureUsuarioLivro();
+      setUsuarioLivroIdCache(usuarioLivroId);
+
+      const { data: leituras } = await supabase
         .from("usuario_leituras")
-        .select("id")
+        .select("id, status, clube_id, data_fim, created_at")
         .eq("usuario_livro_id", usuarioLivroId)
-        .eq("clube_id", clubeId)
-        .maybeSingle();
-      let usuarioLeituraId = existing?.id as string | undefined;
-      if (!usuarioLeituraId) {
-        const today = new Date().toISOString().slice(0, 10);
-        const { data: novaUL, error } = await supabase
-          .from("usuario_leituras")
-          .insert({
-            usuario_livro_id: usuarioLivroId,
-            tipo_origem: "clube",
-            clube_id: clubeId,
-            status: "lendo",
-            data_inicio: today,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        usuarioLeituraId = novaUL.id;
+        .order("created_at", { ascending: false });
+
+      // Já existe leitura para este clube → abre direto
+      const desteClube = leituras?.find((l) => l.clube_id === clubeId);
+      if (desteClube) {
+        navigate(`/leituras/${desteClube.id}`);
+        return;
       }
-      navigate(`/leituras/${usuarioLeituraId}`);
+
+      // Leitura individual em aberto → associa ao clube em vez de criar nova
+      const abertaIndividual = leituras?.find(
+        (l) => l.status !== "concluido" && !l.clube_id,
+      );
+      if (abertaIndividual) {
+        const { error } = await supabase
+          .from("usuario_leituras")
+          .update({ clube_id: clubeId, tipo_origem: "clube" })
+          .eq("id", abertaIndividual.id);
+        if (error) throw error;
+        qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+        navigate(`/leituras/${abertaIndividual.id}`);
+        return;
+      }
+
+      // Já leu este livro antes → pergunta se associa ou se relê
+      const concluidaExistente = leituras?.find((l) => l.status === "concluido");
+      if (concluidaExistente) {
+        setLeituraConcluidaId(concluidaExistente.id);
+        setEscolhaOpen(true);
+        return;
+      }
+
+      // Caso novo: cria leitura nova vinculada ao clube
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: novaUL, error } = await supabase
+        .from("usuario_leituras")
+        .insert({
+          usuario_livro_id: usuarioLivroId,
+          tipo_origem: "clube",
+          clube_id: clubeId,
+          status: "lendo",
+          data_inicio: today,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      navigate(`/leituras/${novaUL.id}`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao abrir livro");
     } finally {
       setNavLoading(false);
+    }
+  };
+
+  const associarConcluida = async () => {
+    if (!user || !leituraConcluidaId) return;
+    try {
+      const { error } = await supabase.from("clube_progresso").upsert(
+        {
+          user_id: user.id,
+          clube_id: clubeId,
+          obra_id: trilha.obra_id,
+          percentual: 100,
+          status: "concluido",
+          data_conclusao: new Date().toISOString(),
+        },
+        { onConflict: "user_id,clube_id,obra_id" },
+      );
+      if (error) throw error;
+      toast.success("Leitura marcada como concluída para o clube");
+      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      setEscolhaOpen(false);
+      navigate(`/leituras/${leituraConcluidaId}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao associar");
+    }
+  };
+
+  const relerLivro = async () => {
+    if (!user || !usuarioLivroIdCache) return;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: novaUL, error } = await supabase
+        .from("usuario_leituras")
+        .insert({
+          usuario_livro_id: usuarioLivroIdCache,
+          tipo_origem: "clube",
+          clube_id: clubeId,
+          status: "lendo",
+          data_inicio: today,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      await supabase
+        .from("usuario_livros")
+        .update({ status: "lendo" })
+        .eq("id", usuarioLivroIdCache);
+      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      setEscolhaOpen(false);
+      navigate(`/leituras/${novaUL.id}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao iniciar releitura");
     }
   };
 
@@ -244,6 +332,28 @@ const TrilhaCard = ({
           )}
         </div>
       </article>
+
+      <Dialog open={escolhaOpen} onOpenChange={setEscolhaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Você já leu este livro</DialogTitle>
+            <DialogDescription>
+              Quer associar essa leitura concluída ao clube (a obra entra como concluída na sua trilha) ou prefere começar uma releitura?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEscolhaOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="outline" onClick={relerLivro}>
+              Reler
+            </Button>
+            <Button onClick={associarConcluida} className="bg-primary hover:bg-primary-hover">
+              Associar como concluído
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.li>
   );
 };

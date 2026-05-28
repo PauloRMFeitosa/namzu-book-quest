@@ -70,8 +70,12 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
       const leituras: LeituraFull[] = (leiturasRaw ?? []).map((l: any) => {
         const progressos = l.leitura_progresso ?? [];
-        const paginas_lidas = progressos.reduce((a: number, p: any) => a + (p.paginas_lidas ?? 0), 0) || null;
-        const last = progressos[progressos.length - 1];
+        const paginas_lidas = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.paginas_lidas ?? 0))) || null
+          : null;
+        const percentual_lido = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.percentual_lido ?? 0))) || null
+          : null;
         return {
           id: l.id,
           tipo: l.tipo,
@@ -79,7 +83,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
           data_fim: l.data_fim,
           created_at: l.created_at,
           paginas_lidas,
-          percentual_lido: last?.percentual_lido ?? null,
+          percentual_lido,
           leitura_pre: Array.isArray(l.leitura_pre) ? l.leitura_pre[0] ?? null : l.leitura_pre,
           leitura_conteudo: l.leitura_conteudo ?? [],
           leitura_citacoes: l.leitura_citacoes ?? [],
@@ -124,11 +128,19 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
 export function calcularProgresso(livro: LivroDetalhe | null | undefined) {
   if (!livro) return { paginasLidas: 0, totalPaginas: null as number | null, percentual: 0, restantes: null as number | null };
-  const paginasLidas = livro.leituras
-    .filter((l) => l.tipo === "leitura")
-    .reduce((acc, l) => acc + (l.paginas_lidas ?? 0), 0);
+  const sessions = livro.leituras.filter((l) => l.tipo === "leitura");
   const total = livro.edicoes?.num_paginas ?? null;
-  const percentual = total && total > 0 ? Math.min(100, Math.round((paginasLidas / total) * 100)) : 0;
+  const paginasLidas = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.paginas_lidas ?? 0))
+    : 0;
+  const percentualSalvo = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.percentual_lido ?? 0))
+    : 0;
+  const percentual = percentualSalvo > 0
+    ? Math.min(100, Math.round(percentualSalvo))
+    : total && total > 0
+      ? Math.min(100, Math.round((paginasLidas / total) * 100))
+      : 0;
   const restantes = total ? Math.max(0, total - paginasLidas) : null;
   return { paginasLidas, totalPaginas: total, percentual, restantes };
 }
