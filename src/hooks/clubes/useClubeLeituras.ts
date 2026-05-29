@@ -16,15 +16,10 @@ export interface TrilhaItem {
     capa_padrao_url: string | null;
     sinopse_padrao: string | null;
   } | null;
-  /** total de páginas (da primeira edição encontrada) */
   total_paginas: number | null;
-  /** progresso coletivo médio (0-100) */
   progresso_coletivo: number;
-  /** quantos membros já concluíram */
   concluidos: number;
-  /** total de membros */
   total_membros: number;
-  /** progresso do usuário corrente */
   meu_progresso: {
     status: string;
     percentual: number;
@@ -34,6 +29,11 @@ export interface TrilhaItem {
   } | null;
 }
 
+/**
+ * Progresso da trilha agora deriva de:
+ *   usuario_leituras (clube_id = clubeId) → leituras → leitura_progresso
+ * A tabela clube_progresso foi descontinuada e não é mais consultada.
+ */
 export const useClubeLeituras = (clubeId: string | undefined) => {
   const { user } = useAuth();
   return useQuery({
@@ -50,16 +50,11 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
 
       const obraIds = trilhas.map((t) => t.obra_id);
 
-      const [obrasRes, progRes, membrosRes, edicoesRes] = await Promise.all([
+      const [obrasRes, membrosRes, edicoesRes, leiturasRes] = await Promise.all([
         supabase
           .from("obras")
           .select("id, titulo_original, capa_padrao_url, sinopse_padrao")
           .in("id", obraIds),
-        supabase
-          .from("clube_progresso")
-          .select("obra_id, user_id, status, percentual, capitulo_atual, pagina_atual, data_conclusao")
-          .eq("clube_id", clubeId!)
-          .in("obra_id", obraIds),
         supabase
           .from("clube_membros")
           .select("user_id", { count: "exact", head: true })
@@ -70,7 +65,49 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
           .select("obra_id, num_paginas")
           .in("obra_id", obraIds)
           .not("num_paginas", "is", null),
+        supabase
+          .from("usuario_leituras")
+          .select(
+            "id, status, data_fim, usuario_livro_id, usuario_livros!inner(user_id, obra_id)",
+          )
+          .eq("clube_id", clubeId!)
+          .in("usuario_livros.obra_id", obraIds),
       ]);
+
+      const leiturasUsuario = (leiturasRes.data ?? []) as any[];
+      const leituraIds = leiturasUsuario.map((l) => l.id);
+
+      // Carrega sessões + último progresso registrado por usuario_leitura
+      let percentualPorUL = new Map<string, number>();
+      let paginaPorUL = new Map<string, number | null>();
+      if (leituraIds.length) {
+        const { data: sessoes } = await supabase
+          .from("leituras")
+          .select("id, usuario_leitura_id")
+          .in("usuario_leitura_id", leituraIds);
+        const sessoesArr = (sessoes ?? []) as any[];
+        const sessaoToUL = new Map<string, string>(
+          sessoesArr.map((s) => [s.id as string, s.usuario_leitura_id as string]),
+        );
+        const sessIds = sessoesArr.map((s) => s.id as string);
+        if (sessIds.length) {
+          const { data: progs } = await supabase
+            .from("leitura_progresso")
+            .select("leitura_id, percentual_lido, paginas_lidas, data_registro")
+            .in("leitura_id", sessIds)
+            .order("data_registro", { ascending: false });
+          (progs ?? []).forEach((p: any) => {
+            const ul = sessaoToUL.get(p.leitura_id);
+            if (!ul) return;
+            const atual = percentualPorUL.get(ul) ?? -1;
+            const pct = Number(p.percentual_lido ?? 0);
+            if (pct > atual) {
+              percentualPorUL.set(ul, pct);
+              paginaPorUL.set(ul, p.paginas_lidas ?? null);
+            }
+          });
+        }
+      }
 
       const paginasPorObra = new Map<string, number>();
       (edicoesRes.data ?? []).forEach((e: any) => {
@@ -80,20 +117,43 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
       });
 
       const obraMap = new Map((obrasRes.data ?? []).map((o: any) => [o.id, o]));
-      const progPorObra = new Map<string, any[]>();
-      (progRes.data ?? []).forEach((p: any) => {
-        const arr = progPorObra.get(p.obra_id) ?? [];
-        arr.push(p);
-        progPorObra.set(p.obra_id, arr);
+
+      // agrupa leituras por obra
+      const leiturasPorObra = new Map<string, any[]>();
+      leiturasUsuario.forEach((l) => {
+        const obraId = l.usuario_livros?.obra_id;
+        if (!obraId) return;
+        const arr = leiturasPorObra.get(obraId) ?? [];
+        arr.push(l);
+        leiturasPorObra.set(obraId, arr);
       });
+
       const totalMembros = membrosRes.count ?? 0;
 
       return trilhas.map((t: any) => {
-        const lista = progPorObra.get(t.obra_id) ?? [];
-        const soma = lista.reduce((a, p) => a + (p.percentual ?? 0), 0);
-        const media = lista.length ? Math.round(soma / Math.max(lista.length, 1)) : 0;
-        const concluidos = lista.filter((p) => p.status === "concluido").length;
-        const meu = user ? lista.find((p) => p.user_id === user.id) ?? null : null;
+        const lista = leiturasPorObra.get(t.obra_id) ?? [];
+        const percentuais = lista.map((l) => {
+          if (l.status === "concluido") return 100;
+          return percentualPorUL.get(l.id) ?? 0;
+        });
+        const media = percentuais.length
+          ? Math.round(percentuais.reduce((a, b) => a + b, 0) / percentuais.length)
+          : 0;
+        const concluidos = lista.filter((l) => l.status === "concluido").length;
+
+        const minhaLeitura = user ? lista.find((l) => l.usuario_livros?.user_id === user.id) : null;
+        let meu_progresso: TrilhaItem["meu_progresso"] = null;
+        if (minhaLeitura) {
+          const concluida = minhaLeitura.status === "concluido";
+          const pct = concluida ? 100 : percentualPorUL.get(minhaLeitura.id) ?? 0;
+          meu_progresso = {
+            status: minhaLeitura.status,
+            percentual: pct,
+            capitulo_atual: null,
+            pagina_atual: paginaPorUL.get(minhaLeitura.id) ?? null,
+            data_conclusao: minhaLeitura.data_fim,
+          };
+        }
 
         return {
           ...t,
@@ -102,15 +162,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
           progresso_coletivo: media,
           concluidos,
           total_membros: totalMembros,
-          meu_progresso: meu
-            ? {
-                status: meu.status,
-                percentual: meu.percentual ?? 0,
-                capitulo_atual: meu.capitulo_atual,
-                pagina_atual: meu.pagina_atual,
-                data_conclusao: meu.data_conclusao,
-              }
-            : null,
+          meu_progresso,
         } as TrilhaItem;
       });
     },
