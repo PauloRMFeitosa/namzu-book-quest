@@ -152,34 +152,11 @@ Deno.serve(async (req) => {
       if (error) throw error;
     }
 
+    // Progresso por clube agora é derivado de usuario_leituras + leitura_progresso.
+    // A tabela clube_progresso foi descontinuada e não recebe mais escritas.
     const clubesParaAtualizar = new Set<string>();
     if (clubeId) clubesParaAtualizar.add(clubeId);
 
-    const [{ data: trilhas }, { data: memberships }] = await Promise.all([
-      admin.from("clube_trilhas").select("clube_id").eq("obra_id", obraId),
-      admin.from("clube_membros").select("clube_id").eq("user_id", user.id).eq("status", "ativo"),
-    ]);
-    const clubesAtivos = new Set((memberships ?? []).map((m: any) => m.clube_id));
-    (trilhas ?? []).forEach((t: any) => {
-      if (clubesAtivos.has(t.clube_id)) clubesParaAtualizar.add(t.clube_id);
-    });
-
-    if (clubesParaAtualizar.size) {
-      const { error } = await admin.from("clube_progresso").upsert(
-        Array.from(clubesParaAtualizar).map((id) => ({
-          user_id: user.id,
-          clube_id: id,
-          obra_id: obraId,
-          percentual,
-          status,
-          capitulo_atual: capituloAtual,
-          pagina_atual: Number.isNaN(paginaAtual) ? null : paginaAtual,
-          data_conclusao: status === "concluido" ? conclusaoIso : null,
-        })),
-        { onConflict: "user_id,clube_id,obra_id" },
-      );
-      if (error) throw error;
-    }
 
     if (usuarioLeituraId && registrarSessao) {
       const { data: sessao } = await admin
