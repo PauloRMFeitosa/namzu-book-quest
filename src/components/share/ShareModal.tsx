@@ -174,7 +174,8 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
         await handleDownload();
       }
     } catch (e: any) {
-      if (e?.name !== "AbortError") toast.error("Falha ao compartilhar");
+      console.error("[ShareModal] share:", e);
+      if (e?.name !== "AbortError") toast.error("Falha ao compartilhar: " + (e?.message ?? ""));
     } finally {
       setBusy(null);
     }
