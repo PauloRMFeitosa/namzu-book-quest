@@ -280,12 +280,12 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
 
             <div className="flex flex-col gap-2 mt-2">
               {(isMobile || canNativeShare) && (
-                <Button onClick={handleShare} disabled={!!busy} className="rounded-xl">
+                <Button onClick={handleShare} disabled={!!busy || resolvingCapa} className="rounded-xl">
                   {busy === "share" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                   Compartilhar
                 </Button>
               )}
-              <Button onClick={handleDownload} disabled={!!busy} variant="outline" className="rounded-xl">
+              <Button onClick={handleDownload} disabled={!!busy || resolvingCapa} variant="outline" className="rounded-xl">
                 {busy === "download" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Baixar imagem
               </Button>
