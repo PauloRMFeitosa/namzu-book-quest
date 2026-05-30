@@ -34,6 +34,7 @@ const ObraDetalhe = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [adicionando, setAdicionando] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
