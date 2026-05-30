@@ -983,6 +983,30 @@ export type Database = {
           },
         ]
       }
+      generos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ia_interacoes: {
         Row: {
           contexto: Json | null
@@ -1605,6 +1629,42 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_autores_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_generos: {
+        Row: {
+          created_at: string
+          genero_id: string
+          obra_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          genero_id: string
+          obra_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          genero_id?: string
+          obra_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_obra_generos_genero"
+            columns: ["genero_id"]
+            isOneToOne: false
+            referencedRelation: "generos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_obra_generos_obra"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
