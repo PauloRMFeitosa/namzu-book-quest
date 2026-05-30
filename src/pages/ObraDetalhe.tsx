@@ -195,12 +195,31 @@ const ObraDetalhe = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="self-start flex items-center gap-1 text-muted-foreground -ml-2 p-2"
-      >
-        <ArrowLeft className="w-4 h-4" /> Voltar
-      </button>
+      <div className="flex items-center justify-between -mx-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-muted-foreground p-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </button>
+        <Button onClick={() => setShareOpen(true)} variant="ghost" size="sm" className="rounded-xl">
+          <Share2 className="w-4 h-4" /> Compartilhar
+        </Button>
+      </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          titulo: obra.titulo_original,
+          autor: autores.map((a: any) => a.nome_completo).join(", ") || undefined,
+          capaUrl: capa,
+          nota: mediaNota > 0 ? mediaNota : null,
+          link: `${window.location.origin}/obras/${id}`,
+        }}
+        templates={["recommend"]}
+        defaultTemplate="recommend"
+      />
 
       {/* Cabeçalho */}
       <div className="flex gap-4">
