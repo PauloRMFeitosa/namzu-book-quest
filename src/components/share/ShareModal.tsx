@@ -210,6 +210,9 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Compartilhar</DialogTitle>
+          <DialogDescription className="text-xs">
+            Escolha o modelo, formato e estilo. A imagem é gerada na hora.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-5">
