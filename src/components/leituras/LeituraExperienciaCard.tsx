@@ -74,14 +74,34 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
 
       <ProgressoBar {...progresso} />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {!isLido && (
           <Button onClick={() => setOpenConcluir(true)} size="sm" variant="outline" className="rounded-xl">
             <Check className="w-3 h-3" /> Concluir
           </Button>
         )}
+        <Button onClick={() => setShareOpen(true)} size="sm" variant="outline" className="rounded-xl">
+          <Share2 className="w-3 h-3" /> Compartilhar
+        </Button>
         <LeituraCopilotoButton usuarioLeituraId={livro.id} />
       </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          titulo: livro.obras?.titulo_original ?? "",
+          autor: livro.autores.map((a) => a.nome).join(", ") || undefined,
+          capaUrl: livro.edicoes?.capa_url || livro.obras?.capa_padrao_url,
+          percentual: progresso.percentual,
+          paginasLidas: progresso.paginasLidas,
+          totalPaginas: progresso.totalPaginas,
+          dataConclusao: livro.data_fim,
+          link: `${window.location.origin}/obras/${livro.obras?.id ?? ""}`,
+        }}
+        defaultTemplate={isLido ? "completed" : "reading"}
+      />
+
 
       {/* Pré-leitura */}
       {hasPre ? (
