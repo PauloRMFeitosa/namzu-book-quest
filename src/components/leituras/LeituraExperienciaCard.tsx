@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Check, Play, Sparkles, Plus, Award } from "lucide-react";
+import { BookOpen, Check, Play, Sparkles, Plus, Award, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
+import { ShareModal } from "@/components/share/ShareModal";
 
 interface Props {
   usuarioLeituraId: string;
