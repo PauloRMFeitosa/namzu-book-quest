@@ -26,6 +26,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
   const { data: livro, isLoading } = useLivroDetalhe(usuarioLeituraId);
   const [openConcluir, setOpenConcluir] = useState(false);
   const [showPreForm, setShowPreForm] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (isLoading) return <div className="card-soft p-4 text-sm text-muted-foreground">Carregando…</div>;
   if (!livro) return null;
