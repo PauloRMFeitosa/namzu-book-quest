@@ -146,7 +146,8 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
       URL.revokeObjectURL(url);
       toast.success("Imagem baixada");
     } catch (e: any) {
-      toast.error("Falha ao gerar imagem: " + (e?.message ?? ""));
+      console.error("[ShareModal] download:", e);
+      toast.error("Falha ao gerar imagem: " + (e?.message ?? "erro desconhecido"));
     } finally {
       setBusy(null);
     }
