@@ -73,11 +73,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
       <ProgressoBar {...progresso} />
 
       <div className="grid grid-cols-2 gap-2">
-        {isLido ? (
-          <Button onClick={reabrir} size="sm" variant="outline" className="rounded-xl">
-            <Play className="w-3 h-3" /> Retomar
-          </Button>
-        ) : (
+        {!isLido && (
           <Button onClick={() => setOpenConcluir(true)} size="sm" variant="outline" className="rounded-xl">
             <Check className="w-3 h-3" /> Concluir
           </Button>
