@@ -1851,16 +1851,19 @@ export type Database = {
       tags: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           nome: string
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           nome: string
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           nome?: string
         }
