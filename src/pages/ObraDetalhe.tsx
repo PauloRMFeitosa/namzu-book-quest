@@ -2,11 +2,12 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareModal } from "@/components/share/ShareModal";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
@@ -33,6 +34,7 @@ const ObraDetalhe = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [adicionando, setAdicionando] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
@@ -193,12 +195,31 @@ const ObraDetalhe = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="self-start flex items-center gap-1 text-muted-foreground -ml-2 p-2"
-      >
-        <ArrowLeft className="w-4 h-4" /> Voltar
-      </button>
+      <div className="flex items-center justify-between -mx-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-muted-foreground p-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </button>
+        <Button onClick={() => setShareOpen(true)} variant="ghost" size="sm" className="rounded-xl">
+          <Share2 className="w-4 h-4" /> Compartilhar
+        </Button>
+      </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          titulo: obra.titulo_original,
+          autor: autores.map((a: any) => a.nome_completo).join(", ") || undefined,
+          capaUrl: capa,
+          nota: mediaNota > 0 ? mediaNota : null,
+          link: `${window.location.origin}/obras/${id}`,
+        }}
+        templates={["recommend"]}
+        defaultTemplate="recommend"
+      />
 
       {/* Cabeçalho */}
       <div className="flex gap-4">

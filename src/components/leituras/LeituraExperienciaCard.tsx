@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Check, Play, Sparkles, Plus, Award } from "lucide-react";
+import { BookOpen, Check, Play, Sparkles, Plus, Award, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { finalizarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
+import { ShareModal } from "@/components/share/ShareModal";
 
 interface Props {
   usuarioLeituraId: string;
@@ -25,6 +26,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
   const { data: livro, isLoading } = useLivroDetalhe(usuarioLeituraId);
   const [openConcluir, setOpenConcluir] = useState(false);
   const [showPreForm, setShowPreForm] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (isLoading) return <div className="card-soft p-4 text-sm text-muted-foreground">Carregando…</div>;
   if (!livro) return null;
@@ -72,14 +74,34 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
 
       <ProgressoBar {...progresso} />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {!isLido && (
           <Button onClick={() => setOpenConcluir(true)} size="sm" variant="outline" className="rounded-xl">
             <Check className="w-3 h-3" /> Concluir
           </Button>
         )}
+        <Button onClick={() => setShareOpen(true)} size="sm" variant="outline" className="rounded-xl">
+          <Share2 className="w-3 h-3" /> Compartilhar
+        </Button>
         <LeituraCopilotoButton usuarioLeituraId={livro.id} />
       </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          titulo: livro.obras?.titulo_original ?? "",
+          autor: livro.autores.map((a) => a.nome).join(", ") || undefined,
+          capaUrl: livro.edicoes?.capa_url || livro.obras?.capa_padrao_url,
+          percentual: progresso.percentual,
+          paginasLidas: progresso.paginasLidas,
+          totalPaginas: progresso.totalPaginas,
+          dataConclusao: livro.data_fim,
+          link: `${window.location.origin}/obras/${livro.obras?.id ?? ""}`,
+        }}
+        defaultTemplate={isLido ? "completed" : "reading"}
+      />
+
 
       {/* Pré-leitura */}
       {hasPre ? (
