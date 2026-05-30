@@ -1,4 +1,5 @@
 import React from "react";
+import logoNamzu from "@/assets/logo-namzu.png";
 
 export type ShareFormat = "feed" | "story" | "square" | "whatsapp";
 export type ShareStyle = "light" | "dark" | "gradient" | "cover";
