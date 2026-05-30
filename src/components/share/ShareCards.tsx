@@ -117,7 +117,6 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         {data.capaUrl ? (
           <img
             src={data.capaUrl}
-            crossOrigin="anonymous"
             style={{
               width: capaW,
               height: capaH,
