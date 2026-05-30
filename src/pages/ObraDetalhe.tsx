@@ -2,11 +2,12 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareModal } from "@/components/share/ShareModal";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
