@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Share2, Link2, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { imageToDataUrl, preloadImage } from "@/lib/imageToDataUrl";
 import {
   ShareCard,
   ShareData,
@@ -45,6 +46,8 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
   const [style, setStyle] = useState<ShareStyle>("light");
   const [comentario, setComentario] = useState(data.comentario ?? "");
   const [busy, setBusy] = useState<"download" | "share" | null>(null);
+  const [capaResolved, setCapaResolved] = useState<string | null>(null);
+  const [resolvingCapa, setResolvingCapa] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,11 +58,37 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Pré-resolve a capa em dataURL (evita problemas de CORS na captura)
+  useEffect(() => {
+    let cancelled = false;
+    if (!open) return;
+    const src = data.capaUrl;
+    if (!src) {
+      setCapaResolved(null);
+      return;
+    }
+    if (src.startsWith("data:")) {
+      setCapaResolved(src);
+      return;
+    }
+    setResolvingCapa(true);
+    setCapaResolved(null);
+    imageToDataUrl(src)
+      .then(async (durl) => {
+        if (cancelled) return;
+        if (durl) await preloadImage(durl);
+        if (!cancelled) setCapaResolved(durl);
+      })
+      .finally(() => !cancelled && setResolvingCapa(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, data.capaUrl]);
+
   const link = data.link ?? (typeof window !== "undefined" ? window.location.href : "");
-  const fullData: ShareData = { ...data, comentario, link };
+  const fullData: ShareData = { ...data, capaUrl: capaResolved ?? data.capaUrl, comentario, link };
 
   const size = FORMAT_SIZES[format];
-  // largura disponível no preview
   const maxPreviewW = 320;
   const maxPreviewH = 480;
   const scale = useMemo(
@@ -68,12 +97,35 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
   );
 
   async function generatePng(): Promise<Blob | null> {
-    if (!cardRef.current) return null;
+    if (!cardRef.current) {
+      throw new Error("Card não renderizado");
+    }
+    // Aguarda fontes carregarem
+    if (typeof document !== "undefined" && (document as any).fonts?.ready) {
+      try { await (document as any).fonts.ready; } catch {}
+    }
+    // Aguarda imagens internas
+    const imgs = Array.from(cardRef.current.querySelectorAll("img"));
+    await Promise.all(
+      imgs.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) return resolve();
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+          }),
+      ),
+    );
+
+    // Pequeno delay para garantir layout
+    await new Promise((r) => setTimeout(r, 50));
+
     const dataUrl = await toPng(cardRef.current, {
       pixelRatio: 1,
       cacheBust: true,
       width: size.w,
       height: size.h,
+      skipFonts: false,
     });
     const res = await fetch(dataUrl);
     return await res.blob();
@@ -94,7 +146,8 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
       URL.revokeObjectURL(url);
       toast.success("Imagem baixada");
     } catch (e: any) {
-      toast.error("Falha ao gerar imagem: " + (e?.message ?? ""));
+      console.error("[ShareModal] download:", e);
+      toast.error("Falha ao gerar imagem: " + (e?.message ?? "erro desconhecido"));
     } finally {
       setBusy(null);
     }
@@ -121,7 +174,8 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
         await handleDownload();
       }
     } catch (e: any) {
-      if (e?.name !== "AbortError") toast.error("Falha ao compartilhar");
+      console.error("[ShareModal] share:", e);
+      if (e?.name !== "AbortError") toast.error("Falha ao compartilhar: " + (e?.message ?? ""));
     } finally {
       setBusy(null);
     }
@@ -156,6 +210,9 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Compartilhar</DialogTitle>
+          <DialogDescription className="text-xs">
+            Escolha o modelo, formato e estilo. A imagem é gerada na hora.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-5">
@@ -223,12 +280,12 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
 
             <div className="flex flex-col gap-2 mt-2">
               {(isMobile || canNativeShare) && (
-                <Button onClick={handleShare} disabled={!!busy} className="rounded-xl">
+                <Button onClick={handleShare} disabled={!!busy || resolvingCapa} className="rounded-xl">
                   {busy === "share" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                   Compartilhar
                 </Button>
               )}
-              <Button onClick={handleDownload} disabled={!!busy} variant="outline" className="rounded-xl">
+              <Button onClick={handleDownload} disabled={!!busy || resolvingCapa} variant="outline" className="rounded-xl">
                 {busy === "download" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Baixar imagem
               </Button>
