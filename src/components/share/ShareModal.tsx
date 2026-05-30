@@ -42,7 +42,7 @@ const STYLES: { id: ShareStyle; label: string }[] = [
 export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplate }: ShareModalProps) => {
   const allowed = templates ?? ["recommend", "reading", "completed"];
   const [template, setTemplate] = useState<ShareTemplate>(defaultTemplate ?? allowed[0]);
-  const [format, setFormat] = useState<ShareFormat>("feed");
+  const [format, setFormat] = useState<ShareFormat>("square");
   const [style, setStyle] = useState<ShareStyle>("light");
   const [comentario, setComentario] = useState(data.comentario ?? "");
   const [busy, setBusy] = useState<"download" | "share" | null>(null);
