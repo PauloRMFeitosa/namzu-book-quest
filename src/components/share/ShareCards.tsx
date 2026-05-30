@@ -50,11 +50,11 @@ const palettes: Record<ShareStyle, { bg: string; fg: string; sub: string; accent
 const Watermark = ({ fg, sub, size }: { fg: string; sub: string; size: number }) => (
   <>
     <div style={{ position: "absolute", top: size * 0.04, left: size * 0.05, display: "flex", alignItems: "center", gap: size * 0.012 }}>
-      <img src="/logo-namzu.png" crossOrigin="anonymous" style={{ width: size * 0.07, height: size * 0.07, objectFit: "contain" }} />
+      <img src={logoNamzu} style={{ width: size * 0.07, height: size * 0.07, objectFit: "contain" }} />
       <span style={{ fontFamily: "'Fraunces', serif", color: fg, fontSize: size * 0.035, fontWeight: 700, letterSpacing: "0.02em" }}>Namzu</span>
     </div>
     <div style={{ position: "absolute", bottom: size * 0.04, right: size * 0.05, display: "flex", alignItems: "center", gap: size * 0.01 }}>
-      <img src="/logo-namzu.png" crossOrigin="anonymous" style={{ width: size * 0.035, height: size * 0.035, objectFit: "contain", opacity: 0.8 }} />
+      <img src={logoNamzu} style={{ width: size * 0.035, height: size * 0.035, objectFit: "contain", opacity: 0.8 }} />
       <span style={{ color: sub, fontSize: size * 0.018, fontFamily: "'Inter', sans-serif", fontWeight: 500, letterSpacing: "0.05em" }}>www.namzu.com.br</span>
     </div>
   </>
