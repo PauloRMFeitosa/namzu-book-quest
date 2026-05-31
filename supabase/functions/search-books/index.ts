@@ -158,18 +158,23 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
 }
 
 function dedupe(list: BookResult[]): BookResult[] {
-  const seen = new Set<string>();
-  const out: BookResult[] = [];
+  const map = new Map<string, BookResult>();
   for (const b of list) {
     const key = b.isbn13
       ? `i:${b.isbn13}`
       : `t:${b.titulo.toLowerCase().trim()}|${(b.autores[0] ?? "").toLowerCase().trim()}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(b);
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...b, generos: b.generos ?? [] });
+      continue;
+    }
+    // mescla gêneros sem duplicar
+    const merged = new Set([...(existing.generos ?? []), ...(b.generos ?? [])]);
+    existing.generos = Array.from(merged);
   }
-  return out;
+  return Array.from(map.values());
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
