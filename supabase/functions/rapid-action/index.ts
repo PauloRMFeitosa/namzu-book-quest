@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import slugify from "https://esm.sh/slugify@1.6.6";
+import { persistGenresForObra } from "../_shared/generos.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
