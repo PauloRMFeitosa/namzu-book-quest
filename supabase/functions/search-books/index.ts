@@ -2,6 +2,9 @@
 // Apenas BUSCA em fontes externas (Google Books + Open Library) e retorna resultados normalizados.
 // NÃO escreve em banco.
 
+import { normalizeGenres } from "../_shared/generos.ts";
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -26,7 +29,9 @@ interface BookResult {
   editora?: string | null;
   num_paginas?: number | null;
   idioma?: string | null;
+  generos?: string[];
 }
+
 
 function parseYear(v: any): number | null {
   if (!v) return null;
@@ -96,7 +101,9 @@ async function searchGoogle(params: any): Promise<BookResult[]> {
         editora: info.publisher ?? null,
         num_paginas: info.pageCount ?? null,
         idioma: info.language ?? null,
+        generos: normalizeGenres(info.categories),
       };
+
     })
     .filter(Boolean) as BookResult[];
 }
@@ -114,9 +121,11 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13: isbn,
         fonte: "openlibrary",
         num_paginas: data.number_of_pages ?? null,
+        generos: normalizeGenres(data.subjects),
       },
     ];
   }
+
   const params = new URLSearchParams();
   if (titulo) params.set("title", titulo);
   if (autor) params.set("author", autor);
@@ -141,24 +150,31 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13,
         fonte: "openlibrary",
         editora: doc.publisher?.[0] ?? null,
+        generos: normalizeGenres(doc.subject),
       };
     })
+
     .filter(Boolean) as BookResult[];
 }
 
 function dedupe(list: BookResult[]): BookResult[] {
-  const seen = new Set<string>();
-  const out: BookResult[] = [];
+  const map = new Map<string, BookResult>();
   for (const b of list) {
     const key = b.isbn13
       ? `i:${b.isbn13}`
       : `t:${b.titulo.toLowerCase().trim()}|${(b.autores[0] ?? "").toLowerCase().trim()}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(b);
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...b, generos: b.generos ?? [] });
+      continue;
+    }
+    // mescla gêneros sem duplicar
+    const merged = new Set([...(existing.generos ?? []), ...(b.generos ?? [])]);
+    existing.generos = Array.from(merged);
   }
-  return out;
+  return Array.from(map.values());
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

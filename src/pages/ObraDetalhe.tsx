@@ -45,13 +45,15 @@ const ObraDetalhe = () => {
         .select(
           `id, titulo_original, sinopse_padrao, capa_padrao_url, ano_primeira_publicacao, idioma_original,
            obra_autores(ordem, autores(id, nome_completo)),
-           edicoes(id, editora, num_paginas, capa_url, isbn_13, idioma)`,
+           edicoes(id, editora, num_paginas, capa_url, isbn_13, idioma),
+           obra_generos(generos(id, nome, slug))`,
         )
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
+
   });
 
   const autores = (obra?.obra_autores ?? [])
@@ -62,6 +64,10 @@ const ObraDetalhe = () => {
   const autorPrincipal = autores[0];
   const editora = obra?.edicoes?.[0]?.editora ?? null;
   const numPaginas = obra?.edicoes?.[0]?.num_paginas ?? null;
+  const generos: { id: string; nome: string; slug: string }[] = ((obra as any)?.obra_generos ?? [])
+    .map((og: any) => og.generos)
+    .filter(Boolean);
+
 
   // Outras obras do autor
   const { data: outrasObras = [] } = useQuery({
@@ -248,8 +254,21 @@ const ObraDetalhe = () => {
               {totalAvaliacoes > 0 ? `${mediaNota.toFixed(1)} (${totalAvaliacoes})` : "Sem avaliações"}
             </span>
           </div>
+          {generos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {generos.map((g) => (
+                <span
+                  key={g.id}
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                >
+                  {g.nome}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
 
       {/* Sinopse */}
       {obra.sinopse_padrao && (
