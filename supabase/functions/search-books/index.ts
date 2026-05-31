@@ -101,7 +101,9 @@ async function searchGoogle(params: any): Promise<BookResult[]> {
         editora: info.publisher ?? null,
         num_paginas: info.pageCount ?? null,
         idioma: info.language ?? null,
+        generos: normalizeGenres(info.categories),
       };
+
     })
     .filter(Boolean) as BookResult[];
 }
@@ -119,9 +121,11 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13: isbn,
         fonte: "openlibrary",
         num_paginas: data.number_of_pages ?? null,
+        generos: normalizeGenres(data.subjects),
       },
     ];
   }
+
   const params = new URLSearchParams();
   if (titulo) params.set("title", titulo);
   if (autor) params.set("author", autor);
@@ -146,8 +150,10 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13,
         fonte: "openlibrary",
         editora: doc.publisher?.[0] ?? null,
+        generos: normalizeGenres(doc.subject),
       };
     })
+
     .filter(Boolean) as BookResult[];
 }
 
