@@ -200,6 +200,7 @@ async function handleRegistrarResultado(payload: any) {
     sinopse: payload.descricao ?? payload.sinopse ?? null,
     capa_url: payload.capa_url ?? null,
     sourceId: payload.sourceId ?? payload.isbn13 ?? null,
+    generos: payload.generos ?? payload.categories ?? payload.subjects ?? null,
   });
 
   let edicao = null;
@@ -225,9 +226,12 @@ async function handleRegistrarResultado(payload: any) {
       capa_padrao_url: obra.capa_padrao_url,
       ano_primeira_publicacao: obra.ano_primeira_publicacao,
       autor: (payload.autores ?? [])[0] ?? null,
+      generos: (obra as any).generos ?? [],
+      generos_ids: (obra as any).generos_ids ?? [],
     },
     edicao,
   });
+
 }
 
 // =========================
