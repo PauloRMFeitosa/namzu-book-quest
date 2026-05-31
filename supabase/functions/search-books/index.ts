@@ -2,6 +2,9 @@
 // Apenas BUSCA em fontes externas (Google Books + Open Library) e retorna resultados normalizados.
 // NÃO escreve em banco.
 
+import { normalizeGenres } from "../_shared/generos.ts";
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -26,7 +29,9 @@ interface BookResult {
   editora?: string | null;
   num_paginas?: number | null;
   idioma?: string | null;
+  generos?: string[];
 }
+
 
 function parseYear(v: any): number | null {
   if (!v) return null;
