@@ -360,7 +360,9 @@ async function searchGoogle({ isbn13, titulo, autor }: any) {
     publishedDate: info.publishedDate,
     isbn13: info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")?.identifier,
     sourceId: data.items[0].id,
+    categories: info.categories ?? [],
   };
+
 }
 
 async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
@@ -381,7 +383,9 @@ async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
       publishedDate: data.publish_date,
       isbn13,
       sourceId: isbn13,
+      categories: data.subjects ?? [],
     };
+
   }
 
   url = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo || "")}&author=${encodeURIComponent(autor || "")}`;
@@ -402,8 +406,10 @@ async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
     publishedDate: book.first_publish_year,
     isbn13: book.isbn?.[0],
     sourceId: book.key,
+    categories: book.subject ?? [],
   };
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -464,6 +470,14 @@ serve(async (req) => {
       if (a) await vincularAutor(obraId, a.id, 1);
     }
 
+    // Persistência de gêneros (aditiva, idempotente)
+    let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
+    try {
+      generosInfo = await persistGenresForObra(supabase, obraId, (book as any).categories);
+    } catch (e) {
+      console.warn("persistGenresForObra falhou", e);
+    }
+
     if (book.isbn13) {
       const { data: exist } = await supabase
         .from("edicoes")
@@ -496,9 +510,12 @@ serve(async (req) => {
           ? parseInt(book.publishedDate.toString().substring(0, 4))
           : null,
         autor: (book.authors || [])[0] || null,
+        generos: generosInfo.nomes,
+        generos_ids: generosInfo.ids,
       },
       fonte: book.isbn13 ? "google/openlibrary" : "fallback",
     });
+
   } catch (err: any) {
     return json({ error: err?.message || "Erro interno" }, 500);
   }
