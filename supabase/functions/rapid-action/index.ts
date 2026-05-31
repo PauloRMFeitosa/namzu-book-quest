@@ -96,6 +96,7 @@ async function upsertObraComAutores(input: {
   sinopse: string | null;
   capa_url: string | null;
   sourceId?: string | null;
+  generos?: unknown;
 }) {
   const slug = makeSlug(input.titulo, input.sourceId ?? undefined);
 
@@ -132,8 +133,17 @@ async function upsertObraComAutores(input: {
     if (a) await vincularAutor(obra.id, a.id, ordem++);
   }
 
-  return obra;
+  // Persistência aditiva de gêneros (não remove vínculos existentes)
+  let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
+  try {
+    generosInfo = await persistGenresForObra(supabase, obra.id, input.generos);
+  } catch (e) {
+    console.warn("persistGenresForObra falhou", e);
+  }
+
+  return { ...obra, generos: generosInfo.nomes, generos_ids: generosInfo.ids };
 }
+
 
 async function upsertEdicaoParaObra(
   obraId: string,
