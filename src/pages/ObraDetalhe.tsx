@@ -254,8 +254,21 @@ const ObraDetalhe = () => {
               {totalAvaliacoes > 0 ? `${mediaNota.toFixed(1)} (${totalAvaliacoes})` : "Sem avaliações"}
             </span>
           </div>
+          {generos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {generos.map((g) => (
+                <span
+                  key={g.id}
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                >
+                  {g.nome}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
 
       {/* Sinopse */}
       {obra.sinopse_padrao && (
