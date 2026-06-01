@@ -270,12 +270,12 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
               <Label className="text-xs">Comentário (opcional)</Label>
               <Textarea
                 value={comentario}
-                onChange={(e) => setComentario(e.target.value.slice(0, 180))}
+                onChange={(e) => setComentario(e.target.value.slice(0, COMMENT_MAX))}
                 placeholder="Adicione um comentário pessoal…"
                 className="resize-none"
                 rows={3}
               />
-              <p className="text-[10px] text-muted-foreground text-right">{comentario.length}/180</p>
+              <p className="text-[10px] text-muted-foreground text-right">{comentario.length}/{COMMENT_MAX}</p>
             </div>
 
             <div className="flex flex-col gap-2 mt-2">
