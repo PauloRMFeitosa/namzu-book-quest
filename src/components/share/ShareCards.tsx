@@ -404,7 +404,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
       >
         <span
           style={{
-            color: style === "dark" ? "#F2F6FA" : style === "gradient" ? "#FFFFFF" : "#FFFFFF",
+            color: pal.fg,
             fontSize: u * 0.022,
             fontFamily: "'Inter', sans-serif",
             fontWeight: 600,
