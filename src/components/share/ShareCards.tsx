@@ -1,14 +1,15 @@
 import React from "react";
 import logoNamzu from "@/assets/logo-namzu.png";
 
-export type ShareFormat = "story" | "square" | "whatsapp";
-export type ShareStyle = "light" | "dark" | "gradient" | "cover";
+export type ShareFormat = "square" | "story";
+export type ShareStyle = "light" | "dark" | "gradient";
 export type ShareTemplate = "recommend" | "reading" | "completed";
+
+export const COMMENT_MAX = 140;
 
 export const FORMAT_SIZES: Record<ShareFormat, { w: number; h: number; label: string }> = {
   square: { w: 1080, h: 1080, label: "Quadrado" },
-  story: { w: 1080, h: 1920, label: "Story Instagram" },
-  whatsapp: { w: 1080, h: 1920, label: "Story WhatsApp" },
+  story: { w: 1080, h: 1920, label: "Story" },
 };
 
 export interface ShareData {
@@ -25,12 +26,12 @@ export interface ShareData {
   coverColors?: string[];
 }
 
-const Stars = ({ value, size }: { value: number; size: number }) => (
-  <div style={{ display: "flex", gap: size * 0.1 }}>
+const Stars = ({ value, size, color }: { value: number; size: number; color: string }) => (
+  <div style={{ display: "flex", gap: size * 0.12 }}>
     {[0, 1, 2, 3, 4].map((i) => {
       const filled = i < Math.round(value);
       return (
-        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "#F5B400" : "none"} stroke={filled ? "#F5B400" : "#999"} strokeWidth={1.5}>
+        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : "none"} stroke={color} strokeWidth={1.5}>
           <polygon points="12,2 15,9 22,9.5 17,14.5 18.5,22 12,18 5.5,22 7,14.5 2,9.5 9,9" />
         </svg>
       );
@@ -38,11 +39,56 @@ const Stars = ({ value, size }: { value: number; size: number }) => (
   </div>
 );
 
-const palettes: Record<ShareStyle, { bg: string; fg: string; sub: string; accent: string }> = {
-  light: { bg: "linear-gradient(160deg, #F7F9F7 0%, #EAEFEA 100%)", fg: "#12263F", sub: "#536479", accent: "#1A3B8B" },
-  dark: { bg: "linear-gradient(160deg, #0F1B2D 0%, #142D6B 100%)", fg: "#F5F8FA", sub: "#A8B5C8", accent: "#88B4D8" },
-  gradient: { bg: "linear-gradient(135deg, #1A3B8B 0%, #88B4D8 50%, #D1F2E5 100%)", fg: "#0F1B2D", sub: "#1A3B8B", accent: "#12263F" },
-  cover: { bg: "linear-gradient(160deg, #2A3148 0%, #1A1F2E 100%)", fg: "#F5F8FA", sub: "#B8C0D0", accent: "#E8B547" },
+interface Palette {
+  bg: string;
+  fg: string;
+  sub: string;
+  accent: string;
+  accentSoft: string;
+  waveTop: string;
+  waveBottom: string;
+  tagBg: string;
+  tagFg: string;
+  shadow: string;
+}
+
+const palettes: Record<ShareStyle, Palette> = {
+  light: {
+    bg: "linear-gradient(180deg, #FBFCFD 0%, #EEF3F2 100%)",
+    fg: "#0F2747",
+    sub: "#5A6B85",
+    accent: "#1A3B8B",
+    accentSoft: "#8FB8C8",
+    waveTop: "rgba(143,184,200,0.35)",
+    waveBottom: "#1A3B8B",
+    tagBg: "rgba(143,184,200,0.25)",
+    tagFg: "#1A3B8B",
+    shadow: "0 30px 60px -25px rgba(15,39,71,0.35)",
+  },
+  dark: {
+    bg: "linear-gradient(180deg, #0B1626 0%, #0F2747 100%)",
+    fg: "#F2F6FA",
+    sub: "#9CB0CC",
+    accent: "#88B4D8",
+    accentSoft: "#3A5A8C",
+    waveTop: "rgba(136,180,216,0.18)",
+    waveBottom: "#88B4D8",
+    tagBg: "rgba(136,180,216,0.18)",
+    tagFg: "#C9DEF0",
+    shadow: "0 30px 60px -20px rgba(0,0,0,0.6)",
+  },
+  gradient: {
+    bg: "linear-gradient(160deg, #D6E9E2 0%, #B7D4DE 45%, #6F9BC2 100%)",
+    fg: "#0F2747",
+    sub: "#34527A",
+    accent: "#0F2747",
+    accentSoft: "#FFFFFF",
+    waveTop: "rgba(255,255,255,0.4)",
+    waveBottom: "#0F2747",
+    tagBg: "rgba(255,255,255,0.55)",
+    tagFg: "#0F2747",
+    shadow: "0 30px 60px -20px rgba(15,39,71,0.45)",
+  },
 };
 
 interface CardProps {
@@ -58,6 +104,74 @@ const TEMPLATE_LABEL: Record<ShareTemplate, { tag: string; icon: string }> = {
   completed: { tag: "Concluí a leitura", icon: "✅" },
 };
 
+const BackgroundDecor = ({ pal, w, h }: { pal: Palette; w: number; h: number }) => (
+  <>
+    {/* Top right soft wave */}
+    <svg
+      width={w}
+      height={h * 0.28}
+      viewBox={`0 0 ${w} ${h * 0.28}`}
+      preserveAspectRatio="none"
+      style={{ position: "absolute", top: 0, right: 0, zIndex: 0, pointerEvents: "none" }}
+    >
+      <path
+        d={`M${w * 0.45},0 Q${w * 0.75},${h * 0.05} ${w},${h * 0.18} L${w},0 Z`}
+        fill={pal.waveTop}
+      />
+    </svg>
+    {/* Bottom waves */}
+    <svg
+      width={w}
+      height={h * 0.18}
+      viewBox={`0 0 ${w} ${h * 0.18}`}
+      preserveAspectRatio="none"
+      style={{ position: "absolute", bottom: 0, left: 0, zIndex: 0, pointerEvents: "none" }}
+    >
+      <path
+        d={`M0,${h * 0.09} Q${w * 0.25},${h * 0.02} ${w * 0.55},${h * 0.07} T${w},${h * 0.06} L${w},${h * 0.18} L0,${h * 0.18} Z`}
+        fill={pal.waveTop}
+      />
+      <path
+        d={`M0,${h * 0.13} Q${w * 0.3},${h * 0.07} ${w * 0.6},${h * 0.12} T${w},${h * 0.11} L${w},${h * 0.18} L0,${h * 0.18} Z`}
+        fill={pal.waveBottom}
+      />
+    </svg>
+  </>
+);
+
+const VerticalWatermark = ({ pal, u, h, side }: { pal: Palette; u: number; h: number; side: "left" | "right" }) => (
+  <div
+    style={{
+      position: "absolute",
+      [side]: u * 0.035,
+      top: "50%",
+      transform: `translateY(-50%) rotate(-90deg)`,
+      transformOrigin: "center",
+      display: "flex",
+      alignItems: "center",
+      gap: u * 0.015,
+      zIndex: 1,
+      opacity: 0.55,
+    }}
+  >
+    <div style={{ width: u * 0.04, height: 1, background: pal.sub }} />
+    <span
+      style={{
+        color: pal.sub,
+        fontSize: u * 0.018,
+        letterSpacing: "0.35em",
+        fontFamily: "'Inter', sans-serif",
+        fontWeight: 500,
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
+      }}
+    >
+      www.namzu.com.br
+    </span>
+    <div style={{ width: u * 0.04, height: 1, background: pal.sub }} />
+  </div>
+);
+
 export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, template, format, style }, ref) => {
   const { w, h } = FORMAT_SIZES[format];
   const pal = palettes[style];
@@ -65,15 +179,8 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
   const isSquare = w === h;
   const meta = TEMPLATE_LABEL[template];
 
-  // Áreas reservadas (topo/rodapé) para branding — conteúdo nunca invade
-  const topReserved = u * 0.14;
-  const bottomReserved = u * 0.10;
-
-  const capaW = isSquare ? u * 0.36 : u * 0.50;
+  const capaW = isSquare ? u * 0.34 : u * 0.56;
   const capaH = capaW * 1.5;
-
-  // Área fixa de comentário (não empurra layout)
-  const commentMaxH = u * 0.18;
 
   return (
     <div
@@ -88,164 +195,314 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         overflow: "hidden",
       }}
     >
-      {/* Branding topo */}
-      <div style={{ position: "absolute", top: u * 0.04, left: u * 0.05, display: "flex", alignItems: "center", gap: u * 0.012, zIndex: 2 }}>
-        <img src={logoNamzu} style={{ width: u * 0.07, height: u * 0.07, objectFit: "contain" }} />
-        <span style={{ fontFamily: "'Fraunces', serif", color: pal.fg, fontSize: u * 0.035, fontWeight: 700, letterSpacing: "0.02em" }}>Namzu</span>
+      <BackgroundDecor pal={pal} w={w} h={h} />
+
+      {/* Brand top-left — discreta */}
+      <div
+        style={{
+          position: "absolute",
+          top: u * 0.045,
+          left: u * 0.06,
+          display: "flex",
+          alignItems: "center",
+          gap: u * 0.01,
+          zIndex: 2,
+        }}
+      >
+        <img src={logoNamzu} style={{ width: u * 0.04, height: u * 0.04, objectFit: "contain" }} crossOrigin="anonymous" />
+        <span
+          style={{
+            fontFamily: "'Fraunces', serif",
+            color: pal.fg,
+            fontSize: u * 0.022,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          Namzu
+        </span>
       </div>
 
-      {/* Branding rodapé */}
-      <div style={{ position: "absolute", bottom: u * 0.035, right: u * 0.05, display: "flex", alignItems: "center", gap: u * 0.01, zIndex: 2 }}>
-        <img src={logoNamzu} style={{ width: u * 0.032, height: u * 0.032, objectFit: "contain", opacity: 0.8 }} />
-        <span style={{ color: pal.sub, fontSize: u * 0.018, fontFamily: "'Inter', sans-serif", fontWeight: 500, letterSpacing: "0.05em" }}>www.namzu.com.br</span>
-      </div>
+      {/* Vertical watermark */}
+      <VerticalWatermark pal={pal} u={u} h={h} side={isSquare ? "left" : "left"} />
 
       {/* Conteúdo */}
       <div
         style={{
           position: "absolute",
-          top: topReserved,
-          left: 0,
-          right: 0,
-          bottom: bottomReserved,
+          inset: 0,
+          paddingTop: u * 0.12,
+          paddingBottom: u * 0.11,
+          paddingLeft: u * 0.11,
+          paddingRight: u * 0.08,
           display: "flex",
           flexDirection: isSquare ? "row" : "column",
           alignItems: "center",
-          justifyContent: isSquare ? "center" : "flex-start",
-          gap: u * 0.04,
-          padding: `${u * 0.03}px ${u * 0.07}px`,
+          justifyContent: "center",
+          gap: isSquare ? u * 0.05 : u * 0.035,
+          zIndex: 1,
         }}
       >
-        {/* Capa */}
-        {data.capaUrl ? (
-          <img
-            src={data.capaUrl}
-            style={{
-              width: capaW,
-              height: capaH,
-              objectFit: "cover",
-              borderRadius: u * 0.02,
-              boxShadow: "0 30px 60px -20px rgba(0,0,0,0.5)",
-              flexShrink: 0,
-            }}
-          />
-        ) : (
-          <div style={{ width: capaW, height: capaH, background: pal.accent, borderRadius: u * 0.02, flexShrink: 0 }} />
-        )}
-
-        {/* Bloco texto */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: isSquare ? "flex-start" : "center",
-            textAlign: isSquare ? "left" : "center",
-            gap: u * 0.018,
-            maxWidth: isSquare ? w * 0.48 : w * 0.84,
-            flex: isSquare ? 1 : "initial",
-            minWidth: 0,
-          }}
-        >
-          {/* Tipo */}
-          <div style={{ display: "flex", alignItems: "center", gap: u * 0.012, color: pal.accent, fontSize: u * 0.026, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>
-            <span style={{ fontSize: u * 0.034 }}>{meta.icon}</span>
-            <span>{meta.tag}</span>
-          </div>
-
-          {/* Título */}
-          <h1
-            style={{
-              fontFamily: "'Fraunces', serif",
-              fontSize: u * 0.058,
-              fontWeight: 700,
-              lineHeight: 1.05,
-              margin: 0,
-              color: pal.fg,
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {data.titulo}
-          </h1>
-
-          {/* Autor */}
-          {data.autor && (
-            <p
+        {/* Story: tipo + título no topo */}
+        {!isSquare && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: u * 0.018, textAlign: "center", maxWidth: w * 0.82 }}>
+            <div
               style={{
-                fontSize: u * 0.028,
-                color: pal.sub,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: u * 0.012,
+                padding: `${u * 0.012}px ${u * 0.028}px`,
+                background: pal.tagBg,
+                borderRadius: 999,
+                color: pal.tagFg,
+                fontSize: u * 0.022,
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+              }}
+            >
+              <span style={{ fontSize: u * 0.028 }}>{meta.icon}</span>
+              <span>{meta.tag}</span>
+            </div>
+            <h1
+              style={{
+                fontFamily: "'Fraunces', serif",
+                fontSize: u * 0.07,
+                fontWeight: 700,
+                lineHeight: 1.05,
                 margin: 0,
-                fontStyle: "italic",
+                color: pal.fg,
                 display: "-webkit-box",
-                WebkitLineClamp: 1,
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
               }}
             >
-              {data.autor}
-            </p>
-          )}
+              {data.titulo}
+            </h1>
+            {data.autor && (
+              <p style={{ fontSize: u * 0.03, color: pal.sub, margin: 0, fontStyle: "italic" }}>{data.autor}</p>
+            )}
+            <div style={{ width: u * 0.08, height: 2, background: pal.accent, marginTop: u * 0.005 }} />
+          </div>
+        )}
 
-          {/* Percentual + barra */}
-          {template === "reading" && data.percentual != null && (
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: u * 0.008, marginTop: u * 0.006 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: u * 0.022, color: pal.sub }}>
-                <span style={{ fontWeight: 700, color: pal.fg }}>{data.percentual}% concluído</span>
-                {data.paginasLidas != null && data.totalPaginas != null && (
-                  <span>{data.paginasLidas} / {data.totalPaginas} págs</span>
-                )}
-              </div>
-              <div style={{ width: "100%", height: u * 0.012, background: "rgba(127,127,127,0.25)", borderRadius: u * 0.008, overflow: "hidden" }}>
-                <div style={{ width: `${data.percentual}%`, height: "100%", background: pal.accent, borderRadius: u * 0.008 }} />
-              </div>
-            </div>
-          )}
-
-          {template === "completed" && data.dataConclusao && (
-            <p style={{ fontSize: u * 0.024, color: pal.sub, margin: 0 }}>
-              Concluído em {new Date(data.dataConclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-            </p>
-          )}
-
-          {(template === "recommend" || template === "completed") && data.nota != null && data.nota > 0 && (
-            <Stars value={data.nota} size={u * 0.04} />
-          )}
-
-          {/* Comentário — área fixa, nunca empurra layout */}
-          {data.comentario && (
+        {/* Capa */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {data.capaUrl ? (
+            <img
+              src={data.capaUrl}
+              crossOrigin="anonymous"
+              style={{
+                width: capaW,
+                height: capaH,
+                objectFit: "contain",
+                borderRadius: u * 0.015,
+                boxShadow: pal.shadow,
+                background: "rgba(0,0,0,0.04)",
+              }}
+            />
+          ) : (
             <div
               style={{
-                width: "100%",
-                maxHeight: commentMaxH,
-                marginTop: u * 0.01,
-                position: "relative",
-                overflow: "hidden",
+                width: capaW,
+                height: capaH,
+                background: pal.accentSoft,
+                borderRadius: u * 0.015,
+                boxShadow: pal.shadow,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: pal.fg,
+                fontFamily: "'Fraunces', serif",
+                fontSize: u * 0.05,
               }}
             >
-              <p
-                style={{
-                  fontSize: u * 0.026,
-                  color: pal.fg,
-                  fontStyle: "italic",
-                  lineHeight: 1.4,
-                  margin: 0,
-                  borderLeft: `${u * 0.005}px solid ${pal.accent}`,
-                  paddingLeft: u * 0.022,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 5,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
-                "{data.comentario}"
-              </p>
+              {data.titulo.slice(0, 1)}
             </div>
           )}
         </div>
+
+        {/* Square: bloco direito com texto */}
+        {isSquare && (
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: u * 0.018,
+              maxWidth: w * 0.46,
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: u * 0.01,
+                padding: `${u * 0.01}px ${u * 0.024}px`,
+                background: pal.tagBg,
+                borderRadius: 999,
+                color: pal.tagFg,
+                fontSize: u * 0.02,
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+              }}
+            >
+              <span style={{ fontSize: u * 0.024 }}>{meta.icon}</span>
+              <span>{meta.tag}</span>
+            </div>
+
+            <h1
+              style={{
+                fontFamily: "'Fraunces', serif",
+                fontSize: u * 0.064,
+                fontWeight: 700,
+                lineHeight: 1.05,
+                margin: 0,
+                color: pal.fg,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {data.titulo}
+            </h1>
+
+            {data.autor && (
+              <p style={{ fontSize: u * 0.028, color: pal.sub, margin: 0, fontStyle: "italic" }}>{data.autor}</p>
+            )}
+
+            <div style={{ width: u * 0.06, height: 2, background: pal.accent, margin: `${u * 0.005}px 0` }} />
+
+            {template === "reading" && data.percentual != null && (
+              <ReadingProgress pal={pal} u={u} data={data} width="100%" />
+            )}
+
+            {template === "completed" && data.dataConclusao && (
+              <p style={{ fontSize: u * 0.022, color: pal.sub, margin: 0 }}>
+                Concluído em{" "}
+                {new Date(data.dataConclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+              </p>
+            )}
+
+            {(template === "recommend" || template === "completed") && data.nota != null && data.nota > 0 && (
+              <Stars value={data.nota} size={u * 0.034} color={pal.accent} />
+            )}
+
+            {data.comentario && <Comment pal={pal} u={u} text={data.comentario} />}
+          </div>
+        )}
+
+        {/* Story: bloco inferior com progresso/comentário */}
+        {!isSquare && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: u * 0.018,
+              maxWidth: w * 0.78,
+              width: "100%",
+            }}
+          >
+            {template === "reading" && data.percentual != null && (
+              <ReadingProgress pal={pal} u={u} data={data} width="78%" />
+            )}
+
+            {template === "completed" && data.dataConclusao && (
+              <p style={{ fontSize: u * 0.024, color: pal.sub, margin: 0 }}>
+                Concluído em{" "}
+                {new Date(data.dataConclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+              </p>
+            )}
+
+            {(template === "recommend" || template === "completed") && data.nota != null && data.nota > 0 && (
+              <Stars value={data.nota} size={u * 0.034} color={pal.accent} />
+            )}
+
+            {data.comentario && <Comment pal={pal} u={u} text={data.comentario} center />}
+          </div>
+        )}
+      </div>
+
+      {/* Footer URL */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: u * 0.035,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          zIndex: 2,
+        }}
+      >
+        <span
+          style={{
+            color: style === "dark" ? "#F2F6FA" : style === "gradient" ? "#FFFFFF" : "#FFFFFF",
+            fontSize: u * 0.022,
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+          }}
+        >
+          www.namzu.com.br
+        </span>
       </div>
     </div>
   );
 });
 ShareCard.displayName = "ShareCard";
+
+const ReadingProgress = ({ pal, u, data, width }: { pal: Palette; u: number; data: ShareData; width: string }) => (
+  <div style={{ width, display: "flex", flexDirection: "column", gap: u * 0.008 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: u * 0.022, color: pal.sub }}>
+      <span style={{ fontWeight: 700, color: pal.fg }}>{data.percentual}% concluído</span>
+      {data.paginasLidas != null && data.totalPaginas != null && (
+        <span>
+          {data.paginasLidas} / {data.totalPaginas} págs
+        </span>
+      )}
+    </div>
+    <div style={{ width: "100%", height: u * 0.01, background: "rgba(127,127,127,0.22)", borderRadius: 999, overflow: "hidden" }}>
+      <div style={{ width: `${data.percentual}%`, height: "100%", background: pal.accent, borderRadius: 999 }} />
+    </div>
+  </div>
+);
+
+const Comment = ({ pal, u, text, center }: { pal: Palette; u: number; text: string; center?: boolean }) => (
+  <div
+    style={{
+      width: "100%",
+      marginTop: u * 0.008,
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: center ? "center" : "flex-start",
+      gap: u * 0.008,
+    }}
+  >
+    <span style={{ fontFamily: "'Fraunces', serif", fontSize: u * 0.05, color: pal.accent, lineHeight: 0.8 }}>“</span>
+    <p
+      style={{
+        fontSize: u * 0.026,
+        color: pal.fg,
+        fontStyle: "italic",
+        lineHeight: 1.4,
+        margin: 0,
+        textAlign: center ? "center" : "left",
+        display: "-webkit-box",
+        WebkitLineClamp: 4,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+      }}
+    >
+      {text}
+    </p>
+  </div>
+);
