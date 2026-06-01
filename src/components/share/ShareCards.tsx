@@ -247,8 +247,9 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
           </div>
         )}
 
-        {/* Capa */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Capa + watermark vertical na lombada */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: u * 0.008 }}>
+          <SpineWatermark pal={pal} u={u} capaH={capaH} />
           {data.capaUrl ? (
             <img
               src={data.capaUrl}
