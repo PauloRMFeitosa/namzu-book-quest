@@ -15,6 +15,7 @@ import {
   ShareStyle,
   ShareTemplate,
   FORMAT_SIZES,
+  COMMENT_MAX,
 } from "./ShareCards";
 
 interface ShareModalProps {
@@ -36,7 +37,6 @@ const STYLES: { id: ShareStyle; label: string }[] = [
   { id: "light", label: "Claro" },
   { id: "dark", label: "Escuro" },
   { id: "gradient", label: "Gradiente" },
-  { id: "cover", label: "Premium" },
 ];
 
 export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplate }: ShareModalProps) => {
