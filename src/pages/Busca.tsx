@@ -73,6 +73,7 @@ interface ExternalResult {
   num_paginas?: number | null;
   idioma?: string | null;
   descricao?: string | null;
+  generos?: string[];
 }
 
 const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
@@ -395,7 +396,9 @@ const Busca = () => {
         num_paginas: b.num_paginas ?? null,
         idioma: b.idioma ?? null,
         descricao: b.descricao ?? null,
+        generos: Array.isArray(b.generos) ? b.generos : [],
       }));
+      console.log("[Busca] resultados externos:", results.map((r) => ({ titulo: r.titulo, generos: r.generos })));
       if (isCancelado()) return;
       setExterno(results);
       cache.set(cacheKey, { local: locais, externo: results });
@@ -474,6 +477,7 @@ const Busca = () => {
 
   const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
     if (!user) return;
+    console.log("[Busca] adicionarExterno clicado:", { titulo: b.titulo, status, generos: b.generos });
     setAdicionando(b.key);
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
@@ -489,11 +493,13 @@ const Busca = () => {
           idioma: b.idioma ?? null,
           descricao: b.descricao ?? null,
           sourceId: b.isbn13 ?? b.key,
+          generos: b.generos ?? [],
         },
       });
       if (error) throw error;
       const obraId = data?.obra?.id ?? data?.obra_id;
       if (!obraId) throw new Error("Resposta inválida da função");
+      console.log("[Busca] obra registrada:", { obraId, generosPersistidos: data?.obra?.generos });
 
       const today = new Date().toISOString().slice(0, 10);
       const { error: insErr } = await supabase.from("usuario_livros").insert({
@@ -592,7 +598,7 @@ const Busca = () => {
             <Button
               size="sm"
               disabled={busy || done}
-              className="rounded-xl bg-primary hover:bg-primary-hover"
+              className="rounded-xl bg-primary hover:bg-primary-hover touch-manipulation"
             >
               {busy ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -604,10 +610,10 @@ const Busca = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onAdd("quero_ler"); }}>
               <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAdd("lido")}>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onAdd("lido"); }}>
               <CheckCheck className="w-4 h-4 mr-2" /> Já lido
             </DropdownMenuItem>
           </DropdownMenuContent>
