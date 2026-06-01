@@ -411,7 +411,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
             letterSpacing: "0.18em",
           }}
         >
-          www.namzu.com.br
+          WWW.NAMZU.COM.BR
         </span>
       </div>
     </div>
