@@ -289,14 +289,7 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
                 {busy === "download" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Baixar imagem
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={handleCopyImage} variant="outline" size="sm" className="rounded-xl">
-                  <Copy className="w-3 h-3" /> Copiar imagem
-                </Button>
-                <Button onClick={handleCopyLink} variant="outline" size="sm" className="rounded-xl">
-                  <Link2 className="w-3 h-3" /> Copiar link
-                </Button>
-              </div>
+            </div>
             </div>
           </div>
         </div>
