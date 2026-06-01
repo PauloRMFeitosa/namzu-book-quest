@@ -104,57 +104,17 @@ const TEMPLATE_LABEL: Record<ShareTemplate, { tag: string; icon: string }> = {
   completed: { tag: "Concluí a leitura", icon: "✅" },
 };
 
-const BackgroundDecor = ({ pal, w, h }: { pal: Palette; w: number; h: number }) => (
-  <>
-    {/* Top right soft wave */}
-    <svg
-      width={w}
-      height={h * 0.28}
-      viewBox={`0 0 ${w} ${h * 0.28}`}
-      preserveAspectRatio="none"
-      style={{ position: "absolute", top: 0, right: 0, zIndex: 0, pointerEvents: "none" }}
-    >
-      <path
-        d={`M${w * 0.45},0 Q${w * 0.75},${h * 0.05} ${w},${h * 0.18} L${w},0 Z`}
-        fill={pal.waveTop}
-      />
-    </svg>
-    {/* Bottom waves */}
-    <svg
-      width={w}
-      height={h * 0.18}
-      viewBox={`0 0 ${w} ${h * 0.18}`}
-      preserveAspectRatio="none"
-      style={{ position: "absolute", bottom: 0, left: 0, zIndex: 0, pointerEvents: "none" }}
-    >
-      <path
-        d={`M0,${h * 0.09} Q${w * 0.25},${h * 0.02} ${w * 0.55},${h * 0.07} T${w},${h * 0.06} L${w},${h * 0.18} L0,${h * 0.18} Z`}
-        fill={pal.waveTop}
-      />
-      <path
-        d={`M0,${h * 0.13} Q${w * 0.3},${h * 0.07} ${w * 0.6},${h * 0.12} T${w},${h * 0.11} L${w},${h * 0.18} L0,${h * 0.18} Z`}
-        fill={pal.waveBottom}
-      />
-    </svg>
-  </>
-);
-
-const VerticalWatermark = ({ pal, u, h, side }: { pal: Palette; u: number; h: number; side: "left" | "right" }) => (
+const SpineWatermark = ({ pal, u, capaH }: { pal: Palette; u: number; capaH: number }) => (
   <div
     style={{
-      position: "absolute",
-      [side]: u * 0.035,
-      top: "50%",
-      transform: `translateY(-50%) rotate(-90deg)`,
-      transformOrigin: "center",
+      height: capaH,
+      width: u * 0.04,
       display: "flex",
       alignItems: "center",
-      gap: u * 0.015,
-      zIndex: 1,
-      opacity: 0.55,
+      justifyContent: "center",
+      flexShrink: 0,
     }}
   >
-    <div style={{ width: u * 0.04, height: 1, background: pal.sub }} />
     <span
       style={{
         color: pal.sub,
@@ -164,11 +124,13 @@ const VerticalWatermark = ({ pal, u, h, side }: { pal: Palette; u: number; h: nu
         fontWeight: 500,
         textTransform: "uppercase",
         whiteSpace: "nowrap",
+        transform: "rotate(-90deg)",
+        transformOrigin: "center",
+        opacity: 0.65,
       }}
     >
       www.namzu.com.br
     </span>
-    <div style={{ width: u * 0.04, height: 1, background: pal.sub }} />
   </div>
 );
 
@@ -195,8 +157,6 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         overflow: "hidden",
       }}
     >
-      <BackgroundDecor pal={pal} w={w} h={h} />
-
       {/* Brand top-left — discreta */}
       <div
         style={{
@@ -205,18 +165,18 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
           left: u * 0.06,
           display: "flex",
           alignItems: "center",
-          gap: u * 0.01,
+          gap: u * 0.012,
           zIndex: 2,
         }}
       >
         <img src={logoNamzu} style={{ width: u * 0.04, height: u * 0.04, objectFit: "contain" }} crossOrigin="anonymous" />
         <span
           style={{
-            fontFamily: "'Fraunces', serif",
+            fontFamily: "'Inter', system-ui, sans-serif",
             color: pal.fg,
-            fontSize: u * 0.022,
+            fontSize: u * 0.024,
             fontWeight: 700,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.22em",
             textTransform: "uppercase",
           }}
         >
@@ -224,8 +184,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         </span>
       </div>
 
-      {/* Vertical watermark */}
-      <VerticalWatermark pal={pal} u={u} h={h} side={isSquare ? "left" : "left"} />
+
 
       {/* Conteúdo */}
       <div
@@ -288,8 +247,9 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
           </div>
         )}
 
-        {/* Capa */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Capa + watermark vertical na lombada */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: u * 0.008 }}>
+          <SpineWatermark pal={pal} u={u} capaH={capaH} />
           {data.capaUrl ? (
             <img
               src={data.capaUrl}
@@ -444,7 +404,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
       >
         <span
           style={{
-            color: style === "dark" ? "#F2F6FA" : style === "gradient" ? "#FFFFFF" : "#FFFFFF",
+            color: pal.fg,
             fontSize: u * 0.022,
             fontFamily: "'Inter', sans-serif",
             fontWeight: 600,
