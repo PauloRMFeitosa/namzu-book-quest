@@ -290,7 +290,6 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
                 Baixar imagem
               </Button>
             </div>
-            </div>
           </div>
         </div>
 
