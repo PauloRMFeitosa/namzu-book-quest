@@ -157,8 +157,6 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         overflow: "hidden",
       }}
     >
-      <BackgroundDecor pal={pal} w={w} h={h} />
-
       {/* Brand top-left — discreta */}
       <div
         style={{
@@ -167,18 +165,18 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
           left: u * 0.06,
           display: "flex",
           alignItems: "center",
-          gap: u * 0.01,
+          gap: u * 0.012,
           zIndex: 2,
         }}
       >
         <img src={logoNamzu} style={{ width: u * 0.04, height: u * 0.04, objectFit: "contain" }} crossOrigin="anonymous" />
         <span
           style={{
-            fontFamily: "'Fraunces', serif",
+            fontFamily: "'Inter', system-ui, sans-serif",
             color: pal.fg,
-            fontSize: u * 0.022,
+            fontSize: u * 0.024,
             fontWeight: 700,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.22em",
             textTransform: "uppercase",
           }}
         >
@@ -186,8 +184,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, CardProps>(({ data, te
         </span>
       </div>
 
-      {/* Vertical watermark */}
-      <VerticalWatermark pal={pal} u={u} h={h} side={isSquare ? "left" : "left"} />
+
 
       {/* Conteúdo */}
       <div
