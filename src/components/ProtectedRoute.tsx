@@ -13,5 +13,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
   if (!user) return <Navigate to="/onboarding" replace />;
+  const onboardingDone = typeof window !== "undefined" && localStorage.getItem("namzu_onboarding_completed") === "1";
+  if (!onboardingDone) return <Navigate to="/onboarding" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
