@@ -157,10 +157,6 @@ const Home = () => {
         </section>
       )}
 
-      <section>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Progresso do dia</p>
-        <Progress value={lendoList.length > 0 ? 35 : 0} className="h-3" />
-      </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">
