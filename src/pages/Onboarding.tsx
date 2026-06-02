@@ -63,8 +63,8 @@ const Onboarding = () => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(dx) > 50) {
-      if (dx < 0 && !isLast) setIndex((i) => i + 1);
-      if (dx > 0 && index > 0) setIndex((i) => i - 1);
+      if (dx < 0 && !isLast) goTo(index + 1);
+      if (dx > 0 && index > 0) goTo(index - 1);
     }
     touchStartX.current = null;
   };
