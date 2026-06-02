@@ -9,7 +9,7 @@ type Conquista = {
   nome: string;
   descricao: string;
   xp_recompensa: number;
-  categoria: string | null;
+  categoria?: string | null;
 };
 
 // metas implícitas pelo código
@@ -91,7 +91,7 @@ export const useProximaConquista = () => {
       );
 
       const owned = new Set((ownedRes.data ?? []).map((r: any) => r.conquista_id));
-      const todas = (conqRes.data ?? []) as Conquista[];
+      const todas = ((conqRes.data ?? []) as unknown) as Conquista[];
 
       let melhor: { conquista: Conquista; falta: number; unidade: string; atual: number; meta: number } | null = null;
       for (const c of todas) {
