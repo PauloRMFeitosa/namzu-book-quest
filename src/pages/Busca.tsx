@@ -451,9 +451,29 @@ const Busca = () => {
   };
 
 
+  // Invalidations fora do caminho crítico, para não travar o toast em Android mediano
+  const invalidarLivros = () => {
+    const run = () => {
+      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+      qc.invalidateQueries({ queryKey: ["meus-livros"] });
+      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
+      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+    };
+    const ric = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => number)
+      | undefined;
+    if (ric) ric(run, { timeout: 1500 });
+    else setTimeout(run, 0);
+  };
+
   const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
+    // Guard síncrono: bloqueia duplo-tap (touch + click ghost) antes de qualquer await
+    if (inFlightRef.current.has(key) || adicionados.has(key)) return;
+    inFlightRef.current.add(key);
     setAdicionando(key);
+    // Feedback otimista imediato
+    setAdicionados((s) => new Set(s).add(key));
     const today = new Date().toISOString().slice(0, 10);
     const payload = {
       user_id: user.id,
@@ -462,31 +482,38 @@ const Busca = () => {
       ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
     };
     const { error } = await supabase.from("usuario_livros").insert(payload);
+    inFlightRef.current.delete(key);
     setAdicionando(null);
     if (error) {
-      console.error("adicionarLocal error", { code: error.code, message: error.message, details: (error as any).details, hint: (error as any).hint });
+      console.error("adicionarLocal error", { code: error.code, message: error.message });
       if (error.code === "23505") {
         toast.info("Este livro já está na sua biblioteca");
-        setAdicionados((s) => new Set(s).add(key));
         return;
       }
+      // Rollback otimista em erro real
+      setAdicionados((s) => {
+        const n = new Set(s);
+        n.delete(key);
+        return n;
+      });
       const msg = error.message?.includes("ranking_clube") || error.message?.includes("refresh")
         ? "Erro ao atualizar ranking. Tente novamente."
         : `Não foi possível adicionar: ${error.message}`;
       return toast.error(msg);
     }
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
-    setAdicionados((s) => new Set(s).add(key));
-    qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-    qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
-    qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+    invalidarLivros();
   };
 
   const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
     if (!user) return;
-    console.log("[Busca] adicionarExterno clicado:", { titulo: b.titulo, status, generos: b.generos });
+    if (inFlightRef.current.has(b.key) || adicionados.has(b.key)) return;
+    inFlightRef.current.add(b.key);
     setAdicionando(b.key);
+    setAdicionados((s) => new Set(s).add(b.key));
+    const loadingId = toast.loading(
+      status === "lido" ? "Registrando como lido…" : "Adicionando em Quero ler…",
+    );
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
@@ -507,7 +534,6 @@ const Busca = () => {
       if (error) throw error;
       const obraId = data?.obra?.id ?? data?.obra_id;
       if (!obraId) throw new Error("Resposta inválida da função");
-      console.log("[Busca] obra registrada:", { obraId, generosPersistidos: data?.obra?.generos });
 
       const today = new Date().toISOString().slice(0, 10);
       const { error: insErr } = await supabase.from("usuario_livros").insert({
@@ -517,7 +543,6 @@ const Busca = () => {
         ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
       });
       if (insErr && insErr.code !== "23505") {
-        console.error("adicionarExterno insert error", { code: insErr.code, message: insErr.message, details: (insErr as any).details, hint: (insErr as any).hint });
         const msg = insErr.message?.includes("ranking_clube") || insErr.message?.includes("refresh")
           ? "Erro ao atualizar ranking. Tente novamente."
           : insErr.message;
@@ -537,19 +562,26 @@ const Busca = () => {
         },
         ...arr,
       ]);
-      setAdicionados((s) => new Set(s).add(b.key));
-      toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
-      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-      qc.invalidateQueries({ queryKey: ["meus-livros"] });
-      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
-      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+      toast.success(
+        status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler",
+        { id: loadingId },
+      );
+      invalidarLivros();
     } catch (e: any) {
       console.error("adicionarExterno", e);
-      toast.error(e?.message ?? "Erro ao adicionar");
+      // Rollback otimista
+      setAdicionados((s) => {
+        const n = new Set(s);
+        n.delete(b.key);
+        return n;
+      });
+      toast.error(e?.message ?? "Erro ao adicionar", { id: loadingId });
     } finally {
+      inFlightRef.current.delete(b.key);
       setAdicionando(null);
     }
   };
+
 
   const renderCard = (
     key: string,
