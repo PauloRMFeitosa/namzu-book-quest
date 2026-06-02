@@ -38,11 +38,11 @@ export const useRankingClube = () => {
 
       // nomes
       const ids = ranking.slice(0, 5).map((p: any) => p.user_id);
-      const { data: profiles } = await (supabase as any)
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", ids);
-      const nameMap = new Map((profiles ?? []).map((p: any) => [p.id, p.full_name]));
+      const { data: profiles } = await supabase
+        .from("perfis")
+        .select("user_id, nome_exibicao")
+        .in("user_id", ids);
+      const nameMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.nome_exibicao]));
 
       const top = ranking.slice(0, 5).map((p: any, idx: number) => ({
         posicao: idx + 1,
