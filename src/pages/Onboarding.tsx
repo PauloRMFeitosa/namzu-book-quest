@@ -104,6 +104,7 @@ const Onboarding = () => {
       {/* Slides */}
       <div className="flex-1 overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div
+          ref={slidesRef}
           className="flex h-full w-full transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
@@ -114,12 +115,12 @@ const Onboarding = () => {
       </div>
 
       {/* Bottom CTA */}
-      <div className="absolute bottom-0 inset-x-0 z-20 pb-6 pt-4 px-5 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <div className="flex justify-center gap-2 mb-4">
+      <div className="absolute bottom-0 inset-x-0 z-20 pb-4 pt-2 px-5 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <div className="flex justify-center gap-2 mb-3">
           {[0, 1, 2].map((i) => (
             <button
               key={i}
-              onClick={() => setIndex(i)}
+              onClick={() => goTo(i)}
               aria-label={`Slide ${i + 1}`}
               className={cn("h-2 rounded-full transition-all", i === index ? "w-8 bg-primary" : "w-2 bg-primary/25 hover:bg-primary/40")}
             />
