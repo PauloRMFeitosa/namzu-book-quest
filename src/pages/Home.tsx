@@ -76,9 +76,7 @@ const Home = () => {
         description="Acompanhe suas leituras, conquistas e clubes."
       />
 
-      <div className="flex items-start justify-between gap-3">
-        {flags.show_gamificacao_home && <StatsChips />}
-      </div>
+      {flags.show_gamificacao_home && <GamificacaoHome />}
 
       <section>
         <div className="flex items-center justify-between mb-3">
