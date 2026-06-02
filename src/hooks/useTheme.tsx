@@ -14,7 +14,10 @@ const STORAGE_KEY = "namzu-theme";
 const apply = (t: "light" | "dark") => {
   const root = document.documentElement;
   root.classList.toggle("dark", t === "dark");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", t === "dark" ? "#14213a" : "#ffffff");
 };
+
 
 const getSystem = (): "light" | "dark" =>
   window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
