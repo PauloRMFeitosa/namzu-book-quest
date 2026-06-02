@@ -2280,6 +2280,13 @@ export type Database = {
       }
     }
     Functions: {
+      calcular_streak_leitura: {
+        Args: { _user_id: string }
+        Returns: {
+          atual: number
+          maximo: number
+        }[]
+      }
       criar_usuario_leitura: {
         Args: {
           p_clube_id: string
