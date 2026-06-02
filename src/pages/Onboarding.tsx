@@ -203,7 +203,7 @@ const MiniNav = ({ active }: { active: "Início" | "Clubes" }) => (
 /* --------------------------- Slide 1 --------------------------- */
 
 const SlideOne = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
       <div className="space-y-7">
         <BrandHeader />
@@ -271,7 +271,7 @@ const SlideOne = () => (
 /* --------------------------- Slide 2 --------------------------- */
 
 const SlideTwo = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
       <div className="space-y-7">
         <BrandHeader />
@@ -342,7 +342,7 @@ const SlideTwo = () => (
 /* --------------------------- Slide 3 --------------------------- */
 
 const SlideThree = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-3xl mx-auto text-center">
       <BrandHeader size="lg" />
       <p className="text-muted-foreground text-sm mt-2">A sabedoria começa aqui.</p>
