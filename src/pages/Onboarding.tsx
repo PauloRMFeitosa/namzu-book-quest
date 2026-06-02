@@ -31,11 +31,21 @@ const Onboarding = () => {
   const { user, loading } = useAuth();
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const slidesRef = useRef<HTMLDivElement>(null);
 
   const completed = typeof window !== "undefined" && localStorage.getItem(ONBOARDING_FLAG) === "1";
   if (!loading && user && completed) return <Navigate to="/" replace />;
 
   const isLast = index === 2;
+
+  const scrollSlidesTop = () => {
+    requestAnimationFrame(() => {
+      slidesRef.current?.querySelectorAll<HTMLElement>("section").forEach((s) => {
+        s.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  };
 
   const finish = () => {
     try { localStorage.setItem(ONBOARDING_FLAG, "1"); } catch {}
@@ -45,15 +55,16 @@ const Onboarding = () => {
     try { localStorage.setItem(ONBOARDING_FLAG, "1"); } catch {}
     navigate(user ? "/" : "/login");
   };
-  const next = () => (isLast ? finish() : setIndex((i) => i + 1));
+  const goTo = (i: number) => { setIndex(i); scrollSlidesTop(); };
+  const next = () => (isLast ? finish() : goTo(index + 1));
 
   const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(dx) > 50) {
-      if (dx < 0 && !isLast) setIndex((i) => i + 1);
-      if (dx > 0 && index > 0) setIndex((i) => i - 1);
+      if (dx < 0 && !isLast) goTo(index + 1);
+      if (dx > 0 && index > 0) goTo(index - 1);
     }
     touchStartX.current = null;
   };
@@ -61,7 +72,7 @@ const Onboarding = () => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft" && index > 0) setIndex((i) => i - 1);
+      if (e.key === "ArrowLeft" && index > 0) goTo(index - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -93,6 +104,7 @@ const Onboarding = () => {
       {/* Slides */}
       <div className="flex-1 overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div
+          ref={slidesRef}
           className="flex h-full w-full transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
@@ -103,12 +115,12 @@ const Onboarding = () => {
       </div>
 
       {/* Bottom CTA */}
-      <div className="absolute bottom-0 inset-x-0 z-20 pb-6 pt-4 px-5 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <div className="flex justify-center gap-2 mb-4">
+      <div className="absolute bottom-0 inset-x-0 z-20 pb-4 pt-2 px-5 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <div className="flex justify-center gap-2 mb-3">
           {[0, 1, 2].map((i) => (
             <button
               key={i}
-              onClick={() => setIndex(i)}
+              onClick={() => goTo(i)}
               aria-label={`Slide ${i + 1}`}
               className={cn("h-2 rounded-full transition-all", i === index ? "w-8 bg-primary" : "w-2 bg-primary/25 hover:bg-primary/40")}
             />
@@ -191,7 +203,7 @@ const MiniNav = ({ active }: { active: "Início" | "Clubes" }) => (
 /* --------------------------- Slide 1 --------------------------- */
 
 const SlideOne = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
       <div className="space-y-7">
         <BrandHeader />
@@ -259,7 +271,7 @@ const SlideOne = () => (
 /* --------------------------- Slide 2 --------------------------- */
 
 const SlideTwo = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
       <div className="space-y-7">
         <BrandHeader />
@@ -330,7 +342,7 @@ const SlideTwo = () => (
 /* --------------------------- Slide 3 --------------------------- */
 
 const SlideThree = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-10 pb-44">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
     <div className="max-w-3xl mx-auto text-center">
       <BrandHeader size="lg" />
       <p className="text-muted-foreground text-sm mt-2">A sabedoria começa aqui.</p>
