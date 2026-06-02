@@ -342,7 +342,8 @@ const SlideTwo = () => (
 /* --------------------------- Slide 3 --------------------------- */
 
 const SlideThree = () => (
-  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-32">
+  <section className="min-w-full h-full overflow-y-auto px-6 sm:px-10 pt-8 pb-56">
+
     <div className="max-w-3xl mx-auto text-center">
       <BrandHeader size="lg" />
       <p className="text-muted-foreground text-sm mt-2">A sabedoria começa aqui.</p>
