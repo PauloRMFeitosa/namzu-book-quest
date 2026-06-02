@@ -948,6 +948,73 @@ const Busca = () => {
           setSubmitted({ titulo: fTitulo.trim(), autor: fAutor.trim(), isbn });
         }}
       />
+
+      <Dialog
+        open={!!addTarget}
+        onOpenChange={(open) => {
+          if (!open) setAddTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Adicionar à estante</DialogTitle>
+            <DialogDescription>Escolha o status desta obra na sua biblioteca.</DialogDescription>
+          </DialogHeader>
+          {addTarget && (
+            <div className="flex gap-3 items-center">
+              {addTarget.capa ? (
+                <img src={addTarget.capa} alt="" className="w-14 h-20 rounded-md object-cover" />
+              ) : (
+                <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold line-clamp-2">{addTarget.titulo}</p>
+                {addTarget.autor && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{addTarget.autor}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              size="lg"
+              className="rounded-xl bg-primary hover:bg-primary-hover justify-start touch-manipulation"
+              disabled={!!adicionando}
+              onClick={() => {
+                const t = addTarget;
+                if (!t) return;
+                setAddTarget(null);
+                t.onAdd("quero_ler");
+              }}
+            >
+              <BookmarkPlus className="w-5 h-5 mr-2" /> Quero ler
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-xl justify-start touch-manipulation"
+              disabled={!!adicionando}
+              onClick={() => {
+                const t = addTarget;
+                if (!t) return;
+                setAddTarget(null);
+                t.onAdd("lido");
+              }}
+            >
+              <CheckCheck className="w-5 h-5 mr-2" /> Já li
+            </Button>
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => setAddTarget(null)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
