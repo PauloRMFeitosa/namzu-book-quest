@@ -781,6 +781,7 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           capa_url: string | null
+          created_at: string | null
           editora: string
           fonte_dados: string
           formato: string
@@ -791,10 +792,12 @@ export type Database = {
           obra_id: string
           preco_capa_centavos: number | null
           titulo_edicao: string
+          updated_at: string | null
         }
         Insert: {
           atualizado_em?: string | null
           capa_url?: string | null
+          created_at?: string | null
           editora: string
           fonte_dados?: string
           formato: string
@@ -805,10 +808,12 @@ export type Database = {
           obra_id: string
           preco_capa_centavos?: number | null
           titulo_edicao: string
+          updated_at?: string | null
         }
         Update: {
           atualizado_em?: string | null
           capa_url?: string | null
+          created_at?: string | null
           editora?: string
           fonte_dados?: string
           formato?: string
@@ -819,6 +824,7 @@ export type Database = {
           obra_id?: string
           preco_capa_centavos?: number | null
           titulo_edicao?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1683,6 +1689,7 @@ export type Database = {
           slug: string
           titulo_ordenacao: string
           titulo_original: string
+          updated_at: string | null
         }
         Insert: {
           ano_primeira_publicacao?: number | null
@@ -1694,6 +1701,7 @@ export type Database = {
           slug: string
           titulo_ordenacao: string
           titulo_original: string
+          updated_at?: string | null
         }
         Update: {
           ano_primeira_publicacao?: number | null
@@ -1705,6 +1713,7 @@ export type Database = {
           slug?: string
           titulo_ordenacao?: string
           titulo_original?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2067,6 +2076,7 @@ export type Database = {
       }
       usuario_livros: {
         Row: {
+          created_at: string | null
           data_fim: string | null
           data_inicio: string | null
           edicao_id: string | null
@@ -2080,6 +2090,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           edicao_id?: string | null
@@ -2093,6 +2104,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           edicao_id?: string | null

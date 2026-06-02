@@ -31,11 +31,21 @@ const Onboarding = () => {
   const { user, loading } = useAuth();
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const slidesRef = useRef<HTMLDivElement>(null);
 
   const completed = typeof window !== "undefined" && localStorage.getItem(ONBOARDING_FLAG) === "1";
   if (!loading && user && completed) return <Navigate to="/" replace />;
 
   const isLast = index === 2;
+
+  const scrollSlidesTop = () => {
+    requestAnimationFrame(() => {
+      slidesRef.current?.querySelectorAll<HTMLElement>("section").forEach((s) => {
+        s.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  };
 
   const finish = () => {
     try { localStorage.setItem(ONBOARDING_FLAG, "1"); } catch {}
@@ -45,7 +55,8 @@ const Onboarding = () => {
     try { localStorage.setItem(ONBOARDING_FLAG, "1"); } catch {}
     navigate(user ? "/" : "/login");
   };
-  const next = () => (isLast ? finish() : setIndex((i) => i + 1));
+  const goTo = (i: number) => { setIndex(i); scrollSlidesTop(); };
+  const next = () => (isLast ? finish() : goTo(index + 1));
 
   const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
