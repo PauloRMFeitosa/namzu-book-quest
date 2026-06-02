@@ -613,6 +613,7 @@ export type Database = {
       }
       conquistas: {
         Row: {
+          categoria: string | null
           codigo: string
           descricao: string
           icone_url: string | null
@@ -621,6 +622,7 @@ export type Database = {
           xp_recompensa: number | null
         }
         Insert: {
+          categoria?: string | null
           codigo: string
           descricao: string
           icone_url?: string | null
@@ -629,6 +631,7 @@ export type Database = {
           xp_recompensa?: number | null
         }
         Update: {
+          categoria?: string | null
           codigo?: string
           descricao?: string
           icone_url?: string | null
