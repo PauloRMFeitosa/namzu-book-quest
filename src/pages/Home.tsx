@@ -2,11 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { StatsChips } from "@/components/StatsChips";
+import { GamificacaoHome } from "@/components/gamificacao/GamificacaoHome";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+
 import { BookOpen, Plus, ArrowRight, HomeIcon, Users } from "lucide-react";
 
 const Home = () => {
@@ -76,9 +76,7 @@ const Home = () => {
         description="Acompanhe suas leituras, conquistas e clubes."
       />
 
-      <div className="flex items-start justify-between gap-3">
-        {flags.show_gamificacao_home && <StatsChips />}
-      </div>
+      {flags.show_gamificacao_home && <GamificacaoHome />}
 
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -159,10 +157,6 @@ const Home = () => {
         </section>
       )}
 
-      <section>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Progresso do dia</p>
-        <Progress value={lendoList.length > 0 ? 35 : 0} className="h-3" />
-      </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">
