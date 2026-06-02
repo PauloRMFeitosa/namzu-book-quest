@@ -114,6 +114,13 @@ const Busca = () => {
   const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
+  // Guard síncrono contra duplo-tap (touch + click ghost no iOS PWA)
+  const inFlightRef = useRef<Set<string>>(new Set());
+  // Alvo do modal de seleção de status
+  const [addTarget, setAddTarget] = useState<
+    | { key: string; titulo: string; autor?: string | null; capa?: string | null; onAdd: (s: AddStatus) => void }
+    | null
+  >(null);
 
   // Controles do acervo
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
