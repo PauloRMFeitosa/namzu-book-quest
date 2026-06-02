@@ -72,7 +72,7 @@ const Onboarding = () => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft" && index > 0) setIndex((i) => i - 1);
+      if (e.key === "ArrowLeft" && index > 0) goTo(index - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
