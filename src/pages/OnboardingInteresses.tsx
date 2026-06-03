@@ -70,6 +70,18 @@ const OnboardingInteresses = () => {
     if (!user || !canContinue) return;
     setSaving(true);
     try {
+      // Garante que o registro em `perfis` exista (FK perfil_interesses.user_id → perfis.user_id).
+      // Necessário para usuários novos (ex.: OAuth) cujo perfil ainda não foi materializado.
+      const { data: perfilExistente } = await supabase
+        .from("perfis")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!perfilExistente) {
+        const { error: ensureErr } = await supabase.functions.invoke("ensure-profiles");
+        if (ensureErr) throw ensureErr;
+      }
+
       const rows = Array.from(selected).map((interesse_id) => ({
         user_id: user.id,
         interesse_id,
