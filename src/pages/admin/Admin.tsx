@@ -8,6 +8,7 @@ import { ClubesTab } from "./tabs/ClubesTab";
 import { MetasTab } from "./tabs/MetasTab";
 import { ConquistasTab } from "./tabs/ConquistasTab";
 import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
+import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 
 const Admin = () => {
   const [tab, setTab] = useState("visibilidade");
