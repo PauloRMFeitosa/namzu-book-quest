@@ -79,7 +79,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
 
         {/* ───────── Central Namzu logo silhouette (~70% viewport) ───────── */}
         {/* Anchored around (720, 450); spans roughly 1000×630 */}
-        <g opacity="0.65">
+        <g opacity="0.65" transform="translate(720 450) scale(0.5) translate(-720 -450)">
           {/* Open book base */}
           <g fill="none" stroke={mint} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
             {/* Book outer silhouette */}
