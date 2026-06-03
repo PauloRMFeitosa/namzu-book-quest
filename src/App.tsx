@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { FontSizeProvider } from "@/hooks/useFontSize";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Onboarding from "./pages/Onboarding";
+import OnboardingInteresses from "./pages/OnboardingInteresses";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -51,6 +52,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding-interesses" element={<OnboardingInteresses />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
