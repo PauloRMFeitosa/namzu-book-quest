@@ -1688,6 +1688,9 @@ export type Database = {
           created_at: string | null
           id: string
           idioma_original: string
+          metadata_checked_at: string | null
+          metadata_score: number | null
+          metadata_source: string | null
           sinopse_padrao: string | null
           slug: string
           titulo_ordenacao: string
@@ -1700,6 +1703,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           idioma_original?: string
+          metadata_checked_at?: string | null
+          metadata_score?: number | null
+          metadata_source?: string | null
           sinopse_padrao?: string | null
           slug: string
           titulo_ordenacao: string
@@ -1712,6 +1718,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           idioma_original?: string
+          metadata_checked_at?: string | null
+          metadata_score?: number | null
+          metadata_source?: string | null
           sinopse_padrao?: string | null
           slug?: string
           titulo_ordenacao?: string
@@ -1797,14 +1806,20 @@ export type Database = {
           cidade: string | null
           created_at: string | null
           instagram_url: string | null
+          mostrar_biblioteca: boolean
+          mostrar_conquistas: boolean
+          mostrar_estatisticas: boolean
+          mostrar_insights: boolean
           nivel_intelectual: number | null
           nome_exibicao: string
           pais: string | null
+          perfil_publico: boolean
           score_consistencia: number | null
           score_empatia: number | null
           score_reputacao: number | null
           score_social: number | null
           site_url: string | null
+          slug: string | null
           tiktok_url: string | null
           tipo_perfil: string
           updated_at: string | null
@@ -1820,14 +1835,20 @@ export type Database = {
           cidade?: string | null
           created_at?: string | null
           instagram_url?: string | null
+          mostrar_biblioteca?: boolean
+          mostrar_conquistas?: boolean
+          mostrar_estatisticas?: boolean
+          mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao: string
           pais?: string | null
+          perfil_publico?: boolean
           score_consistencia?: number | null
           score_empatia?: number | null
           score_reputacao?: number | null
           score_social?: number | null
           site_url?: string | null
+          slug?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
@@ -1843,14 +1864,20 @@ export type Database = {
           cidade?: string | null
           created_at?: string | null
           instagram_url?: string | null
+          mostrar_biblioteca?: boolean
+          mostrar_conquistas?: boolean
+          mostrar_estatisticas?: boolean
+          mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao?: string
           pais?: string | null
+          perfil_publico?: boolean
           score_consistencia?: number | null
           score_empatia?: number | null
           score_reputacao?: number | null
           score_social?: number | null
           site_url?: string | null
+          slug?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
