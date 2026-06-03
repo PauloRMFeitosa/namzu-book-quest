@@ -34,6 +34,7 @@ const Admin = () => {
             <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
             <TabsTrigger value="saude">Saúde do Catálogo</TabsTrigger>
             <TabsTrigger value="reprocessamento">Reprocessamento</TabsTrigger>
+            <TabsTrigger value="mapeamento-generos">Mapeamento de Gêneros</TabsTrigger>
             <TabsTrigger value="gamificacao">Gamificação</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
             <TabsTrigger value="livros">Livros</TabsTrigger>
