@@ -80,7 +80,7 @@ const Onboarding = () => {
   }, [index]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
+    <div className="relative z-10 min-h-screen flex flex-col overflow-hidden">
       {/* Decorative dots */}
       <div className="pointer-events-none absolute top-24 right-8 grid grid-cols-5 gap-1.5 opacity-40">
         {Array.from({ length: 20 }).map((_, i) => (
