@@ -36,8 +36,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     typeof window !== "undefined" && localStorage.getItem("namzu_onboarding_completed") === "1";
   if (!onboardingDone) return <Navigate to="/onboarding" replace />;
 
-  // Novo usuário sem interesses → obrigatório fazer o onboarding do Código ME
-  if (temInteresses === false && location.pathname !== "/onboarding-interesses") {
+  // Novo usuário (criado nas últimas 24h) sem interesses → obrigatório iniciar o Código ME.
+  // Usuários existentes recebem apenas o convite no Home/Perfil (não intrusivo).
+  const createdAt = user?.created_at ? new Date(user.created_at).getTime() : 0;
+  const isNewUser = createdAt > 0 && Date.now() - createdAt < 24 * 60 * 60 * 1000;
+  if (isNewUser && temInteresses === false && location.pathname !== "/onboarding-interesses") {
     return <Navigate to="/onboarding-interesses" replace />;
   }
 
