@@ -79,7 +79,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
 
         {/* ───────── Central Namzu logo silhouette (~70% viewport) ───────── */}
         {/* Anchored around (720, 450); spans roughly 1000×630 */}
-        <g opacity="0.65" transform="translate(720 450) scale(0.5) translate(-720 -450)">
+        <g opacity="0.55" transform="translate(720 450) scale(0.5) translate(-720 -450)">
           {/* Open book base */}
           <g fill="none" stroke={mint} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
             {/* Book outer silhouette */}
@@ -102,61 +102,46 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
             <path d="M 740 710 C 840 685, 980 690, 1100 720" />
           </g>
 
-          {/* Ribbon "N" rising from the book */}
-          <g fill={mint}>
-            <path d="M 540 620
-                     L 540 240
-                     L 620 240
-                     L 880 540
-                     L 880 240
-                     L 960 240
-                     L 960 620
-                     L 880 620
-                     L 620 320
-                     L 620 620
-                     Z" />
-          </g>
-          {/* Ribbon highlight stroke */}
-          <path
-            d="M 540 620 L 540 240 L 620 240 L 880 540 L 880 240 L 960 240 L 960 620"
-            fill="none"
-            stroke={mint}
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
+          {/* Knowledge network rising from the center of the book */}
+          <g transform="translate(-380 200)">
+            {/* Geometric triangle network */}
+            <g fill="none" stroke={mint} strokeWidth="1.5" strokeLinejoin="round">
+              <polygon points="960,240 1040,170 960,140" />
+              <polygon points="1040,170 1120,210 1040,260" />
+              <polygon points="1040,170 1120,100 1180,170" />
+              <polygon points="1120,100 1200,60 1240,130" />
+              <polygon points="1180,170 1260,200 1240,130" />
+              <polygon points="1200,60 1280,90 1260,30" />
+            </g>
+            {/* Connector from book center up to network base */}
+            <g stroke={mint} strokeWidth="1" fill="none" strokeLinecap="round">
+              <line x1="1100" y1="420" x2="1040" y2="260" />
+              <line x1="1100" y1="420" x2="960" y2="240" />
+            </g>
+            {/* Nodes on the triangle vertices */}
+            <g fill={mint}>
+              <circle cx="960" cy="240" r="3.5" />
+              <circle cx="1040" cy="170" r="3" />
+              <circle cx="1120" cy="210" r="3" />
+              <circle cx="1120" cy="100" r="3" />
+              <circle cx="1180" cy="170" r="3" />
+              <circle cx="1200" cy="60" r="3" />
+              <circle cx="1260" cy="200" r="2.5" />
+              <circle cx="1280" cy="90" r="2.5" />
+              <circle cx="1260" cy="30" r="2.5" />
+            </g>
 
-          {/* Geometric triangle network rising from top-right of the N */}
-          <g fill="none" stroke={mint} strokeWidth="1.5" strokeLinejoin="round">
-            <polygon points="960,240 1040,170 960,140" />
-            <polygon points="1040,170 1120,210 1040,260" />
-            <polygon points="1040,170 1120,100 1180,170" />
-            <polygon points="1120,100 1200,60 1240,130" />
-            <polygon points="1180,170 1260,200 1240,130" />
-            <polygon points="1200,60 1280,90 1260,30" />
-          </g>
-          {/* Nodes on the triangle vertices */}
-          <g fill={mint}>
-            <circle cx="960" cy="240" r="3.5" />
-            <circle cx="1040" cy="170" r="3" />
-            <circle cx="1120" cy="210" r="3" />
-            <circle cx="1120" cy="100" r="3" />
-            <circle cx="1180" cy="170" r="3" />
-            <circle cx="1200" cy="60" r="3" />
-            <circle cx="1260" cy="200" r="2.5" />
-            <circle cx="1280" cy="90" r="2.5" />
-            <circle cx="1260" cy="30" r="2.5" />
-          </g>
-
-          {/* Sparkle / four-point star above the network */}
-          <g fill={mint}>
-            <path d="M 1310 40
-                     L 1322 70
-                     L 1352 82
-                     L 1322 94
-                     L 1310 124
-                     L 1298 94
-                     L 1268 82
-                     L 1298 70 Z" />
+            {/* Sparkle / four-point star above the network */}
+            <g fill={mint}>
+              <path d="M 1310 40
+                       L 1322 70
+                       L 1352 82
+                       L 1322 94
+                       L 1310 124
+                       L 1298 94
+                       L 1268 82
+                       L 1298 70 Z" />
+            </g>
           </g>
         </g>
 
