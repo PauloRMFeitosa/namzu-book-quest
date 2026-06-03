@@ -24,7 +24,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
         className="block h-full w-full"
       >
         {/* ───────── Constellation / knowledge graph (background layer) ───────── */}
-        <g stroke={mint} strokeWidth="1" fill="none" opacity="0.05" strokeLinecap="round">
+        <g stroke={mint} strokeWidth="1" fill="none" opacity="0.28" strokeLinecap="round">
           <line x1="120" y1="140" x2="320" y2="220" />
           <line x1="320" y1="220" x2="500" y2="120" />
           <line x1="500" y1="120" x2="720" y2="200" />
@@ -46,7 +46,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
         </g>
 
         {/* Scattered knowledge nodes (dots, tiny squares, triangles) */}
-        <g fill={mint} opacity="0.06">
+        <g fill={mint} opacity="0.25">
           <circle cx="120" cy="140" r="3" />
           <circle cx="500" cy="120" r="2.5" />
           <circle cx="940" cy="110" r="3" />
@@ -70,7 +70,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
           <rect x="1058" y="378" width="4" height="4" />
         </g>
 
-        <g fill="none" stroke={mint} strokeWidth="1" opacity="0.05">
+        <g fill="none" stroke={mint} strokeWidth="1" opacity="0.28">
           <polygon points="220,620 250,600 240,640" />
           <polygon points="1260,460 1290,440 1280,480" />
           <polygon points="640,60 660,40 670,70" />
@@ -78,7 +78,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
 
         {/* ───────── Central Namzu logo silhouette (~70% viewport) ───────── */}
         {/* Anchored around (720, 450); spans roughly 1000×630 */}
-        <g opacity="0.07">
+        <g opacity="0.42">
           {/* Open book base */}
           <g fill="none" stroke={mint} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
             {/* Book outer silhouette */}
@@ -102,7 +102,7 @@ export const NamzuBackground = ({ className = "" }: { className?: string }) => {
           </g>
 
           {/* Ribbon "N" rising from the book */}
-          <g fill={mint} opacity="0.55">
+          <g fill={mint}>
             <path d="M 540 620
                      L 540 240
                      L 620 240
