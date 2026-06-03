@@ -12,14 +12,9 @@ import {
   Library, Lightbulb, Trophy, BarChart3, Star, Users, Heart,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const MES_CODIGO_FAKE = [
-  { tema: "Filosofia", valor: 92 },
-  { tema: "Negócios", valor: 88 },
-  { tema: "Liderança", valor: 81 },
-  { tema: "Psicologia", valor: 67 },
-  { tema: "Espiritualidade", valor: 54 },
-];
+import { useNavigate } from "react-router-dom";
+import { useInteressesUsuario } from "@/hooks/useInteressesUsuario";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -43,7 +38,9 @@ const formatDate = (d?: string | null) =>
 
 const Perfil = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: gam } = useGamificacao();
+  const { data: meusInteresses = [] } = useInteressesUsuario();
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil", user?.id],
