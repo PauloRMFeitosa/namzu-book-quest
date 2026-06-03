@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
-import { NamzuBackground } from "@/components/NamzuBackground";
+
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
@@ -64,7 +64,6 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
-      <NamzuBackground />
       <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
           <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
