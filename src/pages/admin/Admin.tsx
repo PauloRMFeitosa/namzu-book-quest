@@ -13,6 +13,11 @@ import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
 
 const Admin = () => {
   const [tab, setTab] = useState("visibilidade");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [tab]);
+
   return (
     <div className="space-y-4">
       <header>
