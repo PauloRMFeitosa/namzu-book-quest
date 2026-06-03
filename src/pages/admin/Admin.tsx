@@ -37,6 +37,7 @@ const Admin = () => {
         </div>
 
         <TabsContent value="visibilidade"><VisibilidadeTab /></TabsContent>
+        <TabsContent value="saude"><SaudeCatalogoTab /></TabsContent>
         <TabsContent value="gamificacao"><GamificacaoTab /></TabsContent>
         <TabsContent value="usuarios"><UsuariosTab /></TabsContent>
         <TabsContent value="livros"><LivrosTab /></TabsContent>
