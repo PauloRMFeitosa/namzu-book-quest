@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GamificacaoTab } from "./tabs/GamificacaoTab";
 import { UsuariosTab } from "./tabs/UsuariosTab";
@@ -13,6 +13,11 @@ import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
 
 const Admin = () => {
   const [tab, setTab] = useState("visibilidade");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [tab]);
+
   return (
     <div className="space-y-4">
       <header>
