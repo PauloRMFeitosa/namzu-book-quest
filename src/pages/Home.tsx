@@ -6,6 +6,7 @@ import { GamificacaoHome } from "@/components/gamificacao/GamificacaoHome";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
+import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 
 import { BookOpen, Plus, ArrowRight, HomeIcon, Users } from "lucide-react";
 
@@ -77,6 +78,8 @@ const Home = () => {
       />
 
       {flags.show_gamificacao_home && <GamificacaoHome />}
+
+      <IniciarCodigoMeCard />
 
       <section>
         <div className="flex items-center justify-between mb-3">

@@ -12,14 +12,9 @@ import {
   Library, Lightbulb, Trophy, BarChart3, Star, Users, Heart,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const MES_CODIGO_FAKE = [
-  { tema: "Filosofia", valor: 92 },
-  { tema: "Negócios", valor: 88 },
-  { tema: "Liderança", valor: 81 },
-  { tema: "Psicologia", valor: 67 },
-  { tema: "Espiritualidade", valor: 54 },
-];
+import { useNavigate } from "react-router-dom";
+import { useInteressesUsuario } from "@/hooks/useInteressesUsuario";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -43,7 +38,9 @@ const formatDate = (d?: string | null) =>
 
 const Perfil = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: gam } = useGamificacao();
+  const { data: meusInteresses = [] } = useInteressesUsuario();
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil", user?.id],
@@ -250,24 +247,41 @@ const Perfil = () => {
               </PopoverContent>
             </Popover>
           </div>
-          <Badge variant="outline" className="text-[10px]">prévia</Badge>
+          <Badge variant="outline" className="text-[10px]">
+            {meusInteresses.length > 0 ? "início" : "não iniciado"}
+          </Badge>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {MES_CODIGO_FAKE.map((m) => (
-            <div key={m.tema}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="font-medium">{m.tema}</span>
-                <span className="text-muted-foreground tabular-nums">{m.valor}%</span>
-              </div>
-              <Progress value={m.valor} className="h-2" />
+        {meusInteresses.length === 0 ? (
+          <div className="flex flex-col items-start gap-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Seu Código ME ainda não foi iniciado.
+            </p>
+            <Button
+              onClick={() => navigate("/onboarding-interesses")}
+              className="h-11 rounded-2xl bg-primary hover:bg-primary-hover"
+            >
+              Iniciar Código ME
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {meusInteresses.map((m) => (
+                <span
+                  key={m.interesse_id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium"
+                >
+                  {m.icone && <span className="text-base leading-none">{m.icone}</span>}
+                  {m.nome}
+                </span>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <p className="text-xs text-muted-foreground mt-4 italic">
-          Em breve o seu Código ME será construído automaticamente a partir das suas leituras e aprendizados.
-        </p>
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              Seus interesses irão refinar automaticamente seu Código ME conforme suas leituras, aprendizados e atividades evoluírem.
+            </p>
+          </>
+        )}
       </section>
 
       {/* SEÇÃO 5 - TABS */}

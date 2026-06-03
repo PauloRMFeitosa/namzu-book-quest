@@ -1098,20 +1098,29 @@ export type Database = {
       }
       interesses: {
         Row: {
+          ativo: boolean | null
           categoria: string | null
           created_at: string | null
+          descricao: string | null
+          icone: string | null
           id: string
           nome: string
         }
         Insert: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
           id?: string
           nome: string
         }
         Update: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
           id?: string
           nome?: string
         }
@@ -1817,18 +1826,24 @@ export type Database = {
       }
       perfil_interesses: {
         Row: {
+          created_at: string | null
           interesse_id: string
           peso: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           interesse_id: string
           peso?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          created_at?: string | null
           interesse_id?: string
           peso?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
