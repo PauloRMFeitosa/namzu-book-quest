@@ -25,6 +25,7 @@ const Admin = () => {
         <div className="overflow-x-auto -mx-4 px-4">
           <TabsList className="inline-flex w-max">
             <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
+            <TabsTrigger value="saude">Saúde do Catálogo</TabsTrigger>
             <TabsTrigger value="gamificacao">Gamificação</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
             <TabsTrigger value="livros">Livros</TabsTrigger>
