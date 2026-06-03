@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
+import { NamzuBackground } from "@/components/NamzuBackground";
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
