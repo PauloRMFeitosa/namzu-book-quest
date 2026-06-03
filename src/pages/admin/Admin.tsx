@@ -10,6 +10,7 @@ import { ConquistasTab } from "./tabs/ConquistasTab";
 import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
 import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
+import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
 
 const Admin = () => {
   const [tab, setTab] = useState("visibilidade");
