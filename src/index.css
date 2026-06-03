@@ -121,12 +121,19 @@
 
   html, body, #root { @apply h-full; }
 
+  #root {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "ss01", "cv11";
     position: relative;
+    isolation: isolate;
   }
 
   /* Ambient theme-aware background: layered radial glows + subtle grain.
