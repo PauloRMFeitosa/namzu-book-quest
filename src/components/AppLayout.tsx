@@ -64,7 +64,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
-      <NamzuBackground className="fixed" />
+      <NamzuBackground />
       <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
           <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
@@ -86,7 +86,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </header>
 
-      <main className="flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
+      <main className="relative z-10 flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
         {children}
       </main>
 
