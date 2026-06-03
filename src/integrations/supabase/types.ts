@@ -1126,6 +1126,48 @@ export type Database = {
         }
         Relationships: []
       }
+      interesses_generos: {
+        Row: {
+          created_at: string | null
+          genero_id: string
+          id: string
+          interesse_id: string
+          peso: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          genero_id: string
+          id?: string
+          interesse_id: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          genero_id?: string
+          id?: string
+          interesse_id?: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interesses_generos_genero_id_fkey"
+            columns: ["genero_id"]
+            isOneToOne: false
+            referencedRelation: "generos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interesses_generos_interesse_id_fkey"
+            columns: ["interesse_id"]
+            isOneToOne: false
+            referencedRelation: "interesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leitura_aplicacoes: {
         Row: {
           created_at: string | null

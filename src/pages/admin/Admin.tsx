@@ -10,6 +10,7 @@ import { ConquistasTab } from "./tabs/ConquistasTab";
 import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
 import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
+import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
 
 const Admin = () => {
   const [tab, setTab] = useState("visibilidade");
@@ -33,6 +34,7 @@ const Admin = () => {
             <TabsTrigger value="visibilidade">Visibilidade</TabsTrigger>
             <TabsTrigger value="saude">Saúde do Catálogo</TabsTrigger>
             <TabsTrigger value="reprocessamento">Reprocessamento</TabsTrigger>
+            <TabsTrigger value="mapeamento-generos">Mapeamento de Gêneros</TabsTrigger>
             <TabsTrigger value="gamificacao">Gamificação</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
             <TabsTrigger value="livros">Livros</TabsTrigger>
@@ -46,6 +48,7 @@ const Admin = () => {
         <TabsContent value="visibilidade"><VisibilidadeTab /></TabsContent>
         <TabsContent value="saude"><SaudeCatalogoTab /></TabsContent>
         <TabsContent value="reprocessamento"><ReprocessamentoTab /></TabsContent>
+        <TabsContent value="mapeamento-generos"><MapeamentoGenerosTab /></TabsContent>
         <TabsContent value="gamificacao"><GamificacaoTab /></TabsContent>
         <TabsContent value="usuarios"><UsuariosTab /></TabsContent>
         <TabsContent value="livros"><LivrosTab /></TabsContent>
