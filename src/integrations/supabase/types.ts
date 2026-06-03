@@ -791,6 +791,7 @@ export type Database = {
           id: string
           idioma: string
           isbn_13: string | null
+          isbn10: string | null
           num_paginas: number | null
           obra_id: string
           preco_capa_centavos: number | null
@@ -807,6 +808,7 @@ export type Database = {
           id?: string
           idioma?: string
           isbn_13?: string | null
+          isbn10?: string | null
           num_paginas?: number | null
           obra_id: string
           preco_capa_centavos?: number | null
@@ -823,6 +825,7 @@ export type Database = {
           id?: string
           idioma?: string
           isbn_13?: string | null
+          isbn10?: string | null
           num_paginas?: number | null
           obra_id?: string
           preco_capa_centavos?: number | null
@@ -835,6 +838,53 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edicoes_fontes_externas: {
+        Row: {
+          chave_externa: string | null
+          created_at: string
+          dados_externos: Json | null
+          data_sincronizacao: string | null
+          edicao_id: string
+          fonte: string
+          id: string
+          identificador_externo: string
+          updated_at: string
+          url_externa: string | null
+        }
+        Insert: {
+          chave_externa?: string | null
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          edicao_id: string
+          fonte: string
+          id?: string
+          identificador_externo: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Update: {
+          chave_externa?: string | null
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          edicao_id?: string
+          fonte?: string
+          id?: string
+          identificador_externo?: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edicoes_fontes_externas_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "edicoes"
             referencedColumns: ["id"]
           },
         ]
