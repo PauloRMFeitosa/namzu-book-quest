@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { RegistrarLeituraDialog } from "./RegistrarLeituraDialog";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   leituras: LeituraFull[];
