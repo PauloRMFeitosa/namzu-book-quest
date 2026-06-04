@@ -1,54 +1,105 @@
-# Admin — Edição completa + Filtro nos grids
+## Visão Geral
 
-Aplicar nas abas: **Usuários**, **Livros (obras)** e **Clubes**.
+Reorganizar `LeituraDetalhe` em 6 blocos verticais com foco em jornada e aprendizado. **Nenhuma tabela nova** — toda a modelagem atual atende.
 
-## 1. Edição com todos os campos da tabela
+## Mapeamento de tabelas (reutilização)
 
-Cada formulário de edição passa a expor todos os campos editáveis da respectiva tabela.
+| Bloco da nova UI | Tabela(s) existente(s) |
+|---|---|
+| Cabeçalho | `obras`, `obra_autores`, `autores`, `usuario_livros`, `edicoes`, `usuario_leituras` |
+| Progresso | `leitura_progresso` (agregado), `usuario_leituras.status/data_fim` |
+| Pré-leitura | `leituras` (tipo `pre_leitura`) + `leitura_pre` |
+| Sessões | `leituras` (tipo `leitura`) + `leitura_progresso` apenas |
+| Pós-leitura | `leituras` (tipo `pos_leitura`) + `leitura_pos` (resenha, nota via `ideia_principal`/`resenha`) |
+| Aprendizados – Insight | `leituras` "container" + `leitura_conteudo` (resumo + conceito_principal) |
+| Aprendizados – Aplicação | `leitura_aplicacoes` |
+| Aprendizados – Citação | `leitura_citacoes` |
+| Aprendizados – Resenha | `leitura_pos.resenha` (uma por livro) |
+| Organização – Tags | `leitura_tags` + `tags` |
+| Organização – Links | `leitura_links` |
+| Timeline | derivada de todas acima por `created_at`/`data_registro` |
 
-**Livros (`obras`)**
-Campos no modal de criar/editar: `titulo_original`, `titulo_ordenacao`, `slug`, `idioma_original`, `ano_primeira_publicacao`, `sinopse_padrao`, `capa_padrao_url`. (`id`/`created_at` somente leitura no edit.)
+**Decisão arquitetural:** Como `leitura_conteudo/citacoes/aplicacoes/links/tags` têm FK para `leituras.id`, criaremos **uma única "leitura container"** por `usuario_leitura` (tipo `leitura`, sem `leitura_progresso`) para abrigar todos os aprendizados standalone do livro. Sessões de leitura passam a ser `leituras` tipo `leitura` que **só** possuem registro em `leitura_progresso`. UI distingue pela presença de progresso. Migração leve no client: ao abrir a página, se existirem sessões antigas com conteúdo misturado, eles continuam visíveis na timeline (compatibilidade preservada). Nenhum dado existente é apagado.
 
-**Clubes (`clubes`)**
-Adicionar ao formulário os campos hoje ausentes: `is_ativo` (switch), além dos já existentes. (`curador_id` mantido só-leitura exibido como info; `id`/`created_at` só leitura no edit.)
+## Bloco 1 — Cabeçalho
+Componente `LivroHeader` existente + barra de progresso (`ProgressoBar`). Sem mudanças significativas.
 
-**Usuários** (via edge function `admin-manage-user`)
-Modal de edição passa a aceitar e enviar:
-- Auth: `email`, `password`, `full_name`
-- Perfil (`perfis`): `username`, `nome_exibicao`, `bio`, `avatar_url`, `banner_url`, `cidade`, `pais`, `tipo_perfil`, `verificado`, `instagram_url`, `youtube_url`, `tiktok_url`, `site_url`
-- Gamificação (`gamificacao_perfis`): `xp_total`, `nivel`, `streak_atual`, `streak_maximo`
-- Admin role: checkbox que sincroniza `user_roles`
+## Bloco 2 — Progresso (novo)
+Novo componente `ProgressoBlock`:
+- Mostra **página atual**, **última atualização**, barra de progresso
+- Botão **"Atualizar progresso"** abre `AtualizarProgressoDialog`
+  - Campos: página anterior (readonly, derivada do máximo já registrado), página atual, tempo de leitura (opcional)
+  - Calcula `paginas_lidas = pagina_atual - pagina_anterior`
+  - Salva: cria nova `leituras` tipo `leitura` + `leitura_progresso` (paginas_lidas, percentual_lido calculado, data_registro=now)
+  - Exibe resumo antes de salvar
+  - Sem campos de conteúdo
 
-A edge function `admin-manage-user` será estendida para receber esses campos e fazer `update` em `perfis` e `gamificacao_perfis` (usando service role) além do `auth.admin.updateUserById`.
+## Bloco 3 — Jornada (novo)
+Novo componente `JornadaBlock` com 3 etapas visuais:
+- **Pré-leitura** — reusa `PreLeituraForm`/`PreLeituraView` (sem alterações), status auto-calculado
+- **Sessões de leitura** — novo `SessoesList`: lista cronológica leve mostrando data, página inicial, página final, páginas lidas, tempo (se houver), observação. Editar/excluir mantém. **Apenas progresso**, sem citações/insights/etc.
+- **Pós-leitura** — versão simplificada do `PosLeituraBlock`: ao status≠concluido mostra "Disponível após concluir o livro"; ao concluído, formulário com resumo final, principais aprendizados (`ideia_principal`), resenha, nota e flag recomendaria (mapeados a `leitura_pos`). **Sem** o agregador atual de citações/aplicações/links/tags.
 
-## 2. Filtro por campo/valor no grid
+## Bloco 4 — Aprendizados (destaque)
+Novo `AprendizadosBlock`:
+- Botão principal **"Adicionar conteúdo"** abre menu com 4 opções
+- 4 cards-resumo: Insights / Aplicações / Citações / Resenhas — cada um abre lista correspondente
+- Forms minimalistas em dialogs separados:
+  - `InsightDialog` → grava em `leitura_conteudo` (resumo = "o que aprendi", conceito_principal = "por que foi importante")
+  - `AplicacaoDialog` → grava em `leitura_aplicacoes` com categoria salva em `plano_acao.categoria`
+  - `CitacaoDialog` → grava em `leitura_citacoes` (+ tags em `leitura_tags`)
+  - `ResenhaDialog` → grava/edita em `leitura_pos.resenha` (única por livro)
+- Todos os 4 primeiros tipos usam a "leitura container" (criada lazy na primeira gravação)
 
-Adicionar acima de cada tabela uma barra de filtro com:
-- `Select` com a lista de colunas filtráveis daquela aba
-- `Input` de valor
-- Botão **Filtrar** e botão **Limpar**
+## Bloco 5 — Organização
+Novo `OrganizacaoBlock`:
+- **Tags** — listagem agregada de todas tags vinculadas via `leitura_tags`
+- **Links** — listagem de `leitura_links`
+- **Arquivos** — placeholder ("em breve"); nenhuma tabela atual armazena arquivos anexados
 
-Comportamento:
-- Texto: `ilike %valor%`
-- Numérico/booleano: igualdade
-- A query é refeita no Supabase com `.ilike()` / `.eq()` conforme o tipo da coluna
-- Para a aba de Usuários (lista vem da edge function), o filtro é aplicado client-side sobre o array já carregado, com o mesmo seletor de campo + valor
+## Bloco 6 — Timeline
+Novo `TimelineBlock`:
+- Query única que une eventos das tabelas: `leitura_progresso` (sessões), `leitura_conteudo`, `leitura_citacoes`, `leitura_aplicacoes`, `leitura_pre`, `leitura_pos`, status changes (`usuario_leituras.data_fim`)
+- Ordenado decrescente por timestamp
+- Cada item: ícone + descrição curta + data
 
-Colunas filtráveis por aba:
-- **Livros**: `titulo_original`, `ano_primeira_publicacao`, `idioma_original`, `slug`
-- **Clubes**: `nome`, `categoria`, `visibilidade`, `duracao_tipo`, `is_ativo`
-- **Usuários**: `email`, `full_name`, `nivel`, `xp_total`, `admin (sim/não)`
+## Remoções
+- Botão **Copiloto IA** e **Compartilhar** do topo do card
+- Tabs do `RegistrarLeituraDialog` (substituído pelos dialogs simples)
+- Agregadores no `PosLeituraBlock`
+- O componente atual `LeituraExperienciaCard` é substituído por composição dos novos blocos em `LeituraDetalhe.tsx`
 
-## Arquivos alterados
+## Arquivos
 
-- `src/pages/admin/tabs/LivrosTab.tsx` — adicionar campos faltantes + barra de filtro
-- `src/pages/admin/tabs/ClubesTab.tsx` — adicionar `is_ativo` no form + barra de filtro
-- `src/pages/admin/tabs/UsuariosTab.tsx` — modal de edição expandido + barra de filtro client-side
-- `supabase/functions/admin-manage-user/index.ts` — aceitar e persistir campos de `perfis` e `gamificacao_perfis`
+**Novos:**
+- `src/components/leituras/jornada/ProgressoBlock.tsx`
+- `src/components/leituras/jornada/AtualizarProgressoDialog.tsx`
+- `src/components/leituras/jornada/JornadaBlock.tsx`
+- `src/components/leituras/jornada/SessoesList.tsx`
+- `src/components/leituras/jornada/PosLeituraSimples.tsx`
+- `src/components/leituras/jornada/AprendizadosBlock.tsx`
+- `src/components/leituras/jornada/dialogs/InsightDialog.tsx`
+- `src/components/leituras/jornada/dialogs/AplicacaoDialog.tsx`
+- `src/components/leituras/jornada/dialogs/CitacaoDialog.tsx`
+- `src/components/leituras/jornada/dialogs/ResenhaDialog.tsx`
+- `src/components/leituras/jornada/OrganizacaoBlock.tsx`
+- `src/components/leituras/jornada/TimelineBlock.tsx`
+- `src/hooks/leituras/useContainerLeitura.ts` (cria/obtém leitura container)
+- `src/hooks/leituras/useTimelineLivro.ts`
 
-## Detalhes técnicos
+**Alterados:**
+- `src/pages/LeituraDetalhe.tsx` — nova composição
+- `src/hooks/leituras/useLivroDetalhe.ts` — selects iguais; helper para separar sessões puras de container
 
-- Componente compartilhado `FilterBar` em `src/components/admin/FilterBar.tsx` para reuso (campo `Select`, valor `Input`, ações).
-- Tipo das colunas declarado por aba: `{ key, label, type: 'text'|'number'|'boolean' }`.
-- Para `boolean`, o `Input` vira `Select` com Sim/Não.
-- `slug` em obras: manter geração automática só na criação; edição permite editar manualmente.
+**Mantidos (uso parcial):** `LivroHeader`, `ProgressoBar`, `PreLeituraForm`, `PreLeituraView`, `useLeituraActions`
+
+**Removidos do fluxo principal (não deletados — usados em edição legada):** `LeituraExperienciaCard`, `RegistrarLeituraDialog`, `LeiturasList`, `PosLeituraBlock`
+
+## Responsividade
+Layout single-column, mobile-first, `max-w-2xl` no desktop. Mantém PWA/iOS safe areas já vigentes no `AppLayout`.
+
+## RLS e compatibilidade
+Nenhuma migração. RLS atual (`leituras`, `leitura_*`, `usuario_leituras`) já cobre todos os inserts/updates/deletes propostos pois operam com `auth.uid()` via FK em `usuario_leituras → usuario_livros.user_id`.
+
+## Relatório final (será entregue após implementação)
+Lista de arquivos alterados/criados/removidos, tabelas usadas, decisões e validações de QA.
