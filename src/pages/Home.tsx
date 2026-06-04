@@ -20,16 +20,10 @@ const Home = () => {
     queryKey: ["leituras-lendo", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: uls } = await supabase
-        .from("usuario_livros")
-        .select("id")
-        .eq("user_id", user!.id);
-      const ulIds = (uls ?? []).map((u: any) => u.id);
-      if (!ulIds.length) return [];
       const { data } = await supabase
         .from("usuario_leituras")
-        .select("id, usuario_livros!inner(obra_id, obras(*))")
-        .in("usuario_livro_id", ulIds)
+        .select("id, usuario_livros!inner(user_id, obra_id, obras(*))")
+        .eq("usuario_livros.user_id", user!.id)
         .eq("status", "lendo")
         .order("updated_at", { ascending: false });
       return (data ?? []).map((d: any) => ({
