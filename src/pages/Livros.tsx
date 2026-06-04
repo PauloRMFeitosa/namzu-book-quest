@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo";
 
