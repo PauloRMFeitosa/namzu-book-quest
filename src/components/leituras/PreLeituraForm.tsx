@@ -60,6 +60,7 @@ export const PreLeituraForm = ({ usuarioLeituraId, leituraId, initial, onCancel,
         toast.success("Pré-leitura salva!");
       }
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
       onSaved?.();
     } catch (err: any) {
       toast.error(err.message);
