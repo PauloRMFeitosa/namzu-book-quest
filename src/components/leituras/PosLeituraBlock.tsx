@@ -74,6 +74,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       toast.success("Pós-leitura excluída");
       setConfirmDel(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      invalidateLeituras(qc);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
