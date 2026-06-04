@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareModal } from "@/components/share/ShareModal";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
