@@ -68,13 +68,19 @@ const useExperiencias = (status: "lendo" | "concluido") => {
   });
 };
 
+const StageBadge = ({ label }: { label: string }) => (
+  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+    {label}
+  </span>
+);
+
 const LeiturasList = () => {
   const navigate = useNavigate();
   const { data: lendo = [] } = useExperiencias("lendo");
   const { data: lidos = [] } = useExperiencias("concluido");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">
       <PageHero
         icon={BookMarked}
         badge="Jornada"
@@ -83,7 +89,12 @@ const LeiturasList = () => {
       />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Lendo</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Em andamento</h2>
+          {lendo.length > 0 && (
+            <span className="text-xs text-muted-foreground">{lendo.length}</span>
+          )}
+        </div>
         {lendo.length === 0 ? (
           <div className="card-soft p-6 text-center">
             <BookOpen className="w-8 h-8 mx-auto text-primary mb-2" />
@@ -97,17 +108,24 @@ const LeiturasList = () => {
               const percentual = total && total > 0 ? Math.min(100, Math.round((l.paginasLidas / total) * 100)) : 0;
               const restantes = total ? Math.max(0, total - l.paginasLidas) : null;
               return (
-                <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+                <button
+                  key={l.id}
+                  onClick={() => navigate(`/leituras/${l.id}`)}
+                  className="card-soft p-4 flex gap-4 hover-lift text-left group"
+                >
                   {l.usuario_livros?.obras?.capa_padrao_url ? (
-                    <img src={l.usuario_livros.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
+                    <img src={l.usuario_livros.obras.capa_padrao_url} alt="" className="w-16 h-24 rounded-lg object-cover shadow-soft" />
                   ) : (
-                    <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center"><BookOpen className="w-5 h-5 text-primary" /></div>
+                    <div className="w-16 h-24 rounded-lg bg-secondary flex items-center justify-center"><BookOpen className="w-6 h-6 text-primary" /></div>
                   )}
                   <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center">
-                    <p className="font-semibold line-clamp-2">{l.usuario_livros?.obras?.titulo_original}</p>
-                    {l.experienciasCount > 1 && (
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{l.experienciasCount} leituras</p>
-                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <StageBadge label="Lendo" />
+                      {l.experienciasCount > 1 && (
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{l.experienciasCount} sessões</span>
+                      )}
+                    </div>
+                    <p className="font-semibold leading-tight line-clamp-2">{l.usuario_livros?.obras?.titulo_original}</p>
                     <ProgressoBar paginasLidas={l.paginasLidas} totalPaginas={total} percentual={percentual} restantes={restantes} compact />
                   </div>
                 </button>
@@ -118,21 +136,29 @@ const LeiturasList = () => {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Últimos lidos</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Concluídos</h2>
+          {lidos.length > 0 && <span className="text-xs text-muted-foreground">{lidos.length}</span>}
+        </div>
         {lidos.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum livro concluído ainda.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {lidos.slice(0, 5).map((l: any) => (
-              <button key={l.id} onClick={() => navigate(`/leituras/${l.id}`)} className="card-soft p-3 flex gap-3 hover-lift text-left">
+              <button
+                key={l.id}
+                onClick={() => navigate(`/leituras/${l.id}`)}
+                className="card-soft p-4 flex gap-4 hover-lift text-left"
+              >
                 {l.usuario_livros?.obras?.capa_padrao_url ? (
-                  <img src={l.usuario_livros.obras.capa_padrao_url} alt="" className="w-14 h-20 rounded-md object-cover" />
+                  <img src={l.usuario_livros.obras.capa_padrao_url} alt="" className="w-16 h-24 rounded-lg object-cover shadow-soft" />
                 ) : (
-                  <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center"><BookOpen className="w-5 h-5 text-primary" /></div>
+                  <div className="w-16 h-24 rounded-lg bg-secondary flex items-center justify-center"><BookOpen className="w-6 h-6 text-primary" /></div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold line-clamp-2">{l.usuario_livros?.obras?.titulo_original}</p>
-                  {l.data_fim && <p className="text-xs text-muted-foreground mt-1">Concluído em {new Date(l.data_fim).toLocaleDateString("pt-BR")}</p>}
+                <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center">
+                  <StageBadge label="Concluído" />
+                  <p className="font-semibold leading-tight line-clamp-2">{l.usuario_livros?.obras?.titulo_original}</p>
+                  {l.data_fim && <p className="text-xs text-muted-foreground">Finalizado em {new Date(l.data_fim).toLocaleDateString("pt-BR")}</p>}
                 </div>
               </button>
             ))}
