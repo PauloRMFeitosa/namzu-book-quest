@@ -82,7 +82,7 @@ const Livros = () => {
     }
     toast.success("Livro removido da biblioteca");
     setRemoverAlvo(null);
-    qc.invalidateQueries({ queryKey: ["meus-livros", user?.id] });
+    invalidateLeituras(qc);
   };
 
   const matchFiltro = (status: string, f: Filtro) => {
