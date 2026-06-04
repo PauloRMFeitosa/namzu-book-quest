@@ -50,6 +50,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
       toast.success("Pré-leitura excluída");
       setConfirmDel(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
