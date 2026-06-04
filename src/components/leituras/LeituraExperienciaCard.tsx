@@ -16,6 +16,7 @@ import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDial
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 import { ShareModal } from "@/components/share/ShareModal";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   usuarioLeituraId: string;
