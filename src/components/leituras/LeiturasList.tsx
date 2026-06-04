@@ -49,6 +49,7 @@ export const LeiturasList = ({ leituras, usuarioLeituraId, totalPaginas }: Props
       toast.success("Sessão excluída");
       setDeleting(null);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
