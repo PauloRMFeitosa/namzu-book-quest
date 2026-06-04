@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles, X } from "lucide-react";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   usuarioLeituraId: string;
