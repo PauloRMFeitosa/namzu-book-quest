@@ -191,8 +191,7 @@ const ObraDetalhe = () => {
     }
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
-    qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+    invalidateLeituras(qc);
   };
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
