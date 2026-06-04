@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { PreLeituraForm } from "./PreLeituraForm";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   pre: { intencao: string; dominio_previo: string | null; observacao: string | null };
@@ -49,6 +50,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
       toast.success("Pré-leitura excluída");
       setConfirmDel(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {

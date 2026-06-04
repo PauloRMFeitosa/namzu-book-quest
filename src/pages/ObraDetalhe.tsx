@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareModal } from "@/components/share/ShareModal";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
@@ -190,8 +191,7 @@ const ObraDetalhe = () => {
     }
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
-    qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+    invalidateLeituras(qc);
   };
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;

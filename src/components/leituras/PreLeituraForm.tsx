@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles, X } from "lucide-react";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   usuarioLeituraId: string;
@@ -59,6 +60,7 @@ export const PreLeituraForm = ({ usuarioLeituraId, leituraId, initial, onCancel,
         toast.success("Pré-leitura salva!");
       }
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
       onSaved?.();
     } catch (err: any) {
       toast.error(err.message);

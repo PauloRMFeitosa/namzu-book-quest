@@ -16,6 +16,7 @@ import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDial
 import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 import { ShareModal } from "@/components/share/ShareModal";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   usuarioLeituraId: string;
@@ -45,7 +46,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
     if (error) return toast.error(error.message);
     toast.success("Leitura retomada");
     qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
-    qc.invalidateQueries({ queryKey: ["livro-experiencias"] });
+    invalidateLeituras(qc);
   };
 
   const concluir = async (dataFim: string) => {
@@ -53,8 +54,8 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
       await finalizarLeitura(livro.id, dataFim);
       toast.success("Leitura concluída!");
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
-      qc.invalidateQueries({ queryKey: ["livro-experiencias"] });
       qc.invalidateQueries({ queryKey: ["clube-leituras"] });
+      invalidateLeituras(qc);
     } catch (e: any) {
       toast.error(e.message);
     }

@@ -92,8 +92,15 @@ const OnboardingInteresses = () => {
         .from("perfil_interesses")
         .upsert(rows, { onConflict: "user_id,interesse_id", ignoreDuplicates: true });
       if (error) throw error;
-      await qc.invalidateQueries({ queryKey: ["perfil-interesses"] });
-      await qc.invalidateQueries({ queryKey: ["perfil-interesses-count"] });
+
+      // Atualiza o cache IMEDIATAMENTE para que ProtectedRoute / IniciarCodigoMeCard
+      // não voltem a redirecionar/exibir o convite enquanto o refetch ocorre.
+      qc.setQueryData(["perfil-interesses-count", user.id], true);
+      const { invalidateCodigoMe, invalidateUserData } = await import("@/lib/queryInvalidation");
+      invalidateCodigoMe(qc);
+      // Invalida também demais áreas que dependem do perfil (Home, Perfil).
+      invalidateUserData(qc);
+
       toast.success("Seu Código ME foi iniciado!");
       navigate("/perfil", { replace: true });
     } catch (e: any) {

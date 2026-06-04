@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { iniciarLeitura, registrarProgresso } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { PercentualProgressoControl } from "./PercentualProgressoControl";
 
 type Citacao = { texto: string; pagina: string };
@@ -253,6 +254,7 @@ export const RegistrarLeituraDialog = ({
       setConfirmClose(false);
       baseSetOpen(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {

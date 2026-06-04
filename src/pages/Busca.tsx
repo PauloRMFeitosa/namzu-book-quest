@@ -453,11 +453,9 @@ const Busca = () => {
 
   // Invalidations fora do caminho crítico, para não travar o toast em Android mediano
   const invalidarLivros = () => {
-    const run = () => {
-      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-      qc.invalidateQueries({ queryKey: ["meus-livros"] });
-      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
-      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+    const run = async () => {
+      const { invalidateLeituras } = await import("@/lib/queryInvalidation");
+      invalidateLeituras(qc);
     };
     const ric = (window as any).requestIdleCallback as
       | ((cb: () => void, opts?: { timeout: number }) => number)

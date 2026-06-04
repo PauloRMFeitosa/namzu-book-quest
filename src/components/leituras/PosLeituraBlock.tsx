@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const qc = useQueryClient();
@@ -73,6 +74,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       toast.success("Pós-leitura excluída");
       setConfirmDel(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      invalidateLeituras(qc);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -113,6 +115,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       setAdding(false);
       setEditing(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      invalidateLeituras(qc);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
