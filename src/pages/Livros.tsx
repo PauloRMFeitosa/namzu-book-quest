@@ -40,18 +40,15 @@ const Livros = () => {
         .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
       const list = livros ?? [];
-      const ids = list.map((l: any) => l.id);
       let lendoIds = new Set<string>();
       let concluidoIds = new Set<string>();
-      if (ids.length) {
-        const { data: exps } = await supabase
-          .from("usuario_leituras")
-          .select("usuario_livro_id, status")
-          .in("usuario_livro_id", ids);
-        for (const e of exps ?? []) {
-          if (e.status === "lendo") lendoIds.add(e.usuario_livro_id);
-          if (e.status === "concluido") concluidoIds.add(e.usuario_livro_id);
-        }
+      const { data: exps } = await supabase
+        .from("usuario_leituras")
+        .select("usuario_livro_id, status, usuario_livros!inner(user_id)")
+        .eq("usuario_livros.user_id", user!.id);
+      for (const e of exps ?? []) {
+        if (e.status === "lendo") lendoIds.add((e as any).usuario_livro_id);
+        if (e.status === "concluido") concluidoIds.add((e as any).usuario_livro_id);
       }
       return list.map((l: any) => ({
         ...l,
