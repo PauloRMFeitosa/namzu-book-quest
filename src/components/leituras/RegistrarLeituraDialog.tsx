@@ -254,6 +254,7 @@ export const RegistrarLeituraDialog = ({
       setConfirmClose(false);
       baseSetOpen(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
