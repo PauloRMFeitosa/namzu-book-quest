@@ -20,7 +20,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
         .eq("user_id", user!.id);
       return (count ?? 0) > 0;
     },
-    staleTime: 60_000,
+    staleTime: 0,
   });
 
   if (loading || (user && chk)) {
