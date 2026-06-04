@@ -14,17 +14,10 @@ const useExperiencias = (status: "lendo" | "concluido") => {
     queryKey: ["experiencias", status, user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: ulRows } = await supabase
-        .from("usuario_livros")
-        .select("id")
-        .eq("user_id", user!.id);
-      const ulIds = (ulRows ?? []).map((r: any) => r.id);
-      if (!ulIds.length) return [];
-
       let q = supabase
         .from("usuario_leituras")
-        .select("id, status, data_fim, usuario_livro_id, usuario_livros!inner(id, obra_id, obras(titulo_original, capa_padrao_url), edicoes(num_paginas))")
-        .in("usuario_livro_id", ulIds)
+        .select("id, status, data_fim, usuario_livro_id, usuario_livros!inner(id, user_id, obra_id, obras(titulo_original, capa_padrao_url), edicoes(num_paginas))")
+        .eq("usuario_livros.user_id", user!.id)
         .eq("status", status);
 
       if (status === "lendo") q = q.order("updated_at", { ascending: false });
