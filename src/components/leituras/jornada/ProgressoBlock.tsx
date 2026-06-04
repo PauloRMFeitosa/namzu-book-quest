@@ -1,0 +1,49 @@
+import { BookOpen } from "lucide-react";
+import { LivroDetalhe, calcularProgresso } from "@/hooks/leituras/useLivroDetalhe";
+import { ProgressoBar } from "@/components/leituras/ProgressoBar";
+import { AtualizarProgressoDialog } from "./AtualizarProgressoDialog";
+import { getSessoes } from "@/hooks/leituras/useContainerLeitura";
+
+export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
+  const progresso = calcularProgresso(livro);
+  const sessoes = getSessoes(livro);
+  const ultima = sessoes[sessoes.length - 1];
+  const paginaAtual = progresso.paginasLidas;
+  const ultimaData = ultima?.created_at
+    ? new Date(ultima.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+    : "Sem registros";
+
+  return (
+    <section className="card-soft p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Progresso</h2>
+        </div>
+        <AtualizarProgressoDialog
+          usuarioLeituraId={livro.id}
+          paginaAnterior={paginaAtual}
+          totalPaginas={livro.edicoes?.num_paginas ?? null}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Página atual</span>
+          <span className="text-2xl font-bold leading-none mt-1">
+            {paginaAtual}
+            {livro.edicoes?.num_paginas && (
+              <span className="text-sm text-muted-foreground font-normal"> / {livro.edicoes.num_paginas}</span>
+            )}
+          </span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Última atualização</span>
+          <span className="text-sm font-semibold mt-1">{ultimaData}</span>
+        </div>
+      </div>
+
+      <ProgressoBar {...progresso} />
+    </section>
+  );
+};
