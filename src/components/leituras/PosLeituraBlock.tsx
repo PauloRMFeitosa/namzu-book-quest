@@ -115,6 +115,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       setAdding(false);
       setEditing(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
+      invalidateLeituras(qc);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
