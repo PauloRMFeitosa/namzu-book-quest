@@ -138,6 +138,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Se o usuário informou total_paginas e a edição ainda não tem num_paginas, persistir
+    if (totalPaginasInput && totalPaginasInput > 0 && usuarioLivroId) {
+      if (!edicaoId) {
+        const { data: ul } = await admin.from("usuario_livros").select("edicao_id").eq("id", usuarioLivroId).maybeSingle();
+        edicaoId = (ul as any)?.edicao_id ?? null;
+      }
+      if (edicaoId) {
+        const { data: ed } = await admin.from("edicoes").select("num_paginas").eq("id", edicaoId).maybeSingle();
+        if (!ed?.num_paginas) {
+          await admin.from("edicoes").update({ num_paginas: totalPaginasInput }).eq("id", edicaoId);
+        }
+      }
+    }
+
     if (usuarioLivroId) {
       const livroUpdate: Record<string, unknown> = { updated_at: nowIso };
       if (status === "concluido") {
