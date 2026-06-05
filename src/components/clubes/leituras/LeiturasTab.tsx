@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { PercentualProgressoControl } from "@/components/leituras/PercentualProgressoControl";
+import { ReadingProgressModal } from "@/components/leituras/ReadingProgressModal";
 import {
   TrilhaItem,
   useClubeLeituras,
