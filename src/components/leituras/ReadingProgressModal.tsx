@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -112,9 +112,20 @@ export const ReadingProgressModal = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {/* Barra de progresso visual */}
-          <div className="flex flex-col gap-1.5">
-            <Progress value={percentual ?? 0} className="h-2" />
+          {/* Barra de progresso interativa (sincronizada com a página atual) */}
+          <div className="flex flex-col gap-2">
+            <Slider
+              value={[percentual ?? 0]}
+              min={0}
+              max={100}
+              step={1}
+              disabled={!totalEfetivo}
+              onValueChange={(v) => {
+                if (!totalEfetivo) return;
+                const novaPagina = Math.round((v[0] / 100) * totalEfetivo);
+                setPaginaAtual(String(novaPagina));
+              }}
+            />
             <div className="flex justify-between text-xs text-muted-foreground">
               {totalEfetivo ? (
                 <>

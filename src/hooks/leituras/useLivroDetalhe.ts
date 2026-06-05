@@ -136,11 +136,11 @@ export function calcularProgresso(livro: LivroDetalhe | null | undefined) {
   const percentualSalvo = sessions.length
     ? Math.max(0, ...sessions.map((s) => s.percentual_lido ?? 0))
     : 0;
-  const percentual = percentualSalvo > 0
-    ? Math.min(100, Math.round(percentualSalvo))
-    : total && total > 0
-      ? Math.min(100, Math.round((paginasLidas / total) * 100))
-      : 0;
+  // Regra: quando temos total de páginas, sempre derivamos da página atual.
+  // Sem total, usamos o último percentual salvo.
+  const percentual = total && total > 0
+    ? Math.min(100, Math.round((paginasLidas / total) * 100))
+    : Math.min(100, Math.round(percentualSalvo));
   const restantes = total ? Math.max(0, total - paginasLidas) : null;
   return { paginasLidas, totalPaginas: total, percentual, restantes };
 }

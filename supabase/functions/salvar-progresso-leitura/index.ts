@@ -199,11 +199,15 @@ Deno.serve(async (req) => {
         if (error) throw error;
         leituraId = novaSessao.id;
       }
+      const tempoMin = body.tempo_minutos != null && body.tempo_minutos !== ""
+        ? Math.max(0, Math.round(Number(body.tempo_minutos)))
+        : null;
       await admin.from("leitura_progresso").insert({
         leitura_id: leituraId,
         user_id: user.id,
         paginas_lidas: Number.isNaN(paginaAtual) ? null : paginaAtual,
         percentual_lido: percentual,
+        tempo_leitura_minutos: tempoMin,
       });
       if (status === "concluido") {
         await admin.from("leituras").update({ data_fim: nowIso, updated_at: nowIso }).eq("usuario_leitura_id", usuarioLeituraId).eq("tipo", "leitura").is("data_fim", null);
