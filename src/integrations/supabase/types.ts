@@ -1380,6 +1380,7 @@ export type Database = {
           leitura_id: string | null
           paginas_lidas: number | null
           percentual_lido: number | null
+          tempo_leitura_minutos: number | null
           user_id: string
         }
         Insert: {
@@ -1389,6 +1390,7 @@ export type Database = {
           leitura_id?: string | null
           paginas_lidas?: number | null
           percentual_lido?: number | null
+          tempo_leitura_minutos?: number | null
           user_id: string
         }
         Update: {
@@ -1398,6 +1400,7 @@ export type Database = {
           leitura_id?: string | null
           paginas_lidas?: number | null
           percentual_lido?: number | null
+          tempo_leitura_minutos?: number | null
           user_id?: string
         }
         Relationships: [
