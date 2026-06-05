@@ -34,7 +34,6 @@ const Onboarding = () => {
   const slidesRef = useRef<HTMLDivElement>(null);
 
   const completed = typeof window !== "undefined" && localStorage.getItem(ONBOARDING_FLAG) === "1";
-  if (!loading && user && completed) return <Navigate to="/" replace />;
 
   const isLast = index === 2;
 
@@ -78,6 +77,8 @@ const Onboarding = () => {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
+
+  if (!loading && user && completed) return <Navigate to="/" replace />;
 
   return (
     <div className="relative z-10 min-h-screen flex flex-col overflow-hidden">
