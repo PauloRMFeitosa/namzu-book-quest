@@ -107,6 +107,27 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
         .map((oa: any) => oa.autores && { id: oa.autores.id, nome: oa.autores.nome_completo })
         .filter(Boolean);
+
+      // Fallback: se a edição vinculada não possui num_paginas, buscar
+      // qualquer outra edição da mesma obra que tenha — mesma lógica usada
+      // no fluxo de clubes (useClubeLeituras).
+      let edicoes = ul_any.usuario_livros?.edicoes ?? null;
+      const obraId = ul_any.usuario_livros?.obra_id;
+      if ((!edicoes || !edicoes.num_paginas) && obraId) {
+        const { data: alt } = await supabase
+          .from("edicoes")
+          .select("id, num_paginas, capa_url, editora")
+          .eq("obra_id", obraId)
+          .not("num_paginas", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (alt?.num_paginas) {
+          edicoes = edicoes
+            ? { ...edicoes, num_paginas: alt.num_paginas }
+            : alt;
+        }
+      }
+
       return {
         id: ul_any.id,
         status: ul_any.status,
@@ -117,7 +138,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         usuario_livro_id: ul_any.usuario_livro_id,
         obras: obrasRaw,
         autores: autoresArr,
-        edicoes: ul_any.usuario_livros?.edicoes,
+        edicoes,
         leituras,
         pos_leitura,
         leitura_pos,
