@@ -8,6 +8,9 @@ export interface MinhasLeiturasShareProps {
   nome: string;
   periodoLabel: string;
   stats: EstatisticasPeriodo;
+  /** Mapa capa original -> dataURL pré-resolvido (evita CORS na captura). */
+  capasResolvidas?: Record<string, string>;
+  logoSrc?: string;
 }
 
 function formatTempo(min: number | null) {
@@ -19,81 +22,49 @@ function formatTempo(min: number | null) {
   return `${h}h ${m}min`;
 }
 
+function statusLine(l: LivroResumo) {
+  if (l.status === "concluido") return "Concluído";
+  if (l.total_paginas && l.total_paginas > 0) {
+    return `${l.paginas_lidas} págs · ${l.percentual}%`;
+  }
+  return `${l.paginas_lidas} págs lidas`;
+}
+
 const Metric = ({ label, value }: { label: string; value: string | number }) => (
   <div
     style={{
-      flex: 1,
-      minWidth: 220,
+      flex: "1 1 0",
+      minWidth: 0,
       background: "rgba(255,255,255,0.6)",
-      borderRadius: 24,
-      padding: "28px 24px",
+      borderRadius: 22,
+      padding: "20px 18px",
       display: "flex",
       flexDirection: "column",
-      gap: 6,
+      gap: 4,
     }}
   >
-    <span style={{ fontSize: 22, color: "#34527A", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
+    <span style={{ fontSize: 18, color: "#34527A", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
       {label}
     </span>
-    <span style={{ fontFamily: "'Fraunces', serif", fontSize: 64, color: "#0F2747", fontWeight: 700, lineHeight: 1 }}>
+    <span style={{ fontFamily: "'Fraunces', serif", fontSize: 44, color: "#0F2747", fontWeight: 700, lineHeight: 1 }}>
       {value}
     </span>
   </div>
 );
 
-const LivroRow = ({ livro }: { livro: LivroResumo }) => {
-  const statusText =
-    livro.status === "concluido" && livro.data_fim
-      ? `Concluído em ${new Date(livro.data_fim).toLocaleDateString("pt-BR")}`
-      : livro.total_paginas
-      ? `${livro.paginas_lidas} de ${livro.total_paginas} págs · ${livro.percentual}%`
-      : `${livro.paginas_lidas} págs lidas`;
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 18,
-        alignItems: "center",
-        background: "rgba(255,255,255,0.55)",
-        borderRadius: 20,
-        padding: 16,
-      }}
-    >
-      {livro.capa_url ? (
-        <img
-          src={livro.capa_url}
-          crossOrigin="anonymous"
-          style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 8, boxShadow: "0 8px 18px -8px rgba(15,39,71,0.35)" }}
-        />
-      ) : (
-        <div style={{ width: 72, height: 108, borderRadius: 8, background: "#8FB8C8" }} />
-      )}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-        <span
-          style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: 30,
-            color: "#0F2747",
-            fontWeight: 700,
-            lineHeight: 1.15,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {livro.titulo}
-        </span>
-        <span style={{ fontSize: 22, color: "#34527A" }}>{statusText}</span>
-      </div>
-    </div>
-  );
-};
-
 export const MinhasLeiturasShareCard = React.forwardRef<HTMLDivElement, MinhasLeiturasShareProps>(
-  ({ nome, periodoLabel, stats }, ref) => {
-    const livrosTop = stats.livros.slice(0, 4);
+  ({ nome, periodoLabel, stats, capasResolvidas, logoSrc }, ref) => {
+    const livros = stats.livros;
+    const n = livros.length;
+
+    // Grid adaptativo: define colunas conforme quantidade
+    const cols = n <= 3 ? 1 : n <= 8 ? 2 : n <= 15 ? 3 : 4;
+    const capaH = cols === 1 ? 200 : cols === 2 ? 230 : cols === 3 ? 220 : 200;
+    const tituloFs = cols === 1 ? 26 : cols === 2 ? 22 : cols === 3 ? 18 : 16;
+    const statusFs = cols === 1 ? 20 : cols === 2 ? 16 : cols === 3 ? 14 : 12;
+
+    const getCapa = (url?: string | null) => (url && capasResolvidas?.[url]) || url || null;
+
     return (
       <div
         ref={ref}
@@ -103,49 +74,111 @@ export const MinhasLeiturasShareCard = React.forwardRef<HTMLDivElement, MinhasLe
           background: "linear-gradient(160deg, #D6E9E2 0%, #B7D4DE 45%, #6F9BC2 100%)",
           color: "#0F2747",
           fontFamily: "'Inter', sans-serif",
-          padding: "80px 70px",
+          padding: "70px 60px",
           display: "flex",
           flexDirection: "column",
-          gap: 36,
+          gap: 28,
           position: "relative",
+          boxSizing: "border-box",
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <img src={logoNamzu} crossOrigin="anonymous" style={{ width: 48, height: 48 }} />
-            <span style={{ fontWeight: 700, letterSpacing: "0.28em", fontSize: 28 }}>NAMZU</span>
+            {logoSrc && <img src={logoSrc} crossOrigin="anonymous" style={{ width: 44, height: 44 }} />}
+            <span style={{ fontWeight: 700, letterSpacing: "0.28em", fontSize: 24 }}>NAMZU</span>
           </div>
-          <span style={{ fontSize: 28, color: "#34527A", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, marginTop: 18 }}>
+          <span style={{ fontSize: 24, color: "#34527A", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, marginTop: 14 }}>
             {nome}
           </span>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 96, fontWeight: 700, margin: 0, lineHeight: 1 }}>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 80, fontWeight: 700, margin: 0, lineHeight: 1 }}>
             Minhas Leituras
           </h1>
-          <span style={{ fontSize: 36, color: "#34527A", fontStyle: "italic" }}>{periodoLabel}</span>
-          <p style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontSize: 30, color: "#0F2747", margin: "10px 0 0" }}>
-            “Cada página lida é um passo rumo à sabedoria.”
-          </p>
+          <span style={{ fontSize: 30, color: "#34527A", fontStyle: "italic" }}>{periodoLabel}</span>
         </div>
 
         {/* Métricas */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 18 }}>
-          <Metric label="Iniciados" value={stats.livrosIniciados} />
-          <Metric label="Concluídos" value={stats.livrosConcluidos} />
-          <Metric label="Páginas lidas" value={stats.paginasLidas} />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          <Metric label="Livros" value={n} />
+          <Metric label="Páginas" value={stats.paginasLidas} />
           <Metric label="Sessões" value={stats.sessoesLeitura} />
           <Metric label="Tempo" value={formatTempo(stats.tempoMinutos)} />
         </div>
 
         {/* Livros */}
-        {livrosTop.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <span style={{ fontSize: 24, color: "#34527A", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>
+        {n > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, minHeight: 0 }}>
+            <span style={{ fontSize: 20, color: "#34527A", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>
               Livros do período
             </span>
-            {livrosTop.map((l) => (
-              <LivroRow key={l.usuario_leitura_id} livro={l} />
-            ))}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                gap: cols === 1 ? 16 : 14,
+                alignContent: "start",
+              }}
+            >
+              {livros.map((l) => {
+                const capa = getCapa(l.capa_url);
+                return (
+                  <div
+                    key={l.usuario_leitura_id}
+                    style={{
+                      display: "flex",
+                      flexDirection: cols === 1 ? "row" : "column",
+                      gap: cols === 1 ? 18 : 10,
+                      background: "rgba(255,255,255,0.55)",
+                      borderRadius: 18,
+                      padding: cols === 1 ? 16 : 12,
+                      alignItems: cols === 1 ? "center" : "stretch",
+                    }}
+                  >
+                    {capa ? (
+                      <img
+                        src={capa}
+                        crossOrigin="anonymous"
+                        style={{
+                          width: cols === 1 ? capaH * 0.7 : "100%",
+                          height: capaH,
+                          objectFit: "cover",
+                          borderRadius: 10,
+                          boxShadow: "0 8px 18px -8px rgba(15,39,71,0.35)",
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: cols === 1 ? capaH * 0.7 : "100%",
+                          height: capaH,
+                          borderRadius: 10,
+                          background: "#8FB8C8",
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span
+                        style={{
+                          fontFamily: "'Fraunces', serif",
+                          fontSize: tituloFs,
+                          color: "#0F2747",
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {l.titulo}
+                      </span>
+                      <span style={{ fontSize: statusFs, color: "#34527A" }}>{statusLine(l)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -153,16 +186,17 @@ export const MinhasLeiturasShareCard = React.forwardRef<HTMLDivElement, MinhasLe
         <div
           style={{
             marginTop: "auto",
+            paddingTop: 24,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 6,
+            gap: 4,
           }}
         >
-          <span style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontSize: 30, color: "#0F2747" }}>
+          <span style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontSize: 28, color: "#0F2747" }}>
             A sabedoria começa aqui.
           </span>
-          <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.2em" }}>WWW.NAMZU.COM.BR</span>
+          <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.2em" }}>WWW.NAMZU.COM.BR</span>
         </div>
       </div>
     );
