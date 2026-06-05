@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { PercentualProgressoControl } from "@/components/leituras/PercentualProgressoControl";
+import { ReadingProgressModal } from "@/components/leituras/ReadingProgressModal";
 import {
   TrilhaItem,
   useClubeLeituras,
@@ -417,68 +418,18 @@ const ProgressoDialog = ({
   trigger: React.ReactNode;
 }) => {
   const [open, setOpen] = useState(false);
-  const [percentual, setPercentual] = useState<number>(0);
-  const [capitulo, setCapitulo] = useState<string>("");
-  const [pagina, setPagina] = useState<string>("");
-  const totalPaginas = trilha.total_paginas ?? null;
-  const salvar = useSalvarProgresso(clubeId);
-
-  // Sempre que abrir o diálogo, limpa os campos (em branco)
-  const handleOpenChange = (v: boolean) => {
-    setOpen(v);
-    if (v) {
-      setPercentual(0);
-      setCapitulo("");
-      setPagina("");
-    }
-  };
-
-  const handleSave = async () => {
-    await salvar.mutateAsync({
-      obra_id: trilha.obra_id,
-      percentual,
-      capitulo_atual: capitulo || null,
-      pagina_atual: pagina ? Number(pagina) : null,
-    });
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-display">
-            {trilha.obra?.titulo_original}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="py-2">
-          <PercentualProgressoControl
-            percentual={percentual}
-            onPercentualChange={setPercentual}
-            pagina={pagina}
-            onPaginaChange={setPagina}
-            totalPaginas={totalPaginas}
-            capitulo={capitulo}
-            onCapituloChange={setCapitulo}
-          />
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={salvar.isPending}
-            className="bg-primary hover:bg-primary-hover"
-          >
-            {salvar.isPending ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <span onClick={() => setOpen(true)} className="contents">{trigger}</span>
+      <ReadingProgressModal
+        open={open}
+        onOpenChange={setOpen}
+        obraId={trilha.obra_id}
+        clubeId={clubeId}
+        totalPaginas={trilha.total_paginas ?? null}
+        ultimaPagina={trilha.meu_progresso?.pagina_atual ?? 0}
+      />
+    </>
   );
 };
 

@@ -52,10 +52,12 @@ Deno.serve(async (req) => {
     let obraId = body.obra_id?.toString() || null;
     let clubeId = body.clube_id?.toString() || null;
 
+    let edicaoId: string | null = null;
+
     if (usuarioLeituraId) {
       const { data: leitura, error } = await admin
         .from("usuario_leituras")
-        .select("id, clube_id, usuario_livro_id, usuario_livros!inner(id, user_id, obra_id, status)")
+        .select("id, clube_id, usuario_livro_id, usuario_livros!inner(id, user_id, obra_id, edicao_id, status)")
         .eq("id", usuarioLeituraId)
         .maybeSingle();
       if (error) throw error;
@@ -63,8 +65,14 @@ Deno.serve(async (req) => {
       if (!leitura || dono !== user.id) return json({ error: "forbidden", message: "Leitura não encontrada." }, 403);
       usuarioLivroId = (leitura as any).usuario_livro_id;
       obraId = (leitura as any).usuario_livros?.obra_id ?? obraId;
+      edicaoId = (leitura as any).usuario_livros?.edicao_id ?? null;
       clubeId = clubeId ?? ((leitura as any).clube_id || null);
     }
+
+    // Aceita total_paginas para persistir em edicoes.num_paginas quando vazio
+    const totalPaginasInput = body.total_paginas != null && body.total_paginas !== ""
+      ? Number(body.total_paginas)
+      : null;
 
     if (!obraId) return json({ error: "obra_id_required", message: "Livro não identificado." }, 400);
 
@@ -127,6 +135,20 @@ Deno.serve(async (req) => {
           .single();
         if (novaLeituraErr) throw novaLeituraErr;
         usuarioLeituraId = novaLeitura.id;
+      }
+    }
+
+    // Se o usuário informou total_paginas e a edição ainda não tem num_paginas, persistir
+    if (totalPaginasInput && totalPaginasInput > 0 && usuarioLivroId) {
+      if (!edicaoId) {
+        const { data: ul } = await admin.from("usuario_livros").select("edicao_id").eq("id", usuarioLivroId).maybeSingle();
+        edicaoId = (ul as any)?.edicao_id ?? null;
+      }
+      if (edicaoId) {
+        const { data: ed } = await admin.from("edicoes").select("num_paginas").eq("id", edicaoId).maybeSingle();
+        if (!ed?.num_paginas) {
+          await admin.from("edicoes").update({ num_paginas: totalPaginasInput }).eq("id", edicaoId);
+        }
       }
     }
 
