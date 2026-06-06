@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
+import { useConcluirLeitura } from "@/hooks/leituras/useConcluirLeitura";
 
 export interface ReadingProgressModalProps {
   open: boolean;
