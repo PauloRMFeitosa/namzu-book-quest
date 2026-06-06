@@ -46,10 +46,12 @@ export const ReadingProgressModal = ({
   onSaved,
 }: ReadingProgressModalProps) => {
   const qc = useQueryClient();
+  const concluirLeitura = useConcluirLeitura();
   const [paginaAtual, setPaginaAtual] = useState<string>("");
   const [totalInput, setTotalInput] = useState<string>("");
   const [tempoMin, setTempoMin] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [askConcluir, setAskConcluir] = useState(false);
 
   useEffect(() => {
     if (open) {
