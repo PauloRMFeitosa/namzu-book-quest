@@ -112,37 +112,68 @@ export function useConcluidosRecentes(limit = 8) {
   });
 }
 
-/** Última sessão registrada (qualquer livro) → para "Continuar lendo". */
+/** Última sessão registrada de uma leitura ATIVA → para "Continuar lendo". */
 export function useUltimaSessao() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["minhas-leituras-ultima-sessao", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<LivroResumo | null> => {
+      // Busca as últimas sessões e percorre até achar uma cuja leitura esteja ativa.
       const { data: prog } = await supabase
         .from("leitura_progresso")
         .select("leitura_id, data_registro")
         .eq("user_id", user!.id)
         .order("data_registro", { ascending: false })
-        .limit(1);
-      const leituraId = prog?.[0]?.leitura_id;
-      if (!leituraId) return null;
-      const { data: leit } = await supabase
+        .limit(20);
+      const leituraIds = Array.from(new Set((prog ?? []).map((p: any) => p.leitura_id).filter(Boolean)));
+      if (!leituraIds.length) return null;
+
+      const { data: leits } = await supabase
         .from("leituras")
-        .select("usuario_leitura_id")
-        .eq("id", leituraId)
-        .maybeSingle();
-      const expId = (leit as any)?.usuario_leitura_id;
-      if (!expId) return null;
+        .select("id, usuario_leitura_id")
+        .in("id", leituraIds);
+      const leituraToExp: Record<string, string> = {};
+      (leits ?? []).forEach((l: any) => {
+        if (l.usuario_leitura_id) leituraToExp[l.id] = l.usuario_leitura_id;
+      });
+
+      // Mantém ordem cronológica da consulta de progresso
+      let expIdAtivo: string | null = null;
+      let ultimaData: string | null = null;
+      const expIdsCandidatos = Array.from(
+        new Set((prog ?? []).map((p: any) => leituraToExp[p.leitura_id ?? ""]).filter(Boolean)),
+      );
+      if (!expIdsCandidatos.length) return null;
+
+      // Carrega só as leituras ainda em andamento (status = 'lendo')
+      const { data: expsAtivas } = await supabase
+        .from("usuario_leituras")
+        .select("id, status")
+        .in("id", expIdsCandidatos)
+        .eq("status", "lendo");
+      const ativos = new Set((expsAtivas ?? []).map((e: any) => e.id));
+      if (!ativos.size) return null;
+
+      for (const p of prog ?? []) {
+        const expId = leituraToExp[p.leitura_id ?? ""];
+        if (expId && ativos.has(expId)) {
+          expIdAtivo = expId;
+          ultimaData = p.data_registro ?? null;
+          break;
+        }
+      }
+      if (!expIdAtivo) return null;
+
       const { data: exp } = await supabase
         .from("usuario_leituras")
         .select(SELECT_EXP)
-        .eq("id", expId)
+        .eq("id", expIdAtivo)
         .maybeSingle();
       if (!exp) return null;
-      const agg = await aggregateProgresso([expId]);
-      const a = agg[expId] ?? { paginas: 0, ultima: prog?.[0]?.data_registro ?? null };
-      return toLivroResumo(exp, a.paginas, a.ultima);
+      const agg = await aggregateProgresso([expIdAtivo]);
+      const a = agg[expIdAtivo] ?? { paginas: 0, ultima: ultimaData };
+      return toLivroResumo(exp, a.paginas, a.ultima ?? ultimaData);
     },
   });
 }
