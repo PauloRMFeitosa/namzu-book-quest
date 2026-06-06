@@ -41,6 +41,10 @@ const BIBLIOTECA_KEYS = [
   "obra-avaliacoes",
   "perfil-livros",
   "perfil-insights",
+  "minhas-leituras-lendo",
+  "minhas-leituras-concluidos",
+  "minhas-leituras-ultima-sessao",
+  "minhas-leituras-stats",
 ];
 
 /** Queries do perfil + clubes do usuário. */
