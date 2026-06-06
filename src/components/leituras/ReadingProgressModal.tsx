@@ -241,10 +241,16 @@ export const ReadingProgressModal = ({
           )}
 
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">
-            {loading ? "Salvando..." : "Salvar"}
+            {loading ? "Salvando..." : percentual !== null && percentual >= 100 ? "Concluir leitura" : "Salvar"}
           </Button>
         </div>
       </DialogContent>
+
+      <ConcluirLeituraDialog
+        open={askConcluir}
+        onOpenChange={setAskConcluir}
+        onConfirm={handleConcluir}
+      />
     </Dialog>
   );
 };
