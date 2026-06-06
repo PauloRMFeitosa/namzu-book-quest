@@ -76,6 +76,13 @@ export const ReadingProgressModal = ({
     if (pgAtualNum < ultimaPagina) {
       return toast.error(`A nova página não pode ser menor que ${ultimaPagina} (última registrada).`);
     }
+
+    // Ao atingir 100%, delega para o fluxo único de conclusão (com modal de data)
+    if (percentual !== null && percentual >= 100) {
+      setAskConcluir(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const body: Record<string, unknown> = {
@@ -103,6 +110,27 @@ export const ReadingProgressModal = ({
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao salvar progresso");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConcluir = async (dataFim: string) => {
+    setLoading(true);
+    try {
+      await concluirLeitura({
+        usuarioLeituraId,
+        obraId,
+        clubeId,
+        totalPaginas: totalEfetivo ?? null,
+        dataFim,
+      });
+      onSaved?.();
+      onOpenChange(false);
+    } catch (e: any) {
+      if (e?.message !== "data_fim_futura") {
+        toast.error(e?.message ?? "Erro ao concluir leitura");
+      }
     } finally {
       setLoading(false);
     }
