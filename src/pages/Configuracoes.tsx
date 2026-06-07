@@ -42,6 +42,19 @@ const Configuracoes = () => {
         </div>
         <FontSizeToggle />
       </div>
+      <button
+        onClick={() => navigate("/termos")}
+        className="card-soft p-4 flex items-center justify-between w-full text-left hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <FileText className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-semibold text-sm">Termos e Privacidade</p>
+            <p className="text-xs text-muted-foreground">Termos de uso, política de privacidade e diretrizes</p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </button>
       <Button onClick={handleSignOut} variant="outline" className="h-[52px] rounded-2xl border-2 text-destructive border-destructive/30 hover:bg-destructive/10">
         <LogOut className="w-4 h-4" /> Sair da conta
       </Button>
