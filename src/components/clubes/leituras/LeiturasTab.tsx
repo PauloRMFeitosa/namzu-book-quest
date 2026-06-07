@@ -96,6 +96,8 @@ const TrilhaCard = ({
   const qc = useQueryClient();
   const [navLoading, setNavLoading] = useState(false);
   const [escolhaOpen, setEscolhaOpen] = useState(false);
+  const [confirmIniciarOpen, setConfirmIniciarOpen] = useState(false);
+  const [progressoOpen, setProgressoOpen] = useState(false);
   const [leituraConcluidaId, setLeituraConcluidaId] = useState<string | null>(null);
   const [usuarioLivroIdCache, setUsuarioLivroIdCache] = useState<string | null>(null);
 
