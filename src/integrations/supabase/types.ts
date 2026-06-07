@@ -1833,6 +1833,130 @@ export type Database = {
         }
         Relationships: []
       }
+      obras_duplicadas: {
+        Row: {
+          analisado_em: string | null
+          analisado_por: string | null
+          created_at: string
+          detalhes: Json | null
+          id: string
+          merge_automatico: boolean
+          mesclado_em: string | null
+          obra_a_id: string
+          obra_b_id: string
+          obra_maior_id: string
+          obra_mantida_id: string | null
+          obra_menor_id: string
+          obra_removida_id: string | null
+          observacao: string | null
+          score_ano: number
+          score_autor: number
+          score_datas: number
+          score_isbn: number
+          score_paginas: number
+          score_titulo: number
+          score_total: number
+          status: string
+          updated_at: string
+          versao_algoritmo: string | null
+        }
+        Insert: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          merge_automatico?: boolean
+          mesclado_em?: string | null
+          obra_a_id: string
+          obra_b_id: string
+          obra_maior_id: string
+          obra_mantida_id?: string | null
+          obra_menor_id: string
+          obra_removida_id?: string | null
+          observacao?: string | null
+          score_ano?: number
+          score_autor?: number
+          score_datas?: number
+          score_isbn?: number
+          score_paginas?: number
+          score_titulo?: number
+          score_total?: number
+          status?: string
+          updated_at?: string
+          versao_algoritmo?: string | null
+        }
+        Update: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          merge_automatico?: boolean
+          mesclado_em?: string | null
+          obra_a_id?: string
+          obra_b_id?: string
+          obra_maior_id?: string
+          obra_mantida_id?: string | null
+          obra_menor_id?: string
+          obra_removida_id?: string | null
+          observacao?: string | null
+          score_ano?: number
+          score_autor?: number
+          score_datas?: number
+          score_isbn?: number
+          score_paginas?: number
+          score_titulo?: number
+          score_total?: number
+          status?: string
+          updated_at?: string
+          versao_algoritmo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_duplicadas_obra_a_id_fkey"
+            columns: ["obra_a_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_b_id_fkey"
+            columns: ["obra_b_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_maior_id_fkey"
+            columns: ["obra_maior_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_mantida_id_fkey"
+            columns: ["obra_mantida_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_menor_id_fkey"
+            columns: ["obra_menor_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_removida_id_fkey"
+            columns: ["obra_removida_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           created_at: string | null
@@ -2417,6 +2541,20 @@ export type Database = {
       }
     }
     Functions: {
+      calcular_similaridade_obras: {
+        Args: { p_obra_a: string; p_obra_b: string }
+        Returns: {
+          detalhes: Json
+          merge_automatico: boolean
+          score_ano: number
+          score_autor: number
+          score_datas: number
+          score_isbn: number
+          score_paginas: number
+          score_titulo: number
+          score_total: number
+        }[]
+      }
       calcular_streak_leitura: {
         Args: { _user_id: string }
         Returns: {
@@ -2466,10 +2604,17 @@ export type Database = {
         Args: { _clube: string; _user: string }
         Returns: boolean
       }
+      normalize_book_text: { Args: { input_text: string }; Returns: string }
       refresh_ranking: { Args: never; Returns: undefined }
       registrar_progresso: {
         Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
         Returns: undefined
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      texto_similarity: {
+        Args: { texto_a: string; texto_b: string }
+        Returns: number
       }
     }
     Enums: {
