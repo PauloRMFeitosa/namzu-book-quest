@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings2 } from "lucide-react";
+import { LogOut, Settings2, FileText, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FontSizeToggle } from "@/components/FontSizeToggle";
 
