@@ -25,6 +25,7 @@ const drawerItems = [
   { to: "/historico", icon: History, label: "Histórico" },
   { to: "/notificacoes", icon: Bell, label: "Notificações" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
+  { to: "/termos", icon: FileText, label: "Termos e Privacidade" },
 ];
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
