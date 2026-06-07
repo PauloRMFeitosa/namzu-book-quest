@@ -4,6 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,6 +44,8 @@ const ObraDetalhe = () => {
   const qc = useQueryClient();
   const [adicionando, setAdicionando] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [confirmIniciarOpen, setConfirmIniciarOpen] = useState(false);
+  const [iniciando, setIniciando] = useState(false);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
@@ -227,6 +237,48 @@ const ObraDetalhe = () => {
         defaultTemplate="recommend"
       />
 
+      <Dialog open={confirmIniciarOpen} onOpenChange={setConfirmIniciarOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deseja iniciar a leitura deste livro?</DialogTitle>
+            <DialogDescription>
+              Ao iniciar: será criada uma nova leitura e o status do livro será alterado para “lendo”.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmIniciarOpen(false)} disabled={iniciando}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary-hover"
+              disabled={iniciando || !meuLivro}
+              onClick={async () => {
+                if (!meuLivro) return;
+                setIniciando(true);
+                try {
+                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
+                  const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
+                  await supabase
+                    .from("usuario_livros")
+                    .update({ status: "lendo" })
+                    .eq("id", meuLivro.id);
+                  qc.invalidateQueries({ queryKey: ["meu-livro-obra", user?.id, id] });
+                  invalidateLeituras(qc);
+                  setConfirmIniciarOpen(false);
+                  navigate(`/leituras/${novoId}`);
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao iniciar leitura");
+                } finally {
+                  setIniciando(false);
+                }
+              }}
+            >
+              {iniciando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar leitura"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Cabeçalho */}
       <div className="flex gap-4">
         {capa ? (
@@ -308,7 +360,7 @@ const ObraDetalhe = () => {
             </span>
             <Button
               onClick={async () => {
-                // Busca experiência ativa para essa estante
+                // Verifica se já existe leitura para abrir diretamente; senão pede confirmação
                 const { data: exp } = await supabase
                   .from("usuario_leituras")
                   .select("id")
@@ -316,13 +368,10 @@ const ObraDetalhe = () => {
                   .order("updated_at", { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                if (exp?.id) navigate(`/leituras/${exp.id}`);
-                else {
-                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
-                  try {
-                    const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
-                    navigate(`/leituras/${novoId}`);
-                  } catch (e: any) { toast.error(e.message); }
+                if (exp?.id) {
+                  navigate(`/leituras/${exp.id}`);
+                } else {
+                  setConfirmIniciarOpen(true);
                 }
               }}
               className="rounded-xl bg-primary hover:bg-primary-hover"

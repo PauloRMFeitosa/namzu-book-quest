@@ -26,6 +26,7 @@ export interface TrilhaItem {
     capitulo_atual: string | null;
     pagina_atual: number | null;
     data_conclusao: string | null;
+    usuario_leitura_id: string;
   } | null;
 }
 
@@ -152,6 +153,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
             capitulo_atual: null,
             pagina_atual: paginaPorUL.get(minhaLeitura.id) ?? null,
             data_conclusao: minhaLeitura.data_fim,
+            usuario_leitura_id: minhaLeitura.id,
           };
         }
 

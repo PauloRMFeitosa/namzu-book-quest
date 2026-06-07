@@ -96,6 +96,8 @@ const TrilhaCard = ({
   const qc = useQueryClient();
   const [navLoading, setNavLoading] = useState(false);
   const [escolhaOpen, setEscolhaOpen] = useState(false);
+  const [confirmIniciarOpen, setConfirmIniciarOpen] = useState(false);
+  const [progressoOpen, setProgressoOpen] = useState(false);
   const [leituraConcluidaId, setLeituraConcluidaId] = useState<string | null>(null);
   const [usuarioLivroIdCache, setUsuarioLivroIdCache] = useState<string | null>(null);
 
@@ -369,19 +371,73 @@ const TrilhaCard = ({
                 </span>
               </div>
               <Progress value={meu?.percentual ?? 0} className="h-1.5" />
-              <ProgressoDialog
-                trilha={trilha}
+              {concluido && meu?.usuario_leitura_id ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl mt-2 self-start h-8 text-xs"
+                  onClick={() => navigate(`/leituras/${meu.usuario_leitura_id}`)}
+                >
+                  <BookOpen className="w-3 h-3" /> Ver leitura
+                </Button>
+              ) : meu ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl mt-2 self-start h-8 text-xs"
+                  onClick={() => setProgressoOpen(true)}
+                >
+                  Atualizar progresso
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl mt-2 self-start h-8 text-xs"
+                  onClick={() => setConfirmIniciarOpen(true)}
+                  disabled={navLoading}
+                >
+                  Iniciar leitura
+                </Button>
+              )}
+              <ReadingProgressModal
+                open={progressoOpen}
+                onOpenChange={setProgressoOpen}
+                usuarioLeituraId={meu?.usuario_leitura_id ?? null}
                 clubeId={clubeId}
-                trigger={
-                  <Button size="sm" variant="outline" className="rounded-xl mt-2 self-start h-8 text-xs">
-                    {meu ? "Atualizar progresso" : "Iniciar leitura"}
-                  </Button>
-                }
+                totalPaginas={trilha.total_paginas ?? null}
+                ultimaPagina={meu?.pagina_atual ?? 0}
               />
             </div>
           )}
         </div>
       </article>
+
+      <Dialog open={confirmIniciarOpen} onOpenChange={setConfirmIniciarOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Deseja iniciar a leitura deste livro?</DialogTitle>
+            <DialogDescription>
+              Ao iniciar: será criada uma nova leitura, o status do livro será alterado para “lendo” e a leitura será vinculada ao contexto do clube.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmIniciarOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary-hover"
+              disabled={navLoading}
+              onClick={async () => {
+                setConfirmIniciarOpen(false);
+                await abrirLivro();
+              }}
+            >
+              Iniciar leitura
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={escolhaOpen} onOpenChange={setEscolhaOpen}>
         <DialogContent className="max-w-md">
