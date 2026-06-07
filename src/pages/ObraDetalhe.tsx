@@ -237,6 +237,48 @@ const ObraDetalhe = () => {
         defaultTemplate="recommend"
       />
 
+      <Dialog open={confirmIniciarOpen} onOpenChange={setConfirmIniciarOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deseja iniciar a leitura deste livro?</DialogTitle>
+            <DialogDescription>
+              Ao iniciar: será criada uma nova leitura e o status do livro será alterado para “lendo”.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmIniciarOpen(false)} disabled={iniciando}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary-hover"
+              disabled={iniciando || !meuLivro}
+              onClick={async () => {
+                if (!meuLivro) return;
+                setIniciando(true);
+                try {
+                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
+                  const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
+                  await supabase
+                    .from("usuario_livros")
+                    .update({ status: "lendo" })
+                    .eq("id", meuLivro.id);
+                  qc.invalidateQueries({ queryKey: ["meu-livro-obra", user?.id, id] });
+                  invalidateLeituras(qc);
+                  setConfirmIniciarOpen(false);
+                  navigate(`/leituras/${novoId}`);
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao iniciar leitura");
+                } finally {
+                  setIniciando(false);
+                }
+              }}
+            >
+              {iniciando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar leitura"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Cabeçalho */}
       <div className="flex gap-4">
         {capa ? (
