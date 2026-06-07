@@ -26,6 +26,7 @@ export interface TrilhaItem {
     capitulo_atual: string | null;
     pagina_atual: number | null;
     data_conclusao: string | null;
+    usuario_leitura_id: string;
   } | null;
 }
 
