@@ -318,7 +318,7 @@ const ObraDetalhe = () => {
             </span>
             <Button
               onClick={async () => {
-                // Busca experiência ativa para essa estante
+                // Verifica se já existe leitura para abrir diretamente; senão pede confirmação
                 const { data: exp } = await supabase
                   .from("usuario_leituras")
                   .select("id")
@@ -326,13 +326,10 @@ const ObraDetalhe = () => {
                   .order("updated_at", { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                if (exp?.id) navigate(`/leituras/${exp.id}`);
-                else {
-                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
-                  try {
-                    const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
-                    navigate(`/leituras/${novoId}`);
-                  } catch (e: any) { toast.error(e.message); }
+                if (exp?.id) {
+                  navigate(`/leituras/${exp.id}`);
+                } else {
+                  setConfirmIniciarOpen(true);
                 }
               }}
               className="rounded-xl bg-primary hover:bg-primary-hover"
