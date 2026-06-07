@@ -22,6 +22,7 @@ import Metas from "./pages/Metas";
 import Historico from "./pages/Historico";
 import Notificacoes from "./pages/Notificacoes";
 import Configuracoes from "./pages/Configuracoes";
+import TermosDeUso from "./pages/TermosDeUso";
 import CadastroManual from "./pages/CadastroManual";
 import ObraDetalhe from "./pages/ObraDetalhe";
 import Admin from "./pages/admin/Admin";
