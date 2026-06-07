@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
-import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield } from "lucide-react";
+import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield, FileText } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";

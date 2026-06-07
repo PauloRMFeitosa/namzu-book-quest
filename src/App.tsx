@@ -69,6 +69,7 @@ const App = () => (
             <Route path="/historico" element={<ProtectedRoute><FeatureRoute flag="show_historico"><Historico /></FeatureRoute></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><FeatureRoute flag="show_notificacoes"><Notificacoes /></FeatureRoute></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+            <Route path="/termos" element={<ProtectedRoute><TermosDeUso /></ProtectedRoute>} />
             <Route path="/cadastro-manual" element={<ProtectedRoute><CadastroManual /></ProtectedRoute>} />
             <Route path="/obras/:id" element={<ProtectedRoute><ObraDetalhe /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
