@@ -30,13 +30,20 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {!concluido && (
-            <Button size="sm" variant="outline" className="rounded-xl h-9" onClick={() => setOpenConcluir(true)}>
-              <CheckCircle2 className="w-3.5 h-3.5" /> Concluir leitura
-            </Button>
+            <>
+              <Button size="sm" variant="outline" className="rounded-xl h-9" onClick={() => setOpenConcluir(true)}>
+                <CheckCircle2 className="w-3.5 h-3.5" /> Concluir leitura
+              </Button>
+              <Button size="sm" className="rounded-xl h-9" onClick={() => setOpen(true)}>
+                <Plus className="w-3.5 h-3.5" /> Atualizar progresso
+              </Button>
+            </>
           )}
-          <Button size="sm" className="rounded-xl h-9" onClick={() => setOpen(true)}>
-            <Plus className="w-3.5 h-3.5" /> Atualizar progresso
-          </Button>
+          {concluido && (
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success" /> Esta leitura já foi concluída.
+            </span>
+          )}
         </div>
       </div>
 
