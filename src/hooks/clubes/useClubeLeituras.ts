@@ -153,6 +153,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
             capitulo_atual: null,
             pagina_atual: paginaPorUL.get(minhaLeitura.id) ?? null,
             data_conclusao: minhaLeitura.data_fim,
+            usuario_leitura_id: minhaLeitura.id,
           };
         }
 
