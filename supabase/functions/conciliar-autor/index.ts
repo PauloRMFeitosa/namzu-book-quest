@@ -102,12 +102,12 @@ Deno.serve(async (req) => {
     const { data: existingFonte } = await admin
       .from("fontes_externas")
       .select("id")
-      .eq("tipo_entidade", "autores" as any)
+      .eq("tipo_entidade", "autor" as any)
       .eq("entidade_id", autorId)
       .eq("fonte", "wikidata")
       .maybeSingle();
     const fontePayload: any = {
-      tipo_entidade: "autores",
+      tipo_entidade: "autor",
       entidade_id: autorId,
       fonte: "wikidata",
       identificador_externo: cand.qid,

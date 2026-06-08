@@ -97,13 +97,13 @@ async function aplicarConciliacao(
   const { data: existingFonte } = await admin
     .from("fontes_externas")
     .select("id")
-    .eq("tipo_entidade", "autores" as any)
+    .eq("tipo_entidade", "autor" as any)
     .eq("entidade_id", autor.id)
     .eq("fonte", "wikidata")
     .maybeSingle();
 
   const fontePayload: any = {
-    tipo_entidade: "autores",
+    tipo_entidade: "autor",
     entidade_id: autor.id,
     fonte: "wikidata",
     identificador_externo: cand.qid,
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
         await admin.from("integracoes_execucoes_itens").insert({
           execucao_id: execucaoId,
           entidade_id: autor.id,
-          tipo_entidade: "autores",
+          tipo_entidade: "autor",
           nome_referencia: autor.nome_completo,
           status: r.status,
           mensagem: r.mensagem,
@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
         await admin.from("integracoes_execucoes_itens").insert({
           execucao_id: execucaoId,
           entidade_id: autor.id,
-          tipo_entidade: "autores",
+          tipo_entidade: "autor",
           nome_referencia: autor.nome_completo,
           status: "erro",
           mensagem: e?.message ?? "erro",
