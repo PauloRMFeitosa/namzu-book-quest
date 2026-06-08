@@ -34,24 +34,113 @@ export type Database = {
       }
       autores: {
         Row: {
+          aliases: Json
+          data_falecimento: string | null
+          data_nascimento: string | null
+          data_ultima_conciliacao: string | null
+          descricao: string | null
+          foto_url: string | null
           id: string
+          nacionalidade: string | null
+          nome_cadastro: string | null
           nome_completo: string
           nome_normalizado: string | null
           nome_ordenacao: string
+          status_conciliacao: string
+          tentativas_conciliacao: number
         }
         Insert: {
+          aliases?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          data_ultima_conciliacao?: string | null
+          descricao?: string | null
+          foto_url?: string | null
           id?: string
+          nacionalidade?: string | null
+          nome_cadastro?: string | null
           nome_completo: string
           nome_normalizado?: string | null
           nome_ordenacao: string
+          status_conciliacao?: string
+          tentativas_conciliacao?: number
         }
         Update: {
+          aliases?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          data_ultima_conciliacao?: string | null
+          descricao?: string | null
+          foto_url?: string | null
           id?: string
+          nacionalidade?: string | null
+          nome_cadastro?: string | null
           nome_completo?: string
           nome_normalizado?: string | null
           nome_ordenacao?: string
+          status_conciliacao?: string
+          tentativas_conciliacao?: number
         }
         Relationships: []
+      }
+      autores_candidatos_wikidata: {
+        Row: {
+          autor_id: string
+          created_at: string
+          dados_externos: Json
+          data_falecimento: string | null
+          data_nascimento: string | null
+          descricao: string | null
+          foto_url: string | null
+          id: string
+          nacionalidade: string | null
+          nome: string
+          qid: string
+          score_namzu: number
+          updated_at: string
+          url_wikidata: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          dados_externos: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          descricao?: string | null
+          foto_url?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome: string
+          qid: string
+          score_namzu: number
+          updated_at?: string
+          url_wikidata: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          dados_externos?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          descricao?: string | null
+          foto_url?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome?: string
+          qid?: string
+          score_namzu?: number
+          updated_at?: string
+          url_wikidata?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autores_candidatos_wikidata_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clube_canais: {
         Row: {
@@ -971,6 +1060,48 @@ export type Database = {
           },
         ]
       }
+      fontes_externas: {
+        Row: {
+          created_at: string
+          dados_externos: Json | null
+          data_sincronizacao: string | null
+          entidade_id: string
+          fonte: string
+          id: string
+          identificador_externo: string
+          score_confianca: number | null
+          tipo_entidade: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at: string
+          url_externa: string | null
+        }
+        Insert: {
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          entidade_id: string
+          fonte: string
+          id?: string
+          identificador_externo: string
+          score_confianca?: number | null
+          tipo_entidade: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Update: {
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          entidade_id?: string
+          fonte?: string
+          id?: string
+          identificador_externo?: string
+          score_confianca?: number | null
+          tipo_entidade?: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Relationships: []
+      }
       gamificacao_perfis: {
         Row: {
           nivel: number
@@ -1095,6 +1226,104 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      integracoes_execucoes: {
+        Row: {
+          created_at: string
+          finalizado_em: string | null
+          fonte: string
+          id: string
+          iniciado_em: string
+          quantidade_erro: number
+          quantidade_processada: number
+          quantidade_solicitada: number
+          quantidade_sucesso: number
+          status: string
+          tipo_processo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finalizado_em?: string | null
+          fonte: string
+          id?: string
+          iniciado_em?: string
+          quantidade_erro?: number
+          quantidade_processada?: number
+          quantidade_solicitada?: number
+          quantidade_sucesso?: number
+          status?: string
+          tipo_processo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finalizado_em?: string | null
+          fonte?: string
+          id?: string
+          iniciado_em?: string
+          quantidade_erro?: number
+          quantidade_processada?: number
+          quantidade_solicitada?: number
+          quantidade_sucesso?: number
+          status?: string
+          tipo_processo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integracoes_execucoes_itens: {
+        Row: {
+          created_at: string
+          dados_requisicao: Json | null
+          dados_resposta: Json | null
+          entidade_id: string
+          execucao_id: string
+          id: string
+          mensagem: string | null
+          nome_referencia: string
+          processado_em: string
+          status: string
+          tipo_entidade: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dados_requisicao?: Json | null
+          dados_resposta?: Json | null
+          entidade_id: string
+          execucao_id: string
+          id?: string
+          mensagem?: string | null
+          nome_referencia: string
+          processado_em?: string
+          status: string
+          tipo_entidade: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dados_requisicao?: Json | null
+          dados_resposta?: Json | null
+          entidade_id?: string
+          execucao_id?: string
+          id?: string
+          mensagem?: string | null
+          nome_referencia?: string
+          processado_em?: string
+          status?: string
+          tipo_entidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_execucoes_itens_execucao_id_fkey"
+            columns: ["execucao_id"]
+            isOneToOne: false
+            referencedRelation: "integracoes_execucoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interesses: {
         Row: {
@@ -2619,6 +2848,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      tipo_entidade_enum: "autor" | "obra" | "edicao" | "editora"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2747,6 +2977,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      tipo_entidade_enum: ["autor", "obra", "edicao", "editora"],
     },
   },
 } as const

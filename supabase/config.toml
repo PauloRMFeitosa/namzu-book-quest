@@ -29,3 +29,10 @@ verify_jwt = false
 
 [functions.obra-estatisticas]
 verify_jwt = false
+
+[functions.reprocessar-autores]
+verify_jwt = false
+
+[functions.conciliar-autor]
+verify_jwt = false
+
