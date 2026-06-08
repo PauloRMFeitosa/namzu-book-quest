@@ -13,6 +13,8 @@ export interface ClubeDetalhe {
   duracao_tipo: string;
   objetivo: string | null;
   regras: string | null;
+  categoria: string | null;
+  visibilidade: string | null;
   created_at: string;
   curador?: {
     user_id: string;
@@ -41,31 +43,51 @@ export const useClube = (id: string | undefined) => {
       if (error) throw error;
       if (!c) return null;
 
-      const [perfilRes, metricasRes, tagsRes] = await Promise.all([
+      const since7 = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const since30 = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+
+      const [perfilRes, membrosRes, posts7Res, posts30Res, tagsRes] = await Promise.all([
         supabase
           .from("perfis")
           .select("user_id, username, nome_exibicao, avatar_url, bio")
           .eq("user_id", c.curador_id)
           .maybeSingle(),
         supabase
-          .from("clube_metricas")
-          .select("membros_count, ativos_7d, ativos_30d, engagement_score")
+          .from("clube_membros")
+          .select("user_id", { count: "exact" })
           .eq("clube_id", c.id)
-          .maybeSingle(),
+          .eq("status", "ativo"),
+        supabase
+          .from("clube_posts")
+          .select("user_id")
+          .eq("clube_id", c.id)
+          .gte("created_at", since7),
+        supabase
+          .from("clube_posts")
+          .select("user_id")
+          .eq("clube_id", c.id)
+          .gte("created_at", since30),
         supabase
           .from("clube_tags")
           .select("tags(nome)")
           .eq("clube_id", c.id),
       ]);
 
-      const m: any = metricasRes.data ?? {};
+      const membrosCount = membrosRes.count ?? (membrosRes.data?.length ?? 0);
+      const ativos7d = new Set((posts7Res.data ?? []).map((p: any) => p.user_id)).size;
+      const ativos30d = new Set((posts30Res.data ?? []).map((p: any) => p.user_id)).size;
+      const engagement = membrosCount > 0
+        ? Math.round((ativos7d / membrosCount) * 100)
+        : 0;
+
       return {
-        ...c,
+        ...(c as any),
+        categoria: (c as any).categoria ?? null,
         curador: perfilRes.data ?? null,
-        membros_count: m.membros_count ?? 0,
-        ativos_7d: m.ativos_7d ?? 0,
-        ativos_30d: m.ativos_30d ?? 0,
-        engagement_score: Number(m.engagement_score ?? 0),
+        membros_count: membrosCount,
+        ativos_7d: ativos7d,
+        ativos_30d: ativos30d,
+        engagement_score: engagement,
         tags: (tagsRes.data ?? []).map((r: any) => r.tags?.nome).filter(Boolean),
       } as ClubeDetalhe;
     },
@@ -84,28 +106,143 @@ export const useClubeMembership = (clubeId: string | undefined) => {
         .eq("clube_id", clubeId!)
         .eq("user_id", user!.id)
         .maybeSingle();
+      // Se o usuário já está ativo, garante que os livros da trilha estejam
+      // sincronizados na biblioteca dele (executa sob o próprio auth — passa RLS).
+      if (data?.status === "ativo" && user && clubeId) {
+        try { await sincronizarLivrosClube(user.id, clubeId); } catch (e) { console.warn("sync livros (membership) falhou", e); }
+      }
       return data;
     },
   });
 };
 
+async function sincronizarLivrosClube(userId: string, clubeId: string) {
+  const { data: trilhas } = await supabase
+    .from("clube_trilhas")
+    .select("obra_id")
+    .eq("clube_id", clubeId);
+  const obraIds = Array.from(new Set((trilhas ?? []).map((t: any) => t.obra_id)));
+  if (!obraIds.length) return;
+
+  const { data: existentes } = await supabase
+    .from("usuario_livros")
+    .select("id, obra_id, status")
+    .eq("user_id", userId)
+    .in("obra_id", obraIds);
+  const byObra = new Map<string, { id: string; status: string }>(
+    (existentes ?? []).map((r: any) => [r.obra_id, { id: r.id, status: r.status }])
+  );
+
+  const today = new Date().toISOString().slice(0, 10);
+  for (const obra_id of obraIds) {
+    let usuarioLivroId: string | undefined;
+    const ex = byObra.get(obra_id);
+    if (!ex) {
+      const { data: novo } = await supabase
+        .from("usuario_livros")
+        .insert({ user_id: userId, obra_id, status: "quero_ler" })
+        .select("id")
+        .single();
+      usuarioLivroId = novo?.id;
+    } else {
+      usuarioLivroId = ex.id;
+      if (ex.status === "lido" || ex.status === "concluido") {
+        await supabase
+          .from("usuario_livros")
+          .update({ status: "relendo", updated_at: new Date().toISOString() })
+          .eq("id", ex.id);
+      }
+    }
+    if (!usuarioLivroId) continue;
+  }
+}
+
 export const useEntrarClube = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (status: "ativo" | "pendente" = "pendente") => {
       if (!user || !clubeId) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("clube_membros")
-        .insert({ clube_id: clubeId, user_id: user.id, status: "ativo" });
+        .insert({ clube_id: clubeId, user_id: user.id, status } as any);
       if (error) throw error;
+      return status;
+    },
+    onSuccess: (status) => {
+      if (status === "ativo") {
+        toast.success("Bem-vindo ao clube!");
+      } else {
+        toast.success("Solicitação enviada! Aguarde aprovação do curador.");
+      }
+      qc.invalidateQueries({ queryKey: ["clube-membership", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
+  });
+};
+
+export const useAprovarMembro = (clubeId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!clubeId) throw new Error("Clube inválido");
+      const { error } = await supabase
+        .from("clube_membros")
+        .update({ status: "ativo" })
+        .eq("clube_id", clubeId)
+        .eq("user_id", userId);
+      if (error) throw error;
+      // Sincroniza livros somente após aprovação
+      try { await sincronizarLivrosClube(userId, clubeId); } catch (e) { console.warn("sync livros falhou", e); }
     },
     onSuccess: () => {
-      toast.success("Bem-vindo ao clube!");
+      toast.success("Membro aprovado");
+      qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
       qc.invalidateQueries({ queryKey: ["clube-membership", clubeId] });
       qc.invalidateQueries({ queryKey: ["clube", clubeId] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao aprovar"),
+  });
+};
+
+export const useRejeitarMembro = (clubeId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!clubeId) throw new Error("Clube inválido");
+      const { error } = await supabase
+        .from("clube_membros")
+        .delete()
+        .eq("clube_id", clubeId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação rejeitada");
+      qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao rejeitar"),
+  });
+};
+
+export const useDefinirPapelMembro = (clubeId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, papel }: { userId: string; papel: "membro" | "moderador" }) => {
+      if (!clubeId) throw new Error("Clube inválido");
+      const { error } = await supabase
+        .from("clube_membros")
+        .update({ papel } as any)
+        .eq("clube_id", clubeId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Papel atualizado");
+      qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao alterar papel"),
   });
 };
 

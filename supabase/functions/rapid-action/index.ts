@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import slugify from "https://esm.sh/slugify@1.6.6";
+import { persistGenresForObra } from "../_shared/generos.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,6 +96,7 @@ async function upsertObraComAutores(input: {
   sinopse: string | null;
   capa_url: string | null;
   sourceId?: string | null;
+  generos?: unknown;
 }) {
   const slug = makeSlug(input.titulo, input.sourceId ?? undefined);
 
@@ -130,8 +133,17 @@ async function upsertObraComAutores(input: {
     if (a) await vincularAutor(obra.id, a.id, ordem++);
   }
 
-  return obra;
+  // Persistência aditiva de gêneros (não remove vínculos existentes)
+  let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
+  try {
+    generosInfo = await persistGenresForObra(supabase, obra.id, input.generos);
+  } catch (e) {
+    console.warn("persistGenresForObra falhou", e);
+  }
+
+  return { ...obra, generos: generosInfo.nomes, generos_ids: generosInfo.ids };
 }
+
 
 async function upsertEdicaoParaObra(
   obraId: string,
@@ -188,6 +200,7 @@ async function handleRegistrarResultado(payload: any) {
     sinopse: payload.descricao ?? payload.sinopse ?? null,
     capa_url: payload.capa_url ?? null,
     sourceId: payload.sourceId ?? payload.isbn13 ?? null,
+    generos: payload.generos ?? payload.categories ?? payload.subjects ?? null,
   });
 
   let edicao = null;
@@ -213,9 +226,12 @@ async function handleRegistrarResultado(payload: any) {
       capa_padrao_url: obra.capa_padrao_url,
       ano_primeira_publicacao: obra.ano_primeira_publicacao,
       autor: (payload.autores ?? [])[0] ?? null,
+      generos: (obra as any).generos ?? [],
+      generos_ids: (obra as any).generos_ids ?? [],
     },
     edicao,
   });
+
 }
 
 // =========================
@@ -344,7 +360,9 @@ async function searchGoogle({ isbn13, titulo, autor }: any) {
     publishedDate: info.publishedDate,
     isbn13: info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")?.identifier,
     sourceId: data.items[0].id,
+    categories: info.categories ?? [],
   };
+
 }
 
 async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
@@ -365,7 +383,9 @@ async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
       publishedDate: data.publish_date,
       isbn13,
       sourceId: isbn13,
+      categories: data.subjects ?? [],
     };
+
   }
 
   url = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo || "")}&author=${encodeURIComponent(autor || "")}`;
@@ -386,8 +406,10 @@ async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
     publishedDate: book.first_publish_year,
     isbn13: book.isbn?.[0],
     sourceId: book.key,
+    categories: book.subject ?? [],
   };
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -448,6 +470,14 @@ serve(async (req) => {
       if (a) await vincularAutor(obraId, a.id, 1);
     }
 
+    // Persistência de gêneros (aditiva, idempotente)
+    let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
+    try {
+      generosInfo = await persistGenresForObra(supabase, obraId, (book as any).categories);
+    } catch (e) {
+      console.warn("persistGenresForObra falhou", e);
+    }
+
     if (book.isbn13) {
       const { data: exist } = await supabase
         .from("edicoes")
@@ -480,9 +510,12 @@ serve(async (req) => {
           ? parseInt(book.publishedDate.toString().substring(0, 4))
           : null,
         autor: (book.authors || [])[0] || null,
+        generos: generosInfo.nomes,
+        generos_ids: generosInfo.ids,
       },
       fonte: book.isbn13 ? "google/openlibrary" : "fallback",
     });
+
   } catch (err: any) {
     return json({ error: err?.message || "Erro interno" }, 500);
   }

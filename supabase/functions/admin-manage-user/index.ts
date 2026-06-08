@@ -6,6 +6,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const PERFIL_FIELDS = [
+  "username", "nome_exibicao", "bio", "avatar_url", "banner_url",
+  "cidade", "pais", "tipo_perfil", "verificado",
+  "instagram_url", "youtube_url", "tiktok_url", "site_url",
+];
+
+const GAM_FIELDS = ["xp_total", "nivel", "streak_atual", "streak_maximo"];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,7 +50,7 @@ Deno.serve(async (req) => {
     if (!roleRow) return json(403, { error: "Acesso negado" });
 
     const body = await req.json();
-    const { action, user_id, email, password, full_name } = body ?? {};
+    const { action, user_id, email, password, full_name, perfil, gamificacao, is_admin } = body ?? {};
 
     if (!action || !user_id) return json(400, { error: "action e user_id obrigatórios" });
     if (user_id === userData.user.id && action === "delete") {
@@ -54,8 +62,59 @@ Deno.serve(async (req) => {
       if (email) attrs.email = email;
       if (password) attrs.password = password;
       if (full_name !== undefined) attrs.user_metadata = { full_name };
-      const { error } = await admin.auth.admin.updateUserById(user_id, attrs);
-      if (error) return json(400, { error: error.message });
+      if (Object.keys(attrs).length) {
+        const { error } = await admin.auth.admin.updateUserById(user_id, attrs);
+        if (error) return json(400, { error: error.message });
+      }
+
+      // perfis
+      if (perfil && typeof perfil === "object") {
+        const patch: Record<string, unknown> = {};
+        for (const k of PERFIL_FIELDS) {
+          if (perfil[k] !== undefined) patch[k] = perfil[k] === "" ? null : perfil[k];
+        }
+        if (Object.keys(patch).length) {
+          const { data: existing } = await admin.from("perfis").select("user_id").eq("user_id", user_id).maybeSingle();
+          if (existing) {
+            const { error } = await admin.from("perfis").update(patch).eq("user_id", user_id);
+            if (error) return json(400, { error: `perfis: ${error.message}` });
+          } else {
+            const insertPayload: Record<string, unknown> = { user_id, ...patch };
+            if (!insertPayload.username) insertPayload.username = `user_${user_id.slice(0, 8)}`;
+            if (!insertPayload.nome_exibicao) insertPayload.nome_exibicao = full_name ?? insertPayload.username;
+            const { error } = await admin.from("perfis").insert(insertPayload);
+            if (error) return json(400, { error: `perfis insert: ${error.message}` });
+          }
+        }
+      }
+
+      // gamificacao_perfis
+      if (gamificacao && typeof gamificacao === "object") {
+        const patch: Record<string, unknown> = {};
+        for (const k of GAM_FIELDS) {
+          if (gamificacao[k] !== undefined && gamificacao[k] !== "") patch[k] = Number(gamificacao[k]);
+        }
+        if (Object.keys(patch).length) {
+          const { data: existing } = await admin.from("gamificacao_perfis").select("user_id").eq("user_id", user_id).maybeSingle();
+          if (existing) {
+            const { error } = await admin.from("gamificacao_perfis").update(patch).eq("user_id", user_id);
+            if (error) return json(400, { error: `gamificacao: ${error.message}` });
+          } else {
+            const { error } = await admin.from("gamificacao_perfis").insert({ user_id, ...patch });
+            if (error) return json(400, { error: `gamificacao insert: ${error.message}` });
+          }
+        }
+      }
+
+      // admin role
+      if (typeof is_admin === "boolean") {
+        if (is_admin) {
+          await admin.from("user_roles").upsert({ user_id, role: "admin" }, { onConflict: "user_id,role" });
+        } else {
+          await admin.from("user_roles").delete().eq("user_id", user_id).eq("role", "admin");
+        }
+      }
+
       return json(200, { ok: true });
     }
 

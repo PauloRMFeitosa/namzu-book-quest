@@ -29,7 +29,8 @@ export type LivroDetalhe = {
   tipo_origem: string;
   usuario_livro_id: string;
   obras: any;
-  edicoes: { id: string; num_paginas: number | null; capa_url: string | null } | null;
+  autores: { id: string; nome: string }[];
+  edicoes: { id: string; num_paginas: number | null; capa_url: string | null; editora: string | null } | null;
   leituras: LeituraFull[];
   /** sessão pos_leitura + leitura_pos */
   pos_leitura: LeituraFull | null;
@@ -44,7 +45,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
     queryFn: async (): Promise<LivroDetalhe | null> => {
       const { data: ul, error } = await supabase
         .from("usuario_leituras")
-        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*), edicoes(id, num_paginas, capa_url))")
+        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*, obra_autores(ordem, autores(id, nome_completo))), edicoes(id, num_paginas, capa_url, editora))")
         .eq("id", usuarioLeituraId!)
         .maybeSingle();
       if (error) throw error;
@@ -69,8 +70,12 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
       const leituras: LeituraFull[] = (leiturasRaw ?? []).map((l: any) => {
         const progressos = l.leitura_progresso ?? [];
-        const paginas_lidas = progressos.reduce((a: number, p: any) => a + (p.paginas_lidas ?? 0), 0) || null;
-        const last = progressos[progressos.length - 1];
+        const paginas_lidas = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.paginas_lidas ?? 0))) || null
+          : null;
+        const percentual_lido = progressos.length
+          ? Math.max(...progressos.map((p: any) => Number(p.percentual_lido ?? 0))) || null
+          : null;
         return {
           id: l.id,
           tipo: l.tipo,
@@ -78,7 +83,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
           data_fim: l.data_fim,
           created_at: l.created_at,
           paginas_lidas,
-          percentual_lido: last?.percentual_lido ?? null,
+          percentual_lido,
           leitura_pre: Array.isArray(l.leitura_pre) ? l.leitura_pre[0] ?? null : l.leitura_pre,
           leitura_conteudo: l.leitura_conteudo ?? [],
           leitura_citacoes: l.leitura_citacoes ?? [],
@@ -96,6 +101,33 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
       }
 
       const ul_any = ul as any;
+      const obrasRaw = ul_any.usuario_livros?.obras;
+      const autoresArr = (obrasRaw?.obra_autores ?? [])
+        .slice()
+        .sort((a: any, b: any) => (a.ordem ?? 0) - (b.ordem ?? 0))
+        .map((oa: any) => oa.autores && { id: oa.autores.id, nome: oa.autores.nome_completo })
+        .filter(Boolean);
+
+      // Fallback: se a edição vinculada não possui num_paginas, buscar
+      // qualquer outra edição da mesma obra que tenha — mesma lógica usada
+      // no fluxo de clubes (useClubeLeituras).
+      let edicoes = ul_any.usuario_livros?.edicoes ?? null;
+      const obraId = ul_any.usuario_livros?.obra_id;
+      if ((!edicoes || !edicoes.num_paginas) && obraId) {
+        const { data: alt } = await supabase
+          .from("edicoes")
+          .select("id, num_paginas, capa_url, editora")
+          .eq("obra_id", obraId)
+          .not("num_paginas", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (alt?.num_paginas) {
+          edicoes = edicoes
+            ? { ...edicoes, num_paginas: alt.num_paginas }
+            : alt;
+        }
+      }
+
       return {
         id: ul_any.id,
         status: ul_any.status,
@@ -104,8 +136,9 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         clube_id: ul_any.clube_id,
         tipo_origem: ul_any.tipo_origem,
         usuario_livro_id: ul_any.usuario_livro_id,
-        obras: ul_any.usuario_livros?.obras,
-        edicoes: ul_any.usuario_livros?.edicoes,
+        obras: obrasRaw,
+        autores: autoresArr,
+        edicoes,
         leituras,
         pos_leitura,
         leitura_pos,
@@ -116,11 +149,19 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
 
 export function calcularProgresso(livro: LivroDetalhe | null | undefined) {
   if (!livro) return { paginasLidas: 0, totalPaginas: null as number | null, percentual: 0, restantes: null as number | null };
-  const paginasLidas = livro.leituras
-    .filter((l) => l.tipo === "leitura")
-    .reduce((acc, l) => acc + (l.paginas_lidas ?? 0), 0);
+  const sessions = livro.leituras.filter((l) => l.tipo === "leitura");
   const total = livro.edicoes?.num_paginas ?? null;
-  const percentual = total && total > 0 ? Math.min(100, Math.round((paginasLidas / total) * 100)) : 0;
+  const paginasLidas = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.paginas_lidas ?? 0))
+    : 0;
+  const percentualSalvo = sessions.length
+    ? Math.max(0, ...sessions.map((s) => s.percentual_lido ?? 0))
+    : 0;
+  // Regra: quando temos total de páginas, sempre derivamos da página atual.
+  // Sem total, usamos o último percentual salvo.
+  const percentual = total && total > 0
+    ? Math.min(100, Math.round((paginasLidas / total) * 100))
+    : Math.min(100, Math.round(percentualSalvo));
   const restantes = total ? Math.max(0, total - paginasLidas) : null;
   return { paginasLidas, totalPaginas: total, percentual, restantes };
 }

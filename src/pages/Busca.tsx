@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,17 +15,13 @@ import {
   ArrowUpDown,
   X,
   Compass,
+  ScanLine,
 } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -33,6 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 type AddStatus = "quero_ler" | "lido";
 
@@ -71,6 +74,7 @@ interface ExternalResult {
   num_paginas?: number | null;
   idioma?: string | null;
   descricao?: string | null;
+  generos?: string[];
 }
 
 const cache = new Map<string, { local: LocalResult[]; externo: ExternalResult[] }>();
@@ -99,6 +103,7 @@ const Busca = () => {
   const [fTitulo, setFTitulo] = useState("");
   const [fAutor, setFAutor] = useState("");
   const [fIsbn, setFIsbn] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   // Termo "submetido" — só muda ao clicar em Buscar
   const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
 
@@ -109,6 +114,13 @@ const Busca = () => {
   const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
+  // Guard síncrono contra duplo-tap (touch + click ghost no iOS PWA)
+  const inFlightRef = useRef<Set<string>>(new Set());
+  // Alvo do modal de seleção de status
+  const [addTarget, setAddTarget] = useState<
+    | { key: string; titulo: string; autor?: string | null; capa?: string | null; onAdd: (s: AddStatus) => void }
+    | null
+  >(null);
 
   // Controles do acervo
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
@@ -348,46 +360,10 @@ const Busca = () => {
       setLocal(locais);
       setLoadingLocal(false);
 
-      if (locais.length > 0) {
+      if (locais.length === 0) {
+        await runExterno(titulo, autor, isbn, cacheKey, locais, () => cancelado);
+      } else {
         cache.set(cacheKey, { local: locais, externo: [] });
-        return;
-      }
-
-      setLoadingExterno(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("search-books", {
-          body: { titulo, autor, isbn },
-        });
-        if (error) throw error;
-        const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
-          origem: "externo" as const,
-          key: externalKey({
-            isbn13: b.isbn13 ?? null,
-            titulo: b.titulo,
-            autores: b.autores ?? [],
-          }),
-          titulo: b.titulo,
-          autores: b.autores ?? [],
-          ano: b.ano ?? null,
-          capa_url: b.capa_url ?? null,
-          isbn13: b.isbn13 ?? null,
-          fonte: b.fonte ?? "externo",
-          editora: b.editora ?? null,
-          num_paginas: b.num_paginas ?? null,
-          idioma: b.idioma ?? null,
-          descricao: b.descricao ?? null,
-        }));
-        if (cancelado) return;
-        setExterno(results);
-        cache.set(cacheKey, { local: [], externo: results });
-      } catch (e: any) {
-        console.error("search-books failed", e);
-        if (!cancelado) {
-          setErroExterno(true);
-          toast.error("Erro ao buscar em fontes externas");
-        }
-      } finally {
-        if (!cancelado) setLoadingExterno(false);
       }
     })();
 
@@ -395,6 +371,62 @@ const Busca = () => {
       cancelado = true;
     };
   }, [submitted]);
+
+  const runExterno = async (
+    titulo: string,
+    autor: string,
+    isbn: string,
+    cacheKey: string,
+    locais: LocalResult[],
+    isCancelado: () => boolean,
+  ) => {
+    setLoadingExterno(true);
+    setErroExterno(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("search-books", {
+        body: { titulo, autor, isbn },
+      });
+      if (error) throw error;
+      const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
+        origem: "externo" as const,
+        key: externalKey({
+          isbn13: b.isbn13 ?? null,
+          titulo: b.titulo,
+          autores: b.autores ?? [],
+        }),
+        titulo: b.titulo,
+        autores: b.autores ?? [],
+        ano: b.ano ?? null,
+        capa_url: b.capa_url ?? null,
+        isbn13: b.isbn13 ?? null,
+        fonte: b.fonte ?? "externo",
+        editora: b.editora ?? null,
+        num_paginas: b.num_paginas ?? null,
+        idioma: b.idioma ?? null,
+        descricao: b.descricao ?? null,
+        generos: Array.isArray(b.generos) ? b.generos : [],
+      }));
+      console.log("[Busca] resultados externos:", results.map((r) => ({ titulo: r.titulo, generos: r.generos })));
+      if (isCancelado()) return;
+      setExterno(results);
+      cache.set(cacheKey, { local: locais, externo: results });
+    } catch (e: any) {
+      console.error("search-books failed", e);
+      if (!isCancelado()) {
+        setErroExterno(true);
+        toast.error("Erro ao buscar em fontes externas");
+      }
+    } finally {
+      if (!isCancelado()) setLoadingExterno(false);
+    }
+  };
+
+  const handleBuscarExterno = () => {
+    if (!submitted) return;
+    const { titulo, autor, isbn } = submitted;
+    const cacheKey = `t:${titulo}|a:${autor}|i:${isbn}`.toLowerCase();
+    runExterno(titulo, autor, isbn, cacheKey, local, () => false);
+  };
 
   const handleBuscar = () => {
     const t = fTitulo.trim();
@@ -419,9 +451,27 @@ const Busca = () => {
   };
 
 
+  // Invalidations fora do caminho crítico, para não travar o toast em Android mediano
+  const invalidarLivros = () => {
+    const run = async () => {
+      const { invalidateLeituras } = await import("@/lib/queryInvalidation");
+      invalidateLeituras(qc);
+    };
+    const ric = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => number)
+      | undefined;
+    if (ric) ric(run, { timeout: 1500 });
+    else setTimeout(run, 0);
+  };
+
   const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
     if (!user) return;
+    // Guard síncrono: bloqueia duplo-tap (touch + click ghost) antes de qualquer await
+    if (inFlightRef.current.has(key) || adicionados.has(key)) return;
+    inFlightRef.current.add(key);
     setAdicionando(key);
+    // Feedback otimista imediato
+    setAdicionados((s) => new Set(s).add(key));
     const today = new Date().toISOString().slice(0, 10);
     const payload = {
       user_id: user.id,
@@ -430,30 +480,38 @@ const Busca = () => {
       ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
     };
     const { error } = await supabase.from("usuario_livros").insert(payload);
+    inFlightRef.current.delete(key);
     setAdicionando(null);
     if (error) {
-      console.error("adicionarLocal error", { code: error.code, message: error.message, details: (error as any).details, hint: (error as any).hint });
+      console.error("adicionarLocal error", { code: error.code, message: error.message });
       if (error.code === "23505") {
         toast.info("Este livro já está na sua biblioteca");
-        setAdicionados((s) => new Set(s).add(key));
         return;
       }
+      // Rollback otimista em erro real
+      setAdicionados((s) => {
+        const n = new Set(s);
+        n.delete(key);
+        return n;
+      });
       const msg = error.message?.includes("ranking_clube") || error.message?.includes("refresh")
         ? "Erro ao atualizar ranking. Tente novamente."
         : `Não foi possível adicionar: ${error.message}`;
       return toast.error(msg);
     }
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
-    setAdicionados((s) => new Set(s).add(key));
-    qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-    qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
-    qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+    invalidarLivros();
   };
 
   const adicionarExterno = async (b: ExternalResult, status: AddStatus) => {
     if (!user) return;
+    if (inFlightRef.current.has(b.key) || adicionados.has(b.key)) return;
+    inFlightRef.current.add(b.key);
     setAdicionando(b.key);
+    setAdicionados((s) => new Set(s).add(b.key));
+    const loadingId = toast.loading(
+      status === "lido" ? "Registrando como lido…" : "Adicionando em Quero ler…",
+    );
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
@@ -468,6 +526,7 @@ const Busca = () => {
           idioma: b.idioma ?? null,
           descricao: b.descricao ?? null,
           sourceId: b.isbn13 ?? b.key,
+          generos: b.generos ?? [],
         },
       });
       if (error) throw error;
@@ -482,7 +541,6 @@ const Busca = () => {
         ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
       });
       if (insErr && insErr.code !== "23505") {
-        console.error("adicionarExterno insert error", { code: insErr.code, message: insErr.message, details: (insErr as any).details, hint: (insErr as any).hint });
         const msg = insErr.message?.includes("ranking_clube") || insErr.message?.includes("refresh")
           ? "Erro ao atualizar ranking. Tente novamente."
           : insErr.message;
@@ -502,19 +560,26 @@ const Busca = () => {
         },
         ...arr,
       ]);
-      setAdicionados((s) => new Set(s).add(b.key));
-      toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
-      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
-      qc.invalidateQueries({ queryKey: ["meus-livros"] });
-      qc.invalidateQueries({ queryKey: ["meu-livro-obra"] });
-      qc.invalidateQueries({ queryKey: ["livro-detalhe"] });
+      toast.success(
+        status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler",
+        { id: loadingId },
+      );
+      invalidarLivros();
     } catch (e: any) {
       console.error("adicionarExterno", e);
-      toast.error(e?.message ?? "Erro ao adicionar");
+      // Rollback otimista
+      setAdicionados((s) => {
+        const n = new Set(s);
+        n.delete(b.key);
+        return n;
+      });
+      toast.error(e?.message ?? "Erro ao adicionar", { id: loadingId });
     } finally {
+      inFlightRef.current.delete(b.key);
       setAdicionando(null);
     }
   };
+
 
   const renderCard = (
     key: string,
@@ -566,31 +631,29 @@ const Busca = () => {
             {Info}
           </>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              disabled={busy || done}
-              className="rounded-xl bg-primary hover:bg-primary-hover"
-            >
-              {busy ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : done ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onAdd("quero_ler")}>
-              <BookmarkPlus className="w-4 h-4 mr-2" /> Quero ler
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAdd("lido")}>
-              <CheckCheck className="w-4 h-4 mr-2" /> Já lido
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          size="sm"
+          disabled={busy || done}
+          onClick={() =>
+            setAddTarget({
+              key,
+              titulo,
+              autor,
+              capa,
+              onAdd,
+            })
+          }
+          aria-label={done ? "Adicionado" : busy ? "Adicionando…" : "Adicionar à estante"}
+          className="rounded-xl bg-primary hover:bg-primary-hover touch-manipulation"
+        >
+          {busy ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : done ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </Button>
       </div>
     );
   };
@@ -640,14 +703,26 @@ const Busca = () => {
             placeholder="Autor"
             className="h-11 rounded-xl"
           />
-          <Input
-            value={fIsbn}
-            onChange={(e) => setFIsbn(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-            placeholder="ISBN (10 ou 13 dígitos)"
-            inputMode="numeric"
-            className="h-11 rounded-xl"
-          />
+          <div className="flex gap-2">
+            <Input
+              value={fIsbn}
+              onChange={(e) => setFIsbn(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+              placeholder="ISBN (10 ou 13 dígitos)"
+              inputMode="numeric"
+              className="h-11 rounded-xl flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-xl shrink-0"
+              onClick={() => setScannerOpen(true)}
+              title="Ler código de barras"
+            >
+              <ScanLine className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
@@ -799,6 +874,22 @@ const Busca = () => {
         </section>
       )}
 
+      {local.length > 0 && externo.length === 0 && !loadingExterno && !erroExterno && (
+        <Button
+          variant="outline"
+          onClick={handleBuscarExterno}
+          className="rounded-xl self-center"
+        >
+          <Globe className="w-4 h-4 mr-2" /> Buscar também em fontes externas
+        </Button>
+      )}
+
+      {local.length > 0 && loadingExterno && (
+        <p className="text-sm text-muted-foreground flex items-center gap-2">
+          <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
+        </p>
+      )}
+
       {!!submitted && !loadingLocal && local.length === 0 && loadingExterno && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Globe className="w-4 h-4 animate-pulse" /> Buscando em fontes externas…
@@ -846,6 +937,82 @@ const Busca = () => {
           </Button>
         </div>
       )}
+
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onDetected={(isbn) => {
+          setFIsbn(isbn);
+          setSubmitted({ titulo: fTitulo.trim(), autor: fAutor.trim(), isbn });
+        }}
+      />
+
+      <Dialog
+        open={!!addTarget}
+        onOpenChange={(open) => {
+          if (!open) setAddTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Adicionar à estante</DialogTitle>
+            <DialogDescription>Escolha o status desta obra na sua biblioteca.</DialogDescription>
+          </DialogHeader>
+          {addTarget && (
+            <div className="flex gap-3 items-center">
+              {addTarget.capa ? (
+                <img src={addTarget.capa} alt="" className="w-14 h-20 rounded-md object-cover" />
+              ) : (
+                <div className="w-14 h-20 rounded-md bg-secondary flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold line-clamp-2">{addTarget.titulo}</p>
+                {addTarget.autor && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{addTarget.autor}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              size="lg"
+              className="rounded-xl bg-primary hover:bg-primary-hover justify-start touch-manipulation"
+              disabled={!!adicionando}
+              onClick={() => {
+                const t = addTarget;
+                if (!t) return;
+                setAddTarget(null);
+                t.onAdd("quero_ler");
+              }}
+            >
+              <BookmarkPlus className="w-5 h-5 mr-2" /> Quero ler
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-xl justify-start touch-manipulation"
+              disabled={!!adicionando}
+              onClick={() => {
+                const t = addTarget;
+                if (!t) return;
+                setAddTarget(null);
+                t.onAdd("lido");
+              }}
+            >
+              <CheckCheck className="w-5 h-5 mr-2" /> Já li
+            </Button>
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => setAddTarget(null)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

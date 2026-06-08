@@ -21,6 +21,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { iniciarLeitura, registrarProgresso } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { PercentualProgressoControl } from "./PercentualProgressoControl";
 
 type Citacao = { texto: string; pagina: string };
 type Aplicacao = { descricao: string; plano_acao: any };
@@ -164,6 +166,20 @@ export const RegistrarLeituraDialog = ({
           paginas: paginasLidas ? Number(paginasLidas) : null,
           percentual: percentual ? Number(percentual) : null,
         });
+
+        // Invalida cache do clube vinculado (progresso agora é derivado de usuario_leituras/leitura_progresso)
+        try {
+          const { data: ul } = await supabase
+            .from("usuario_leituras")
+            .select("clube_id")
+            .eq("id", usuarioLeituraId)
+            .maybeSingle();
+          const clubeId = (ul as any)?.clube_id as string | null;
+          if (clubeId) qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+        } catch (e) {
+          console.warn("invalidate clube cache falhou", e);
+        }
+
       }
 
       if (resumo.trim() || conceito.trim()) {
@@ -238,6 +254,7 @@ export const RegistrarLeituraDialog = ({
       setConfirmClose(false);
       baseSetOpen(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -250,8 +267,8 @@ export const RegistrarLeituraDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       {!hideTrigger && (
         <DialogTrigger asChild>
-          <Button disabled={disabled} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
-            <Plus className="w-4 h-4" /> Registrar leitura
+          <Button disabled={disabled} size="sm" variant="outline" className="rounded-xl">
+            <Plus className="w-3 h-3" /> Registrar leitura
           </Button>
         </DialogTrigger>
       )}
@@ -285,16 +302,13 @@ export const RegistrarLeituraDialog = ({
 
           <TabsContent value="progresso" className="flex flex-col gap-3 mt-0">
             <p className="text-xs text-muted-foreground">Salvo em <code>leituras</code></p>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-muted-foreground">Páginas lidas</label>
-                <Input type="number" min={0} max={totalPaginas ?? undefined} value={paginasLidas} onChange={(e) => setPaginasLidas(e.target.value)} className="h-11 rounded-xl mt-1" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Ou %</label>
-                <Input type="number" min={0} max={100} value={percentual} onChange={(e) => setPercentual(e.target.value)} className="h-11 rounded-xl mt-1" />
-              </div>
-            </div>
+            <PercentualProgressoControl
+              percentual={percentual ? Number(percentual) : 0}
+              onPercentualChange={(value) => setPercentual(value.toString())}
+              pagina={paginasLidas}
+              onPaginaChange={setPaginasLidas}
+              totalPaginas={totalPaginas}
+            />
           </TabsContent>
 
           <TabsContent value="citacoes" className="flex flex-col gap-2 mt-0">

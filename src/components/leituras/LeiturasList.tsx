@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { RegistrarLeituraDialog } from "./RegistrarLeituraDialog";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   leituras: LeituraFull[];
@@ -48,6 +49,7 @@ export const LeiturasList = ({ leituras, usuarioLeituraId, totalPaginas }: Props
       toast.success("Sessão excluída");
       setDeleting(null);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {

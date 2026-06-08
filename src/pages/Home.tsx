@@ -2,12 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { StatsChips } from "@/components/StatsChips";
+import { GamificacaoHome } from "@/components/gamificacao/GamificacaoHome";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { BookOpen, Plus, ArrowRight, HomeIcon } from "lucide-react";
+import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
+
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users } from "lucide-react";
 
 const Home = () => {
   const { user } = useAuth();
@@ -19,16 +20,10 @@ const Home = () => {
     queryKey: ["leituras-lendo", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: uls } = await supabase
-        .from("usuario_livros")
-        .select("id")
-        .eq("user_id", user!.id);
-      const ulIds = (uls ?? []).map((u: any) => u.id);
-      if (!ulIds.length) return [];
       const { data } = await supabase
         .from("usuario_leituras")
-        .select("id, usuario_livros!inner(obra_id, obras(*))")
-        .in("usuario_livro_id", ulIds)
+        .select("id, usuario_livros!inner(user_id, obra_id, obras(*))")
+        .eq("usuario_livros.user_id", user!.id)
         .eq("status", "lendo")
         .order("updated_at", { ascending: false });
       return (data ?? []).map((d: any) => ({
@@ -53,14 +48,17 @@ const Home = () => {
   });
 
   const { data: clubes = [] } = useQuery({
-    queryKey: ["meus-clubes", user?.id],
+    queryKey: ["meus-clubes-ativos", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("clube_membros")
         .select("clubes(*)")
-        .eq("user_id", user!.id);
-      return (data ?? []).map((r: any) => r.clubes).filter(Boolean);
+        .eq("user_id", user!.id)
+        .eq("status", "ativo");
+      return (data ?? [])
+        .map((r: any) => r.clubes)
+        .filter((c: any) => c && c.is_ativo);
     },
   });
 
@@ -73,9 +71,45 @@ const Home = () => {
         description="Acompanhe suas leituras, conquistas e clubes."
       />
 
-      <div className="flex items-start justify-between gap-3">
-        {flags.show_gamificacao_home && <StatsChips />}
-      </div>
+      {flags.show_gamificacao_home && <GamificacaoHome />}
+
+      <IniciarCodigoMeCard />
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-primary font-semibold">Meus clubes ativos</p>
+          </div>
+          <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
+        </div>
+        {clubes.length === 0 ? (
+          <div className="card-soft p-6 text-center">
+            <Users className="w-10 h-10 mx-auto text-primary mb-3" />
+            <p className="font-semibold">Você ainda não participa de nenhum clube ativo</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-4">Encontre uma comunidade que combina com você.</p>
+            <Button onClick={() => navigate("/clubes")} className="h-[48px] rounded-2xl bg-primary hover:bg-primary-hover">
+              Explorar clubes
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {clubes.map((c: any) => (
+              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
+                {c.imagem_capa_url ? (
+                  <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold text-lg">{c.nome[0]}</div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{c.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       {lendoList.length > 0 ? (
         <section>
@@ -120,10 +154,6 @@ const Home = () => {
         </section>
       )}
 
-      <section>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Progresso do dia</p>
-        <Progress value={lendoList.length > 0 ? 35 : 0} className="h-3" />
-      </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -150,34 +180,6 @@ const Home = () => {
         )}
       </section>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Clubes ativos</h3>
-          <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
-        </div>
-        {clubes.length === 0 ? (
-          <div className="card-soft p-5 text-center">
-            <p className="text-sm text-muted-foreground mb-3">Você ainda não participa de nenhum clube.</p>
-            <Button variant="outline" onClick={() => navigate("/clubes")} className="rounded-2xl">Explorar clubes</Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {clubes.map((c: any) => (
-              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
-                {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold">{c.nome[0]}</div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 };

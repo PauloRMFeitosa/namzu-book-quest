@@ -2,6 +2,9 @@
 // Apenas BUSCA em fontes externas (Google Books + Open Library) e retorna resultados normalizados.
 // NÃO escreve em banco.
 
+import { normalizeGenres } from "../_shared/generos.ts";
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -26,7 +29,9 @@ interface BookResult {
   editora?: string | null;
   num_paginas?: number | null;
   idioma?: string | null;
+  generos?: string[];
 }
+
 
 function parseYear(v: any): number | null {
   if (!v) return null;
@@ -63,8 +68,17 @@ function buildGoogleQuery({ titulo, autor, isbn, query }: any): string | null {
 async function searchGoogle(params: any): Promise<BookResult[]> {
   const q = buildGoogleQuery(params);
   if (!q) return [];
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`;
-  const data = await safeJson(url);
+  const key = Deno.env.get("GOOGLE_BOOKS_API_KEY");
+  const keyParam = key ? `&key=${encodeURIComponent(key)}` : "";
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10${keyParam}`;
+  const res = await fetch(url).catch(() => null);
+  if (!res) return [];
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    console.warn("Google Books error", res.status, txt.slice(0, 200));
+    return [];
+  }
+  const data = await res.json().catch(() => null);
   if (!data?.items?.length) return [];
   return data.items
     .map((item: any): BookResult | null => {
@@ -87,7 +101,9 @@ async function searchGoogle(params: any): Promise<BookResult[]> {
         editora: info.publisher ?? null,
         num_paginas: info.pageCount ?? null,
         idioma: info.language ?? null,
+        generos: normalizeGenres(info.categories),
       };
+
     })
     .filter(Boolean) as BookResult[];
 }
@@ -105,9 +121,11 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13: isbn,
         fonte: "openlibrary",
         num_paginas: data.number_of_pages ?? null,
+        generos: normalizeGenres(data.subjects),
       },
     ];
   }
+
   const params = new URLSearchParams();
   if (titulo) params.set("title", titulo);
   if (autor) params.set("author", autor);
@@ -132,24 +150,31 @@ async function searchOpenLibrary({ titulo, autor, isbn, query }: any): Promise<B
         isbn13,
         fonte: "openlibrary",
         editora: doc.publisher?.[0] ?? null,
+        generos: normalizeGenres(doc.subject),
       };
     })
+
     .filter(Boolean) as BookResult[];
 }
 
 function dedupe(list: BookResult[]): BookResult[] {
-  const seen = new Set<string>();
-  const out: BookResult[] = [];
+  const map = new Map<string, BookResult>();
   for (const b of list) {
     const key = b.isbn13
       ? `i:${b.isbn13}`
       : `t:${b.titulo.toLowerCase().trim()}|${(b.autores[0] ?? "").toLowerCase().trim()}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(b);
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...b, generos: b.generos ?? [] });
+      continue;
+    }
+    // mescla gêneros sem duplicar
+    const merged = new Set([...(existing.generos ?? []), ...(b.generos ?? [])]);
+    existing.generos = Array.from(merged);
   }
-  return out;
+  return Array.from(map.values());
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

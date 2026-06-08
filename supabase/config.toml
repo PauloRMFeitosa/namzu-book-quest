@@ -11,3 +11,28 @@ verify_jwt = false
 
 [functions.admin-manage-user]
 verify_jwt = false
+
+[functions.clube-ai]
+verify_jwt = true
+
+[functions.leitura-copiloto]
+verify_jwt = true
+
+[functions.salvar-progresso-leitura]
+verify_jwt = true
+
+[functions.ensure-profiles]
+verify_jwt = false
+
+[functions.admin-list-users]
+verify_jwt = false
+
+[functions.obra-estatisticas]
+verify_jwt = false
+
+[functions.reprocessar-autores]
+verify_jwt = false
+
+[functions.conciliar-autor]
+verify_jwt = false
+

@@ -8,6 +8,28 @@
     <meta name="description" content="A sabedoria começa aqui">
     <meta name="author" content="Lovable" />
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Namzu" />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+      // Aplica o tema antes da primeira pintura para evitar flicker.
+      // Fonte de verdade: localStorage["namzu-theme"] ∈ {"light","dark","system"}.
+      // Default para novos usuários: "system" (segue prefers-color-scheme).
+      (function () {
+        try {
+          var saved = localStorage.getItem('namzu-theme') || 'system';
+          var isDark = saved === 'dark' || (saved === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', isDark ? '#14213a' : '#ffffff');
+        } catch (e) {}
+      })();
+    </script>
+
+
 
     <!-- TODO: Update og:title to match your application name -->
     

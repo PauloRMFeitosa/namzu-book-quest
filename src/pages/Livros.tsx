@@ -1,51 +1,106 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
-import { BookOpen, Plus, Library } from "lucide-react";
+import { BookOpen, Plus, Library, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
-type Filtro = "todos" | "lendo" | "quero_ler" | "lido";
+type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo";
 
 const Livros = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [removerAlvo, setRemoverAlvo] = useState<{ id: string; titulo: string } | null>(null);
+  const [removendo, setRemovendo] = useState(false);
 
   const { data = [] } = useQuery({
     queryKey: ["meus-livros", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: livros } = await supabase
         .from("usuario_livros")
         .select("id, status, obra_id, obras(*)")
         .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
-      return data ?? [];
+      const list = livros ?? [];
+      let lendoIds = new Set<string>();
+      let concluidoIds = new Set<string>();
+      const { data: exps } = await supabase
+        .from("usuario_leituras")
+        .select("usuario_livro_id, status, usuario_livros!inner(user_id)")
+        .eq("usuario_livros.user_id", user!.id);
+      for (const e of exps ?? []) {
+        if (e.status === "lendo") lendoIds.add((e as any).usuario_livro_id);
+        if (e.status === "concluido") concluidoIds.add((e as any).usuario_livro_id);
+      }
+      return list.map((l: any) => ({
+        ...l,
+        statusEfetivo:
+          l.status === "relendo"
+            ? "relendo"
+            : lendoIds.has(l.id)
+            ? "lendo"
+            : l.status === "lido" || l.status === "concluido" || concluidoIds.has(l.id)
+            ? "lido"
+            : l.status,
+      }));
     },
   });
 
+  const confirmarRemocao = async () => {
+    if (!removerAlvo) return;
+    setRemovendo(true);
+    const { error } = await supabase
+      .from("usuario_livros")
+      .delete()
+      .eq("id", removerAlvo.id)
+      .eq("user_id", user!.id);
+    setRemovendo(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Livro removido da biblioteca");
+    setRemoverAlvo(null);
+    invalidateLeituras(qc);
+  };
+
   const matchFiltro = (status: string, f: Filtro) => {
     if (f === "todos") return true;
-    if (f === "lido") return status === "lido" || status === "concluido";
     return status === f;
   };
 
   const counts = {
     todos: data.length,
-    lendo: data.filter((l: any) => matchFiltro(l.status, "lendo")).length,
-    quero_ler: data.filter((l: any) => matchFiltro(l.status, "quero_ler")).length,
-    lido: data.filter((l: any) => matchFiltro(l.status, "lido")).length,
+    lendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lendo")).length,
+    quero_ler: data.filter((l: any) => matchFiltro(l.statusEfetivo, "quero_ler")).length,
+    lido: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lido")).length,
+    relendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "relendo")).length,
   };
 
-  const filtrados = data.filter((l: any) => matchFiltro(l.status, filtro));
+  const filtrados = data.filter((l: any) => matchFiltro(l.statusEfetivo, filtro));
 
   const chips: { key: Filtro; label: string }[] = [
     { key: "todos", label: "Todos" },
     { key: "lendo", label: "Lendo" },
+    { key: "relendo", label: "Relendo" },
     { key: "quero_ler", label: "Quero ler" },
     { key: "lido", label: "Lidos" },
   ];
@@ -62,16 +117,29 @@ const Livros = () => {
     ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
         {items.map((l: any) => (
-          <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="text-left hover-lift">
-            {l.obras?.capa_padrao_url ? (
-              <img src={l.obras.capa_padrao_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
-            ) : (
-              <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-primary" />
-              </div>
-            )}
-            <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
-          </button>
+          <div key={l.id} className="relative group">
+            <button onClick={() => navigate(`/obras/${l.obra_id}`)} className="text-left hover-lift w-full">
+              {l.obras?.capa_padrao_url ? (
+                <img src={l.obras.capa_padrao_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
+              ) : (
+                <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-primary" />
+                </div>
+              )}
+              <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setRemoverAlvo({ id: l.id, titulo: l.obras?.titulo_original ?? "este livro" });
+              }}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center text-destructive shadow-soft opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+              aria-label="Remover da biblioteca"
+              title="Remover da biblioteca"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         ))}
       </div>
     );
@@ -104,6 +172,27 @@ const Livros = () => {
         })}
       </div>
       <Grid items={filtrados} />
+
+      <AlertDialog open={!!removerAlvo} onOpenChange={(o) => !o && setRemoverAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover da biblioteca?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{removerAlvo?.titulo}" será removido da sua biblioteca, junto com leituras e progresso vinculados. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removendo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmarRemocao(); }}
+              disabled={removendo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removendo ? "Removendo…" : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

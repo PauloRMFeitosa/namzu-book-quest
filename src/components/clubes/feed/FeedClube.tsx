@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFeedClube } from "@/hooks/clubes/useFeed";
 import { PostComposer } from "./PostComposer";
 import { PostCard } from "./PostCard";
+import { ResumoDiscussaoButton } from "@/components/clubes/ai/ResumoDiscussaoButton";
 
 interface Props {
   clubeId: string;
@@ -36,6 +37,9 @@ export const FeedClube = ({ clubeId, isMembro }: Props) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <ResumoDiscussaoButton clubeId={clubeId} />
+      </div>
       <PostComposer clubeId={clubeId} isMembro={isMembro} />
 
       {isLoading ? (
@@ -60,7 +64,7 @@ export const FeedClube = ({ clubeId, isMembro }: Props) => {
       ) : (
         <div className="flex flex-col gap-3">
           {posts.map((p) => (
-            <PostCard key={p.id} post={p} clubeId={clubeId} />
+            <PostCard key={p.id} post={p} clubeId={clubeId} isMembro={isMembro} />
           ))}
           <div ref={sentinel} />
           {hasNextPage && (

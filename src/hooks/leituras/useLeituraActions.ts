@@ -61,11 +61,15 @@ export async function registrarProgresso(opts: {
   if (error) throw error;
 }
 
-export async function finalizarLeitura(usuario_leitura_id: string) {
+export async function finalizarLeitura(usuario_leitura_id: string, dataFim?: string) {
   const today = new Date().toISOString().slice(0, 10);
-  const { error } = await supabase
-    .from("usuario_leituras")
-    .update({ status: "concluido", data_fim: today, updated_at: new Date().toISOString() })
-    .eq("id", usuario_leitura_id);
+  const data_fim = dataFim || today;
+  const { error } = await supabase.functions.invoke("salvar-progresso-leitura", {
+    body: {
+      usuario_leitura_id,
+      percentual: 100,
+      data_fim,
+    },
+  });
   if (error) throw error;
 }

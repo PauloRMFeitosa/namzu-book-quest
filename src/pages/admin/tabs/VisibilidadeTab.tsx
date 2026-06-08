@@ -8,10 +8,26 @@ import type { FeatureFlagKey } from "@/hooks/useFeatureFlags";
 
 const FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_clubes", label: "Página Clubes", desc: "Exibir o item Clubes na navegação." },
+  { key: "show_leituras", label: "Página Leituras", desc: "Exibir Leituras no menu principal." },
   { key: "show_metas", label: "Página Metas", desc: "Exibir Metas no menu Mais." },
   { key: "show_historico", label: "Página Histórico", desc: "Exibir Histórico no menu Mais." },
   { key: "show_notificacoes", label: "Página Notificações", desc: "Exibir Notificações no menu Mais." },
   { key: "show_gamificacao_home", label: "Gamificação na Home", desc: "Exibir XP, nível e streak no topo da Home." },
+];
+
+const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
+  { key: "show_clube_feed", label: "Aba Feed", desc: "Exibir a aba Feed dentro do clube." },
+  { key: "show_clube_leituras", label: "Aba Leituras", desc: "Exibir a aba Leituras dentro do clube." },
+  { key: "show_clube_canais", label: "Aba Canais", desc: "Exibir a aba Canais dentro do clube." },
+  { key: "show_clube_eventos", label: "Aba Eventos", desc: "Exibir a aba Eventos dentro do clube." },
+  { key: "show_clube_membros", label: "Aba Membros", desc: "Exibir a aba Membros dentro do clube." },
+  { key: "show_clube_conteudos", label: "Aba Conteúdos", desc: "Exibir a aba Conteúdos dentro do clube." },
+  { key: "show_clube_microgrupos", label: "Aba Microgrupos", desc: "Exibir a aba Microgrupos dentro do clube." },
+  { key: "show_clube_ai_copiloto", label: "IA · Copiloto de leitura", desc: "Exibir o botão Copiloto IA na página de leitura." },
+  { key: "show_clube_ai_provocacao", label: "IA · Provocar discussão", desc: "Exibir o botão Provocar (perguntas profundas) nos posts do feed." },
+  { key: "show_clube_ai_resumo", label: "IA · Resumo da discussão", desc: "Exibir o botão Resumo IA no feed do clube." },
+  { key: "show_clube_ai_matchmaking", label: "IA · Encontrar afinidades", desc: "Exibir o botão Encontrar afinidades nos microgrupos." },
+  { key: "show_clube_ai_recomendacoes", label: "IA · Recomendações de clubes", desc: "Exibir o bloco Curadoria IA no marketplace." },
 ];
 
 export const VisibilidadeTab = () => {
@@ -35,7 +51,7 @@ export const VisibilidadeTab = () => {
         map[row.key] = typeof v === "boolean" ? v : v === "true" || v === true;
       }
       // defaults
-      FLAGS.forEach((f) => {
+      [...FLAGS, ...CLUBE_FLAGS].forEach((f) => {
         if (!(f.key in map)) map[f.key] = true;
       });
       setValues(map);
@@ -69,6 +85,28 @@ export const VisibilidadeTab = () => {
       </div>
       <div className="card-soft p-4 space-y-4">
         {FLAGS.map((f) => (
+          <div key={f.key} className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <Label htmlFor={f.key} className="font-semibold">{f.label}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+            </div>
+            <Switch
+              id={f.key}
+              checked={!!values[f.key]}
+              onCheckedChange={(v) => toggle(f.key, v)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold">Abas do Clube de Leitura</h2>
+        <p className="text-sm text-muted-foreground">
+          Controle quais abas internas aparecem em cada clube. Admins sempre veem tudo.
+        </p>
+      </div>
+      <div className="card-soft p-4 space-y-4">
+        {CLUBE_FLAGS.map((f) => (
           <div key={f.key} className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <Label htmlFor={f.key} className="font-semibold">{f.label}</Label>

@@ -2,11 +2,21 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareModal } from "@/components/share/ShareModal";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
@@ -33,6 +43,9 @@ const ObraDetalhe = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [adicionando, setAdicionando] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [confirmIniciarOpen, setConfirmIniciarOpen] = useState(false);
+  const [iniciando, setIniciando] = useState(false);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
@@ -43,13 +56,15 @@ const ObraDetalhe = () => {
         .select(
           `id, titulo_original, sinopse_padrao, capa_padrao_url, ano_primeira_publicacao, idioma_original,
            obra_autores(ordem, autores(id, nome_completo)),
-           edicoes(id, editora, num_paginas, capa_url, isbn_13, idioma)`,
+           edicoes(id, editora, num_paginas, capa_url, isbn_13, idioma),
+           obra_generos(generos(id, nome, slug))`,
         )
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
+
   });
 
   const autores = (obra?.obra_autores ?? [])
@@ -60,6 +75,10 @@ const ObraDetalhe = () => {
   const autorPrincipal = autores[0];
   const editora = obra?.edicoes?.[0]?.editora ?? null;
   const numPaginas = obra?.edicoes?.[0]?.num_paginas ?? null;
+  const generos: { id: string; nome: string; slug: string }[] = ((obra as any)?.obra_generos ?? [])
+    .map((og: any) => og.generos)
+    .filter(Boolean);
+
 
   // Outras obras do autor
   const { data: outrasObras = [] } = useQuery({
@@ -76,7 +95,26 @@ const ObraDetalhe = () => {
     },
   });
 
-  // Avaliações / resenhas (limitado pela RLS — atualmente vê apenas as do próprio usuário)
+  // Estatísticas agregadas de TODOS os usuários (via edge function, bypassa RLS)
+  const { data: estatisticas } = useQuery({
+    queryKey: ["obra-estatisticas", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("obra-estatisticas", {
+        body: { obra_id: id },
+      });
+      if (error) throw error;
+      return data as {
+        lidos: number;
+        lendo: number;
+        quero: number;
+        total_avaliacoes: number;
+        media_nota: number;
+      };
+    },
+  });
+
+  // Resenhas (limitado pela RLS — atualmente vê apenas as do próprio usuário)
   const { data: avaliacoes = [] } = useQuery({
     queryKey: ["obra-avaliacoes", id],
     enabled: !!id,
@@ -89,23 +127,14 @@ const ObraDetalhe = () => {
     },
   });
 
-  const notas = avaliacoes.filter((a: any) => a.nota != null);
-  const mediaNota = notas.length
-    ? notas.reduce((s: number, a: any) => s + Number(a.nota), 0) / notas.length
-    : 0;
+  const mediaNota = estatisticas?.media_nota ?? 0;
+  const totalAvaliacoes = estatisticas?.total_avaliacoes ?? 0;
   const resenhas = avaliacoes.filter((a: any) => a.review_texto?.trim());
-
-  // Estatísticas (apenas do próprio usuário devido à RLS — somatório real exigiria view pública)
-  const stats = avaliacoes.reduce(
-    (acc: any, a: any) => {
-      const s = a.status;
-      if (s === "lido" || s === "lido") acc.lidos++;
-      else if (s === "lendo") acc.lendo++;
-      else if (s === "quero_ler") acc.quero++;
-      return acc;
-    },
-    { lidos: 0, lendo: 0, quero: 0 },
-  );
+  const stats = {
+    lidos: estatisticas?.lidos ?? 0,
+    lendo: estatisticas?.lendo ?? 0,
+    quero: estatisticas?.quero ?? 0,
+  };
 
   // Citações
   const { data: citacoes = [] } = useQuery({
@@ -172,8 +201,7 @@ const ObraDetalhe = () => {
     }
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
-    qc.invalidateQueries({ queryKey: ["meus-livros"] });
-    qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+    invalidateLeituras(qc);
   };
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
@@ -183,12 +211,73 @@ const ObraDetalhe = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="self-start flex items-center gap-1 text-muted-foreground -ml-2 p-2"
-      >
-        <ArrowLeft className="w-4 h-4" /> Voltar
-      </button>
+      <div className="flex items-center justify-between -mx-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-muted-foreground p-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </button>
+        <Button onClick={() => setShareOpen(true)} variant="ghost" size="sm" className="rounded-xl">
+          <Share2 className="w-4 h-4" /> Compartilhar
+        </Button>
+      </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          titulo: obra.titulo_original,
+          autor: autores.map((a: any) => a.nome_completo).join(", ") || undefined,
+          capaUrl: capa,
+          nota: mediaNota > 0 ? mediaNota : null,
+          link: `${window.location.origin}/obras/${id}`,
+        }}
+        templates={["recommend"]}
+        defaultTemplate="recommend"
+      />
+
+      <Dialog open={confirmIniciarOpen} onOpenChange={setConfirmIniciarOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deseja iniciar a leitura deste livro?</DialogTitle>
+            <DialogDescription>
+              Ao iniciar: será criada uma nova leitura e o status do livro será alterado para “lendo”.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmIniciarOpen(false)} disabled={iniciando}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary-hover"
+              disabled={iniciando || !meuLivro}
+              onClick={async () => {
+                if (!meuLivro) return;
+                setIniciando(true);
+                try {
+                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
+                  const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
+                  await supabase
+                    .from("usuario_livros")
+                    .update({ status: "lendo" })
+                    .eq("id", meuLivro.id);
+                  qc.invalidateQueries({ queryKey: ["meu-livro-obra", user?.id, id] });
+                  invalidateLeituras(qc);
+                  setConfirmIniciarOpen(false);
+                  navigate(`/leituras/${novoId}`);
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao iniciar leitura");
+                } finally {
+                  setIniciando(false);
+                }
+              }}
+            >
+              {iniciando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar leitura"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Cabeçalho */}
       <div className="flex gap-4">
@@ -214,11 +303,24 @@ const ObraDetalhe = () => {
           <div className="flex items-center gap-2 mt-1">
             <Stars value={mediaNota} />
             <span className="text-xs text-muted-foreground">
-              {notas.length > 0 ? `${mediaNota.toFixed(1)} (${notas.length})` : "Sem avaliações"}
+              {totalAvaliacoes > 0 ? `${mediaNota.toFixed(1)} (${totalAvaliacoes})` : "Sem avaliações"}
             </span>
           </div>
+          {generos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {generos.map((g) => (
+                <span
+                  key={g.id}
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                >
+                  {g.nome}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
 
       {/* Sinopse */}
       {obra.sinopse_padrao && (
@@ -258,7 +360,7 @@ const ObraDetalhe = () => {
             </span>
             <Button
               onClick={async () => {
-                // Busca experiência ativa para essa estante
+                // Verifica se já existe leitura para abrir diretamente; senão pede confirmação
                 const { data: exp } = await supabase
                   .from("usuario_leituras")
                   .select("id")
@@ -266,13 +368,10 @@ const ObraDetalhe = () => {
                   .order("updated_at", { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                if (exp?.id) navigate(`/leituras/${exp.id}`);
-                else {
-                  const { criarUsuarioLeitura } = await import("@/hooks/leituras/useLeituraActions");
-                  try {
-                    const novoId = await criarUsuarioLeitura({ usuario_livro_id: meuLivro.id });
-                    navigate(`/leituras/${novoId}`);
-                  } catch (e: any) { toast.error(e.message); }
+                if (exp?.id) {
+                  navigate(`/leituras/${exp.id}`);
+                } else {
+                  setConfirmIniciarOpen(true);
                 }
               }}
               className="rounded-xl bg-primary hover:bg-primary-hover"

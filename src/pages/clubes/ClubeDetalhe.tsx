@@ -1,25 +1,35 @@
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppLayout } from "@/components/AppLayout";
+
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
+import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
+import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
+import { EventosTab } from "@/components/clubes/eventos/EventosTab";
+import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
+import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
+import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
+import { GestaoTab } from "@/components/clubes/gestao/GestaoTab";
 import {
   useClube,
   useClubeMembership,
   useEntrarClube,
   useSairClube,
 } from "@/hooks/clubes/useClube";
+import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
+import { useFeatureFlags, type FeatureFlagKey } from "@/hooks/useFeatureFlags";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-const TABS = [
-  { value: "feed", label: "Feed" },
-  { value: "leituras", label: "Leituras" },
-  { value: "canais", label: "Canais" },
-  { value: "eventos", label: "Eventos" },
-  { value: "membros", label: "Membros" },
-  { value: "conteudos", label: "Conteúdos" },
-  { value: "microgrupos", label: "Microgrupos" },
+const BASE_TABS: { value: string; label: string; flag: FeatureFlagKey }[] = [
+  { value: "feed", label: "Feed", flag: "show_clube_feed" },
+  { value: "leituras", label: "Leituras", flag: "show_clube_leituras" },
+  { value: "canais", label: "Canais", flag: "show_clube_canais" },
+  { value: "eventos", label: "Eventos", flag: "show_clube_eventos" },
+  { value: "membros", label: "Membros", flag: "show_clube_membros" },
+  { value: "conteudos", label: "Conteúdos", flag: "show_clube_conteudos" },
+  { value: "microgrupos", label: "Microgrupos", flag: "show_clube_microgrupos" },
 ];
 
 const ClubeDetalhe = () => {
@@ -31,12 +41,19 @@ const ClubeDetalhe = () => {
   const { data: membership } = useClubeMembership(id);
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
+  const { canManage } = useIsCurador(id, clube?.curador_id);
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const acessoTotal = membership?.status === "ativo" || canManage;
+  const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
+  const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
+  const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
+  const activeTab = isTabVisible(tab) ? tab : (TABS[0]?.value ?? "feed");
 
   if (!id) return <Navigate to="/clubes" replace />;
 
   return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 pb-8">
+    <div className="flex flex-col gap-6 pb-8">
         {isLoading || !clube ? (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-44 sm:h-56 rounded-[var(--radius)]" />
@@ -47,15 +64,16 @@ const ClubeDetalhe = () => {
           <>
             <ClubeHeader
               clube={clube}
-              isMembro={!!membership}
-              onEntrar={() => entrar.mutate()}
+              isMembro={acessoTotal}
+              isPendente={membership?.status === "pendente"}
+              onEntrar={() => entrar.mutate(clube.visibilidade === "privado" ? "pendente" : "ativo")}
               onSair={() => sair.mutate()}
               loading={entrar.isPending || sair.isPending}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
               <Tabs
-                value={tab}
+                value={activeTab}
                 onValueChange={(v) => {
                   const next = new URLSearchParams(search);
                   next.set("tab", v);
@@ -76,51 +94,62 @@ const ClubeDetalhe = () => {
                   </TabsList>
                 </div>
 
-                <TabsContent value="feed" className="mt-5">
-                  <FeedClube clubeId={clube.id} isMembro={!!membership} />
-                </TabsContent>
-                <TabsContent value="leituras" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Leituras do clube"
-                    descricao="Trilha atual, progresso coletivo e checkpoints."
-                    fase="Fase 4"
-                  />
-                </TabsContent>
-                <TabsContent value="canais" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Canais"
-                    descricao="Conversas em tempo real organizadas por tema."
-                    fase="Fase 5"
-                  />
-                </TabsContent>
-                <TabsContent value="eventos" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Eventos"
-                    descricao="Lives, workshops, leituras coletivas e encontros."
-                    fase="Fase 6"
-                  />
-                </TabsContent>
-                <TabsContent value="membros" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Membros"
-                    descricao="Quem faz parte desta tribo intelectual."
-                    fase="Fase 8"
-                  />
-                </TabsContent>
-                <TabsContent value="conteudos" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Conteúdos"
-                    descricao="Material exclusivo curado para os membros."
-                    fase="Fase 8"
-                  />
-                </TabsContent>
-                <TabsContent value="microgrupos" className="mt-5">
-                  <PlaceholderTab
-                    titulo="Microgrupos"
-                    descricao="Tribos pequenas e íntimas dentro do clube."
-                    fase="Fase 7"
-                  />
-                </TabsContent>
+                {isTabVisible("feed") && (
+                  <TabsContent value="feed" className="mt-5">
+                    <FeedClube clubeId={clube.id} isMembro={acessoTotal} />
+                  </TabsContent>
+                )}
+                {isTabVisible("leituras") && (
+                  <TabsContent value="leituras" className="mt-5">
+                    <LeiturasTab clubeId={clube.id} isMembro={acessoTotal} />
+                  </TabsContent>
+                )}
+                {isTabVisible("canais") && (
+                  <TabsContent value="canais" className="mt-5">
+                    <CanaisTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={acessoTotal}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("eventos") && (
+                  <TabsContent value="eventos" className="mt-5">
+                    <EventosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={acessoTotal}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("membros") && (
+                  <TabsContent value="membros" className="mt-5">
+                    <MembrosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={acessoTotal}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("conteudos") && (
+                  <TabsContent value="conteudos" className="mt-5">
+                    <ConteudosTab
+                      clubeId={clube.id}
+                      curadorId={clube.curador_id}
+                      isMembro={acessoTotal}
+                    />
+                  </TabsContent>
+                )}
+                {isTabVisible("microgrupos") && (
+                  <TabsContent value="microgrupos" className="mt-5">
+                    <MicrogruposTab clubeId={clube.id} isMembro={acessoTotal} />
+                  </TabsContent>
+                )}
+                {canManage && (
+                  <TabsContent value="gestao" className="mt-5">
+                    <GestaoTab clubeId={clube.id} curadorId={clube.curador_id} />
+                  </TabsContent>
+                )}
               </Tabs>
 
               <ClubeSidebar
@@ -132,8 +161,7 @@ const ClubeDetalhe = () => {
             </div>
           </>
         )}
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 

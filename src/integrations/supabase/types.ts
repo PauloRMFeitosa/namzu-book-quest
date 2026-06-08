@@ -34,24 +34,113 @@ export type Database = {
       }
       autores: {
         Row: {
+          aliases: Json
+          data_falecimento: string | null
+          data_nascimento: string | null
+          data_ultima_conciliacao: string | null
+          descricao: string | null
+          foto_url: string | null
           id: string
+          nacionalidade: string | null
+          nome_cadastro: string | null
           nome_completo: string
           nome_normalizado: string | null
           nome_ordenacao: string
+          status_conciliacao: string
+          tentativas_conciliacao: number
         }
         Insert: {
+          aliases?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          data_ultima_conciliacao?: string | null
+          descricao?: string | null
+          foto_url?: string | null
           id?: string
+          nacionalidade?: string | null
+          nome_cadastro?: string | null
           nome_completo: string
           nome_normalizado?: string | null
           nome_ordenacao: string
+          status_conciliacao?: string
+          tentativas_conciliacao?: number
         }
         Update: {
+          aliases?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          data_ultima_conciliacao?: string | null
+          descricao?: string | null
+          foto_url?: string | null
           id?: string
+          nacionalidade?: string | null
+          nome_cadastro?: string | null
           nome_completo?: string
           nome_normalizado?: string | null
           nome_ordenacao?: string
+          status_conciliacao?: string
+          tentativas_conciliacao?: number
         }
         Relationships: []
+      }
+      autores_candidatos_wikidata: {
+        Row: {
+          autor_id: string
+          created_at: string
+          dados_externos: Json
+          data_falecimento: string | null
+          data_nascimento: string | null
+          descricao: string | null
+          foto_url: string | null
+          id: string
+          nacionalidade: string | null
+          nome: string
+          qid: string
+          score_namzu: number
+          updated_at: string
+          url_wikidata: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          dados_externos: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          descricao?: string | null
+          foto_url?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome: string
+          qid: string
+          score_namzu: number
+          updated_at?: string
+          url_wikidata: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          dados_externos?: Json
+          data_falecimento?: string | null
+          data_nascimento?: string | null
+          descricao?: string | null
+          foto_url?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome?: string
+          qid?: string
+          score_namzu?: number
+          updated_at?: string
+          url_wikidata?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autores_candidatos_wikidata_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clube_canais: {
         Row: {
@@ -168,18 +257,21 @@ export type Database = {
         Row: {
           clube_id: string
           data_entrada: string | null
+          papel: string
           status: string
           user_id: string
         }
         Insert: {
           clube_id: string
           data_entrada?: string | null
+          papel?: string
           status?: string
           user_id: string
         }
         Update: {
           clube_id?: string
           data_entrada?: string | null
+          papel?: string
           status?: string
           user_id?: string
         }
@@ -526,6 +618,7 @@ export type Database = {
       }
       clubes: {
         Row: {
+          categoria: string | null
           created_at: string | null
           curador_id: string
           descricao: string | null
@@ -537,8 +630,10 @@ export type Database = {
           objetivo: string | null
           preco_centavos: number | null
           regras: string | null
+          visibilidade: string
         }
         Insert: {
+          categoria?: string | null
           created_at?: string | null
           curador_id: string
           descricao?: string | null
@@ -550,8 +645,10 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          visibilidade?: string
         }
         Update: {
+          categoria?: string | null
           created_at?: string | null
           curador_id?: string
           descricao?: string | null
@@ -563,6 +660,7 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          visibilidade?: string
         }
         Relationships: []
       }
@@ -604,6 +702,7 @@ export type Database = {
       }
       conquistas: {
         Row: {
+          categoria: string | null
           codigo: string
           descricao: string
           icone_url: string | null
@@ -612,6 +711,7 @@ export type Database = {
           xp_recompensa: number | null
         }
         Insert: {
+          categoria?: string | null
           codigo: string
           descricao: string
           icone_url?: string | null
@@ -620,6 +720,7 @@ export type Database = {
           xp_recompensa?: number | null
         }
         Update: {
+          categoria?: string | null
           codigo?: string
           descricao?: string
           icone_url?: string | null
@@ -772,44 +873,53 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           capa_url: string | null
+          created_at: string | null
           editora: string
           fonte_dados: string
           formato: string
           id: string
           idioma: string
           isbn_13: string | null
+          isbn10: string | null
           num_paginas: number | null
           obra_id: string
           preco_capa_centavos: number | null
           titulo_edicao: string
+          updated_at: string | null
         }
         Insert: {
           atualizado_em?: string | null
           capa_url?: string | null
+          created_at?: string | null
           editora: string
           fonte_dados?: string
           formato: string
           id?: string
           idioma?: string
           isbn_13?: string | null
+          isbn10?: string | null
           num_paginas?: number | null
           obra_id: string
           preco_capa_centavos?: number | null
           titulo_edicao: string
+          updated_at?: string | null
         }
         Update: {
           atualizado_em?: string | null
           capa_url?: string | null
+          created_at?: string | null
           editora?: string
           fonte_dados?: string
           formato?: string
           id?: string
           idioma?: string
           isbn_13?: string | null
+          isbn10?: string | null
           num_paginas?: number | null
           obra_id?: string
           preco_capa_centavos?: number | null
           titulo_edicao?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -817,6 +927,53 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edicoes_fontes_externas: {
+        Row: {
+          chave_externa: string | null
+          created_at: string
+          dados_externos: Json | null
+          data_sincronizacao: string | null
+          edicao_id: string
+          fonte: string
+          id: string
+          identificador_externo: string
+          updated_at: string
+          url_externa: string | null
+        }
+        Insert: {
+          chave_externa?: string | null
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          edicao_id: string
+          fonte: string
+          id?: string
+          identificador_externo: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Update: {
+          chave_externa?: string | null
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          edicao_id?: string
+          fonte?: string
+          id?: string
+          identificador_externo?: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edicoes_fontes_externas_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "edicoes"
             referencedColumns: ["id"]
           },
         ]
@@ -903,6 +1060,48 @@ export type Database = {
           },
         ]
       }
+      fontes_externas: {
+        Row: {
+          created_at: string
+          dados_externos: Json | null
+          data_sincronizacao: string | null
+          entidade_id: string
+          fonte: string
+          id: string
+          identificador_externo: string
+          score_confianca: number | null
+          tipo_entidade: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at: string
+          url_externa: string | null
+        }
+        Insert: {
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          entidade_id: string
+          fonte: string
+          id?: string
+          identificador_externo: string
+          score_confianca?: number | null
+          tipo_entidade: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Update: {
+          created_at?: string
+          dados_externos?: Json | null
+          data_sincronizacao?: string | null
+          entidade_id?: string
+          fonte?: string
+          id?: string
+          identificador_externo?: string
+          score_confianca?: number | null
+          tipo_entidade?: Database["public"]["Enums"]["tipo_entidade_enum"]
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Relationships: []
+      }
       gamificacao_perfis: {
         Row: {
           nivel: number
@@ -974,6 +1173,30 @@ export type Database = {
           },
         ]
       }
+      generos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ia_interacoes: {
         Row: {
           contexto: Json | null
@@ -1004,26 +1227,175 @@ export type Database = {
         }
         Relationships: []
       }
+      integracoes_execucoes: {
+        Row: {
+          created_at: string
+          finalizado_em: string | null
+          fonte: string
+          id: string
+          iniciado_em: string
+          quantidade_erro: number
+          quantidade_processada: number
+          quantidade_solicitada: number
+          quantidade_sucesso: number
+          status: string
+          tipo_processo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finalizado_em?: string | null
+          fonte: string
+          id?: string
+          iniciado_em?: string
+          quantidade_erro?: number
+          quantidade_processada?: number
+          quantidade_solicitada?: number
+          quantidade_sucesso?: number
+          status?: string
+          tipo_processo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finalizado_em?: string | null
+          fonte?: string
+          id?: string
+          iniciado_em?: string
+          quantidade_erro?: number
+          quantidade_processada?: number
+          quantidade_solicitada?: number
+          quantidade_sucesso?: number
+          status?: string
+          tipo_processo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integracoes_execucoes_itens: {
+        Row: {
+          created_at: string
+          dados_requisicao: Json | null
+          dados_resposta: Json | null
+          entidade_id: string
+          execucao_id: string
+          id: string
+          mensagem: string | null
+          nome_referencia: string
+          processado_em: string
+          status: string
+          tipo_entidade: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dados_requisicao?: Json | null
+          dados_resposta?: Json | null
+          entidade_id: string
+          execucao_id: string
+          id?: string
+          mensagem?: string | null
+          nome_referencia: string
+          processado_em?: string
+          status: string
+          tipo_entidade: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dados_requisicao?: Json | null
+          dados_resposta?: Json | null
+          entidade_id?: string
+          execucao_id?: string
+          id?: string
+          mensagem?: string | null
+          nome_referencia?: string
+          processado_em?: string
+          status?: string
+          tipo_entidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_execucoes_itens_execucao_id_fkey"
+            columns: ["execucao_id"]
+            isOneToOne: false
+            referencedRelation: "integracoes_execucoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interesses: {
         Row: {
+          ativo: boolean | null
           categoria: string | null
           created_at: string | null
+          descricao: string | null
+          icone: string | null
           id: string
           nome: string
         }
         Insert: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
           id?: string
           nome: string
         }
         Update: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
           id?: string
           nome?: string
         }
         Relationships: []
+      }
+      interesses_generos: {
+        Row: {
+          created_at: string | null
+          genero_id: string
+          id: string
+          interesse_id: string
+          peso: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          genero_id: string
+          id?: string
+          interesse_id: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          genero_id?: string
+          id?: string
+          interesse_id?: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interesses_generos_genero_id_fkey"
+            columns: ["genero_id"]
+            isOneToOne: false
+            referencedRelation: "generos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interesses_generos_interesse_id_fkey"
+            columns: ["interesse_id"]
+            isOneToOne: false
+            referencedRelation: "interesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leitura_aplicacoes: {
         Row: {
@@ -1237,6 +1609,7 @@ export type Database = {
           leitura_id: string | null
           paginas_lidas: number | null
           percentual_lido: number | null
+          tempo_leitura_minutos: number | null
           user_id: string
         }
         Insert: {
@@ -1246,6 +1619,7 @@ export type Database = {
           leitura_id?: string | null
           paginas_lidas?: number | null
           percentual_lido?: number | null
+          tempo_leitura_minutos?: number | null
           user_id: string
         }
         Update: {
@@ -1255,6 +1629,7 @@ export type Database = {
           leitura_id?: string | null
           paginas_lidas?: number | null
           percentual_lido?: number | null
+          tempo_leitura_minutos?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1603,6 +1978,42 @@ export type Database = {
           },
         ]
       }
+      obra_generos: {
+        Row: {
+          created_at: string
+          genero_id: string
+          obra_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          genero_id: string
+          obra_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          genero_id?: string
+          obra_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_obra_generos_genero"
+            columns: ["genero_id"]
+            isOneToOne: false
+            referencedRelation: "generos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_obra_generos_obra"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           ano_primeira_publicacao: number | null
@@ -1610,10 +2021,14 @@ export type Database = {
           created_at: string | null
           id: string
           idioma_original: string
+          metadata_checked_at: string | null
+          metadata_score: number | null
+          metadata_source: string | null
           sinopse_padrao: string | null
           slug: string
           titulo_ordenacao: string
           titulo_original: string
+          updated_at: string | null
         }
         Insert: {
           ano_primeira_publicacao?: number | null
@@ -1621,10 +2036,14 @@ export type Database = {
           created_at?: string | null
           id?: string
           idioma_original?: string
+          metadata_checked_at?: string | null
+          metadata_score?: number | null
+          metadata_source?: string | null
           sinopse_padrao?: string | null
           slug: string
           titulo_ordenacao: string
           titulo_original: string
+          updated_at?: string | null
         }
         Update: {
           ano_primeira_publicacao?: number | null
@@ -1632,12 +2051,140 @@ export type Database = {
           created_at?: string | null
           id?: string
           idioma_original?: string
+          metadata_checked_at?: string | null
+          metadata_score?: number | null
+          metadata_source?: string | null
           sinopse_padrao?: string | null
           slug?: string
           titulo_ordenacao?: string
           titulo_original?: string
+          updated_at?: string | null
         }
         Relationships: []
+      }
+      obras_duplicadas: {
+        Row: {
+          analisado_em: string | null
+          analisado_por: string | null
+          created_at: string
+          detalhes: Json | null
+          id: string
+          merge_automatico: boolean
+          mesclado_em: string | null
+          obra_a_id: string
+          obra_b_id: string
+          obra_maior_id: string
+          obra_mantida_id: string | null
+          obra_menor_id: string
+          obra_removida_id: string | null
+          observacao: string | null
+          score_ano: number
+          score_autor: number
+          score_datas: number
+          score_isbn: number
+          score_paginas: number
+          score_titulo: number
+          score_total: number
+          status: string
+          updated_at: string
+          versao_algoritmo: string | null
+        }
+        Insert: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          merge_automatico?: boolean
+          mesclado_em?: string | null
+          obra_a_id: string
+          obra_b_id: string
+          obra_maior_id: string
+          obra_mantida_id?: string | null
+          obra_menor_id: string
+          obra_removida_id?: string | null
+          observacao?: string | null
+          score_ano?: number
+          score_autor?: number
+          score_datas?: number
+          score_isbn?: number
+          score_paginas?: number
+          score_titulo?: number
+          score_total?: number
+          status?: string
+          updated_at?: string
+          versao_algoritmo?: string | null
+        }
+        Update: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          merge_automatico?: boolean
+          mesclado_em?: string | null
+          obra_a_id?: string
+          obra_b_id?: string
+          obra_maior_id?: string
+          obra_mantida_id?: string | null
+          obra_menor_id?: string
+          obra_removida_id?: string | null
+          observacao?: string | null
+          score_ano?: number
+          score_autor?: number
+          score_datas?: number
+          score_isbn?: number
+          score_paginas?: number
+          score_titulo?: number
+          score_total?: number
+          status?: string
+          updated_at?: string
+          versao_algoritmo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_duplicadas_obra_a_id_fkey"
+            columns: ["obra_a_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_b_id_fkey"
+            columns: ["obra_b_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_maior_id_fkey"
+            columns: ["obra_maior_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_mantida_id_fkey"
+            columns: ["obra_mantida_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_menor_id_fkey"
+            columns: ["obra_menor_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_duplicadas_obra_removida_id_fkey"
+            columns: ["obra_removida_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pagamentos: {
         Row: {
@@ -1677,18 +2224,24 @@ export type Database = {
       }
       perfil_interesses: {
         Row: {
+          created_at: string | null
           interesse_id: string
           peso: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           interesse_id: string
           peso?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          created_at?: string | null
           interesse_id?: string
           peso?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1716,14 +2269,20 @@ export type Database = {
           cidade: string | null
           created_at: string | null
           instagram_url: string | null
+          mostrar_biblioteca: boolean
+          mostrar_conquistas: boolean
+          mostrar_estatisticas: boolean
+          mostrar_insights: boolean
           nivel_intelectual: number | null
           nome_exibicao: string
           pais: string | null
+          perfil_publico: boolean
           score_consistencia: number | null
           score_empatia: number | null
           score_reputacao: number | null
           score_social: number | null
           site_url: string | null
+          slug: string | null
           tiktok_url: string | null
           tipo_perfil: string
           updated_at: string | null
@@ -1739,14 +2298,20 @@ export type Database = {
           cidade?: string | null
           created_at?: string | null
           instagram_url?: string | null
+          mostrar_biblioteca?: boolean
+          mostrar_conquistas?: boolean
+          mostrar_estatisticas?: boolean
+          mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao: string
           pais?: string | null
+          perfil_publico?: boolean
           score_consistencia?: number | null
           score_empatia?: number | null
           score_reputacao?: number | null
           score_social?: number | null
           site_url?: string | null
+          slug?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
@@ -1762,14 +2327,20 @@ export type Database = {
           cidade?: string | null
           created_at?: string | null
           instagram_url?: string | null
+          mostrar_biblioteca?: boolean
+          mostrar_conquistas?: boolean
+          mostrar_estatisticas?: boolean
+          mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao?: string
           pais?: string | null
+          perfil_publico?: boolean
           score_consistencia?: number | null
           score_empatia?: number | null
           score_reputacao?: number | null
           score_social?: number | null
           site_url?: string | null
+          slug?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
@@ -1842,16 +2413,19 @@ export type Database = {
       tags: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           nome: string
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           nome: string
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           nome?: string
         }
@@ -1995,6 +2569,7 @@ export type Database = {
       }
       usuario_livros: {
         Row: {
+          created_at: string | null
           data_fim: string | null
           data_inicio: string | null
           edicao_id: string | null
@@ -2008,6 +2583,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           edicao_id?: string | null
@@ -2021,6 +2597,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           edicao_id?: string | null
@@ -2193,6 +2770,27 @@ export type Database = {
       }
     }
     Functions: {
+      calcular_similaridade_obras: {
+        Args: { p_obra_a: string; p_obra_b: string }
+        Returns: {
+          detalhes: Json
+          merge_automatico: boolean
+          score_ano: number
+          score_autor: number
+          score_datas: number
+          score_isbn: number
+          score_paginas: number
+          score_titulo: number
+          score_total: number
+        }[]
+      }
+      calcular_streak_leitura: {
+        Args: { _user_id: string }
+        Returns: {
+          atual: number
+          maximo: number
+        }[]
+      }
       criar_usuario_leitura: {
         Args: {
           p_clube_id: string
@@ -2235,14 +2833,22 @@ export type Database = {
         Args: { _clube: string; _user: string }
         Returns: boolean
       }
+      normalize_book_text: { Args: { input_text: string }; Returns: string }
       refresh_ranking: { Args: never; Returns: undefined }
       registrar_progresso: {
         Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      texto_similarity: {
+        Args: { texto_a: string; texto_b: string }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "user"
+      tipo_entidade_enum: "autor" | "obra" | "edicao" | "editora"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2371,6 +2977,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      tipo_entidade_enum: ["autor", "obra", "edicao", "editora"],
     },
   },
 } as const

@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
-import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield } from "lucide-react";
+import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield, FileText } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
+
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
@@ -23,6 +25,7 @@ const drawerItems = [
   { to: "/historico", icon: History, label: "Histórico" },
   { to: "/notificacoes", icon: Bell, label: "Notificações" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
+  { to: "/termos", icon: FileText, label: "Termos e Privacidade" },
 ];
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
@@ -35,6 +38,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;
     if (i.to === "/clubes") return flags.show_clubes;
+    if (i.to === "/leituras") return flags.show_leituras;
     return true;
   });
   const visibleDrawer = drawerItems.filter((i) => {
@@ -60,30 +64,33 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     .join("") || "U";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border shadow-sm">
+    <div className="relative min-h-screen flex flex-col">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
           <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
             <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 object-contain" />
             <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
           </Link>
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
-          <Link to="/perfil" aria-label="Ver perfil" className="ml-auto hover-lift">
-            <Avatar className="w-9 h-9 border border-border">
-              <AvatarImage src={avatarUrl} alt={fullName} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <InstallPWAButton />
+            <Link to="/perfil" aria-label="Ver perfil" className="hover-lift">
+              <Avatar className="w-9 h-9 border border-border">
+                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
+      <main className="relative z-10 flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-elevated">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
         <div
           className="max-w-3xl mx-auto grid px-2 py-2"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}

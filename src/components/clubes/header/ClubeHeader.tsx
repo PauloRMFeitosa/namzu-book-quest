@@ -9,16 +9,18 @@ import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
 interface Props {
   clube: ClubeDetalhe;
   isMembro: boolean;
+  isPendente?: boolean;
   onEntrar: () => void;
   onSair: () => void;
   loading?: boolean;
 }
 
-export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Props) => {
+export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loading }: Props) => {
   const navigate = useNavigate();
 
   const compartilhar = async () => {
-    const url = window.location.href;
+    const path = window.location.pathname + window.location.search + window.location.hash;
+    const url = `https://www.namzu.com.br${path}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: clube.nome, url });
@@ -74,18 +76,19 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
 
       {/* Identidade */}
       <div className="px-1 pt-4 flex flex-col gap-3">
-        {clube.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {clube.tags.map((t) => (
-              <span
-                key={t}
-                className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-1.5">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${clube.visibilidade === "privado" ? "bg-accent/20 text-accent" : "bg-primary/15 text-primary"}`}>
+            {clube.visibilidade === "privado" ? "Privado" : "Público"}
+          </span>
+          {clube.tags.map((t) => (
+            <span
+              key={t}
+              className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
 
         <h1 className="font-display text-2xl sm:text-3xl font-semibold leading-tight">{clube.nome}</h1>
 
@@ -118,26 +121,25 @@ export const ClubeHeader = ({ clube, isMembro, onEntrar, onSair, loading }: Prop
         </div>
 
         {/* CTA */}
-        <div className="pt-2">
-          {isMembro ? (
-            <Button
-              onClick={onSair}
-              disabled={loading}
-              variant="outline"
-              className="w-full h-11 rounded-2xl border-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sair do clube"}
-            </Button>
-          ) : (
+        {!isMembro && (
+          <div className="pt-2">
             <Button
               onClick={onEntrar}
-              disabled={loading}
-              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
+              disabled={loading || isPendente}
+              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow disabled:opacity-70"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar no clube"}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isPendente ? (
+                "Aguardando aprovação"
+              ) : clube.visibilidade === "privado" ? (
+                "Solicitar entrada"
+              ) : (
+                "Entrar no clube"
+              )}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </motion.section>
   );

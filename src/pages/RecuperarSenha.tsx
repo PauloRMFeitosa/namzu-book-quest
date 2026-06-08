@@ -55,7 +55,7 @@ const RecuperarSenha = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-background">
+    <div className="relative z-10 min-h-screen flex flex-col px-6 py-8">
       <button
         onClick={() => (step === "verify" ? setStep("request") : navigate("/login"))}
         className="self-start text-muted-foreground p-2 -ml-2"

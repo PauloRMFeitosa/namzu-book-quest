@@ -1,16 +1,16 @@
 import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/auth";
 import { toast } from "sonner";
 
 export const GoogleButton = forwardRef<HTMLButtonElement, { label?: string }>(
   ({ label = "Continuar com Google" }, ref) => {
     const handleGoogle = async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/` },
-      });
-      if (error) toast.error(error.message);
+      try {
+        await authService.signInWithGoogle();
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Erro ao autenticar com Google");
+      }
     };
 
     return (

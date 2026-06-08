@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { PreLeituraForm } from "./PreLeituraForm";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 
 interface Props {
   pre: { intencao: string; dominio_previo: string | null; observacao: string | null };
@@ -49,6 +50,7 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
       toast.success("Pré-leitura excluída");
       setConfirmDel(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
+      invalidateLeituras(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -57,37 +59,34 @@ export const PreLeituraView = ({ pre, leituraId, usuarioLeituraId }: Props) => {
   };
 
   return (
-    <div className="card-soft p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Pré-leitura</h3>
-        </div>
-        <div className="flex gap-1">
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
-            <Pencil className="w-4 h-4" />
-          </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Intenção</p>
-        <p className="text-sm">{pre.intencao}</p>
-      </div>
-      {pre.dominio_previo && (
+    <div className="flex flex-col gap-3">
+      <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-2">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Domínio prévio</p>
-          <p className="text-sm">{pre.dominio_previo}</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Intenção</p>
+          <p className="text-sm">{pre.intencao}</p>
         </div>
-      )}
-      {pre.observacao && (
-        <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Observação</p>
-          <p className="text-sm">{pre.observacao}</p>
-        </div>
-      )}
+        {pre.dominio_previo && (
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Domínio prévio</p>
+            <p className="text-sm">{pre.dominio_previo}</p>
+          </div>
+        )}
+        {pre.observacao && (
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Observação</p>
+            <p className="text-sm">{pre.observacao}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 pt-2 border-t border-border">
+        <Button size="sm" variant="outline" className="rounded-xl flex-1" onClick={() => setEditing(true)}>
+          <Pencil className="w-3 h-3" /> Editar
+        </Button>
+        <Button size="sm" variant="ghost" className="rounded-xl text-destructive hover:text-destructive" onClick={() => setConfirmDel(true)}>
+          <Trash2 className="w-3 h-3" /> Excluir
+        </Button>
+      </div>
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>

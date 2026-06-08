@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Users, Send, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { clubesService, type Clube, type ClubePost } from "@/services/clubes";
+import { queryKeys } from "@/constants/queryKeys";
 
 const ClubesList = () => {
   const { user } = useAuth();
@@ -14,28 +15,25 @@ const ClubesList = () => {
   const qc = useQueryClient();
 
   const { data: clubes = [] } = useQuery({
-    queryKey: ["clubes-ativos"],
-    queryFn: async () => {
-      const { data } = await supabase.from("clubes").select("*").eq("is_ativo", true);
-      return data ?? [];
-    },
+    queryKey: queryKeys.clubes.all,
+    queryFn: clubesService.listarAtivos,
   });
 
   const { data: membros = [] } = useQuery({
-    queryKey: ["meus-clubes-ids", user?.id],
+    queryKey: queryKeys.clubes.membros(user?.id ?? ""),
     enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("clube_membros").select("clube_id").eq("user_id", user!.id);
-      return (data ?? []).map((r) => r.clube_id);
-    },
+    queryFn: () => clubesService.listarMembrosIds(user!.id),
   });
 
   const entrar = async (clube_id: string) => {
-    const { error } = await supabase.from("clube_membros").insert({ clube_id, user_id: user!.id });
-    if (error) return toast.error(error.message);
-    toast.success("Bem-vindo ao clube!");
-    qc.invalidateQueries({ queryKey: ["meus-clubes-ids"] });
-    qc.invalidateQueries({ queryKey: ["meus-clubes"] });
+    try {
+      await clubesService.entrar(clube_id, user!.id);
+      toast.success("Bem-vindo ao clube!");
+      qc.invalidateQueries({ queryKey: queryKeys.clubes.membros(user!.id) });
+      qc.invalidateQueries({ queryKey: queryKeys.clubes.meus });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao entrar no clube");
+    }
   };
 
   return (
@@ -45,7 +43,7 @@ const ClubesList = () => {
         <p className="text-sm text-muted-foreground text-center py-8">Nenhum clube ativo no momento.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {clubes.map((c: any) => {
+          {clubes.map((c: Clube) => {
             const membro = membros.includes(c.id);
             return (
               <div key={c.id} className="card-soft p-4 flex flex-col gap-3 hover-lift">
@@ -86,38 +84,31 @@ const ClubeDetalhe = () => {
   const [conteudo, setConteudo] = useState("");
 
   const { data: clube } = useQuery({
-    queryKey: ["clube", id],
+    queryKey: queryKeys.clubes.detail(id!),
     enabled: !!id,
-    queryFn: async () => {
-      const { data } = await supabase.from("clubes").select("*").eq("id", id!).maybeSingle();
-      return data;
-    },
+    queryFn: () => clubesService.buscarPorId(id!),
   });
 
   const { data: posts = [] } = useQuery({
-    queryKey: ["clube-posts", id],
+    queryKey: queryKeys.clubes.posts(id!),
     enabled: !!id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("clube_posts")
-        .select("*")
-        .eq("clube_id", id!)
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: () => clubesService.listarPosts(id!),
   });
 
   const postar = async () => {
-    if (!conteudo.trim() || !user) return;
-    const { error } = await supabase.from("clube_posts").insert({
-      clube_id: id!,
-      user_id: user.id,
-      conteudo: conteudo.trim(),
-    });
-    if (error) return toast.error(error.message);
-    setConteudo("");
-    toast.success("Post publicado!");
-    qc.invalidateQueries({ queryKey: ["clube-posts", id] });
+    if (!conteudo.trim() || !user || !id) return;
+    try {
+      await clubesService.criarPost({
+        clube_id: id,
+        user_id: user.id,
+        conteudo: conteudo.trim(),
+      });
+      setConteudo("");
+      toast.success("Post publicado!");
+      qc.invalidateQueries({ queryKey: queryKeys.clubes.posts(id) });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao publicar");
+    }
   };
 
   return (
@@ -149,7 +140,7 @@ const ClubeDetalhe = () => {
         <p className="text-sm text-muted-foreground text-center py-6">Sem posts ainda. Seja o primeiro!</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {posts.map((p: any) => (
+          {posts.map((p: ClubePost) => (
             <div key={p.id} className="card-soft p-4">
               {p.is_destaque_curador && (
                 <div className="flex items-center gap-1 text-xs text-primary font-semibold mb-2">
@@ -157,7 +148,7 @@ const ClubeDetalhe = () => {
                 </div>
               )}
               <p className="text-sm whitespace-pre-wrap">{p.conteudo}</p>
-              <p className="text-[10px] text-muted-foreground mt-2">{new Date(p.created_at).toLocaleString("pt-BR")}</p>
+              <p className="text-[10px] text-muted-foreground mt-2">{new Date(p.created_at!).toLocaleString("pt-BR")}</p>
             </div>
           ))}
         </div>

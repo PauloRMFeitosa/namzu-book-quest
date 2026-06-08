@@ -6,14 +6,40 @@ export type FeatureFlagKey =
   | "show_metas"
   | "show_historico"
   | "show_notificacoes"
-  | "show_gamificacao_home";
+  | "show_leituras"
+  | "show_gamificacao_home"
+  | "show_clube_feed"
+  | "show_clube_leituras"
+  | "show_clube_canais"
+  | "show_clube_eventos"
+  | "show_clube_membros"
+  | "show_clube_conteudos"
+  | "show_clube_microgrupos"
+  | "show_clube_ai_copiloto"
+  | "show_clube_ai_provocacao"
+  | "show_clube_ai_resumo"
+  | "show_clube_ai_matchmaking"
+  | "show_clube_ai_recomendacoes";
 
 const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clubes: true,
   show_metas: true,
   show_historico: true,
   show_notificacoes: true,
+  show_leituras: true,
   show_gamificacao_home: true,
+  show_clube_feed: true,
+  show_clube_leituras: true,
+  show_clube_canais: true,
+  show_clube_eventos: true,
+  show_clube_membros: true,
+  show_clube_conteudos: true,
+  show_clube_microgrupos: true,
+  show_clube_ai_copiloto: true,
+  show_clube_ai_provocacao: true,
+  show_clube_ai_resumo: true,
+  show_clube_ai_matchmaking: true,
+  show_clube_ai_recomendacoes: true,
 };
 
 export const useFeatureFlags = () => {

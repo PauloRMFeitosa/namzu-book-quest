@@ -1,146 +1,105 @@
-# Plano — Experiência Social dos Clubes (faseado)
+## Visão Geral
 
-Decisões fixadas:
-- **Sem clubes pagos / monetização** — esconder qualquer UI de preço/receita.
-- **Editor markdown leve** (textarea + `react-markdown`, com botões para negrito/itálico/citação/spoiler).
-- **Sem canais de voz** — apenas texto.
+Reorganizar `LeituraDetalhe` em 6 blocos verticais com foco em jornada e aprendizado. **Nenhuma tabela nova** — toda a modelagem atual atende.
 
-Execução **fase a fase**. Cada fase é um entregável testável. Começo pela Fase 1 assim que aprovar.
+## Mapeamento de tabelas (reutilização)
 
----
+| Bloco da nova UI | Tabela(s) existente(s) |
+|---|---|
+| Cabeçalho | `obras`, `obra_autores`, `autores`, `usuario_livros`, `edicoes`, `usuario_leituras` |
+| Progresso | `leitura_progresso` (agregado), `usuario_leituras.status/data_fim` |
+| Pré-leitura | `leituras` (tipo `pre_leitura`) + `leitura_pre` |
+| Sessões | `leituras` (tipo `leitura`) + `leitura_progresso` apenas |
+| Pós-leitura | `leituras` (tipo `pos_leitura`) + `leitura_pos` (resenha, nota via `ideia_principal`/`resenha`) |
+| Aprendizados – Insight | `leituras` "container" + `leitura_conteudo` (resumo + conceito_principal) |
+| Aprendizados – Aplicação | `leitura_aplicacoes` |
+| Aprendizados – Citação | `leitura_citacoes` |
+| Aprendizados – Resenha | `leitura_pos.resenha` (uma por livro) |
+| Organização – Tags | `leitura_tags` + `tags` |
+| Organização – Links | `leitura_links` |
+| Timeline | derivada de todas acima por `created_at`/`data_registro` |
 
-## Estado atual
+**Decisão arquitetural:** Como `leitura_conteudo/citacoes/aplicacoes/links/tags` têm FK para `leituras.id`, criaremos **uma única "leitura container"** por `usuario_leitura` (tipo `leitura`, sem `leitura_progresso`) para abrigar todos os aprendizados standalone do livro. Sessões de leitura passam a ser `leituras` tipo `leitura` que **só** possuem registro em `leitura_progresso`. UI distingue pela presença de progresso. Migração leve no client: ao abrir a página, se existirem sessões antigas com conteúdo misturado, eles continuam visíveis na timeline (compatibilidade preservada). Nenhum dado existente é apagado.
 
-- `src/pages/Clubes.tsx` já tem listagem + detalhe simples — será refatorado, não descartado.
-- Várias tabelas existem **sem RLS** (`clube_membros`, `clube_canais`, `clube_threads`, `clube_conteudos`, `microgrupos`, `eventos`, `clube_post_curtidas`, `clube_progresso`, `clube_trilhas`, `evento_participantes`, `microgrupo_membros`, `clube_tags`, etc.). Vou adicionar políticas conforme cada fase tocar a tabela.
-- Stack já tem: shadcn completo, Tanstack Query, Tailwind tokens. **Faltam:** `zustand`, `framer-motion`, `react-markdown`.
+## Bloco 1 — Cabeçalho
+Componente `LivroHeader` existente + barra de progresso (`ProgressoBar`). Sem mudanças significativas.
 
----
+## Bloco 2 — Progresso (novo)
+Novo componente `ProgressoBlock`:
+- Mostra **página atual**, **última atualização**, barra de progresso
+- Botão **"Atualizar progresso"** abre `AtualizarProgressoDialog`
+  - Campos: página anterior (readonly, derivada do máximo já registrado), página atual, tempo de leitura (opcional)
+  - Calcula `paginas_lidas = pagina_atual - pagina_anterior`
+  - Salva: cria nova `leituras` tipo `leitura` + `leitura_progresso` (paginas_lidas, percentual_lido calculado, data_registro=now)
+  - Exibe resumo antes de salvar
+  - Sem campos de conteúdo
 
-## Fase 1 — Design system editorial + Marketplace `/clubes`
+## Bloco 3 — Jornada (novo)
+Novo componente `JornadaBlock` com 3 etapas visuais:
+- **Pré-leitura** — reusa `PreLeituraForm`/`PreLeituraView` (sem alterações), status auto-calculado
+- **Sessões de leitura** — novo `SessoesList`: lista cronológica leve mostrando data, página inicial, página final, páginas lidas, tempo (se houver), observação. Editar/excluir mantém. **Apenas progresso**, sem citações/insights/etc.
+- **Pós-leitura** — versão simplificada do `PosLeituraBlock`: ao status≠concluido mostra "Disponível após concluir o livro"; ao concluído, formulário com resumo final, principais aprendizados (`ideia_principal`), resenha, nota e flag recomendaria (mapeados a `leitura_pos`). **Sem** o agregador atual de citações/aplicações/links/tags.
 
-- Tokens novos em `index.css` + `tailwind.config.ts`: paleta quente literária (HSL semântico), tipografia hierárquica (serif p/ títulos, sans p/ corpo), sombras suaves.
-- `MarketplaceClubes`: busca, filtros por categoria (chips), seções **Em Alta / Novos / Mais Profundos / Mais Ativos / Pequenos Clubes / Para Você**.
-- `ClubeCard` premium: capa, nome, descrição, membros, score engajamento (de `clube_metricas`), creator, tags, hover lift, motion.
-- Hook `useClubes({ filtros, secao })`.
-- Skeletons + empty states.
+## Bloco 4 — Aprendizados (destaque)
+Novo `AprendizadosBlock`:
+- Botão principal **"Adicionar conteúdo"** abre menu com 4 opções
+- 4 cards-resumo: Insights / Aplicações / Citações / Resenhas — cada um abre lista correspondente
+- Forms minimalistas em dialogs separados:
+  - `InsightDialog` → grava em `leitura_conteudo` (resumo = "o que aprendi", conceito_principal = "por que foi importante")
+  - `AplicacaoDialog` → grava em `leitura_aplicacoes` com categoria salva em `plano_acao.categoria`
+  - `CitacaoDialog` → grava em `leitura_citacoes` (+ tags em `leitura_tags`)
+  - `ResenhaDialog` → grava/edita em `leitura_pos.resenha` (única por livro)
+- Todos os 4 primeiros tipos usam a "leitura container" (criada lazy na primeira gravação)
 
-**DB/RLS:** SELECT público em `clube_metricas`, `clube_tags`, `tags`. Adicionar `categoria` em `clubes` (ou via `clube_tags`).
+## Bloco 5 — Organização
+Novo `OrganizacaoBlock`:
+- **Tags** — listagem agregada de todas tags vinculadas via `leitura_tags`
+- **Links** — listagem de `leitura_links`
+- **Arquivos** — placeholder ("em breve"); nenhuma tabela atual armazena arquivos anexados
 
----
+## Bloco 6 — Timeline
+Novo `TimelineBlock`:
+- Query única que une eventos das tabelas: `leitura_progresso` (sessões), `leitura_conteudo`, `leitura_citacoes`, `leitura_aplicacoes`, `leitura_pre`, `leitura_pos`, status changes (`usuario_leituras.data_fim`)
+- Ordenado decrescente por timestamp
+- Cada item: ícone + descrição curta + data
 
-## Fase 2 — Página do Clube `/clubes/:id` (shell + tabs + sidebar)
+## Remoções
+- Botão **Copiloto IA** e **Compartilhar** do topo do card
+- Tabs do `RegistrarLeituraDialog` (substituído pelos dialogs simples)
+- Agregadores no `PosLeituraBlock`
+- O componente atual `LeituraExperienciaCard` é substituído por composição dos novos blocos em `LeituraDetalhe.tsx`
 
-- `ClubeHeader` (capa, avatar, nome, creator, membros, descrição, Entrar/Sair, compartilhar — **sem badge pago**).
-- Tabs: Feed · Leituras · Canais · Eventos · Membros · Conteúdos · Microgrupos.
-- Sidebar direita: progresso coletivo, ranking top 5, próximos eventos, streak coletivo.
-- Hooks: `useClube`, `useClubeMembership`, `useEntrar/Sair`.
+## Arquivos
 
-**DB/RLS:** políticas em `clube_membros` + função security definer `is_clube_membro(_user, _clube)`.
+**Novos:**
+- `src/components/leituras/jornada/ProgressoBlock.tsx`
+- `src/components/leituras/jornada/AtualizarProgressoDialog.tsx`
+- `src/components/leituras/jornada/JornadaBlock.tsx`
+- `src/components/leituras/jornada/SessoesList.tsx`
+- `src/components/leituras/jornada/PosLeituraSimples.tsx`
+- `src/components/leituras/jornada/AprendizadosBlock.tsx`
+- `src/components/leituras/jornada/dialogs/InsightDialog.tsx`
+- `src/components/leituras/jornada/dialogs/AplicacaoDialog.tsx`
+- `src/components/leituras/jornada/dialogs/CitacaoDialog.tsx`
+- `src/components/leituras/jornada/dialogs/ResenhaDialog.tsx`
+- `src/components/leituras/jornada/OrganizacaoBlock.tsx`
+- `src/components/leituras/jornada/TimelineBlock.tsx`
+- `src/hooks/leituras/useContainerLeitura.ts` (cria/obtém leitura container)
+- `src/hooks/leituras/useTimelineLivro.ts`
 
----
+**Alterados:**
+- `src/pages/LeituraDetalhe.tsx` — nova composição
+- `src/hooks/leituras/useLivroDetalhe.ts` — selects iguais; helper para separar sessões puras de container
 
-## Fase 3 — Feed Social (Reddit/Threads moderno)
+**Mantidos (uso parcial):** `LivroHeader`, `ProgressoBar`, `PreLeituraForm`, `PreLeituraView`, `useLeituraActions`
 
-- `FeedClube` com tipos de post (`insight | reflexao | citacao | pergunta | progresso | teoria | recomendacao`), reactions, replies (`parent_post_id`), quote, salvar, fixar, destacar (curador).
-- `CriarPostDialog` — markdown leve com toolbar (negrito/itálico/cita/spoiler), seletor de tipo.
-- `react-markdown` + sanitização para render.
+**Removidos do fluxo principal (não deletados — usados em edição legada):** `LeituraExperienciaCard`, `RegistrarLeituraDialog`, `LeiturasList`, `PosLeituraBlock`
 
-**DB/RLS:** coluna `tipo` em `clube_posts`; nova tabela `clube_post_salvos`; políticas em `clube_post_curtidas`; reativar UPDATE/DELETE em `clube_posts` para autor + admin.
+## Responsividade
+Layout single-column, mobile-first, `max-w-2xl` no desktop. Mantém PWA/iOS safe areas já vigentes no `AppLayout`.
 
----
+## RLS e compatibilidade
+Nenhuma migração. RLS atual (`leituras`, `leitura_*`, `usuario_leituras`) já cobre todos os inserts/updates/deletes propostos pois operam com `auth.uid()` via FK em `usuario_leituras → usuario_livros.user_id`.
 
-## Fase 4 — Leituras do Clube `/clubes/:id/leituras`
-
-- Trilha (`clube_trilhas`) com timeline + checkpoints.
-- Progresso individual (`clube_progresso`) + barra coletiva agregada + heatmap semanal.
-- Comentar capítulo, marcar citação (vincular `leitura_citacoes`).
-
-**DB/RLS:** políticas em `clube_trilhas` e `clube_progresso`.
-
----
-
-## Fase 5 — Canais (Discord-like, **só texto**)
-
-- 3 colunas: lista canais (`clube_canais`) | mensagens (`clube_mensagens` via `clube_threads`) | membros online (`user_presence` + Realtime).
-- Threads, replies, emoji reactions (`reacoes`), fixar, indicador de digitação (broadcast), presença.
-- Zustand store p/ canal selecionado, drafts, scroll.
-- Virtualização opcional (`@tanstack/react-virtual`).
-
-**DB/RLS:** políticas completas em `clube_canais`, `clube_threads`, `clube_mensagens`, `reacoes`, `user_presence`. Habilitar Realtime nessas tabelas.
-
----
-
-## Fase 6 — Eventos `/clubes/:id/eventos`
-
-- Calendário mensal + lista futura/passada, cards modernos.
-- RSVP via `evento_participantes`, lembretes via `notificacoes`.
-- Tipos: live, workshop, autor convidado, sprint leitura, presencial.
-- Criar evento (curador/admin).
-
-**DB/RLS:** políticas em `eventos` e `evento_participantes`.
-
----
-
-## Fase 7 — Microgrupos
-
-- Listar/criar/entrar (limite de membros), feed privado interno.
-- Matchmaking simples por interesses comuns (`perfil_interesses`).
-
-**DB/RLS:** políticas em `microgrupos`, `microgrupo_membros`.
-
----
-
-## Fase 8 — Creator Dashboard `/creator/dashboard` + Gestão `/clubes/:id/admin`
-
-- Métricas: ativos 7d/30d, retenção, crescimento, engajamento (de `clube_metricas`). **Sem receita.**
-- Gráficos com Recharts (shadcn chart).
-- Gestão: editar clube, capa, regras, membros (kick/ban via `status`), cargos, convites (`convites`), moderação (`denuncias`, `moderacao_logs`).
-
-**DB/RLS:** restrito a `curador_id` + admin via função `is_clube_curador`.
-
----
-
-## Fase 9 — Página Pública do Creator `/creator/:username`
-
-- Bio, clubes criados, eventos, reputação, conteúdos, seguidores (`conexoes`). Layout editorial premium.
-
----
-
-## Fase 10 — Camada de IA (Lovable AI Gateway)
-
-Edge functions:
-- `clube-ai-recomendacoes` (gemini-3-flash-preview)
-- `clube-ai-resumo-discussao` (gemini-2.5-pro)
-- `clube-ai-perguntas-profundas`
-- `clube-ai-matchmaking`
-- `leitura-copiloto`
-
-UI contextual (drawers, botões inline). Tratar 429/402 com toasts.
-
----
-
-## Estrutura de pastas
-
-```
-src/
-  pages/clubes/        Marketplace, ClubeDetalhe, ClubeLeituras, ClubeEventos, ClubeAdmin
-  pages/creator/       Dashboard, PerfilPublico
-  components/clubes/   marketplace/ header/ feed/ canais/ leituras/ eventos/ microgrupos/ admin/ ai/
-  hooks/clubes/        useClubes, useClube, useFeed, useCanais, useMensagens, useEventos, useMicrogrupos, useClubeMetricas, useClubeMembership
-  stores/              canalUIStore, presenceStore, draftStore
-  lib/clubes/          helpers, formatters
-supabase/functions/    clube-ai-* , leitura-copiloto
-```
-
----
-
-## Dependências a instalar
-
-`zustand`, `framer-motion`, `react-markdown`, `rehype-sanitize`, (opcional) `@tanstack/react-virtual`.
-
----
-
-## Próximo passo
-
-Aprovando este plano, executo a **Fase 1** (design system editorial + Marketplace de Clubes funcional com filtros, seções e cards premium). Ao final, valido com você antes de seguir para a Fase 2.
+## Relatório final (será entregue após implementação)
+Lista de arquivos alterados/criados/removidos, tabelas usadas, decisões e validações de QA.
