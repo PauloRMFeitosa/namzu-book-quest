@@ -42,7 +42,7 @@ const resultadoBadge = (r: LogItem["resultado"]) => {
   return <Badge className="bg-destructive/15 text-destructive">Erro</Badge>;
 };
 
-export const ReprocessamentoTab = () => {
+export const GenerosReprocessamento = () => {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [loadingResumo, setLoadingResumo] = useState(true);
   const [running, setRunning] = useState<string | null>(null);
