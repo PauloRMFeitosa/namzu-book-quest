@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 import { ShareModal } from "@/components/share/ShareModal";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { ConclusaoLivroModal } from "@/components/avaliacoes/ConclusaoLivroModal";
 
 interface Props {
   usuarioLeituraId: string;
@@ -28,6 +29,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
   const [openConcluir, setOpenConcluir] = useState(false);
   const [showPreForm, setShowPreForm] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [conclusaoOpen, setConclusaoOpen] = useState(false);
 
   if (isLoading) return <div className="card-soft p-4 text-sm text-muted-foreground">Carregando…</div>;
   if (!livro) return null;
@@ -52,10 +54,20 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
   const concluir = async (dataFim: string) => {
     try {
       await finalizarLeitura(livro.id, dataFim);
+
+      // Garante que usuario_livros.status = 'lido' para disparar o trigger de avaliação
+      await supabase
+        .from("usuario_livros")
+        .update({ status: "lido", data_fim: dataFim })
+        .eq("id", livro.usuario_livro_id);
+
       toast.success("Leitura concluída!");
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
       qc.invalidateQueries({ queryKey: ["clube-leituras"] });
       invalidateLeituras(qc);
+
+      // Abre modal de incentivo à avaliação
+      setConclusaoOpen(true);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -169,6 +181,14 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
       )}
 
       <ConcluirLeituraDialog open={openConcluir} onOpenChange={setOpenConcluir} onConfirm={concluir} />
+
+      <ConclusaoLivroModal
+        open={conclusaoOpen}
+        onOpenChange={setConclusaoOpen}
+        usuarioLivroId={livro.usuario_livro_id}
+        titulo={livro.obras?.titulo_original ?? ""}
+        capaUrl={livro.edicoes?.capa_url || livro.obras?.capa_padrao_url}
+      />
     </div>
   );
 };

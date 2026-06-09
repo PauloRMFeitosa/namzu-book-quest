@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
+import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
 
 
 const navItems = [
@@ -23,7 +24,6 @@ const drawerItems = [
   { to: "/perfil", icon: User, label: "Perfil" },
   { to: "/metas", icon: Target, label: "Metas" },
   { to: "/historico", icon: History, label: "Histórico" },
-  { to: "/notificacoes", icon: Bell, label: "Notificações" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
   { to: "/termos", icon: FileText, label: "Termos e Privacidade" },
 ];
@@ -34,6 +34,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { isAdmin } = useIsAdmin();
   const { flags } = useFeatureFlags();
   const navigate = useNavigate();
+  const totalNotificacoes = useNotificacoesTotal();
 
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;
@@ -45,7 +46,6 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     if (isAdmin) return true;
     if (i.to === "/metas") return flags.show_metas;
     if (i.to === "/historico") return flags.show_historico;
-    if (i.to === "/notificacoes") return flags.show_notificacoes;
     return true;
   });
 
@@ -74,6 +74,21 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
           <div className="ml-auto flex items-center gap-2">
             <InstallPWAButton />
+
+            {/* Sino de notificações */}
+            <Link
+              to="/notificacoes"
+              aria-label="Ver notificações"
+              className="flex items-center gap-1 hover-lift p-1.5 rounded-xl text-accent hover:text-primary transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {totalNotificacoes > 0 && (
+                <span className="text-xs font-bold text-destructive leading-none">
+                  {totalNotificacoes > 10 ? "+10" : totalNotificacoes}
+                </span>
+              )}
+            </Link>
+
             <Link to="/perfil" aria-label="Ver perfil" className="hover-lift">
               <Avatar className="w-9 h-9 border border-border">
                 <AvatarImage src={avatarUrl} alt={fullName} />

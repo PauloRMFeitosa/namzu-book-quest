@@ -45,6 +45,9 @@ const BIBLIOTECA_KEYS = [
   "minhas-leituras-concluidos",
   "minhas-leituras-ultima-sessao",
   "minhas-leituras-stats",
+  "pendencias-avaliacao",
+  "notificacoes-count",
+  "notificacoes",
 ];
 
 /** Queries do perfil + clubes do usuário. */

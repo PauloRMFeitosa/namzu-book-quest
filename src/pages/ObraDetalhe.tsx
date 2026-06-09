@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareModal } from "@/components/share/ShareModal";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { ConclusaoLivroModal } from "@/components/avaliacoes/ConclusaoLivroModal";
+import { AvaliacaoModal } from "@/components/avaliacoes/AvaliacaoModal";
 
 const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const full = Math.floor(value);
@@ -37,6 +39,33 @@ const Stars = ({ value, size = 16 }: { value: number; size?: number }) => {
   );
 };
 
+const StarsPicker = ({
+  value,
+  onChange,
+  size = 22,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  size?: number;
+}) => (
+  <div className="flex items-center gap-1">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => onChange(i)}
+        className="hover-lift transition-transform"
+        aria-label={`${i} estrela${i > 1 ? "s" : ""}`}
+      >
+        <Star
+          style={{ width: size, height: size }}
+          className={i <= value ? "fill-primary text-primary" : "text-muted-foreground/30 hover:text-primary/60"}
+        />
+      </button>
+    ))}
+  </div>
+);
+
 const ObraDetalhe = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -46,6 +75,9 @@ const ObraDetalhe = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [confirmIniciarOpen, setConfirmIniciarOpen] = useState(false);
   const [iniciando, setIniciando] = useState(false);
+  const [conclusaoOpen, setConclusaoOpen] = useState(false);
+  const [conclusaoLivroId, setConclusaoLivroId] = useState<string | null>(null);
+  const [avaliacaoOpen, setAvaliacaoOpen] = useState(false);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
@@ -176,7 +208,7 @@ const ObraDetalhe = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("usuario_livros")
-        .select("id, status")
+        .select("id, status, nota")
         .eq("user_id", user!.id)
         .eq("obra_id", id!)
         .maybeSingle();
@@ -188,12 +220,16 @@ const ObraDetalhe = () => {
     if (!user) return;
     setAdicionando(true);
     const today = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("usuario_livros").insert({
-      user_id: user.id,
-      obra_id: id!,
-      status,
-      ...(status === "lido" ? { data_fim: today } : {}),
-    });
+    const { data: novo, error } = await supabase
+      .from("usuario_livros")
+      .insert({
+        user_id: user.id,
+        obra_id: id!,
+        status,
+        ...(status === "lido" ? { data_fim: today } : {}),
+      })
+      .select("id")
+      .single();
     setAdicionando(false);
     if (error) {
       if (error.code === "23505") return toast.info("Já está na sua lista");
@@ -202,6 +238,12 @@ const ObraDetalhe = () => {
     toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
     invalidateLeituras(qc);
+
+    // Abre modal de incentivo à avaliação quando marcado diretamente como lido
+    if (status === "lido" && novo?.id) {
+      setConclusaoLivroId(novo.id);
+      setConclusaoOpen(true);
+    }
   };
 
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
@@ -222,6 +264,26 @@ const ObraDetalhe = () => {
           <Share2 className="w-4 h-4" /> Compartilhar
         </Button>
       </div>
+
+      {conclusaoLivroId && (
+        <ConclusaoLivroModal
+          open={conclusaoOpen}
+          onOpenChange={setConclusaoOpen}
+          usuarioLivroId={conclusaoLivroId}
+          titulo={obra.titulo_original}
+          capaUrl={capa}
+        />
+      )}
+
+      {meuLivro && (
+        <AvaliacaoModal
+          open={avaliacaoOpen}
+          onOpenChange={setAvaliacaoOpen}
+          usuarioLivroId={meuLivro.id}
+          titulo={obra.titulo_original}
+          capaUrl={capa}
+        />
+      )}
 
       <ShareModal
         open={shareOpen}
@@ -300,11 +362,28 @@ const ObraDetalhe = () => {
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            <Stars value={mediaNota} />
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {/* Se o usuário leu e tem nota, mostra as estrelas dele; senão mostra a média */}
+            {meuLivro?.status === "lido" && (meuLivro as any).nota ? (
+              <StarsPicker
+                value={Number((meuLivro as any).nota)}
+                onChange={() => setAvaliacaoOpen(true)}
+                size={18}
+              />
+            ) : (
+              <Stars value={mediaNota} />
+            )}
             <span className="text-xs text-muted-foreground">
               {totalAvaliacoes > 0 ? `${mediaNota.toFixed(1)} (${totalAvaliacoes})` : "Sem avaliações"}
             </span>
+            {meuLivro?.status === "lido" && (
+              <button
+                onClick={() => setAvaliacaoOpen(true)}
+                className="text-[11px] text-primary font-medium hover:underline"
+              >
+                {(meuLivro as any).nota ? "Editar nota" : "Avaliar"}
+              </button>
+            )}
           </div>
           {generos.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -354,12 +433,13 @@ const ObraDetalhe = () => {
           Minha biblioteca
         </h2>
         {meuLivro ? (
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium capitalize">
-              Status: {meuLivro.status.replace("_", " ")}
-            </span>
-            <Button
-              onClick={async () => {
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium capitalize">
+                Status: {meuLivro.status.replace("_", " ")}
+              </span>
+              <Button
+                onClick={async () => {
                 // Verifica se já existe leitura para abrir diretamente; senão pede confirmação
                 const { data: exp } = await supabase
                   .from("usuario_leituras")
@@ -379,6 +459,8 @@ const ObraDetalhe = () => {
               Abrir minha leitura
             </Button>
           </div>
+
+        </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <Button
