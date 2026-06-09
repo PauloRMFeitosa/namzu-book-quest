@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
-import { BookOpen, Plus, Library, Trash2 } from "lucide-react";
+import { BookOpen, Plus, Library, Trash2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 
-type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo";
+type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo" | "favoritos";
 
 const Livros = () => {
   const { user } = useAuth();
@@ -29,6 +29,7 @@ const Livros = () => {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [removerAlvo, setRemoverAlvo] = useState<{ id: string; titulo: string } | null>(null);
   const [removendo, setRemovendo] = useState(false);
+  const [favoritando, setFavoritando] = useState<string | null>(null);
 
   const { data = [] } = useQuery({
     queryKey: ["meus-livros", user?.id],
@@ -36,7 +37,7 @@ const Livros = () => {
     queryFn: async () => {
       const { data: livros } = await supabase
         .from("usuario_livros")
-        .select("id, status, obra_id, obras(*)")
+        .select("id, status, favorito, obra_id, obras(*)")
         .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
       const list = livros ?? [];
@@ -82,20 +83,37 @@ const Livros = () => {
     invalidateLeituras(qc);
   };
 
-  const matchFiltro = (status: string, f: Filtro) => {
+  const toggleFavorito = async (id: string, atual: boolean) => {
+    setFavoritando(id);
+    const { error } = await supabase
+      .from("usuario_livros")
+      .update({ favorito: !atual })
+      .eq("id", id)
+      .eq("user_id", user!.id);
+    setFavoritando(null);
+    if (error) {
+      toast.error("Erro ao atualizar favorito");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["meus-livros", user?.id] });
+  };
+
+  const matchFiltro = (l: any, f: Filtro) => {
     if (f === "todos") return true;
-    return status === f;
+    if (f === "favoritos") return !!l.favorito;
+    return l.statusEfetivo === f;
   };
 
   const counts = {
     todos: data.length,
-    lendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lendo")).length,
-    quero_ler: data.filter((l: any) => matchFiltro(l.statusEfetivo, "quero_ler")).length,
-    lido: data.filter((l: any) => matchFiltro(l.statusEfetivo, "lido")).length,
-    relendo: data.filter((l: any) => matchFiltro(l.statusEfetivo, "relendo")).length,
+    lendo: data.filter((l: any) => l.statusEfetivo === "lendo").length,
+    quero_ler: data.filter((l: any) => l.statusEfetivo === "quero_ler").length,
+    lido: data.filter((l: any) => l.statusEfetivo === "lido").length,
+    relendo: data.filter((l: any) => l.statusEfetivo === "relendo").length,
+    favoritos: data.filter((l: any) => !!l.favorito).length,
   };
 
-  const filtrados = data.filter((l: any) => matchFiltro(l.statusEfetivo, filtro));
+  const filtrados = data.filter((l: any) => matchFiltro(l, filtro));
 
   const chips: { key: Filtro; label: string }[] = [
     { key: "todos", label: "Todos" },
@@ -103,6 +121,7 @@ const Livros = () => {
     { key: "relendo", label: "Relendo" },
     { key: "quero_ler", label: "Quero ler" },
     { key: "lido", label: "Lidos" },
+    { key: "favoritos", label: "Favoritos" },
   ];
 
   const Grid = ({ items }: { items: any[] }) =>
@@ -127,6 +146,23 @@ const Livros = () => {
                 </div>
               )}
               <p className="text-sm font-medium mt-2 line-clamp-2 break-words min-h-[2.5rem]">{l.obras?.titulo_original}</p>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorito(l.id, !!l.favorito);
+              }}
+              disabled={favoritando === l.id}
+              className={cn(
+                "absolute top-2 left-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-soft transition-opacity",
+                l.favorito
+                  ? "opacity-100 text-rose-500"
+                  : "opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground",
+              )}
+              aria-label={l.favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              title={l.favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            >
+              <Heart className={cn("w-4 h-4", l.favorito && "fill-rose-500")} />
             </button>
             <button
               onClick={(e) => {
@@ -160,12 +196,17 @@ const Livros = () => {
               key={c.key}
               onClick={() => setFiltro(c.key)}
               className={cn(
-                "rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap transition-colors",
+                "rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5",
                 ativo
-                  ? "bg-primary text-primary-foreground"
+                  ? c.key === "favoritos"
+                    ? "bg-rose-500 text-white"
+                    : "bg-primary text-primary-foreground"
                   : "bg-muted text-foreground hover:bg-muted/80",
               )}
             >
+              {c.key === "favoritos" && (
+                <Heart className={cn("w-3.5 h-3.5", ativo && "fill-white")} />
+              )}
               {c.label} ({counts[c.key]})
             </button>
           );
