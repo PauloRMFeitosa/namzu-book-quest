@@ -1,36 +1,14 @@
 User-agent: Googlebot
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /auth/
-Disallow: /config/
+
 User-agent: Bingbot
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /auth/
-Disallow: /config/
+
 User-agent: Twitterbot
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /auth/
-Disallow: /config/
+
 User-agent: facebookexternalhit
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /auth/
-Disallow: /config/
+
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /auth/
-Disallow: /config/
-Sitemap: https://www.namzu.com.br/sitemap.xml
