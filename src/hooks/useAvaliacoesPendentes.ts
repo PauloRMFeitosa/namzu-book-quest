@@ -31,6 +31,7 @@ export function useAvaliacoesPendentes(limit = 3) {
       const { data, error } = await supabase
         .from("pendencias_avaliacao_home")
         .select("*")
+        .eq("user_id", user!.id)
         .limit(limit);
       if (error) throw error;
       return (data ?? []) as PendenciaAvaliacao[];
@@ -51,6 +52,7 @@ export function usePendenciasCount() {
       const { data, error } = await supabase
         .from("pendencias_avaliacao_home")
         .select("*")
+        .eq("user_id", user!.id)
         .limit(3);
       if (error) throw error;
       return (data ?? []) as PendenciaAvaliacao[];
