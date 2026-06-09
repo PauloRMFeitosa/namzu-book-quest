@@ -189,6 +189,27 @@ const Admin = () => {
         ))}
       </div>
 
+      {/* Mobile nav — horizontal scroll, fora do flex row para não espremer o conteúdo */}
+      <div className="sm:hidden w-full overflow-x-auto pb-2">
+        <div className="flex gap-1 w-max">
+          {allNav.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors",
+                tab === key
+                  ? "bg-secondary font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Sidebar + Content */}
       <div className="flex gap-6">
         {/* Sidebar — visible on sm+, collapses to icon-only when collapsed=true */}
@@ -221,27 +242,6 @@ const Admin = () => {
             <NavGroup label="Ferramentas" items={TOOLS_NAV} isLast />
           </div>
         </nav>
-
-        {/* Mobile nav — horizontal scroll */}
-        <div className="sm:hidden w-full overflow-x-auto pb-2">
-          <div className="flex gap-1 w-max">
-            {allNav.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors",
-                  tab === key
-                    ? "bg-secondary font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-secondary/50"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Content panel — max-w prevents excessive stretch on ultra-wide screens */}
         <div className="flex-1 min-w-0 max-w-screen-xl">
