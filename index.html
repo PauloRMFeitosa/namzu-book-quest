@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Namzu</title>
+    <meta name="description" content="A sabedoria começa aqui">
+    <meta name="author" content="Lovable" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Namzu" />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+      // Aplica o tema antes da primeira pintura para evitar flicker.
+      // Fonte de verdade: localStorage["namzu-theme"] ∈ {"light","dark","system"}.
+      // Default para novos usuários: "system" (segue prefers-color-scheme).
+      (function () {
+        try {
+          var saved = localStorage.getItem('namzu-theme') || 'system';
+          var isDark = saved === 'dark' || (saved === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', isDark ? '#14213a' : '#ffffff');
+        } catch (e) {}
+      })();
+    </script>
+
+
+
+    <!-- TODO: Update og:title to match your application name -->
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a73216d7-d2cc-4d59-a20d-0b0aec871607">
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a73216d7-d2cc-4d59-a20d-0b0aec871607">
+    <meta property="og:title" content="Namzu">
+  <meta name="twitter:title" content="Namzu">
+  <meta property="og:description" content="A sabedoria começa aqui">
+  <meta name="twitter:description" content="A sabedoria começa aqui">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
