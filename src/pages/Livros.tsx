@@ -487,7 +487,7 @@ const Livros = () => {
           return (
             <button
               key={c.key}
-              onClick={() => { setFiltro(c.key); setShowAll(false); }}
+              onClick={() => { setFiltro(filtro === c.key && c.key !== "todos" ? "todos" : c.key); setShowAll(false); }}
               className={cn(
                 "rounded-full px-4 h-9 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 flex-shrink-0",
                 ativo
@@ -549,8 +549,8 @@ const Livros = () => {
         </div>
       </div>
 
-      {/* ── HOME VIEW (filtro=todos, sem busca) ── */}
-      {!isFiltered ? (
+      {/* ── HOME VIEW (grade + sem filtro) ── */}
+      {!isFiltered && viewMode === "grade" ? (
         <>
           {/* Add book card */}
           <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4">
@@ -586,12 +586,11 @@ const Livros = () => {
           </div>
 
           {/* Prateleiras + Stats */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex gap-3">
             {/* Suas prateleiras */}
-            <div className="bg-card rounded-2xl p-3 border border-border">
-              <div className="flex items-center justify-between mb-3">
+            <div className="flex-1 min-w-0 bg-card rounded-2xl p-3 border border-border">
+              <div className="mb-3">
                 <span className="text-sm font-semibold">Suas prateleiras</span>
-                <button className="text-xs text-primary font-medium">Ver todas</button>
               </div>
               {prateleiras.length > 0 ? (
                 <div className="grid grid-cols-2 gap-1.5">
@@ -617,10 +616,9 @@ const Livros = () => {
             </div>
 
             {/* Biblioteca stats */}
-            <div className="bg-card rounded-2xl p-3 border border-border">
-              <div className="flex items-center justify-between mb-3">
+            <div className="flex-1 min-w-0 bg-card rounded-2xl p-3 border border-border">
+              <div className="mb-3">
                 <span className="text-sm font-semibold">Biblioteca</span>
-                <button className="text-xs text-primary font-medium">Ver detalhes</button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {[
