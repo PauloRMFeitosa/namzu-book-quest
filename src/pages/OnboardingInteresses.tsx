@@ -101,6 +101,9 @@ const OnboardingInteresses = () => {
       // Invalida também demais áreas que dependem do perfil (Home, Perfil).
       invalidateUserData(qc);
 
+      // Marcar onboarding como completo no banco (fonte de verdade)
+      await supabase.rpc("concluir_onboarding");
+
       toast.success("Seu Código ME foi iniciado!");
       navigate("/perfil", { replace: true });
     } catch (e: any) {
@@ -120,6 +123,19 @@ const OnboardingInteresses = () => {
           <img src={logoNamzu} alt="NAMZU" className="w-9 h-9" />
           <span className="font-extrabold text-primary text-lg tracking-tight">NAMZU</span>
         </header>
+
+        {/* Indicador de progresso: Passo 2 de 2 */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center">1</div>
+            <span className="text-xs text-muted-foreground hidden sm:inline">Boas-vindas</span>
+          </div>
+          <div className="flex-1 h-px bg-primary/30 max-w-[32px]" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">2</div>
+            <span className="text-xs font-medium text-primary hidden sm:inline">Seus interesses</span>
+          </div>
+        </div>
 
         <div className="mb-8">
           <div className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-primary font-semibold mb-2">

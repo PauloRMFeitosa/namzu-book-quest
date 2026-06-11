@@ -98,6 +98,21 @@ const Livros = () => {
   const [favoritando, setFavoritando] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
+  // Progresso de leitura por usuario_livro_id (só livros com status "lendo")
+  const { data: progressoMap } = useQuery({
+    queryKey: ["livros-progresso", user?.id],
+    enabled: !!user,
+    staleTime: 2 * 60_000,
+    queryFn: async () => {
+      const { data: rows } = await supabase.rpc("get_progresso_lendo");
+      const map: Record<string, number> = {};
+      for (const r of rows ?? []) {
+        map[(r as any).usuario_livro_id] = Number((r as any).percentual_lido ?? 0);
+      }
+      return map;
+    },
+  });
+
   const { data = [] } = useQuery({
     queryKey: ["meus-livros", user?.id],
     enabled: !!user,
@@ -266,7 +281,11 @@ const Livros = () => {
   const isFiltered = filtro !== "todos" || busca !== "" || showAll;
 
   // Reusable book card (grade mode)
-  const renderBookCard = (l: any) => (
+  const renderBookCard = (l: any) => {
+    const pct = progressoMap?.[l.id];
+    const isLendo = l.statusEfetivo === "lendo" || l.statusEfetivo === "relendo";
+
+    return (
     <div key={l.id} className="relative group">
       <div className="relative">
         <button
@@ -282,6 +301,30 @@ const Livros = () => {
           ) : (
             <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
               <BookOpen className="w-8 h-8 text-primary" />
+            </div>
+          )}
+
+          {/* Barra de progresso — só para livros sendo lidos */}
+          {isLendo && pct != null && pct > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1.5">
+              <div className="w-full h-1.5 rounded-full bg-black/40 backdrop-blur-sm overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
+              </div>
+              <p className="text-[9px] text-white/90 font-semibold text-center mt-0.5 drop-shadow">
+                {Math.round(pct)}%
+              </p>
+            </div>
+          )}
+
+          {/* Badge "Lendo" para livros sem progresso registrado */}
+          {isLendo && (pct == null || pct === 0) && (
+            <div className="absolute bottom-1.5 left-1.5">
+              <span className="text-[9px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                Lendo
+              </span>
             </div>
           )}
         </button>
@@ -352,10 +395,15 @@ const Livros = () => {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // Reusable book row (list mode)
-  const renderBookRow = (l: any) => (
+  const renderBookRow = (l: any) => {
+    const pct = progressoMap?.[l.id];
+    const isLendo = l.statusEfetivo === "lendo" || l.statusEfetivo === "relendo";
+
+    return (
     <div
       key={l.id}
       className="flex items-center gap-3 px-1 py-2 rounded-xl hover:bg-muted/50 group"
@@ -384,6 +432,18 @@ const Livros = () => {
         <p className="text-sm font-medium line-clamp-1">{l.obras?.titulo_original}</p>
         {l.autorNome && (
           <p className="text-xs text-muted-foreground">{l.autorNome}</p>
+        )}
+        {/* Mini barra de progresso no modo lista */}
+        {isLendo && pct != null && pct > 0 && (
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full"
+                style={{ width: `${Math.min(100, pct)}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(pct)}%</span>
+          </div>
         )}
       </button>
 
@@ -431,7 +491,8 @@ const Livros = () => {
         </DropdownMenu>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col gap-4 pb-4">

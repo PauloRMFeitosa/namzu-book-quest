@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
 import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
+import { useConquistaRealtime } from "@/hooks/useConquistaRealtime";
 
 
 const navItems = [
@@ -35,6 +36,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { flags } = useFeatureFlags();
   const navigate = useNavigate();
   const totalNotificacoes = useNotificacoesTotal();
+  useConquistaRealtime(); // Realtime: toast ao desbloquear conquista
 
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;

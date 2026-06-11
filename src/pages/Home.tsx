@@ -8,7 +8,8 @@ import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 
-import { BookOpen, Plus, ArrowRight, HomeIcon, Users } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss } from "lucide-react";
+import { FeedAtividade } from "@/components/social/FeedAtividade";
 
 const Home = () => {
   const { user } = useAuth();
@@ -154,6 +155,20 @@ const Home = () => {
         </section>
       )}
 
+
+      {/* Feed de atividade social */}
+      <section className="card-soft p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Rss className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm">Atividade dos leitores que sigo</h3>
+          </div>
+          <button onClick={() => navigate("/leitores")} className="text-xs text-primary font-medium">
+            Descobrir
+          </button>
+        </div>
+        <FeedAtividade limite={20} />
+      </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">

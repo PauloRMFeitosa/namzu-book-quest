@@ -9,18 +9,20 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Verifica se o usuário já iniciou o Código ME (perfil_interesses).
-  const { data: temInteresses, isLoading: chk } = useQuery({
-    queryKey: ["perfil-interesses-count", user?.id],
+  // Fonte de verdade: onboarding_completo no banco (coluna adicionada na Fase 2)
+  // Fallback rápido via localStorage para evitar flash de redirect no primeiro render.
+  const { data: perfil, isLoading: chk } = useQuery({
+    queryKey: ["perfil-onboarding", user?.id],
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { count } = await supabase
-        .from("perfil_interesses")
-        .select("interesse_id", { count: "exact", head: true })
-        .eq("user_id", user!.id);
-      return (count ?? 0) > 0;
+      const { data } = await supabase
+        .from("perfis")
+        .select("onboarding_completo")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
     },
-    staleTime: 0,
   });
 
   if (loading || (user && chk)) {
@@ -32,15 +34,17 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   }
   if (!user) return <Navigate to="/onboarding" replace />;
 
-  const onboardingDone =
+  // Onboarding: verificar localStorage (rápido) + banco (confiável)
+  const localFlag =
     typeof window !== "undefined" && localStorage.getItem("namzu_onboarding_completed") === "1";
+  const dbFlag = perfil?.onboarding_completo ?? false;
+  const onboardingDone = localFlag || dbFlag;
+
   if (!onboardingDone) return <Navigate to="/onboarding" replace />;
 
-  // Novo usuário (criado nas últimas 24h) sem interesses → obrigatório iniciar o Código ME.
-  // Usuários existentes recebem apenas o convite no Home/Perfil (não intrusivo).
-  const createdAt = user?.created_at ? new Date(user.created_at).getTime() : 0;
-  const isNewUser = createdAt > 0 && Date.now() - createdAt < 24 * 60 * 60 * 1000;
-  if (isNewUser && temInteresses === false && location.pathname !== "/onboarding-interesses") {
+  // Novo usuário sem onboarding_completo no banco → redirecionar para interesses
+  // (usuários existentes têm onboarding_completo=true pela migration)
+  if (!dbFlag && location.pathname !== "/onboarding-interesses") {
     return <Navigate to="/onboarding-interesses" replace />;
   }
 

@@ -9,12 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Award, BookOpen, Flame, Info, MapPin, CalendarDays, Sparkles,
-  Library, Lightbulb, Trophy, BarChart3, Star, Users, Heart,
+  Library, Lightbulb, Trophy, BarChart3, Star, Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useInteressesUsuario } from "@/hooks/useInteressesUsuario";
 import { Button } from "@/components/ui/button";
+import { useContagemSocial } from "@/hooks/social/useSeguir";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -50,6 +51,8 @@ const Perfil = () => {
       return data;
     },
   });
+
+  const { data: social } = useContagemSocial(user?.id);
 
   const { data: livros = [] } = useQuery({
     queryKey: ["perfil-livros", user?.id],
@@ -180,17 +183,24 @@ const Perfil = () => {
             </div>
           </div>
 
-          {/* Espaço reservado social (futuro) */}
-          <div className="mt-4 flex gap-6 text-xs text-muted-foreground/60 border-t border-border/60 pt-3">
-            <span className="inline-flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5" />— seguidores
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5" />— seguindo
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5" />— compatibilidade
-            </span>
+          {/* Contadores sociais */}
+          <div className="mt-4 flex gap-6 text-xs border-t border-border/60 pt-3">
+            <button
+              onClick={() => navigate("/leitores?tab=seguidores")}
+              className="inline-flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="font-semibold tabular-nums">{social?.seguidores ?? "—"}</span>
+              <span className="text-muted-foreground">seguidores</span>
+            </button>
+            <button
+              onClick={() => navigate("/leitores?tab=seguindo")}
+              className="inline-flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="font-semibold tabular-nums">{social?.seguindo ?? "—"}</span>
+              <span className="text-muted-foreground">seguindo</span>
+            </button>
           </div>
         </div>
       </motion.section>
