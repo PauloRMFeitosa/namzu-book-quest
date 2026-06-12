@@ -25,7 +25,7 @@ export const useMinhaResenha = (obraId: string | null | undefined) => {
     enabled: !!obraId && !!user,
     queryFn: async () => {
       const { data } = await supabase
-        .from("resenhas")
+        .from("leitura_resenha")
         .select("*")
         .eq("obra_id", obraId!)
         .eq("user_id", user!.id)
@@ -49,7 +49,7 @@ export const useUpsertResenha = () => {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (payload: UpsertResenhaPayload) => {
-      const { error } = await supabase.from("resenhas").upsert(
+      const { error } = await supabase.from("leitura_resenha").upsert(
         { ...payload, user_id: user!.id },
         { onConflict: "user_id,obra_id" }
       );
@@ -67,7 +67,7 @@ export const useExcluirResenha = (obraId: string | null | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (resenhaId: string) => {
-      const { error } = await supabase.from("resenhas").delete().eq("id", resenhaId);
+      const { error } = await supabase.from("leitura_resenha").delete().eq("id", resenhaId);
       if (error) throw error;
     },
     onSuccess: () => {
