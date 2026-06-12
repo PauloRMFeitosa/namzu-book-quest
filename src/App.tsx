@@ -25,6 +25,7 @@ import Configuracoes from "./pages/Configuracoes";
 import TermosDeUso from "./pages/TermosDeUso";
 import CadastroManual from "./pages/CadastroManual";
 import ObraDetalhe from "./pages/ObraDetalhe";
+import AutorDetalhe from "./pages/AutorDetalhe";
 import Admin from "./pages/admin/Admin";
 import Leitores from "./pages/Leitores";
 import Citacoes from "./pages/Citacoes";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/termos" element={<ProtectedRoute><TermosDeUso /></ProtectedRoute>} />
             <Route path="/cadastro-manual" element={<ProtectedRoute><CadastroManual /></ProtectedRoute>} />
             <Route path="/obras/:id" element={<ProtectedRoute><ObraDetalhe /></ProtectedRoute>} />
+            <Route path="/autores/:id" element={<ProtectedRoute><AutorDetalhe /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -356,7 +356,14 @@ const ObraDetalhe = () => {
           <h1 className="text-xl font-bold leading-tight">{obra.titulo_original}</h1>
           {autores.length > 0 && (
             <p className="text-sm text-muted-foreground">
-              {autores.map((a: any) => a.nome_completo).join(", ")}
+              {autores.map((a: any, i: number) => (
+                <span key={a.id}>
+                  {i > 0 && ", "}
+                  <Link to={`/autores/${a.id}`} className="hover:underline hover:text-foreground transition-colors">
+                    {a.nome_completo}
+                  </Link>
+                </span>
+              ))}
             </p>
           )}
           <p className="text-xs text-muted-foreground">
@@ -490,7 +497,10 @@ const ObraDetalhe = () => {
       {outrasObras.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Outras obras de {autorPrincipal?.nome_completo}
+            Outras obras de{" "}
+            <Link to={`/autores/${autorPrincipal?.id}`} className="hover:underline hover:text-foreground transition-colors">
+              {autorPrincipal?.nome_completo}
+            </Link>
           </h2>
           <div className="flex gap-3 overflow-x-auto -mx-1 px-1 pb-2">
             {outrasObras.map((o: any) => (
