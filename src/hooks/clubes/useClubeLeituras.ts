@@ -131,12 +131,19 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
 
       const totalMembros = membrosRes.count ?? 0;
 
+      const calcPct = (ulId: string, obraId: string, concluido: boolean): number => {
+        if (concluido) return 100;
+        const paginas = paginaPorUL.get(ulId) ?? null;
+        const totalPags = paginasPorObra.get(obraId) ?? null;
+        if (paginas !== null && totalPags && totalPags > 0) {
+          return Math.min(100, Math.round((paginas / totalPags) * 100));
+        }
+        return percentualPorUL.get(ulId) ?? 0;
+      };
+
       return trilhas.map((t: any) => {
         const lista = leiturasPorObra.get(t.obra_id) ?? [];
-        const percentuais = lista.map((l) => {
-          if (l.status === "concluido") return 100;
-          return percentualPorUL.get(l.id) ?? 0;
-        });
+        const percentuais = lista.map((l) => calcPct(l.id, t.obra_id, l.status === "concluido"));
         const media = percentuais.length
           ? Math.round(percentuais.reduce((a, b) => a + b, 0) / percentuais.length)
           : 0;
@@ -146,7 +153,7 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
         let meu_progresso: TrilhaItem["meu_progresso"] = null;
         if (minhaLeitura) {
           const concluida = minhaLeitura.status === "concluido";
-          const pct = concluida ? 100 : percentualPorUL.get(minhaLeitura.id) ?? 0;
+          const pct = calcPct(minhaLeitura.id, t.obra_id, concluida);
           meu_progresso = {
             status: minhaLeitura.status,
             percentual: pct,

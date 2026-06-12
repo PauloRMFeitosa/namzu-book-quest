@@ -67,8 +67,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   });
 
   const handleSignOut = async () => {
+    const destination = flags.show_onboarding ? "/onboarding" : "/login";
     await signOut();
-    navigate("/onboarding");
+    navigate(destination);
   };
 
   const avatarUrl = (user?.user_metadata?.avatar_url as string) || (user?.user_metadata?.picture as string) || "";
