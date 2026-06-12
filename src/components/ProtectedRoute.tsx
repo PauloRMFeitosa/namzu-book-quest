@@ -11,7 +11,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const { flags } = useFeatureFlags();
+  const { flags, loading: flagsLoading } = useFeatureFlags();
   const { isAdmin } = useIsAdmin();
   const landingPage = useLandingPage();
 
@@ -31,7 +31,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     },
   });
 
-  if (loading || (user && chk)) {
+  if (loading || (user && chk) || (user && flagsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

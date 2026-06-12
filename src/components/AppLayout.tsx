@@ -5,6 +5,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import logoNamzu from "@/assets/logo-namzu.png";
@@ -105,14 +106,29 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
               )}
             </Link>
 
-            <Link to="/perfil" aria-label="Ver perfil" className="hover-lift">
-              <Avatar className="w-9 h-9 border border-border">
-                <AvatarImage src={avatarUrl} alt={fullName} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hover-lift rounded-full focus:outline-none" aria-label="Menu do usuário">
+                  <Avatar className="w-9 h-9 border border-border">
+                    <AvatarImage src={avatarUrl} alt={fullName} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => navigate("/perfil")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Ver perfil
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
