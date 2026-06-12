@@ -29,6 +29,7 @@ import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
 import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
 import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
+import { WikidataAutoresTab } from "./tabs/WikidataAutoresTab";
 
 type TabKey =
   | "visibilidade"
@@ -42,7 +43,8 @@ type TabKey =
   | "saude"
   | "reprocessamento"
   | "mapeamento-generos"
-  | "wikidata-obras";
+  | "wikidata-obras"
+  | "wikidata-autores";
 
 interface NavItem {
   key: TabKey;
@@ -69,6 +71,7 @@ const TOOLS_NAV: NavItem[] = [
   { key: "reprocessamento", label: "Reprocessamento", icon: RefreshCw },
   { key: "mapeamento-generos", label: "Mapeamento de Gêneros", icon: Tags },
   { key: "wikidata-obras", label: "Wikidata: Obras", icon: Globe },
+  { key: "wikidata-autores", label: "Wikidata: Autores", icon: Globe },
 ];
 
 interface Metrics {
@@ -268,6 +271,7 @@ const Admin = () => {
           {tab === "reprocessamento" && <ReprocessamentoTab />}
           {tab === "mapeamento-generos" && <MapeamentoGenerosTab />}
           {tab === "wikidata-obras" && <WikidataObrasTab />}
+          {tab === "wikidata-autores" && <WikidataAutoresTab />}
         </div>
       </div>
     </div>
