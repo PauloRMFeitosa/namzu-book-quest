@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, Send, Eye, Pencil, ImagePlus, X } from "lucide-react";
+import { Loader2, Send, Eye, Pencil, ImagePlus, Camera, Images, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,8 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
   const [fileParaUpload, setFileParaUpload] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   const criar = useCriarPost(clubeId);
 
   if (!user || !isMembro) {
@@ -207,24 +209,61 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             className="hidden"
             onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
           />
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+          />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1">
               {!parentPostId && (
                 <>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => galleryRef.current?.click()}
-                    disabled={uploading || criar.isPending}
-                    className="text-xs gap-1.5 h-8"
-                  >
-                    {uploading
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <ImagePlus className="w-3.5 h-3.5" />}
-                    Imagem
-                  </Button>
+                  {isMobile ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => cameraRef.current?.click()}
+                        disabled={uploading || criar.isPending}
+                        className="text-xs gap-1.5 h-8"
+                      >
+                        {uploading
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Camera className="w-3.5 h-3.5" />}
+                        Câmera
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => galleryRef.current?.click()}
+                        disabled={uploading || criar.isPending}
+                        className="text-xs gap-1.5 h-8"
+                      >
+                        <Images className="w-3.5 h-3.5" />
+                        Galeria
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => galleryRef.current?.click()}
+                      disabled={uploading || criar.isPending}
+                      className="text-xs gap-1.5 h-8"
+                    >
+                      {uploading
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <ImagePlus className="w-3.5 h-3.5" />}
+                      Imagem
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     size="sm"
