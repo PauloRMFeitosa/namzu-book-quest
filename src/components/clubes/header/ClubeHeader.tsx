@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Share2, Users, Flame, BookOpen, Loader2 } from "lucide-react";
+import { ArrowLeft, Share2, Users, Flame, BookOpen, Loader2, Link2, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ interface Props {
 
 export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loading }: Props) => {
   const navigate = useNavigate();
+  const isPrivado = clube.visibilidade === "privado";
 
   const compartilhar = async () => {
     const path = window.location.pathname + window.location.search + window.location.hash;
@@ -62,14 +63,17 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+        {/* Botão de compartilhar na capa — com label para ser encontrável */}
         <div className="absolute top-3 right-3">
           <Button
-            size="icon"
+            size="sm"
             variant="secondary"
             onClick={compartilhar}
-            className="rounded-full bg-card/90 backdrop-blur border border-border/40 hover:bg-card"
+            className="rounded-full bg-card/90 backdrop-blur border border-border/40 hover:bg-card gap-1.5 px-3 shadow-sm"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">Compartilhar</span>
           </Button>
         </div>
       </div>
@@ -77,8 +81,8 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
       {/* Identidade */}
       <div className="px-1 pt-4 flex flex-col gap-3">
         <div className="flex flex-wrap gap-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${clube.visibilidade === "privado" ? "bg-accent/20 text-accent" : "bg-primary/15 text-primary"}`}>
-            {clube.visibilidade === "privado" ? "Privado" : "Público"}
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isPrivado ? "bg-accent/20 text-accent" : "bg-primary/15 text-primary"}`}>
+            {isPrivado ? "Privado" : "Público"}
           </span>
           {clube.tags.map((t) => (
             <span
@@ -120,9 +124,30 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
           </div>
         </div>
 
+        {/* Banner de convite para clubes privados */}
+        {isPrivado && (
+          <div className="flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3">
+            <Lock className="w-4 h-4 text-accent flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-accent">Clube privado</p>
+              <p className="text-xs text-muted-foreground leading-snug">
+                Somente quem tiver o link pode acessar e entrar.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={compartilhar}
+              className="rounded-xl gap-1.5 flex-shrink-0 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Copiar link
+            </Button>
+          </div>
+        )}
+
         {/* CTA */}
         {!isMembro && (
-          <div className="pt-2">
+          <div className="pt-1">
             <Button
               onClick={onEntrar}
               disabled={loading || isPendente}
@@ -132,7 +157,7 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : isPendente ? (
                 "Aguardando aprovação"
-              ) : clube.visibilidade === "privado" ? (
+              ) : isPrivado ? (
                 "Solicitar entrada"
               ) : (
                 "Entrar no clube"
