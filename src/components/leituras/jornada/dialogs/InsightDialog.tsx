@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/ui/voice-textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,11 +52,11 @@ export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
         <div className="flex flex-col gap-3">
           <div>
             <label className="text-xs text-muted-foreground">O que aprendi *</label>
-            <Textarea value={aprendi} onChange={(e) => setAprendi(e.target.value)} rows={3} className="rounded-xl mt-1" />
+            <VoiceTextarea value={aprendi} onValueChange={setAprendi} rows={3} className="mt-1" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Por que foi importante</label>
-            <Textarea value={porque} onChange={(e) => setPorque(e.target.value)} rows={2} className="rounded-xl mt-1" />
+            <VoiceTextarea value={porque} onValueChange={setPorque} rows={2} className="mt-1" />
           </div>
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">{loading ? "Salvando..." : "Salvar"}</Button>
         </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/ui/voice-textarea";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -169,30 +169,30 @@ export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
 
           <div>
             <label className="text-xs text-muted-foreground">Opinião *</label>
-            <Textarea
+            <VoiceTextarea
               value={opiniao}
-              onChange={(e) => setOpiniao(e.target.value)}
+              onValueChange={setOpiniao}
               rows={4}
               placeholder="O que você achou do livro?"
-              className="rounded-xl mt-1"
+              className="mt-1"
             />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Pontos positivos</label>
-            <Textarea
+            <VoiceTextarea
               value={positivos}
-              onChange={(e) => setPositivos(e.target.value)}
+              onValueChange={setPositivos}
               rows={2}
-              className="rounded-xl mt-1"
+              className="mt-1"
             />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Pontos negativos</label>
-            <Textarea
+            <VoiceTextarea
               value={negativos}
-              onChange={(e) => setNegativos(e.target.value)}
+              onValueChange={setNegativos}
               rows={2}
-              className="rounded-xl mt-1"
+              className="mt-1"
             />
           </div>
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">
