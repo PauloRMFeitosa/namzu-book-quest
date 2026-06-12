@@ -43,6 +43,7 @@ type Ordenacao = "titulo_asc" | "titulo_desc" | "autor_asc" | "autor_desc";
 
 interface AcervoItem {
   obra_id: string;
+  edicao_id: string | null;
   titulo: string;
   titulo_ordenacao: string;
   ano: number | null;
@@ -54,6 +55,7 @@ interface AcervoItem {
 interface LocalResult {
   origem: "local";
   obra_id: string;
+  edicao_id?: string | null;
   titulo: string;
   autor?: string;
   ano?: number | null;
@@ -163,8 +165,8 @@ const Busca = () => {
         .from("obras")
         .select(
           `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
-           obra_autores!left(ordem, autores(nome_completo, nome_ordenacao))
-           ${filtroEditora !== "todos" ? ", edicoes!inner(editora)" : ""}`,
+           obra_autores!left(ordem, autores(nome_completo, nome_ordenacao)),
+           edicoes!left(id, editora${filtroEditora !== "todos" ? "" : ""})`,
         )
         .limit(500);
 
@@ -206,8 +208,12 @@ const Busca = () => {
           oas.slice().sort((a: any, b: any) => (a.ordem ?? 99) - (b.ordem ?? 99))[0];
         const autorNome = principal?.autores?.nome_completo ?? null;
         const autorOrd = principal?.autores?.nome_ordenacao ?? "zzz";
+        // Pega a primeira edição disponível (preferência: com num_paginas)
+        const edicoes: any[] = o.edicoes ?? [];
+        const edicaoId = edicoes[0]?.id ?? null;
         items.push({
           obra_id: o.id,
+          edicao_id: edicaoId,
           titulo: o.titulo_original,
           titulo_ordenacao: o.titulo_ordenacao ?? o.titulo_original?.toLowerCase() ?? "",
           ano: o.ano_primeira_publicacao,
@@ -332,7 +338,7 @@ const Busca = () => {
           supabase
             .from("edicoes")
             .select(
-              "isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
+              "id, isbn_13, obra_id, obras!inner(id, titulo_original, capa_padrao_url, ano_primeira_publicacao)",
             )
             .ilike("isbn_13", `%${isbn}%`)
             .limit(10)
@@ -343,6 +349,7 @@ const Busca = () => {
                 map.set(o.id, {
                   origem: "local",
                   obra_id: o.id,
+                  edicao_id: row.id,
                   titulo: o.titulo_original,
                   ano: o.ano_primeira_publicacao,
                   capa_url: o.capa_padrao_url,
@@ -464,7 +471,7 @@ const Busca = () => {
     else setTimeout(run, 0);
   };
 
-  const adicionarLocal = async (obraId: string, key: string, status: AddStatus) => {
+  const adicionarLocal = async (obraId: string, key: string, status: AddStatus, edicaoId?: string | null) => {
     if (!user) return;
     // Guard síncrono: bloqueia duplo-tap (touch + click ghost) antes de qualquer await
     if (inFlightRef.current.has(key) || adicionados.has(key)) return;
@@ -473,9 +480,23 @@ const Busca = () => {
     // Feedback otimista imediato
     setAdicionados((s) => new Set(s).add(key));
     const today = new Date().toISOString().slice(0, 10);
-    const payload = {
+
+    // Resolve edicao_id: usa o passado ou busca a primeira edição da obra
+    let resolvedEdicaoId = edicaoId ?? null;
+    if (!resolvedEdicaoId) {
+      const { data: eds } = await supabase
+        .from("edicoes")
+        .select("id")
+        .eq("obra_id", obraId)
+        .order("created_at", { ascending: true })
+        .limit(1);
+      resolvedEdicaoId = eds?.[0]?.id ?? null;
+    }
+
+    const payload: Record<string, any> = {
       user_id: user.id,
       obra_id: obraId,
+      ...(resolvedEdicaoId ? { edicao_id: resolvedEdicaoId } : {}),
       status,
       ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
     };
@@ -552,6 +573,7 @@ const Busca = () => {
         {
           origem: "local",
           obra_id: obraId,
+          edicao_id: data?.edicao_id ?? null,
           titulo: b.titulo,
           autor: b.autores?.[0],
           ano: b.ano,
@@ -824,7 +846,7 @@ const Busca = () => {
                   r.titulo,
                   r.autor,
                   r.ano,
-                  (status) => adicionarLocal(r.obra_id, r.obra_id, status),
+                  (status) => adicionarLocal(r.obra_id, r.obra_id, status, r.edicao_id),
                   adicionando === r.obra_id,
                   adicionados.has(r.obra_id),
                   undefined,
@@ -864,7 +886,7 @@ const Busca = () => {
               r.titulo,
               r.autor,
               r.ano,
-              (status) => adicionarLocal(r.obra_id, r.obra_id, status),
+              (status) => adicionarLocal(r.obra_id, r.obra_id, status, r.edicao_id),
               adicionando === r.obra_id,
               adicionados.has(r.obra_id),
               undefined,

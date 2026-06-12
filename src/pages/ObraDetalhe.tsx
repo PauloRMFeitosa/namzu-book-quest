@@ -220,11 +220,13 @@ const ObraDetalhe = () => {
     if (!user) return;
     setAdicionando(true);
     const today = new Date().toISOString().slice(0, 10);
+    const edicaoId = obra.edicoes?.[0]?.id ?? undefined;
     const { data: novo, error } = await supabase
       .from("usuario_livros")
       .insert({
         user_id: user.id,
         obra_id: id!,
+        ...(edicaoId ? { edicao_id: edicaoId } : {}),
         status,
         ...(status === "lido" ? { data_fim: today } : {}),
       })
