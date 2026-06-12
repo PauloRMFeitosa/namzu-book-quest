@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGamificacao } from "@/hooks/useGamificacao";
@@ -44,6 +45,7 @@ const Perfil = () => {
   const navigate = useNavigate();
   const { data: gam } = useGamificacao();
   const { data: meusInteresses = [] } = useInteressesUsuario();
+  const { flags } = useFeatureFlags();
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil", user?.id],
@@ -280,12 +282,14 @@ const Perfil = () => {
             <p className="text-sm text-muted-foreground">
               Seu Código ME ainda não foi iniciado.
             </p>
-            <Button
-              onClick={() => navigate("/onboarding-interesses")}
-              className="h-11 rounded-2xl bg-primary hover:bg-primary-hover"
-            >
-              Iniciar Código ME
-            </Button>
+            {flags.show_codigo_me && (
+              <Button
+                onClick={() => navigate("/onboarding-interesses")}
+                className="h-11 rounded-2xl bg-primary hover:bg-primary-hover"
+              >
+                Iniciar Código ME
+              </Button>
+            )}
           </div>
         ) : (
           <>

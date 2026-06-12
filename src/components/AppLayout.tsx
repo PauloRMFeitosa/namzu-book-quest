@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { NavLink, useNavigate, Link } from "react-router-dom";
+import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
 import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield, FileText } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -35,15 +35,29 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { isAdmin } = useIsAdmin();
   const { flags } = useFeatureFlags();
   const navigate = useNavigate();
+  const location = useLocation();
   const totalNotificacoes = useNotificacoesTotal();
   useConquistaRealtime(); // Realtime: toast ao desbloquear conquista
 
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;
+    if (!flags.pages_global_visible) return false; // override global
     if (i.to === "/clubes") return flags.show_clubes;
     if (i.to === "/leituras") return flags.show_leituras;
     return true;
   });
+
+  const showMenuInferior = (() => {
+    if (isAdmin) return true;
+    const p = location.pathname;
+    if (p === "/") return flags.show_menu_inferior_home;
+    if (p.startsWith("/clubes")) return flags.show_menu_inferior_clubes;
+    if (p.startsWith("/busca")) return flags.show_menu_inferior_busca;
+    if (p.startsWith("/livros") || p.startsWith("/obra") || p.startsWith("/autor")) return flags.show_menu_inferior_livros;
+    if (p.startsWith("/leituras")) return flags.show_menu_inferior_leituras;
+    if (p.startsWith("/perfil") || p.startsWith("/perfis")) return flags.show_menu_inferior_perfil;
+    return true;
+  })();
   const visibleDrawer = drawerItems.filter((i) => {
     if (isAdmin) return true;
     if (i.to === "/metas") return flags.show_metas;
@@ -103,11 +117,11 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 pb-24 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in">
+      <main className={`relative z-10 flex-1 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in ${showMenuInferior ? "pb-24" : "pb-4"}`}>
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
+      {showMenuInferior && <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
         <div
           className="max-w-3xl mx-auto grid px-2 py-2"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
@@ -136,7 +150,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <span className="text-[10px] font-medium">Mais</span>
           </button>
         </div>
-      </nav>
+      </nav>}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-72">

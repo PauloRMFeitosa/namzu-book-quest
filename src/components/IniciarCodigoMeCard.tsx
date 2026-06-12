@@ -2,15 +2,19 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInteressesUsuario } from "@/hooks/useInteressesUsuario";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 /**
  * Convite para iniciar o Código ME do Leitor.
- * Exibido enquanto o usuário não possui registros em perfil_interesses.
+ * Exibido enquanto o usuário não possui registros em perfil_interesses
+ * e a flag show_codigo_me está ativa no admin.
  */
 export const IniciarCodigoMeCard = ({ compact = false }: { compact?: boolean }) => {
   const navigate = useNavigate();
   const { data: interesses, isLoading } = useInteressesUsuario();
+  const { flags } = useFeatureFlags();
 
+  if (!flags.show_codigo_me) return null;
   if (isLoading) return null;
   if ((interesses?.length ?? 0) > 0) return null;
 

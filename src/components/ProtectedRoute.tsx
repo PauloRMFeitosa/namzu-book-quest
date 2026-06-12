@@ -4,10 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "./AppLayout";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useLandingPage } from "@/hooks/useLandingPage";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const landingPage = useLandingPage();
 
   // Fonte de verdade: onboarding_completo no banco (coluna adicionada na Fase 2)
   // Fallback rápido via localStorage para evitar flash de redirect no primeiro render.
@@ -40,12 +46,19 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const dbFlag = perfil?.onboarding_completo ?? false;
   const onboardingDone = localFlag || dbFlag;
 
-  if (!onboardingDone) return <Navigate to="/onboarding" replace />;
+  // Se o onboarding está desabilitado no admin, bypass completo do redirect
+  if (!onboardingDone && flags.show_onboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
-  // Novo usuário sem onboarding_completo no banco → redirecionar para interesses
-  // (usuários existentes têm onboarding_completo=true pela migration)
-  if (!dbFlag && location.pathname !== "/onboarding-interesses") {
+  // Se o Código ME está desabilitado no admin, bypass do redirect para interesses
+  if (!dbFlag && flags.show_codigo_me && location.pathname !== "/onboarding-interesses") {
     return <Navigate to="/onboarding-interesses" replace />;
+  }
+
+  // Redirect da landing page configurada: só aplica em "/" para não-admins
+  if (!isAdmin && location.pathname === "/" && landingPage !== "/") {
+    return <Navigate to={landingPage} replace />;
   }
 
   return <AppLayout>{children}</AppLayout>;
