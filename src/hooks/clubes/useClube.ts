@@ -246,6 +246,27 @@ export const useDefinirPapelMembro = (clubeId: string | undefined) => {
   });
 };
 
+export const useExpulsarMembro = (clubeId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!clubeId) throw new Error("Clube inválido");
+      const { error } = await supabase
+        .from("clube_membros")
+        .delete()
+        .eq("clube_id", clubeId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Membro removido do clube");
+      qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube", clubeId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao remover membro"),
+  });
+};
+
 export const useSairClube = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();
