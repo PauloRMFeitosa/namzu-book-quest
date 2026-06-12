@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,9 +17,58 @@ interface Props {
   onOpenChange: (o: boolean) => void;
 }
 
+// ─── Star rating ───────────────────────────────────────────────────────────────
+// 5 estrelas, valor 1–5, null = sem avaliação.
+// Clicar na estrela já selecionada limpa a avaliação.
+function StarRating({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const active = hovered ?? value ?? 0;
+
+  return (
+    <div
+      className="flex gap-1"
+      onMouseLeave={() => setHovered(null)}
+      aria-label="Avaliação em estrelas"
+    >
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          aria-label={`${star} estrela${star > 1 ? "s" : ""}`}
+          className="p-0.5 rounded transition-transform hover:scale-110 focus-visible:outline-none"
+          onMouseEnter={() => setHovered(star)}
+          onClick={() => onChange(value === star ? null : star)}
+        >
+          <Star
+            className="w-7 h-7 transition-colors"
+            style={{
+              fill: star <= active ? "hsl(var(--primary))" : "transparent",
+              color: star <= active ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+            }}
+          />
+        </button>
+      ))}
+      {value !== null && (
+        <span className="ml-2 self-center text-sm text-muted-foreground">
+          {value}/5
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Dialog ────────────────────────────────────────────────────────────────────
+
 /**
- * Resenha standalone — grava em leitura_pos.resenha (única por livro).
- * Estrutura: opinião + positivos + negativos concatenados em campo resenha (markdown leve).
+ * Resenha standalone — grava em leitura_pos.resenha (opinião + pontos) e
+ * salva a avaliação (estrelas) em usuario_livros.nota.
  */
 export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
   const qc = useQueryClient();
@@ -27,69 +76,128 @@ export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
   const [opiniao, setOpiniao] = useState("");
   const [positivos, setPositivos] = useState("");
   const [negativos, setNegativos] = useState("");
-  const [nota, setNota] = useState("");
+  // Avaliação em estrelas (1–5), inicializada a partir de usuario_livros.nota
+  const [avaliacao, setAvaliacao] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open && livro.leitura_pos?.resenha) {
-      // Tenta extrair partes do conteúdo concatenado
-      const r = livro.leitura_pos.resenha;
-      setOpiniao(r);
-      setPositivos("");
-      setNegativos("");
+    if (!open) return;
+    // Pré-preenche com nota existente (usuario_livros.nota, escala 1–5)
+    setAvaliacao(livro.nota != null ? Math.round(livro.nota) : null);
+
+    if (livro.leitura_pos?.resenha) {
+      // Limpa o trecho de nota legado que ficava concatenado no texto
+      const resenha = livro.leitura_pos.resenha
+        .replace(/\n*\*\*Nota:\*\*\s*\S+\/10/g, "")
+        .trim();
+      setOpiniao(resenha);
+    } else {
+      setOpiniao("");
     }
-  }, [open, livro.leitura_pos]);
+    setPositivos("");
+    setNegativos("");
+  }, [open, livro.leitura_pos, livro.nota]);
 
   const salvar = async () => {
     if (!opiniao.trim()) return toast.error("Escreva sua opinião");
     setLoading(true);
     try {
+      // 1. Garante sessão pos_leitura
       let leituraId = livro.pos_leitura?.id;
       if (!leituraId) {
-        leituraId = await iniciarLeitura({ usuario_leitura_id: livro.id, tipo: "pos_leitura", user_id: user!.id });
+        leituraId = await iniciarLeitura({
+          usuario_leitura_id: livro.id,
+          tipo: "pos_leitura",
+          user_id: user!.id,
+        });
       }
+
+      // 2. Monta texto da resenha (sem nota — agora em campo separado)
       const partes = [opiniao.trim()];
       if (positivos.trim()) partes.push(`**Pontos positivos:** ${positivos.trim()}`);
       if (negativos.trim()) partes.push(`**Pontos negativos:** ${negativos.trim()}`);
-      if (nota.trim()) partes.push(`**Nota:** ${nota.trim()}/10`);
       const resenha = partes.join("\n\n");
 
+      // 3. Salva resenha em leitura_pos
       const payload = { leitura_id: leituraId, resenha };
-      const { error } = livro.leitura_pos
+      const { error: errResenha } = livro.leitura_pos
         ? await supabase.from("leitura_pos").update(payload).eq("leitura_id", leituraId)
         : await supabase.from("leitura_pos").insert(payload);
-      if (error) throw error;
-      toast.success("Resenha salva!");
+      if (errResenha) throw errResenha;
+
+      // 4. Salva avaliação em usuario_livros.nota (separado da resenha)
+      const { error: errNota } = await supabase
+        .from("usuario_livros")
+        .update({ nota: avaliacao })
+        .eq("id", livro.usuario_livro_id);
+      if (errNota) throw errNota;
+
+      toast.success(livro.leitura_pos ? "Resenha atualizada!" : "Resenha salva!");
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
       qc.invalidateQueries({ queryKey: ["timeline-livro", livro.id] });
+      // Invalida lista de livros para refletir nova nota nas estrelas
+      qc.invalidateQueries({ queryKey: ["usuario-livros"] });
+      qc.invalidateQueries({ queryKey: ["livros"] });
       invalidateLeituras(qc);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const jaTemResenha = !!livro.leitura_pos?.resenha;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Resenha</DialogTitle></DialogHeader>
-        <div className="flex flex-col gap-3">
+        <DialogHeader>
+          <DialogTitle>{jaTemResenha ? "Editar resenha" : "Nova resenha"}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          {/* Avaliação por estrelas */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block">
+              Avaliação
+              {avaliacao === null && (
+                <span className="ml-1 text-muted-foreground/60">(opcional)</span>
+              )}
+            </label>
+            <StarRating value={avaliacao} onChange={setAvaliacao} />
+          </div>
+
           <div>
             <label className="text-xs text-muted-foreground">Opinião *</label>
-            <Textarea value={opiniao} onChange={(e) => setOpiniao(e.target.value)} rows={4} className="rounded-xl mt-1" />
+            <Textarea
+              value={opiniao}
+              onChange={(e) => setOpiniao(e.target.value)}
+              rows={4}
+              placeholder="O que você achou do livro?"
+              className="rounded-xl mt-1"
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Pontos positivos</label>
-            <Textarea value={positivos} onChange={(e) => setPositivos(e.target.value)} rows={2} className="rounded-xl mt-1" />
+            <Textarea
+              value={positivos}
+              onChange={(e) => setPositivos(e.target.value)}
+              rows={2}
+              className="rounded-xl mt-1"
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Pontos negativos</label>
-            <Textarea value={negativos} onChange={(e) => setNegativos(e.target.value)} rows={2} className="rounded-xl mt-1" />
+            <Textarea
+              value={negativos}
+              onChange={(e) => setNegativos(e.target.value)}
+              rows={2}
+              className="rounded-xl mt-1"
+            />
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Nota (0-10)</label>
-            <Input type="number" min={0} max={10} value={nota} onChange={(e) => setNota(e.target.value)} className="h-11 rounded-xl mt-1" />
-          </div>
-          <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">{loading ? "Salvando..." : "Salvar"}</Button>
+          <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">
+            {loading ? "Salvando..." : jaTemResenha ? "Atualizar" : "Salvar"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

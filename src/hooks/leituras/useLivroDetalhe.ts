@@ -28,6 +28,8 @@ export type LivroDetalhe = {
   clube_id: string | null;
   tipo_origem: string;
   usuario_livro_id: string;
+  /** avaliação do livro (1–5 estrelas), salva em usuario_livros.nota */
+  nota: number | null;
   obras: any;
   autores: { id: string; nome: string }[];
   edicoes: { id: string; num_paginas: number | null; capa_url: string | null; editora: string | null } | null;
@@ -45,7 +47,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
     queryFn: async (): Promise<LivroDetalhe | null> => {
       const { data: ul, error } = await supabase
         .from("usuario_leituras")
-        .select("*, usuario_livros!inner(id, user_id, obra_id, obras(*, obra_autores(ordem, autores(id, nome_completo))), edicoes(id, num_paginas, capa_url, editora))")
+        .select("*, usuario_livros!inner(id, user_id, obra_id, nota, obras(*, obra_autores(ordem, autores(id, nome_completo))), edicoes(id, num_paginas, capa_url, editora))")
         .eq("id", usuarioLeituraId!)
         .maybeSingle();
       if (error) throw error;
@@ -136,6 +138,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         clube_id: ul_any.clube_id,
         tipo_origem: ul_any.tipo_origem,
         usuario_livro_id: ul_any.usuario_livro_id,
+        nota: ul_any.usuario_livros?.nota != null ? Number(ul_any.usuario_livros.nota) : null,
         obras: obrasRaw,
         autores: autoresArr,
         edicoes,
