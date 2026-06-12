@@ -19,6 +19,7 @@ const sections = [
   { id: "alteracoes", label: "9. Alterações destes Termos" },
   { id: "conhecimento", label: "10. Conhecimento Colaborativo" },
   { id: "contato", label: "11. Contato" },
+  { id: "acervo", label: "12. Política do Acervo" },
 ];
 
 const lastUpdated = "Junho de 2026";
@@ -233,6 +234,30 @@ export default function TermosDeUso() {
 
         <Section id="contato" title="11. Contato">
           <p>Dúvidas, solicitações ou questões relacionadas a estes termos podem ser encaminhadas para os canais oficiais de atendimento da NAMZU.</p>
+        </Section>
+
+        <hr className="border-border/60" />
+
+        <Section id="acervo" title="12. Política do Acervo">
+          <p>
+            O catálogo de obras disponível para consulta na NAMZU é composto por títulos cujos metadados — como títulos, autores, descrições e capas — são obtidos de fontes públicas, licenciadas ou de domínio público, conforme a legislação vigente sobre direitos autorais no Brasil.
+          </p>
+          <p>
+            A disponibilização de informações sobre obras em domínio público segue o disposto na <span className="font-medium text-foreground">Lei nº 9.610, de 19 de fevereiro de 1998</span>, que regula os direitos autorais no território nacional.
+          </p>
+          <p>
+            A NAMZU envidarou esforços para que nenhum direito autoral seja violado na composição ou exibição de seu catálogo. Contudo, caso você identifique qualquer conteúdo que, por qualquer motivo, viole direitos de tradução, reprodução, exibição ou quaisquer outros, solicitamos que entre em contato com nossa equipe pelos canais oficiais de atendimento para que a situação seja imediatamente regularizada.
+          </p>
+          <p>
+            As obras e informações presentes no acervo refletem o contexto histórico, social e cultural de seu tempo de produção e podem conter linguagens, conceitos ou representações que devem ser compreendidos à luz da época em que foram criados. A NAMZU não endossa opiniões ou perspectivas presentes nas obras catalogadas.
+          </p>
+          <p className="font-medium text-foreground">Sobre as capas</p>
+          <p>
+            As imagens de capa exibidas no catálogo da NAMZU são obtidas de fontes públicas ou licenciadas para fins de identificação visual das obras. Quando não há capa original disponível, podem ser utilizadas imagens meramente ilustrativas, sem correspondência com as capas originais das obras nem com eventuais capas protegidas por direitos autorais. Essas imagens são exibidas com o propósito exclusivo de proporcionar uma experiência visual adequada aos leitores, sem fins comerciais diretos sobre as imagens em si.
+          </p>
+          <p>
+            Caso seja identificada uma capa exibida indevidamente, entre em contato com a equipe NAMZU para que seja substituída ou removida imediatamente.
+          </p>
         </Section>
       </div>
 
