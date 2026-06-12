@@ -15,6 +15,7 @@ import {
   Tags,
   PanelLeftClose,
   PanelLeftOpen,
+  Globe,
 } from "lucide-react";
 import { GamificacaoTab } from "./tabs/GamificacaoTab";
 import { UsuariosTab } from "./tabs/UsuariosTab";
@@ -27,6 +28,7 @@ import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
 import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
 import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
+import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
 
 type TabKey =
   | "visibilidade"
@@ -39,7 +41,8 @@ type TabKey =
   | "conquistas"
   | "saude"
   | "reprocessamento"
-  | "mapeamento-generos";
+  | "mapeamento-generos"
+  | "wikidata-obras";
 
 interface NavItem {
   key: TabKey;
@@ -65,6 +68,7 @@ const TOOLS_NAV: NavItem[] = [
   { key: "saude", label: "Saúde do Catálogo", icon: HeartPulse },
   { key: "reprocessamento", label: "Reprocessamento", icon: RefreshCw },
   { key: "mapeamento-generos", label: "Mapeamento de Gêneros", icon: Tags },
+  { key: "wikidata-obras", label: "Wikidata: Obras", icon: Globe },
 ];
 
 interface Metrics {
@@ -263,6 +267,7 @@ const Admin = () => {
           {tab === "saude" && <SaudeCatalogoTab />}
           {tab === "reprocessamento" && <ReprocessamentoTab />}
           {tab === "mapeamento-generos" && <MapeamentoGenerosTab />}
+          {tab === "wikidata-obras" && <WikidataObrasTab />}
         </div>
       </div>
     </div>
