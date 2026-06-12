@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings2, FileText, ChevronRight } from "lucide-react";
@@ -8,11 +9,12 @@ import { FontSizeToggle } from "@/components/FontSizeToggle";
 
 const Configuracoes = () => {
   const { user, signOut } = useAuth();
+  const { flags } = useFeatureFlags();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/onboarding");
+    navigate(flags.show_onboarding ? "/onboarding" : "/login");
   };
 
   return (
