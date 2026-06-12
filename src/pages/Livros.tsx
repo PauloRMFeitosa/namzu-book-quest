@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +97,28 @@ const Livros = () => {
   const [removendo, setRemovendo] = useState(false);
   const [favoritando, setFavoritando] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(30);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Reseta paginação virtual ao mudar filtro/busca/ordenação
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [filtro, busca, ordenacao, showAll]);
+
+  // IntersectionObserver — carrega mais ao chegar perto do fim
+  const onSentinel = useCallback((entries: IntersectionObserverEntry[]) => {
+    if (entries[0].isIntersecting) {
+      setVisibleCount((c) => c + 24);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(onSentinel, { rootMargin: "200px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [onSentinel]);
 
   // Progresso de leitura por usuario_livro_id (só livros com status "lendo")
   const { data: progressoMap } = useQuery({
@@ -749,14 +771,33 @@ const Livros = () => {
               <Plus className="w-4 h-4" /> Adicionar livro
             </Button>
           </div>
-        ) : viewMode === "grade" ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {filtrados.map((l: any) => renderBookCard(l))}
-          </div>
         ) : (
-          <div className="flex flex-col divide-y divide-border/50">
-            {filtrados.map((l: any) => renderBookRow(l))}
-          </div>
+          <>
+            {viewMode === "grade" ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {filtrados.slice(0, visibleCount).map((l: any) => renderBookCard(l))}
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-border/50">
+                {filtrados.slice(0, visibleCount).map((l: any) => renderBookRow(l))}
+              </div>
+            )}
+
+            {/* Sentinel — dispara quando visível, carrega mais 24 */}
+            {visibleCount < filtrados.length && (
+              <div ref={sentinelRef} className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
+                <div className="w-4 h-4 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                Carregando mais livros…
+              </div>
+            )}
+
+            {/* Rodapé quando todos foram mostrados */}
+            {visibleCount >= filtrados.length && filtrados.length > 30 && (
+              <p className="text-center text-xs text-muted-foreground py-2">
+                {filtrados.length} livros exibidos
+              </p>
+            )}
+          </>
         )
       )}
 
