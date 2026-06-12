@@ -27,6 +27,7 @@ import CadastroManual from "./pages/CadastroManual";
 import ObraDetalhe from "./pages/ObraDetalhe";
 import Admin from "./pages/admin/Admin";
 import Leitores from "./pages/Leitores";
+import Citacoes from "./pages/Citacoes";
 import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/leitores" element={<ProtectedRoute><Leitores /></ProtectedRoute>} />
+            <Route path="/citacoes" element={<ProtectedRoute><Citacoes /></ProtectedRoute>} />
             <Route path="/metas" element={<ProtectedRoute><FeatureRoute flag="show_metas"><Metas /></FeatureRoute></ProtectedRoute>} />
             <Route path="/historico" element={<ProtectedRoute><FeatureRoute flag="show_historico"><Historico /></FeatureRoute></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><FeatureRoute flag="show_notificacoes"><Notificacoes /></FeatureRoute></ProtectedRoute>} />

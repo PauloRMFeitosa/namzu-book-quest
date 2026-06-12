@@ -19,25 +19,23 @@ export function useIsSeguindo(seguidoId: string | undefined) {
 }
 
 // ---------- Contadores de seguidores / seguindo ----------
+// Usa RPC SECURITY DEFINER pois conexoes tem RLS habilitado sem policies,
+// o que bloqueia queries diretas do client retornando sempre 0.
 export function useContagemSocial(userId: string | undefined) {
   return useQuery({
     queryKey: ["contagem-social", userId],
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async () => {
-      const [{ count: seguidores }, { count: seguindo }] = await Promise.all([
-        supabase
-          .from("conexoes")
-          .select("*", { count: "exact", head: true })
-          .eq("seguido_id", userId!)
-          .eq("status", "ativo"),
-        supabase
-          .from("conexoes")
-          .select("*", { count: "exact", head: true })
-          .eq("seguidor_id", userId!)
-          .eq("status", "ativo"),
-      ]);
-      return { seguidores: seguidores ?? 0, seguindo: seguindo ?? 0 };
+      const { data, error } = await supabase.rpc("get_contagem_social", {
+        p_user_id: userId!,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return {
+        seguidores: Number(row?.seguidores ?? 0),
+        seguindo: Number(row?.seguindo ?? 0),
+      };
     },
   });
 }

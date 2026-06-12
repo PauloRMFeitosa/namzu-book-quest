@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { useInteressesUsuario } from "@/hooks/useInteressesUsuario";
 import { Button } from "@/components/ui/button";
 import { useContagemSocial } from "@/hooks/social/useSeguir";
+import { EstatisticasLeitura } from "@/components/EstatisticasLeitura";
+import { useStatsLeitura } from "@/hooks/useEstatisticas";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -53,6 +55,7 @@ const Perfil = () => {
   });
 
   const { data: social } = useContagemSocial(user?.id);
+  const { data: statsLeitura } = useStatsLeitura(user?.id);
 
   const { data: livros = [] } = useQuery({
     queryKey: ["perfil-livros", user?.id],
@@ -72,9 +75,22 @@ const Perfil = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("leituras")
-        .select("id,usuario_leitura_id,leitura_pos(ideia_principal,resumo_geral,resenha),usuario_leituras(usuario_livros(obras(titulo_original)))")
+        .select(`
+          id,
+          leitura_conteudo(id, resumo, conceito_principal),
+          leitura_aplicacoes(id, descricao, plano_acao),
+          leitura_citacoes(id, texto, pagina),
+          leitura_pos(resenha),
+          usuario_leituras(usuario_livros(obras(titulo_original)))
+        `)
         .eq("user_id", user!.id);
-      return (data ?? []).filter((l: any) => l.leitura_pos);
+      // Só mostrar leituras com algum conteúdo de aprendizado
+      return (data ?? []).filter((l: any) =>
+        l.leitura_conteudo?.length > 0 ||
+        l.leitura_aplicacoes?.length > 0 ||
+        l.leitura_citacoes?.length > 0 ||
+        l.leitura_pos?.resenha
+      );
     },
   });
 
@@ -117,10 +133,9 @@ const Perfil = () => {
   const queroLer = livros.filter((l: any) => l.status === "quero_ler");
   const favoritos = livros.filter((l: any) => l.favorito);
 
-  const paginasLidas = concluidos.reduce(
-    (acc: number, l: any) => acc + (l.edicoes?.num_paginas ?? 0),
-    0
-  );
+  // paginas_estimadas vem do RPC (usa COALESCE(num_paginas, 300) por livro concluído)
+  // Mais confiável que somar edicoes.num_paginas que frequentemente é null
+  const paginasEstimadas = statsLeitura?.paginas_estimadas ?? 0;
 
   const xpAtual = gam?.xp_total ?? 0;
   const xpNivel = gam?.xp_proximo_nivel ?? 100;
@@ -208,7 +223,7 @@ const Perfil = () => {
       {/* SEÇÃO 2 - STATS RÁPIDAS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <QuickStat icon={BookOpen} label="Livros" value={concluidos.length} color="text-primary" />
-        <QuickStat icon={Library} label="Páginas lidas" value={paginasLidas.toLocaleString("pt-BR")} color="text-accent" />
+        <QuickStat icon={Library} label="Páginas est." value={paginasEstimadas >= 1000 ? `${(paginasEstimadas / 1000).toFixed(1)}k` : paginasEstimadas.toLocaleString("pt-BR")} color="text-accent" />
         <QuickStat icon={Star} label="XP Total" value={xpAtual.toLocaleString("pt-BR")} color="text-yellow-500" />
         <QuickStat icon={Award} label="Conquistas" value={minhasConquistas.length} color="text-orange-500" />
       </div>
@@ -328,34 +343,80 @@ const Perfil = () => {
           {insights.length === 0 ? (
             <EmptyState
               icon={Lightbulb}
-              title="Nenhum insight ainda"
-              desc="Registre aprendizados ao concluir suas leituras e veja-os aqui."
+              title="Nenhum aprendizado ainda"
+              desc="Registre insights, aplicações e citações nas suas leituras e veja-os aqui."
             />
           ) : (
             insights.map((l: any) => {
-              const pos = l.leitura_pos;
               const titulo = l.usuario_leituras?.usuario_livros?.obras?.titulo_original ?? "Leitura";
+              const conteudos: any[] = l.leitura_conteudo ?? [];
+              const aplicacoes: any[] = l.leitura_aplicacoes ?? [];
+              const citacoes: any[] = l.leitura_citacoes ?? [];
+              const resenha: string | null = l.leitura_pos?.resenha ?? null;
               return (
-                <div key={l.id} className="card-soft p-4">
-                  <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
+                <div key={l.id} className="card-soft p-4 flex flex-col gap-3">
+                  <p className="text-xs uppercase tracking-wider text-primary font-semibold">
                     {titulo}
                   </p>
-                  {pos.ideia_principal && (
-                    <div className="mt-2">
-                      <p className="text-[11px] uppercase text-muted-foreground">Ideia principal</p>
-                      <p className="text-sm">{pos.ideia_principal}</p>
+
+                  {/* Insights / Conteúdo */}
+                  {conteudos.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[11px] uppercase text-muted-foreground flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3" /> Insights ({conteudos.length})
+                      </p>
+                      {conteudos.map((c: any) => (
+                        <div key={c.id} className="p-2 rounded-lg bg-muted/30">
+                          {c.resumo && <p className="text-sm">{c.resumo}</p>}
+                          {c.conceito_principal && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{c.conceito_principal}</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
-                  {pos.resumo_geral && (
-                    <div className="mt-2">
-                      <p className="text-[11px] uppercase text-muted-foreground">Resumo</p>
-                      <p className="text-sm whitespace-pre-line">{pos.resumo_geral}</p>
+
+                  {/* Aplicações */}
+                  {aplicacoes.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[11px] uppercase text-muted-foreground">
+                        Aplicações ({aplicacoes.length})
+                      </p>
+                      {aplicacoes.map((a: any) => (
+                        <div key={a.id} className="p-2 rounded-lg bg-muted/30">
+                          <p className="text-sm">{a.descricao}</p>
+                          {a.plano_acao?.categoria && (
+                            <span className="inline-block text-[10px] uppercase tracking-wider bg-secondary px-2 py-0.5 rounded-full mt-1">
+                              {a.plano_acao.categoria}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
-                  {pos.resenha && (
-                    <div className="mt-2">
+
+                  {/* Citações */}
+                  {citacoes.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[11px] uppercase text-muted-foreground">
+                        Citações ({citacoes.length})
+                      </p>
+                      {citacoes.map((c: any) => (
+                        <p key={c.id} className="text-sm border-l-2 border-primary pl-2 italic">
+                          "{c.texto}"
+                          {c.pagina && (
+                            <span className="text-xs not-italic text-muted-foreground"> · pg {c.pagina}</span>
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Resenha */}
+                  {resenha && (
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-[11px] uppercase text-muted-foreground">Resenha</p>
-                      <p className="text-sm whitespace-pre-line">{pos.resenha}</p>
+                      <p className="text-sm whitespace-pre-line p-2 rounded-lg bg-muted/30">{resenha}</p>
                     </div>
                   )}
                 </div>
@@ -403,15 +464,11 @@ const Perfil = () => {
         </TabsContent>
 
         {/* ESTATÍSTICAS */}
-        <TabsContent value="estatisticas" className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-          <StatItem icon={BookOpen} label="Livros concluídos" value={concluidos.length} />
-          <StatItem icon={Library} label="Páginas lidas" value={paginasLidas.toLocaleString("pt-BR")} />
-          <StatItem icon={Star} label="XP Total" value={xpAtual.toLocaleString("pt-BR")} />
-          <StatItem icon={Sparkles} label="Nível atual" value={gam?.nivel ?? 1} />
-          <StatItem icon={Flame} label="Streak atual" value={`${gam?.streak_atual ?? 0} dias`} />
-          <StatItem icon={Flame} label="Maior streak" value={`${gam?.streak_maximo ?? 0} dias`} />
-          <StatItem icon={Trophy} label="Missões concluídas" value={missoesConcluidas} />
-          <StatItem icon={Award} label="Conquistas" value={minhasConquistas.length} />
+        <TabsContent value="estatisticas" className="mt-4">
+          <EstatisticasLeitura
+            userId={user?.id}
+            mostrar={perfil?.mostrar_estatisticas !== false}
+          />
         </TabsContent>
       </Tabs>
     </div>

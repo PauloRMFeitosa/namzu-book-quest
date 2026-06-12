@@ -6,8 +6,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { BotaoSeguir } from "@/components/social/BotaoSeguir";
-import { Search, Users, BookOpen } from "lucide-react";
+import { useMeusMatches, useRecalcularMatches } from "@/hooks/useMatches";
+import { Search, Users, BookOpen, Sparkles, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── tipos ───────────────────────────────────────────────────────────────────
 
@@ -273,12 +276,168 @@ function AbaSeguindo({ busca }: { busca: string }) {
   );
 }
 
+// ─── aba: compatíveis (match intelectual) ────────────────────────────────────
+
+function AbaCompatíveis({ busca }: { busca: string }) {
+  const { data: matches = [], isLoading } = useMeusMatches();
+  const recalcular = useRecalcularMatches();
+  const navigate = useNavigate();
+
+  const filtrados = useMemo(() => {
+    if (!busca) return matches;
+    const q = busca.toLowerCase();
+    return matches.filter(
+      (m) =>
+        m.nome_exibicao?.toLowerCase().includes(q) ||
+        m.username?.toLowerCase().includes(q)
+    );
+  }, [matches, busca]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Recalculate button */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Baseado em interesses, gêneros e obras em comum.
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs gap-1.5"
+          disabled={recalcular.isPending}
+          onClick={() => recalcular.mutate()}
+        >
+          <RefreshCw className={cn("w-3 h-3", recalcular.isPending && "animate-spin")} />
+          Atualizar
+        </Button>
+      </div>
+
+      {filtrados.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <Sparkles className="w-10 h-10 text-muted-foreground/40" />
+          <p className="font-semibold text-sm">Nenhum leitor compatível ainda</p>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            {busca
+              ? `Sem resultados para "${busca}"`
+              : "Clique em Atualizar para calcular seus matches com outros leitores."}
+          </p>
+          {!busca && (
+            <Button
+              size="sm"
+              disabled={recalcular.isPending}
+              onClick={() => recalcular.mutate()}
+              className="mt-1 rounded-xl"
+            >
+              {recalcular.isPending ? (
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Calcular agora
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtrados.map((m) => {
+            const initials = (m.nome_exibicao ?? "?")
+              .split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            const pct = Math.round(m.compatibilidade);
+            const motivos: string[] = Array.isArray(m.motivos) ? m.motivos : [];
+
+            return (
+              <div
+                key={m.outro_user_id}
+                className="p-3 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate(`/perfis/${m.username ?? m.outro_user_id}`)}
+                    className="shrink-0"
+                  >
+                    <Avatar className="w-11 h-11">
+                      <AvatarImage src={m.avatar_url ?? undefined} />
+                      <AvatarFallback className="text-sm font-semibold bg-secondary text-secondary-foreground">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+
+                  <button
+                    className="flex-1 min-w-0 text-left"
+                    onClick={() => navigate(`/perfis/${m.username ?? m.outro_user_id}`)}
+                  >
+                    <p className="text-sm font-semibold truncate">{m.nome_exibicao}</p>
+                    <p className="text-xs text-muted-foreground">@{m.username}</p>
+                  </button>
+
+                  {/* Compatibility badge */}
+                  <div className="flex flex-col items-center shrink-0">
+                    <span
+                      className={cn(
+                        "text-lg font-bold leading-none",
+                        pct >= 70 ? "text-primary" : pct >= 50 ? "text-accent-foreground" : "text-muted-foreground"
+                      )}
+                    >
+                      {pct}%
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">match</span>
+                  </div>
+
+                  <BotaoSeguir seguidoId={m.outro_user_id} size="sm" />
+                </div>
+
+                {/* Motivos */}
+                {motivos.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2 pl-14">
+                    {motivos.slice(0, 5).map((mot, i) => (
+                      <span
+                        key={i}
+                        className="text-[10px] rounded-full bg-primary/8 text-primary px-2 py-0.5 font-medium border border-primary/15"
+                      >
+                        {mot}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Books in common */}
+                {m.total_lidos > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1.5 pl-14 flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    {m.total_lidos} livro{m.total_lidos !== 1 ? "s" : ""} lido{m.total_lidos !== 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── página principal ────────────────────────────────────────────────────────
 
 const TAB_MAP: Record<string, string> = {
   descobrir: "descobrir",
   seguidores: "seguidores",
   seguindo: "seguindo",
+  compativeis: "compativeis",
 };
 
 export default function Leitores() {
@@ -322,10 +481,13 @@ export default function Leitores() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="descobrir">Descobrir</TabsTrigger>
           <TabsTrigger value="seguidores">Seguidores</TabsTrigger>
           <TabsTrigger value="seguindo">Seguindo</TabsTrigger>
+          <TabsTrigger value="compativeis" className="flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> Match
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="descobrir" className="mt-4">
@@ -336,6 +498,9 @@ export default function Leitores() {
         </TabsContent>
         <TabsContent value="seguindo" className="mt-4">
           <AbaSeguindo busca={busca} />
+        </TabsContent>
+        <TabsContent value="compativeis" className="mt-4">
+          <AbaCompatíveis busca={busca} />
         </TabsContent>
       </Tabs>
     </div>
