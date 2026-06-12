@@ -141,7 +141,7 @@ const TrilhaCard = ({
       // Já existe leitura para este clube → abre direto
       const desteClube = leituras?.find((l) => l.clube_id === clubeId);
       if (desteClube) {
-        navigate(`/leituras/${desteClube.id}`);
+        navigate(`/leituras/${desteClube.id}`, { state: { fromClube: true } });
         return;
       }
 
@@ -162,7 +162,7 @@ const TrilhaCard = ({
             .eq("id", usuarioLivroId);
         }
         qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
-        navigate(`/leituras/${abertaIndividual.id}`);
+        navigate(`/leituras/${abertaIndividual.id}`, { state: { fromClube: true } });
         return;
       }
 
@@ -192,7 +192,7 @@ const TrilhaCard = ({
         .from("usuario_livros")
         .update({ status: "lendo" })
         .eq("id", usuarioLivroId);
-      navigate(`/leituras/${novaUL.id}`);
+      navigate(`/leituras/${novaUL.id}`, { state: { fromClube: true } });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao abrir livro");
     } finally {
@@ -246,7 +246,7 @@ const TrilhaCard = ({
       toast.success("Leitura associada ao clube como concluída");
       qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
       setEscolhaOpen(false);
-      if (leituraIdAlvo) navigate(`/leituras/${leituraIdAlvo}`);
+      if (leituraIdAlvo) navigate(`/leituras/${leituraIdAlvo}`, { state: { fromClube: true } });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao associar");
     }
@@ -278,7 +278,7 @@ const TrilhaCard = ({
         .eq("id", usuarioLivroIdCache);
       qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
       setEscolhaOpen(false);
-      navigate(`/leituras/${novaUL.id}`);
+      navigate(`/leituras/${novaUL.id}`, { state: { fromClube: true } });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao iniciar releitura");
     }
@@ -376,7 +376,7 @@ const TrilhaCard = ({
                   size="sm"
                   variant="outline"
                   className="rounded-xl mt-2 self-start h-8 text-xs"
-                  onClick={() => navigate(`/leituras/${meu.usuario_leitura_id}`)}
+                  onClick={() => navigate(`/leituras/${meu.usuario_leitura_id}`, { state: { fromClube: true } })}
                 >
                   <BookOpen className="w-3 h-3" /> Ver leitura
                 </Button>
