@@ -14,10 +14,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
+import { useMinhaResenha, useUpsertResenha } from "@/hooks/leituras/useResenhas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, Pencil } from "lucide-react";
+import { Award, BookMarked, Quote, Tag, Target, ExternalLink, Wand2, Trash2, Plus, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
@@ -27,6 +28,7 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const { user } = useAuth();
   const pos = livro.leitura_pos;
   const posSessao = livro.pos_leitura;
+  const obraId = livro.obra_id;
   const leiturasReais = livro.leituras.filter((l) => l.tipo === "leitura");
 
   const resumoConcat = leiturasReais
@@ -43,11 +45,15 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
     ).values()
   );
 
+  const { data: resenhaPublicada } = useMinhaResenha(obraId);
+  const upsertResenha = useUpsertResenha();
+
   const [resumoGeral, setResumoGeral] = useState(pos?.resumo_geral ?? resumoConcat);
   const [ideia, setIdeia] = useState(pos?.ideia_principal ?? "");
   const [resenha, setResenha] = useState(pos?.resenha ?? "");
   const [spoiler, setSpoiler] = useState<boolean>(pos?.tem_spoiler ?? false);
   const [publica, setPublica] = useState<boolean>(pos?.publica ?? false);
+  const [publicarResenha, setPublicarResenha] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -63,6 +69,11 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
       setPublica(pos.publica ?? false);
     }
   }, [pos]);
+
+  // Pré-marca o toggle se já existe resenha publicada
+  useEffect(() => {
+    if (resenhaPublicada) setPublicarResenha(true);
+  }, [resenhaPublicada]);
 
   const excluir = async () => {
     if (!posSessao?.id) return;
@@ -111,7 +122,21 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
         ({ error } = await supabase.from("leitura_pos").insert(payload));
       }
       if (error) throw error;
-      toast.success("Pós-leitura salva!");
+
+      // Publica no acervo de resenhas se solicitado
+      if (publicarResenha && obraId && resenha.trim()) {
+        await upsertResenha.mutateAsync({
+          obra_id: obraId,
+          leitura_id: leituraId,
+          texto: resenha.trim(),
+          tem_spoiler: spoiler,
+          visibilidade: "publica",
+        });
+        toast.success("Pós-leitura salva e resenha publicada!");
+      } else {
+        toast.success("Pós-leitura salva!");
+      }
+
       setAdding(false);
       setEditing(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
@@ -158,6 +183,29 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
           <Checkbox checked={publica} onCheckedChange={(v) => setPublica(!!v)} /> Tornar público
         </label>
       </div>
+
+      {/* Toggle: publicar resenha */}
+      {resenha.trim() && obraId && (
+        <label className="flex items-start gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5 cursor-pointer">
+          <Checkbox
+            checked={publicarResenha}
+            onCheckedChange={(v) => setPublicarResenha(!!v)}
+            className="mt-0.5"
+          />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium flex items-center gap-1.5">
+              <BookMarked className="w-3.5 h-3.5 text-primary" />
+              Publicar no acervo de resenhas
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {resenhaPublicada
+                ? "Você já tem uma resenha publicada para este livro. Salvar irá atualizá-la."
+                : "Sua resenha ficará visível para outros leitores do Namzu."}
+            </span>
+          </div>
+        </label>
+      )}
+
       <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
         {loading ? "Salvando..." : pos ? "Salvar alterações" : "Salvar pós-leitura"}
       </Button>

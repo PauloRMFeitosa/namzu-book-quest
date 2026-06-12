@@ -30,6 +30,7 @@ export type LivroDetalhe = {
   usuario_livro_id: string;
   /** avaliação do livro (1–5 estrelas), salva em usuario_livros.nota */
   nota: number | null;
+  obra_id: string | null;
   obras: any;
   autores: { id: string; nome: string }[];
   edicoes: { id: string; num_paginas: number | null; capa_url: string | null; editora: string | null } | null;
@@ -139,6 +140,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
         tipo_origem: ul_any.tipo_origem,
         usuario_livro_id: ul_any.usuario_livro_id,
         nota: ul_any.usuario_livros?.nota != null ? Number(ul_any.usuario_livros.nota) : null,
+        obra_id: obraId ?? null,
         obras: obrasRaw,
         autores: autoresArr,
         edicoes,
