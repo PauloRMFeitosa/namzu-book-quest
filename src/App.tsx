@@ -28,6 +28,7 @@ import ObraDetalhe from "./pages/ObraDetalhe";
 import Admin from "./pages/admin/Admin";
 import Leitores from "./pages/Leitores";
 import Citacoes from "./pages/Citacoes";
+import PerfilPublico from "./pages/PerfilPublico";
 import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+            <Route path="/perfis/:id" element={<ProtectedRoute><PerfilPublico /></ProtectedRoute>} />
             <Route path="/leitores" element={<ProtectedRoute><Leitores /></ProtectedRoute>} />
             <Route path="/citacoes" element={<ProtectedRoute><Citacoes /></ProtectedRoute>} />
             <Route path="/metas" element={<ProtectedRoute><FeatureRoute flag="show_metas"><Metas /></FeatureRoute></ProtectedRoute>} />
