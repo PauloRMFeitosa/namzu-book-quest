@@ -55,40 +55,39 @@ export const MembrosOnline = ({ clubeId }: Props) => {
   const onlineCount = ordenados.filter((m: any) => online.has(m.user_id)).length;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 pt-3 pb-2 flex items-center justify-between">
-        <h3 className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-          Membros
-        </h3>
-        <span className="text-[10px] text-muted-foreground">
-          {onlineCount} online
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+          {onlineCount > 0 ? `${onlineCount} online` : "Todos offline"}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
-        {ordenados.map((m: any) => {
-          const isOn = online.has(m.user_id);
-          return (
-            <div key={m.user_id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-secondary/60">
-              <div className="relative">
-                <Avatar className="w-7 h-7">
-                  <AvatarImage src={m.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    {(m.nome_exibicao ?? m.username ?? "?")[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span
-                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-background ${
-                    isOn ? "bg-success" : "bg-muted-foreground/40"
-                  }`}
-                />
-              </div>
-              <span className={`text-xs truncate ${isOn ? "text-foreground" : "text-muted-foreground"}`}>
-                {m.nome_exibicao ?? m.username ?? "Anônimo"}
-              </span>
+      {ordenados.map((m: any) => {
+        const isOn = online.has(m.user_id);
+        return (
+          <div key={m.user_id} className="flex items-center gap-2 px-1 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
+            <div className="relative shrink-0">
+              <Avatar className="w-7 h-7">
+                <AvatarImage src={m.avatar_url ?? undefined} />
+                <AvatarFallback className="text-[10px]">
+                  {(m.nome_exibicao ?? m.username ?? "?")[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card ${
+                  isOn ? "bg-green-500" : "bg-muted-foreground/30"
+                }`}
+                title={isOn ? "Online" : "Offline"}
+              />
             </div>
-          );
-        })}
-      </div>
+            <span className={`text-xs truncate ${isOn ? "text-foreground" : "text-muted-foreground"}`}>
+              {m.nome_exibicao ?? m.username ?? "Anônimo"}
+            </span>
+            <span className={`ml-auto text-[9px] shrink-0 ${isOn ? "text-green-500" : "text-muted-foreground/50"}`}>
+              {isOn ? "online" : "offline"}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 };

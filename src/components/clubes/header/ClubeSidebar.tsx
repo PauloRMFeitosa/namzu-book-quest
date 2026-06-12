@@ -1,10 +1,11 @@
 import { useRankingClube, useProximosEventos } from "@/hooks/clubes/useClube";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Calendar, Flame, TrendingUp } from "lucide-react";
+import { Trophy, Calendar, Flame, TrendingUp, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { MembrosOnline } from "@/components/clubes/canais/MembrosOnline";
 
 interface Props {
   clubeId: string;
@@ -81,6 +82,15 @@ export const ClubeSidebar = ({ clubeId, membrosCount, ativos7d, ativos30d }: Pro
             ))}
           </ol>
         )}
+      </div>
+
+      {/* Membros online */}
+      <div className="card-soft p-4 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-accent" />
+          <h3 className="font-display font-semibold text-sm">Membros</h3>
+        </div>
+        <MembrosOnline clubeId={clubeId} />
       </div>
 
       {/* Próximos eventos */}
