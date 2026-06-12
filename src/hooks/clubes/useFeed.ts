@@ -217,6 +217,22 @@ export const useCriarPost = (clubeId: string | undefined) => {
   });
 };
 
+export const useExcluirPost = (clubeId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      const { error } = await supabase.from("clube_posts").delete().eq("id", postId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Post excluído");
+      qc.invalidateQueries({ queryKey: ["clube-feed", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-post-respostas"] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e, "Erro ao excluir post")),
+  });
+};
+
 export const useCurtirPost = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();

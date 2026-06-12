@@ -2,11 +2,16 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Heart, MessageCircle, Sparkles, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Loader2, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCurtirPost, useRespostasPost, type FeedPost } from "@/hooks/clubes/useFeed";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useCurtirPost, useRespostasPost, useExcluirPost, type FeedPost } from "@/hooks/clubes/useFeed";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { PerguntasProfundasButton } from "@/components/clubes/ai/PerguntasProfundasButton";
 import { PostComposer } from "./PostComposer";
@@ -16,12 +21,20 @@ interface Props {
   clubeId: string;
   isMembro?: boolean;
   isReply?: boolean;
+  curadorId?: string;
+  canManage?: boolean;
 }
 
-export const PostCard = ({ post, clubeId, isMembro = true, isReply }: Props) => {
+export const PostCard = ({ post, clubeId, isMembro = true, isReply, curadorId, canManage }: Props) => {
+  const { user } = useAuth();
   const curtir = useCurtirPost(clubeId);
+  const excluir = useExcluirPost(clubeId);
   const [openRespostas, setOpenRespostas] = useState(false);
   const respostas = useRespostasPost(post.id, openRespostas);
+
+  const isOwn = !!user && user.id === post.user_id;
+  const isCurador = !!user && !!curadorId && user.id === curadorId;
+  const canDelete = isOwn || isCurador || !!canManage;
 
   const nome = post.autor?.nome_exibicao || post.autor?.username || "Membro";
   const initials = nome
@@ -68,14 +81,14 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply }: Props) => 
       )}
 
       {post.imagem_url && (
-        <a href={post.imagem_url} target="_blank" rel="noreferrer" className="block mt-2">
+        <div className="mt-2">
           <img
             src={post.imagem_url}
             alt=""
             loading="lazy"
             className="rounded-lg border border-border/40 max-h-96 w-full object-cover"
           />
-        </a>
+        </div>
       )}
 
       <footer className="flex items-center gap-1 pt-3 mt-3 border-t border-border/40">
@@ -104,6 +117,36 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply }: Props) => 
           </button>
         )}
         {!isReply && <PerguntasProfundasButton postId={post.id} />}
+
+        {canDelete && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                title="Excluir post"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir este post?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. O post e todos os comentários serão removidos.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => excluir.mutate(post.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {excluir.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Excluir"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </footer>
 
       <AnimatePresence>

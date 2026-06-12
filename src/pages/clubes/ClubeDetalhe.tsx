@@ -96,7 +96,12 @@ const ClubeDetalhe = () => {
 
                 {isTabVisible("feed") && (
                   <TabsContent value="feed" className="mt-5">
-                    <FeedClube clubeId={clube.id} isMembro={acessoTotal} />
+                    <FeedClube
+                      clubeId={clube.id}
+                      isMembro={acessoTotal}
+                      curadorId={clube.curador_id}
+                      canManage={canManage}
+                    />
                   </TabsContent>
                 )}
                 {isTabVisible("leituras") && (

@@ -10,9 +10,11 @@ import { ResumoDiscussaoButton } from "@/components/clubes/ai/ResumoDiscussaoBut
 interface Props {
   clubeId: string;
   isMembro: boolean;
+  curadorId?: string;
+  canManage?: boolean;
 }
 
-export const FeedClube = ({ clubeId, isMembro }: Props) => {
+export const FeedClube = ({ clubeId, isMembro, curadorId, canManage }: Props) => {
   const {
     data,
     isLoading,
@@ -64,7 +66,14 @@ export const FeedClube = ({ clubeId, isMembro }: Props) => {
       ) : (
         <div className="flex flex-col gap-3">
           {posts.map((p) => (
-            <PostCard key={p.id} post={p} clubeId={clubeId} isMembro={isMembro} />
+            <PostCard
+              key={p.id}
+              post={p}
+              clubeId={clubeId}
+              isMembro={isMembro}
+              curadorId={curadorId}
+              canManage={canManage}
+            />
           ))}
           <div ref={sentinel} />
           {hasNextPage && (
