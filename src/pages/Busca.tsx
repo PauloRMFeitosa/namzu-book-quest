@@ -553,11 +553,13 @@ const Busca = () => {
       if (error) throw error;
       const obraId = data?.obra?.id ?? data?.obra_id;
       if (!obraId) throw new Error("Resposta inválida da função");
+      const edicaoId: string | null = data?.edicao_id ?? null;
 
       const today = new Date().toISOString().slice(0, 10);
       const { error: insErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
+        ...(edicaoId ? { edicao_id: edicaoId } : {}),
         status,
         ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
       });
