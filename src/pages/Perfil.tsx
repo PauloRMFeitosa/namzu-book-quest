@@ -80,16 +80,14 @@ const Perfil = () => {
           leitura_conteudo(id, resumo, conceito_principal),
           leitura_aplicacoes(id, descricao, plano_acao),
           leitura_citacoes(id, texto, pagina),
-          leitura_pos(resenha),
-          usuario_leituras(usuario_livros(obras(titulo_original)))
+          usuario_leituras(data_inicio, created_at, usuario_livros(obras(titulo_original, capa_padrao_url)))
         `)
         .eq("user_id", user!.id);
-      // Só mostrar leituras com algum conteúdo de aprendizado
+      // Só mostrar leituras com conteúdo de aprendizado (sem pré/pós-leitura)
       return (data ?? []).filter((l: any) =>
         l.leitura_conteudo?.length > 0 ||
         l.leitura_aplicacoes?.length > 0 ||
-        l.leitura_citacoes?.length > 0 ||
-        l.leitura_pos?.resenha
+        l.leitura_citacoes?.length > 0
       );
     },
   });
@@ -348,16 +346,41 @@ const Perfil = () => {
             />
           ) : (
             insights.map((l: any) => {
-              const titulo = l.usuario_leituras?.usuario_livros?.obras?.titulo_original ?? "Leitura";
+              const obra = l.usuario_leituras?.usuario_livros?.obras;
+              const titulo = obra?.titulo_original ?? "Leitura";
+              const capaUrl: string | null = obra?.capa_padrao_url ?? null;
+              const dataInicio: string | null =
+                l.usuario_leituras?.data_inicio ?? l.usuario_leituras?.created_at ?? null;
+              const mesAno = dataInicio
+                ? new Date(dataInicio).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+                : null;
               const conteudos: any[] = l.leitura_conteudo ?? [];
               const aplicacoes: any[] = l.leitura_aplicacoes ?? [];
               const citacoes: any[] = l.leitura_citacoes ?? [];
-              const resenha: string | null = l.leitura_pos?.resenha ?? null;
               return (
                 <div key={l.id} className="card-soft p-4 flex flex-col gap-3">
-                  <p className="text-xs uppercase tracking-wider text-primary font-semibold">
-                    {titulo}
-                  </p>
+                  {/* Cabeçalho: capa + título + data */}
+                  <div className="flex items-center gap-3">
+                    {capaUrl ? (
+                      <img
+                        src={capaUrl}
+                        alt={titulo}
+                        className="w-10 h-14 rounded object-cover shadow-sm shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-14 rounded bg-secondary flex items-center justify-center shrink-0">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-wider text-primary font-semibold leading-tight line-clamp-2">
+                        {titulo}
+                      </p>
+                      {mesAno && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">{mesAno}</p>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Insights / Conteúdo */}
                   {conteudos.length > 0 && (
@@ -409,14 +432,6 @@ const Perfil = () => {
                           )}
                         </p>
                       ))}
-                    </div>
-                  )}
-
-                  {/* Resenha */}
-                  {resenha && (
-                    <div className="flex flex-col gap-1.5">
-                      <p className="text-[11px] uppercase text-muted-foreground">Resenha</p>
-                      <p className="text-sm whitespace-pre-line p-2 rounded-lg bg-muted/30">{resenha}</p>
                     </div>
                   )}
                 </div>
