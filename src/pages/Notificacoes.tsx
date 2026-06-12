@@ -102,11 +102,14 @@ const NotificacaoCard = ({
   return <div>{cardBody}</div>;
 };
 
+type Filtro = "todas" | "nao_lidas" | "lidas";
+
 // ─── Página ─────────────────────────────────────────────────────────────────
 const Notificacoes = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [avaliacaoAberta, setAvaliacaoAberta] = useState<{ id: string; titulo: string } | null>(null);
+  const [filtro, setFiltro] = useState<Filtro>("todas");
 
   const { data = [] } = useQuery({
     queryKey: ["notificacoes", user?.id],
@@ -122,6 +125,10 @@ const Notificacoes = () => {
   });
 
   const naoLidas = data.filter((n: any) => !n.lida);
+  const visiveis =
+    filtro === "nao_lidas" ? data.filter((n: any) => !n.lida) :
+    filtro === "lidas"     ? data.filter((n: any) => n.lida)  :
+    data;
 
   const invalidar = () => {
     qc.invalidateQueries({ queryKey: ["notificacoes", user?.id] });
@@ -159,6 +166,12 @@ const Notificacoes = () => {
     qc.invalidateQueries({ queryKey: ["pendencias-avaliacao"] });
   };
 
+  const FILTROS: { key: Filtro; label: string }[] = [
+    { key: "todas",     label: "Todas" },
+    { key: "nao_lidas", label: `Não lidas${naoLidas.length > 0 ? ` (${naoLidas.length})` : ""}` },
+    { key: "lidas",     label: "Lidas" },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <PageHero
@@ -168,35 +181,52 @@ const Notificacoes = () => {
         description="Mensagens e atualizações da comunidade."
       />
 
-      {data.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {naoLidas.length > 0
-              ? `${naoLidas.length} não lida${naoLidas.length > 1 ? "s" : ""}`
-              : "Todas lidas"}
-          </p>
-          {naoLidas.length > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs gap-1 text-primary"
-              onClick={marcarTodasLidas}
+      {/* Filtros + ação */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* Pills de filtro */}
+        <div className="flex gap-1.5">
+          {FILTROS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFiltro(f.key)}
+              className={`h-7 px-3 rounded-full text-xs font-medium transition-colors border ${
+                filtro === f.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+              }`}
             >
-              <CheckCheck className="w-3.5 h-3.5" />
-              Marcar todas como lidas
-            </Button>
-          )}
+              {f.label}
+            </button>
+          ))}
         </div>
-      )}
 
-      {data.length === 0 ? (
+        {naoLidas.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs gap-1 text-primary shrink-0"
+            onClick={marcarTodasLidas}
+          >
+            <CheckCheck className="w-3.5 h-3.5" />
+            Marcar todas como lidas
+          </Button>
+        )}
+      </div>
+
+      {visiveis.length === 0 ? (
         <div className="card-soft p-10 text-center flex flex-col items-center gap-3">
           <Bell className="w-10 h-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Nenhuma notificação por enquanto.</p>
+          <p className="text-sm text-muted-foreground">
+            {data.length === 0
+              ? "Nenhuma notificação por enquanto."
+              : filtro === "nao_lidas"
+              ? "Nenhuma notificação não lida."
+              : "Nenhuma notificação lida."}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {data.map((n: any) => (
+          {visiveis.map((n: any) => (
             <NotificacaoCard
               key={n.id}
               n={n}
