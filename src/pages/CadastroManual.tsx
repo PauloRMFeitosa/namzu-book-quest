@@ -42,7 +42,7 @@ const edicaoSchema = z.object({
   obra_id: z.string().uuid("Selecione uma obra"),
   titulo_edicao: z.string().trim().min(1, "Título obrigatório").max(300),
   editora: z.string().trim().min(1, "Editora obrigatória").max(200),
-  formato: z.enum(["ebook", "fisico", "audiobook"]),
+  formato: z.enum(["ebook", "fisico_brochura", "fisico_capa_dura", "audiobook"]),
   idioma: z.string().min(2).max(10),
   isbn_13: z
     .string()
@@ -79,6 +79,9 @@ const CadastroManual = () => {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState(new Date().toISOString().slice(0, 10));
   const [nota, setNota] = useState("");
+  const [obraEditora, setObraEditora] = useState("");
+  const [obraFormato, setObraFormato] = useState("fisico_brochura");
+  const [obraPaginas, setObraPaginas] = useState("");
   const [savingObra, setSavingObra] = useState(false);
 
   // ---------- AUTOR ----------
@@ -90,7 +93,7 @@ const CadastroManual = () => {
   const [edObraId, setEdObraId] = useState<string | null>(null);
   const [edTitulo, setEdTitulo] = useState("");
   const [edEditora, setEdEditora] = useState("");
-  const [edFormato, setEdFormato] = useState<"ebook" | "fisico" | "audiobook">("fisico");
+  const [edFormato, setEdFormato] = useState<"ebook" | "fisico_brochura" | "fisico_capa_dura" | "audiobook">("fisico_brochura");
   const [edIdioma, setEdIdioma] = useState("pt-BR");
   const [edIsbn, setEdIsbn] = useState("");
   const [edPaginas, setEdPaginas] = useState("");
@@ -105,6 +108,9 @@ const CadastroManual = () => {
     setObraAno("");
     setObraSinopse("");
     setObraCapa("");
+    setObraEditora("");
+    setObraFormato("fisico_brochura");
+    setObraPaginas("");
     setObraStatus("quero_ler");
     setDataInicio("");
     setDataFim(new Date().toISOString().slice(0, 10));
@@ -136,15 +142,20 @@ const CadastroManual = () => {
           idioma: obraIdioma,
           sinopse: obraSinopse || null,
           capa_url: obraCapa || null,
+          editora: obraEditora || null,
+          formato: obraFormato,
+          num_paginas: obraPaginas ? Number(obraPaginas) : null,
         },
       });
       if (error) throw error;
       const obraId = data?.obra?.id;
+      const edicaoId: string | null = data?.edicao_id ?? null;
       if (!obraId) throw new Error("Resposta inválida");
 
       const { error: ulErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
+        ...(edicaoId ? { edicao_id: edicaoId } : {}),
         status: obraStatus,
         data_inicio: obraStatus !== "quero_ler" ? dataInicio || null : null,
         data_fim: obraStatus === "concluido" ? dataFim || null : null,
@@ -330,6 +341,41 @@ const CadastroManual = () => {
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Editora</Label>
+              <Input
+                value={obraEditora}
+                onChange={(e) => setObraEditora(e.target.value)}
+                placeholder="Não informada"
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Páginas</Label>
+              <Input
+                value={obraPaginas}
+                onChange={(e) => setObraPaginas(e.target.value)}
+                inputMode="numeric"
+                className="h-11 rounded-xl"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Formato</Label>
+            <Select value={obraFormato} onValueChange={setObraFormato}>
+              <SelectTrigger className="h-11 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fisico_brochura">Físico (brochura)</SelectItem>
+                <SelectItem value="fisico_capa_dura">Físico (capa dura)</SelectItem>
+                <SelectItem value="ebook">eBook</SelectItem>
+                <SelectItem value="audiobook">Audiobook</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex flex-col gap-2 p-3 rounded-xl bg-muted">
             <Label>Status na minha lista</Label>
             <RadioGroup
@@ -486,7 +532,8 @@ const CadastroManual = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fisico">Físico</SelectItem>
+                  <SelectItem value="fisico_brochura">Físico (brochura)</SelectItem>
+                  <SelectItem value="fisico_capa_dura">Físico (capa dura)</SelectItem>
                   <SelectItem value="ebook">eBook</SelectItem>
                   <SelectItem value="audiobook">Audiobook</SelectItem>
                 </SelectContent>
