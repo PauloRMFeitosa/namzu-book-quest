@@ -101,27 +101,30 @@ const Livros = () => {
   // Filtros avançados
   const [filtroAutor, setFiltroAutor] = useState<string | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Reseta paginação virtual ao mudar qualquer filtro
   useEffect(() => {
     setVisibleCount(30);
   }, [filtro, busca, ordenacao, showAll, filtroAutor, filtroCategoria]);
 
-  // IntersectionObserver — carrega mais ao chegar perto do fim
-  const onSentinel = useCallback((entries: IntersectionObserverEntry[]) => {
-    if (entries[0].isIntersecting) {
-      setVisibleCount((c) => c + 24);
+  // Callback ref: re-observa o sentinel toda vez que ele monta/desmonta
+  // (o useRef + useEffect clássico só roda uma vez e perde a referência
+  //  quando o elemento sai do DOM ao trocar filtros)
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
     }
+    if (!node) return;
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) setVisibleCount((c) => c + 24);
+      },
+      { rootMargin: "200px" }
+    );
+    observerRef.current.observe(node);
   }, []);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(onSentinel, { rootMargin: "200px" });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [onSentinel]);
 
   // Progresso de leitura por usuario_livro_id (só livros com status "lendo")
   const { data: progressoMap } = useQuery({
