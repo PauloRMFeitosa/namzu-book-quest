@@ -31,14 +31,14 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     },
   });
 
-  if (loading || (user && chk) || (user && flagsLoading)) {
+  if (loading || flagsLoading || (user && chk)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
-  if (!user) return <Navigate to="/onboarding" replace />;
+  if (!user) return <Navigate to={flags.show_onboarding ? "/onboarding" : "/login"} replace />;
 
   // Onboarding: verificar localStorage (rápido) + banco (confiável)
   const localFlag =
