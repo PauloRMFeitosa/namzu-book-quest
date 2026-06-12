@@ -1,8 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Loader2, Send, Eye, Pencil, ImagePlus, Camera, Images, X } from "lucide-react";
+import { Loader2, Send, ImagePlus, Camera, Images, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -60,7 +58,6 @@ interface Props {
 export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone }: Props) => {
   const { user } = useAuth();
   const [conteudo, setConteudo] = useState("");
-  const [preview, setPreview] = useState(false);
   // Preview local (object URL) — apenas para exibição antes do envio
   const [previewLocal, setPreviewLocal] = useState<string | null>(null);
   // Arquivo processado pronto para upload
@@ -138,7 +135,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
     setConteudo("");
     removerImagem();
-    setPreview(false);
     onDone?.();
   };
 
@@ -158,27 +154,17 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
           </Avatar>
         )}
         <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {preview ? (
-            <div className="prose prose-sm max-w-none min-h-[80px] px-3 py-2 rounded-md bg-muted/30 border border-border/40">
-              {conteudo.trim() ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{conteudo}</ReactMarkdown>
-              ) : (
-                <p className="text-muted-foreground text-sm m-0">Nada para visualizar…</p>
-              )}
-            </div>
-          ) : (
-            <Textarea
-              value={conteudo}
-              onChange={(e) => setConteudo(e.target.value)}
-              placeholder={
-                parentPostId
-                  ? "Escreva um comentário…"
-                  : "Compartilhe uma reflexão… (Markdown suportado)"
-              }
-              rows={compact ? 2 : 3}
-              className="resize-none border-border/60 focus-visible:ring-primary/40"
-            />
-          )}
+          <Textarea
+            value={conteudo}
+            onChange={(e) => setConteudo(e.target.value)}
+            placeholder={
+              parentPostId
+                ? "Escreva um comentário…"
+                : "Compartilhe uma reflexão… (Markdown suportado)"
+            }
+            rows={compact ? 2 : 3}
+            className="resize-none border-border/60 focus-visible:ring-primary/40"
+          />
 
           {/* Preview local da imagem */}
           {previewLocal && (
@@ -264,19 +250,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
                       Imagem
                     </Button>
                   )}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setPreview((v) => !v)}
-                    className="text-xs gap-1.5 h-8"
-                    title={preview ? "Editar" : "Pré-visualizar"}
-                  >
-                    {preview
-                      ? <Pencil className="w-3.5 h-3.5" />
-                      : <Eye className="w-3.5 h-3.5" />}
-                    {preview ? "Editar" : "Preview"}
-                  </Button>
                 </>
               )}
             </div>
