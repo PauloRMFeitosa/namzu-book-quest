@@ -47,7 +47,7 @@ const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 const toFeedPost = (
-  post: ClubePostRow,
+  post: ClubePostRow & { imagem_url?: string | null },
   perfisMap: Map<string, AutorPerfil>,
   curtidasSet: Set<string>,
   curtidasMap: Map<string, number>,
@@ -62,6 +62,7 @@ const toFeedPost = (
   is_destaque_curador: post.is_destaque_curador ?? false,
   curtidas_count: curtidasMap.get(post.id) ?? post.curtidas_count ?? 0,
   created_at: post.created_at ?? new Date().toISOString(),
+  imagem_url: (post as any).imagem_url ?? null,
   autor: perfisMap.get(post.user_id) ?? null,
   curtido_por_mim: curtidasSet.has(post.id),
   respostas_count: respostasCount,
@@ -191,16 +192,18 @@ export const useCriarPost = (clubeId: string | undefined) => {
     mutationFn: async (input: {
       conteudo: string;
       parent_post_id?: string | null;
+      imagem_url?: string | null;
     }) => {
       if (!user || !clubeId) throw new Error("Não autenticado");
       const conteudo = input.conteudo.trim();
-      if (!conteudo) throw new Error("Escreva algo para publicar");
+      if (!conteudo && !input.imagem_url) throw new Error("Escreva algo ou adicione uma imagem");
       const { error } = await supabase.from("clube_posts").insert({
         clube_id: clubeId,
         user_id: user.id,
         conteudo: conteudo || "",
         parent_post_id: input.parent_post_id ?? null,
-      });
+        imagem_url: input.imagem_url ?? null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
