@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 import { useMinhaResenha, useUpsertResenha } from "@/hooks/leituras/useResenhas";
+import { VoiceTextarea } from "@/components/ui/voice-textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -165,15 +166,15 @@ export const PosLeituraBlock = ({ livro }: { livro: LivroDetalhe }) => {
     <div className="p-3 rounded-xl bg-muted/30 flex flex-col gap-3">
       <div>
         <label className="text-xs text-muted-foreground">Resumo geral</label>
-        <Textarea value={resumoGeral} onChange={(e) => setResumoGeral(e.target.value)} rows={4} className="rounded-xl mt-1" />
+        <VoiceTextarea value={resumoGeral} onValueChange={setResumoGeral} rows={4} className="mt-1" />
       </div>
       <div>
         <label className="text-xs text-muted-foreground">Ideia principal</label>
-        <Textarea value={ideia} onChange={(e) => setIdeia(e.target.value)} rows={2} className="rounded-xl mt-1" />
+        <VoiceTextarea value={ideia} onValueChange={setIdeia} rows={2} className="mt-1" />
       </div>
       <div>
         <label className="text-xs text-muted-foreground">Resenha</label>
-        <Textarea value={resenha} onChange={(e) => setResenha(e.target.value)} rows={4} className="rounded-xl mt-1" />
+        <VoiceTextarea value={resenha} onValueChange={setResenha} rows={4} className="mt-1" />
       </div>
       <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-sm">

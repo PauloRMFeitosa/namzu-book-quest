@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/ui/voice-textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -88,11 +88,11 @@ export const PreLeituraForm = ({ usuarioLeituraId, leituraId, initial, onCancel,
       </div>
       <div>
         <label className="text-xs text-muted-foreground">Domínio prévio</label>
-        <Textarea value={dominio} onChange={(e) => setDominio(e.target.value)} rows={2} placeholder="O que você já sabe?" className="rounded-xl mt-1" />
+        <VoiceTextarea value={dominio} onValueChange={setDominio} rows={2} placeholder="O que você já sabe?" className="mt-1" />
       </div>
       <div>
         <label className="text-xs text-muted-foreground">Observação</label>
-        <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="rounded-xl mt-1" />
+        <VoiceTextarea value={obs} onValueChange={setObs} rows={2} className="mt-1" />
       </div>
       <Button type="submit" disabled={loading} className="h-11 rounded-2xl bg-primary hover:bg-primary-hover">
         {loading ? "Salvando..." : isEdit ? "Salvar alterações" : "Salvar pré-leitura"}
