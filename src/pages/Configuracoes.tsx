@@ -13,8 +13,9 @@ const Configuracoes = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
+    const destination = flags.show_onboarding ? "/onboarding" : "/login";
     await signOut();
-    navigate(flags.show_onboarding ? "/onboarding" : "/login");
+    navigate(destination);
   };
 
   return (
