@@ -98,12 +98,15 @@ const Livros = () => {
   const [favoritando, setFavoritando] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
+  // Filtros avançados
+  const [filtroAutor, setFiltroAutor] = useState<string | null>(null);
+  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Reseta paginação virtual ao mudar filtro/busca/ordenação
+  // Reseta paginação virtual ao mudar qualquer filtro
   useEffect(() => {
     setVisibleCount(30);
-  }, [filtro, busca, ordenacao, showAll]);
+  }, [filtro, busca, ordenacao, showAll, filtroAutor, filtroCategoria]);
 
   // IntersectionObserver — carrega mais ao chegar perto do fim
   const onSentinel = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -230,7 +233,11 @@ const Livros = () => {
         ? l.obras?.titulo_original?.toLowerCase().includes(busca.toLowerCase()) ||
           l.autorNome?.toLowerCase().includes(busca.toLowerCase())
         : true;
-      return matchFiltro && matchBusca;
+      const matchAutor = filtroAutor ? l.autorNome === filtroAutor : true;
+      const matchCategoria = filtroCategoria
+        ? l.obras?.obra_generos?.some((og: any) => og.generos?.slug === filtroCategoria)
+        : true;
+      return matchFiltro && matchBusca && matchAutor && matchCategoria;
     });
 
     switch (ordenacao) {
@@ -251,7 +258,28 @@ const Livros = () => {
         break;
     }
     return result;
-  }, [data, filtro, busca, ordenacao]);
+  }, [data, filtro, busca, ordenacao, filtroAutor, filtroCategoria]);
+
+  // Opções derivadas da coleção para os filtros avançados
+  const autoresDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of data as any[]) {
+      if (l.autorNome) set.add(l.autorNome);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [data]);
+
+  const categoriasDisponiveis = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of data as any[]) {
+      for (const og of (l as any).obras?.obra_generos ?? []) {
+        if (og.generos?.slug) map.set(og.generos.slug, og.generos.nome);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([slug, nome]) => ({ slug, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [data]);
 
   // Top genres derived from user's collection
   const prateleiras = useMemo(() => {
@@ -300,7 +328,7 @@ const Livros = () => {
     { key: "favoritos", label: "Favoritos" },
   ];
 
-  const isFiltered = filtro !== "todos" || busca !== "" || showAll;
+  const isFiltered = filtro !== "todos" || busca !== "" || showAll || !!filtroAutor || !!filtroCategoria;
 
   // Reusable book card (grade mode)
   const renderBookCard = (l: any) => {
@@ -548,19 +576,157 @@ const Livros = () => {
 
       {/* ── Advanced filter chips ── */}
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
-        {["Título", "Autor", "Categoria", "Editora", "Idioma", "Coleção", "Favoritos"].map(
-          (f) => (
-            <button
-              key={f}
-              className="flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0"
-            >
-              {f} <ChevronDown className="w-3 h-3" />
+
+        {/* Título — sort toggle */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className={cn(
+              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
+              ordenacao.startsWith("titulo")
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/60"
+            )}>
+              Título <ChevronDown className="w-3 h-3" />
             </button>
-          )
-        )}
-        <button className="flex items-center gap-1.5 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0 ml-auto">
-          <SlidersHorizontal className="w-3 h-3" /> Mais filtros
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setOrdenacao("titulo_asc")}>
+              A → Z {ordenacao === "titulo_asc" && "✓"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOrdenacao("titulo_desc")}>
+              Z → A {ordenacao === "titulo_desc" && "✓"}
+            </DropdownMenuItem>
+            {ordenacao.startsWith("titulo") && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setOrdenacao("recentes")}>
+                  Limpar
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Autor */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className={cn(
+              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 max-w-[140px]",
+              filtroAutor
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/60"
+            )}>
+              <span className="truncate">{filtroAutor ?? "Autor"}</span>
+              <ChevronDown className="w-3 h-3 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
+            {autoresDisponiveis.length === 0 ? (
+              <DropdownMenuItem disabled>Nenhum autor</DropdownMenuItem>
+            ) : (
+              autoresDisponiveis.map((a) => (
+                <DropdownMenuItem
+                  key={a}
+                  onClick={() => setFiltroAutor(filtroAutor === a ? null : a)}
+                >
+                  {a} {filtroAutor === a && "✓"}
+                </DropdownMenuItem>
+              ))
+            )}
+            {filtroAutor && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setFiltroAutor(null)}>Limpar</DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Categoria */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className={cn(
+              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 max-w-[140px]",
+              filtroCategoria
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/60"
+            )}>
+              <span className="truncate">
+                {filtroCategoria
+                  ? (categoriasDisponiveis.find((c) => c.slug === filtroCategoria)?.nome ?? "Categoria")
+                  : "Categoria"}
+              </span>
+              <ChevronDown className="w-3 h-3 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
+            {categoriasDisponiveis.length === 0 ? (
+              <DropdownMenuItem disabled>Nenhuma categoria</DropdownMenuItem>
+            ) : (
+              categoriasDisponiveis.map((c) => (
+                <DropdownMenuItem
+                  key={c.slug}
+                  onClick={() => setFiltroCategoria(filtroCategoria === c.slug ? null : c.slug)}
+                >
+                  {c.nome} {filtroCategoria === c.slug && "✓"}
+                </DropdownMenuItem>
+              ))
+            )}
+            {filtroCategoria && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setFiltroCategoria(null)}>Limpar</DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Editora — em breve */}
+        <button
+          className="flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0 opacity-50 cursor-not-allowed"
+          title="Em breve"
+        >
+          Editora <ChevronDown className="w-3 h-3" />
         </button>
+
+        {/* Idioma — em breve */}
+        <button
+          className="flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0 opacity-50 cursor-not-allowed"
+          title="Em breve"
+        >
+          Idioma <ChevronDown className="w-3 h-3" />
+        </button>
+
+        {/* Favoritos — toggle */}
+        <button
+          onClick={() => {
+            setFiltro((f) => f === "favoritos" ? "todos" : "favoritos");
+            setShowAll(false);
+          }}
+          className={cn(
+            "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
+            filtro === "favoritos"
+              ? "bg-rose-500 text-white"
+              : "bg-muted hover:bg-muted/60"
+          )}
+        >
+          <Heart className={cn("w-3 h-3", filtro === "favoritos" && "fill-white")} />
+          Favoritos
+        </button>
+
+        {/* Limpar todos */}
+        {(filtroAutor || filtroCategoria || ordenacao.startsWith("titulo")) && (
+          <button
+            onClick={() => {
+              setFiltroAutor(null);
+              setFiltroCategoria(null);
+              setOrdenacao("recentes");
+            }}
+            className="flex items-center gap-1.5 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors flex-shrink-0 ml-auto"
+          >
+            Limpar filtros
+          </button>
+        )}
       </div>
 
       {/* ── Status tabs ── */}
