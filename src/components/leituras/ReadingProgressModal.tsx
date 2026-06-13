@@ -100,11 +100,13 @@ export const ReadingProgressModal = ({
       if (error) throw error;
 
       toast.success(avancou > 0 ? `+${avancou} páginas registradas` : "Progresso atualizado");
+      // refetchType: 'all' garante atualização mesmo em abas que não estão montadas no momento,
+      // necessário porque refetchOnMount está desabilitado no QueryClient global
       if (usuarioLeituraId) {
-        qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
-        qc.invalidateQueries({ queryKey: ["timeline-livro", usuarioLeituraId] });
+        qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId], refetchType: "all" });
+        qc.invalidateQueries({ queryKey: ["timeline-livro", usuarioLeituraId], refetchType: "all" });
       }
-      if (clubeId) qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      if (clubeId) qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
       invalidateLeituras(qc);
       onSaved?.();
       onOpenChange(false);
