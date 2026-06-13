@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ensureContainerLeitura } from "@/hooks/leituras/useContainerLeitura";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
+const draftKey = (id: string) => `draft-citacao-${id}`;
 
 interface Props {
   livro: LivroDetalhe;
@@ -26,6 +27,24 @@ export const CitacaoDialog = ({ livro, open, onOpenChange }: Props) => {
   const [comentario, setComentario] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(livro.id));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.texto !== undefined) setTexto(d.texto);
+      if (d.pagina !== undefined) setPagina(d.pagina);
+      if (d.comentario !== undefined) setComentario(d.comentario);
+      if (d.tags?.length) setTags(d.tags);
+    } catch {}
+  }, [open, livro.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(livro.id), JSON.stringify({ texto, pagina, comentario, tags }));
+  }, [open, livro.id, texto, pagina, comentario, tags]);
 
   const salvar = async () => {
     if (!texto.trim()) return toast.error("Informe o texto da citação");
@@ -56,6 +75,7 @@ export const CitacaoDialog = ({ livro, open, onOpenChange }: Props) => {
         await supabase.from("leitura_tags").insert(tagIds.map((tag_id) => ({ leitura_id: containerId, tag_id })));
       }
       toast.success("Citação registrada!");
+      localStorage.removeItem(draftKey(livro.id));
       setTexto(""); setPagina(""); setComentario(""); setTags([]);
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, Hash } from "lucide-react";
 import { useCriarCanal } from "@/hooks/clubes/useCanais";
+const draftKey = (id: string) => `draft-canal-${id}`;
 
 export const CriarCanalDialog = ({ clubeId }: { clubeId: string }) => {
   const [open, setOpen] = useState(false);
@@ -13,9 +14,26 @@ export const CriarCanalDialog = ({ clubeId }: { clubeId: string }) => {
   const [descricao, setDescricao] = useState("");
   const criar = useCriarCanal(clubeId);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(clubeId));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.nome !== undefined) setNome(d.nome);
+      if (d.descricao !== undefined) setDescricao(d.descricao);
+    } catch {}
+  }, [open, clubeId]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(clubeId), JSON.stringify({ nome, descricao }));
+  }, [open, clubeId, nome, descricao]);
+
   const submit = async () => {
     if (!nome.trim()) return;
     await criar.mutateAsync({ nome, descricao });
+    localStorage.removeItem(draftKey(clubeId));
     setNome("");
     setDescricao("");
     setOpen(false);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ObraAutocomplete } from "@/components/cadastro-manual/ObraAutocomplete";
 import { useAdicionarTrilha } from "@/hooks/clubes/useClubeTrilhasGestao";
+const draftKey = (id: string) => `draft-trilha-${id}`;
 
 export const AdicionarObraTrilhaDialog = ({
   clubeId,
@@ -29,6 +30,24 @@ export const AdicionarObraTrilhaDialog = ({
   const [fim, setFim] = useState("");
   const adicionar = useAdicionarTrilha(clubeId);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(clubeId));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.titulo !== undefined) setTitulo(d.titulo);
+      if (d.obraId !== undefined) setObraId(d.obraId);
+      if (d.inicio !== undefined) setInicio(d.inicio);
+      if (d.fim !== undefined) setFim(d.fim);
+    } catch {}
+  }, [open, clubeId]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(clubeId), JSON.stringify({ titulo, obraId, inicio, fim }));
+  }, [open, clubeId, titulo, obraId, inicio, fim]);
+
   const reset = () => {
     setTitulo("");
     setObraId(null);
@@ -43,6 +62,7 @@ export const AdicionarObraTrilhaDialog = ({
       data_inicio_sugerida: inicio || null,
       data_fim_sugerida: fim || null,
     });
+    localStorage.removeItem(draftKey(clubeId));
     reset();
     onOpenChange(false);
   };
