@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Loader2, Send, ImagePlus, Camera, Images, X } from "lucide-react";
@@ -23,7 +23,7 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
 };
 
 /** Redimensiona para max 1200px e retorna um Blob JPEG */
-const resizeToBlob = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
+const resizeToBlob = (file: File | Blob, maxPx = 1200, quality = 0.82): Promise<Blob> =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -59,14 +59,32 @@ interface Props {
 export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone }: Props) => {
   const { user } = useAuth();
   const [conteudo, setConteudo] = useState("");
-  // Preview local (object URL) — apenas para exibição antes do envio
   const [previewLocal, setPreviewLocal] = useState<string | null>(null);
-  // Arquivo processado pronto para upload
   const [fileParaUpload, setFileParaUpload] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  // Ref para sempre apontar para a versão mais recente de handleFile,
+  // evitando closures desatualizadas no listener nativo da câmera.
+  const handleFileRef = useRef<(f: File) => void>(() => {});
   const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   const criar = useCriarPost(clubeId);
+
+  // Listener nativo para câmera: o onChange sintético do React pode não
+  // disparar corretamente no Android quando a página fica em background
+  // enquanto o app de câmera está ativo.
+  useEffect(() => {
+    const input = cameraInputRef.current;
+    if (!input) return;
+    const listener = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      handleFileRef.current(file);
+      setTimeout(() => { input.value = ""; }, 0);
+    };
+    input.addEventListener("change", listener);
+    return () => input.removeEventListener("change", listener);
+  }, []);
 
   if (!user || !isMembro) {
     if (compact) return null;
@@ -77,15 +95,17 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     );
   }
 
-  const handleFile = async (file: File | null) => {
-    if (!file || parentPostId) return;
+  const handleFile = async (file: File) => {
+    if (parentPostId) return;
+    // Câmeras Android às vezes retornam file.type vazio — aceitar se accept="image/*" foi respeitado
     const isImage =
-      file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+      !file.type ||
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
     if (!isImage) { toast.error("Selecione uma imagem válida"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("Imagem máxima de 20MB"); return; }
 
     setUploading(true);
-    // Limpa preview anterior
     if (previewLocal) URL.revokeObjectURL(previewLocal);
     setPreviewLocal(null);
     setFileParaUpload(null);
@@ -103,6 +123,9 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     }
   };
 
+  // Mantém ref atualizada após cada render
+  handleFileRef.current = handleFile;
+
   const removerImagem = () => {
     if (previewLocal) URL.revokeObjectURL(previewLocal);
     setPreviewLocal(null);
@@ -115,7 +138,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
     let imagemUrl: string | null = null;
 
-    // Faz upload para o bucket Clubes se tiver imagem
     if (fileParaUpload) {
       const ext = "jpg";
       const path = `feed/${clubeId}/${user.id}/${Date.now()}.${ext}`;
@@ -166,7 +188,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             className="resize-none border-border/60 focus-visible:ring-primary/40"
           />
 
-          {/* Preview local da imagem */}
           {previewLocal && (
             <div className="relative w-full max-w-xs">
               <img
@@ -182,18 +203,26 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
               >
                 <X className="w-3 h-3" />
               </button>
-              <span className="absolute bottom-1 right-2 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded">
-                Storage
-              </span>
             </div>
           )}
 
+          {/* Input galeria */}
           <input
             ref={galleryRef}
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+          />
+
+          {/* Input câmera — sem onChange: usa listener nativo via useEffect */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            disabled={uploading || criar.isPending}
           />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -202,20 +231,20 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
                 <>
                   {isMobile ? (
                     <>
-                      {/* label envolve o input diretamente — único padrão confiável
-                          para capture="environment" no Android sem click programático */}
                       <label className={cn(
                         "inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium",
                         "hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
                         (uploading || criar.isPending) && "pointer-events-none opacity-50"
                       )}>
+                        {/* Input dentro do label apenas para acionar a câmera via toque direto.
+                            O processamento do arquivo é feito pelo listener nativo no cameraInputRef. */}
                         <input
                           type="file"
                           accept="image/*"
                           capture="environment"
                           className="hidden"
                           disabled={uploading || criar.isPending}
-                          onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
                         />
                         {uploading
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
