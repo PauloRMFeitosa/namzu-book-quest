@@ -186,4 +186,31 @@ CREATE TRIGGER trg_notify_curtida_post
   AFTER INSERT ON clube_post_curtidas
   FOR EACH ROW EXECUTE FUNCTION notify_curtida_post();
 
--- ── 6. Novo evento → será adicionado quando a tabela clube_eventos existir ────
+-- ── 6. Novo evento → notifica todos os membros ativos ─────────────────────────
+CREATE OR REPLACE FUNCTION notify_novo_evento()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_clube_nome text;
+BEGIN
+  SELECT nome INTO v_clube_nome FROM clubes WHERE id = NEW.clube_id;
+
+  INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link_url, referencia_id)
+  SELECT
+    m.user_id,
+    'clube_novo_evento',
+    'Novo evento no clube',
+    'Novo evento em ' || COALESCE(v_clube_nome, 'seu clube') || ': ' || NEW.titulo,
+    '/clubes/' || NEW.clube_id::text,
+    NEW.id
+  FROM clube_membros m
+  WHERE m.clube_id = NEW.clube_id
+    AND m.status = 'ativo';
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notify_novo_evento ON eventos;
+CREATE TRIGGER trg_notify_novo_evento
+  AFTER INSERT ON eventos
+  FOR EACH ROW EXECUTE FUNCTION notify_novo_evento();
