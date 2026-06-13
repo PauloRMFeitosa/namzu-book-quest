@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
@@ -43,6 +43,20 @@ export const CriarClubeDialog = () => {
     imagem_capa_url: "",
   });
 
+  const DRAFT_KEY = "draft-criar-clube";
+
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try { setForm((f) => ({ ...f, ...JSON.parse(raw) })); } catch {}
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+  }, [open, form]);
+
   const submit = async () => {
     if (!user) {
       toast.error("Faça login para criar um clube");
@@ -79,6 +93,7 @@ export const CriarClubeDialog = () => {
         } as any);
 
       toast.success("Clube criado!");
+      localStorage.removeItem(DRAFT_KEY);
       qc.invalidateQueries({ queryKey: ["clubes-marketplace"] });
       setOpen(false);
       navigate(`/clubes/${data.id}`);

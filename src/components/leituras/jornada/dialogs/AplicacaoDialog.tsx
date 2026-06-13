@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ensureContainerLeitura } from "@/hooks/leituras/useContainerLeitura";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
+const draftKey = (id: string) => `draft-aplicacao-${id}`;
 
 const CATEGORIAS = ["Trabalho", "Família", "Saúde", "Finanças", "Estudos"];
 
@@ -28,6 +29,23 @@ export const AplicacaoDialog = ({ livro, open, onOpenChange }: Props) => {
   const [prazo, setPrazo] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(livro.id));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.como !== undefined) setComo(d.como);
+      if (d.categoria !== undefined) setCategoria(d.categoria);
+      if (d.prazo !== undefined) setPrazo(d.prazo);
+    } catch {}
+  }, [open, livro.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(livro.id), JSON.stringify({ como, categoria, prazo }));
+  }, [open, livro.id, como, categoria, prazo]);
+
   const salvar = async () => {
     if (!como.trim()) return toast.error("Descreva como vai aplicar");
     setLoading(true);
@@ -40,6 +58,7 @@ export const AplicacaoDialog = ({ livro, open, onOpenChange }: Props) => {
       });
       if (error) throw error;
       toast.success("Aplicação registrada!");
+      localStorage.removeItem(draftKey(livro.id));
       setComo(""); setCategoria(""); setPrazo("");
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });

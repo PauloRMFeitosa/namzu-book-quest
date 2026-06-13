@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { useCriarEvento } from "@/hooks/clubes/useEventos";
+const draftKey = (id: string) => `draft-evento-${id}`;
 import {
   Select,
   SelectContent,
@@ -31,6 +32,27 @@ export const CriarEventoDialog = ({ clubeId }: { clubeId: string }) => {
   const [limite, setLimite] = useState("");
   const criar = useCriarEvento(clubeId);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(clubeId));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.titulo !== undefined) setTitulo(d.titulo);
+      if (d.descricao !== undefined) setDescricao(d.descricao);
+      if (d.tipo) setTipo(d.tipo);
+      if (d.inicio !== undefined) setInicio(d.inicio);
+      if (d.fim !== undefined) setFim(d.fim);
+      if (d.url !== undefined) setUrl(d.url);
+      if (d.limite !== undefined) setLimite(d.limite);
+    } catch {}
+  }, [open, clubeId]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(clubeId), JSON.stringify({ titulo, descricao, tipo, inicio, fim, url, limite }));
+  }, [open, clubeId, titulo, descricao, tipo, inicio, fim, url, limite]);
+
   const submit = async () => {
     if (!titulo.trim() || !inicio) return;
     await criar.mutateAsync({
@@ -42,6 +64,7 @@ export const CriarEventoDialog = ({ clubeId }: { clubeId: string }) => {
       url_evento: url.trim() || null,
       limite_participantes: limite ? Number(limite) : null,
     });
+    localStorage.removeItem(draftKey(clubeId));
     setOpen(false);
     setTitulo("");
     setDescricao("");

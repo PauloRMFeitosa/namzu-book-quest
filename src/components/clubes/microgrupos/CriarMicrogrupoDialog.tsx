@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCriarMicrogrupo } from "@/hooks/clubes/useMicrogrupos";
+const draftKey = (id: string) => `draft-microgrupo-${id}`;
 
 export const CriarMicrogrupoDialog = ({
   open,
@@ -37,6 +38,25 @@ export const CriarMicrogrupoDialog = ({
   const [limite, setLimite] = useState("10");
   const [privado, setPrivado] = useState(true);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(clubeId));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.nome !== undefined) setNome(d.nome);
+      if (d.descricao !== undefined) setDescricao(d.descricao);
+      if (d.tipo) setTipo(d.tipo);
+      if (d.limite !== undefined) setLimite(d.limite);
+      if (d.privado !== undefined) setPrivado(d.privado);
+    } catch {}
+  }, [open, clubeId]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(clubeId), JSON.stringify({ nome, descricao, tipo, limite, privado }));
+  }, [open, clubeId, nome, descricao, tipo, limite, privado]);
+
   const submit = async () => {
     if (!nome.trim()) return;
     await criar.mutateAsync({
@@ -46,6 +66,7 @@ export const CriarMicrogrupoDialog = ({
       limite_membros: Number(limite) || 10,
       privado,
     });
+    localStorage.removeItem(draftKey(clubeId));
     setNome("");
     setDescricao("");
     setTipo("fixo");

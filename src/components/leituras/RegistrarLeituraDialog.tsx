@@ -93,6 +93,34 @@ export const RegistrarLeituraDialog = ({
       : [{ tipo: "url", url: "", descricao: "" }]
   );
 
+  const DRAFT_KEY = !isEdit ? `draft-registrar-leitura-${usuarioLeituraId}` : null;
+
+  // Restaura rascunho ao abrir (apenas modo novo registro)
+  useEffect(() => {
+    if (!open || isEdit || !DRAFT_KEY) return;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.resumo !== undefined) setResumo(d.resumo);
+      if (d.conceito !== undefined) setConceito(d.conceito);
+      if (d.paginasLidas !== undefined) setPaginasLidas(d.paginasLidas);
+      if (d.percentual !== undefined) setPercentual(d.percentual);
+      if (d.citacoes?.length) setCitacoes(d.citacoes);
+      if (d.aplicacoes?.length) setAplicacoes(d.aplicacoes);
+      if (d.tags?.length) setTags(d.tags);
+      if (d.links?.length) setLinks(d.links);
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEdit]);
+
+  // Salva rascunho a cada alteração (apenas modo novo registro)
+  useEffect(() => {
+    if (!open || isEdit || !DRAFT_KEY) return;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEdit, resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links]);
+
   const snapshotRef = useRef<string>("");
   const currentState = () =>
     JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links });
@@ -249,6 +277,7 @@ export const RegistrarLeituraDialog = ({
       }
 
       toast.success(isEdit ? "Leitura atualizada!" : "Leitura registrada!");
+      if (DRAFT_KEY) localStorage.removeItem(DRAFT_KEY);
       snapshotRef.current = currentState();
       reset();
       setConfirmClose(false);

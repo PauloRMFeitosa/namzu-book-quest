@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ensureContainerLeitura } from "@/hooks/leituras/useContainerLeitura";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
+const draftKey = (id: string) => `draft-insight-${id}`;
 
 interface Props {
   livro: LivroDetalhe;
@@ -24,6 +25,22 @@ export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
   const [porque, setPorque] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(livro.id));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.aprendi !== undefined) setAprendi(d.aprendi);
+      if (d.porque !== undefined) setPorque(d.porque);
+    } catch {}
+  }, [open, livro.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(draftKey(livro.id), JSON.stringify({ aprendi, porque }));
+  }, [open, livro.id, aprendi, porque]);
+
   const salvar = async () => {
     if (!aprendi.trim()) return toast.error("Descreva o aprendizado");
     setLoading(true);
@@ -36,6 +53,7 @@ export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
       });
       if (error) throw error;
       toast.success("Insight registrado!");
+      localStorage.removeItem(draftKey(livro.id));
       setAprendi(""); setPorque("");
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["livro-detalhe", livro.id] });
