@@ -60,7 +60,9 @@ export const InsightDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }:
       if (publicarNoClube && clubeId && user) {
         const titulo = livro.obras?.titulo_original ?? "livro";
         const conteudo = `💡 *Insight sobre "${titulo}"*\n\n${aprendi.trim()}`;
-        await supabase.from("clube_posts").insert({ clube_id: clubeId, user_id: user.id, conteudo, obra_id: livro.obra_id ?? null });
+        const { error: postErr } = await supabase.from("clube_posts").insert({ clube_id: clubeId, user_id: user.id, conteudo, obra_id: livro.obra_id ?? null });
+        if (postErr) throw postErr;
+        qc.invalidateQueries({ queryKey: ["clube-feed", clubeId], refetchType: "all" });
       }
 
       toast.success("Insight registrado!");
