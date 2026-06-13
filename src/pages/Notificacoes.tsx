@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
-import { Bell, BellRing, Star, UserPlus, Heart, CalendarDays, CheckCheck } from "lucide-react";
+import { Bell, BellRing, Star, UserPlus, Heart, CalendarDays, CheckCheck, MessageCircle, Rss, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -11,10 +11,13 @@ import { AvaliacaoModal } from "@/components/avaliacoes/AvaliacaoModal";
 
 // ─── mapa de tipos → ícone + cor de destaque ───────────────────────────────
 const TIPO_CONFIG: Record<string, { icon: React.ElementType; cor: string; label: string }> = {
-  avaliacao_pendente: { icon: Star,         cor: "text-amber-500",  label: "Avaliação"   },
-  clube_novo_membro:  { icon: UserPlus,     cor: "text-blue-500",   label: "Novo membro" },
-  clube_curtida_post: { icon: Heart,        cor: "text-rose-500",   label: "Curtida"     },
-  clube_novo_evento:  { icon: CalendarDays, cor: "text-violet-500", label: "Evento"      },
+  avaliacao_pendente:   { icon: Star,          cor: "text-amber-500",   label: "Avaliação"    },
+  clube_novo_membro:    { icon: UserPlus,      cor: "text-blue-500",    label: "Novo membro"  },
+  clube_curtida_post:   { icon: Heart,         cor: "text-rose-500",    label: "Curtida"      },
+  clube_novo_evento:    { icon: CalendarDays,  cor: "text-violet-500",  label: "Evento"       },
+  clube_novo_comentario:{ icon: MessageCircle, cor: "text-sky-500",     label: "Comentário"   },
+  clube_novo_post:      { icon: Rss,           cor: "text-emerald-500", label: "Novo post"    },
+  clube_novo_conteudo:  { icon: PlayCircle,    cor: "text-teal-500",    label: "Conteúdo"     },
 };
 const TIPO_DEFAULT = { icon: Bell, cor: "text-primary", label: "Aviso" };
 
