@@ -1,4 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,15 +42,27 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
-      staleTime: 5 * 60 * 1000, // 5 min — evita refetch ao voltar de outra aba/app
+      staleTime: 5 * 60 * 1000,
       gcTime: 30 * 60 * 1000,
       retry: 1,
     },
   },
 });
 
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: "namzu-rq-cache",
+});
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{
+      persister,
+      maxAge: 30 * 60 * 1000, // mantém cache por 30 min entre sessões
+      buster: "v1",            // incrementar aqui para forçar invalidação do cache
+    }}
+  >
     <ThemeProvider>
       <FontSizeProvider>
       <TooltipProvider>
@@ -88,7 +102,7 @@ const App = () => (
       </TooltipProvider>
       </FontSizeProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
