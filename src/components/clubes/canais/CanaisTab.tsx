@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Hash } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanais } from "@/hooks/clubes/useCanais";
@@ -19,13 +18,6 @@ export const CanaisTab = ({ clubeId, curadorId, isMembro }: Props) => {
   const selecionado = useCanalUIStore((s) => s.canalSelecionado[clubeId] ?? null);
   const setSelecionado = useCanalUIStore((s) => s.setCanalSelecionado);
 
-  // Auto-selecionar primeiro canal
-  useEffect(() => {
-    if (canais && canais.length && !selecionado) {
-      setSelecionado(clubeId, canais[0].id);
-    }
-  }, [canais, selecionado, clubeId, setSelecionado]);
-
   const canalAtivo = canais?.find((c) => c.id === selecionado) ?? null;
 
   if (!isMembro) {
@@ -41,24 +33,22 @@ export const CanaisTab = ({ clubeId, curadorId, isMembro }: Props) => {
   }
 
   return (
-    <div className="card-soft overflow-hidden border border-border/60 grid grid-cols-[180px_1fr] sm:grid-cols-[200px_1fr] h-[70vh] min-h-[480px]">
-      <aside className="border-r border-border/60 bg-muted/40">
+    <div className="card-soft overflow-hidden border border-border/60 h-[70vh] min-h-[480px]">
+      {canalAtivo ? (
+        <MensagensView
+          clubeId={clubeId}
+          canal={canalAtivo}
+          isMembro={isMembro}
+          onVoltar={() => setSelecionado(clubeId, null)}
+        />
+      ) : (
         <CanalList
           clubeId={clubeId}
           isCurador={isCurador}
           selecionado={selecionado}
           onSelecionar={(id) => setSelecionado(clubeId, id)}
         />
-      </aside>
-      <section className="min-w-0">
-        {canalAtivo ? (
-          <MensagensView clubeId={clubeId} canal={canalAtivo} isMembro={isMembro} />
-        ) : (
-          <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-            {canais?.length ? "Selecione um canal" : "Nenhum canal disponível"}
-          </div>
-        )}
-      </section>
+      )}
     </div>
   );
 };
