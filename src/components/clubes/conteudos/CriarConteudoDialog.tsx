@@ -127,6 +127,7 @@ export const CriarConteudoDialog = ({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="video">Vídeo</SelectItem>
+                  <SelectItem value="live_gravada">Live gravada</SelectItem>
                   <SelectItem value="pdf">PDF</SelectItem>
                   <SelectItem value="texto">Texto</SelectItem>
                   <SelectItem value="link">Link externo</SelectItem>
