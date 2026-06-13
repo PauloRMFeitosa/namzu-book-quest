@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "./AppLayout";
+import { AceitarTermosModal } from "./AceitarTermosModal";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useLandingPage } from "@/hooks/useLandingPage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -24,7 +25,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("perfis")
-        .select("onboarding_completo")
+        .select("onboarding_completo, termos_aceitos_em")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -59,6 +60,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   // Redirect da landing page configurada: só aplica em "/" para não-admins
   if (!isAdmin && location.pathname === "/" && landingPage !== "/") {
     return <Navigate to={landingPage} replace />;
+  }
+
+  if (!perfil?.termos_aceitos_em) {
+    return (
+      <>
+        <AceitarTermosModal userId={user.id} />
+        <AppLayout>{children}</AppLayout>
+      </>
+    );
   }
 
   return <AppLayout>{children}</AppLayout>;
