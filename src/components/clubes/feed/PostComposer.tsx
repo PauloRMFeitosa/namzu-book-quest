@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Loader2, Send, ImagePlus, Camera, Images, X } from "lucide-react";
+import { Loader2, Send, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
 };
 
 /** Redimensiona para max 1200px e retorna um Blob JPEG */
-const resizeToBlob = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
+const resizeToBlob = (file: File | Blob, maxPx = 1200, quality = 0.82): Promise<Blob> =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -59,13 +58,10 @@ interface Props {
 export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone }: Props) => {
   const { user } = useAuth();
   const [conteudo, setConteudo] = useState("");
-  // Preview local (object URL) — apenas para exibição antes do envio
   const [previewLocal, setPreviewLocal] = useState<string | null>(null);
-  // Arquivo processado pronto para upload
   const [fileParaUpload, setFileParaUpload] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   const criar = useCriarPost(clubeId);
 
   if (!user || !isMembro) {
@@ -77,15 +73,15 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
     );
   }
 
-  const handleFile = async (file: File | null) => {
-    if (!file || parentPostId) return;
+  const handleFile = async (file: File) => {
+    if (parentPostId) return;
     const isImage =
-      file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
     if (!isImage) { toast.error("Selecione uma imagem válida"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("Imagem máxima de 20MB"); return; }
 
     setUploading(true);
-    // Limpa preview anterior
     if (previewLocal) URL.revokeObjectURL(previewLocal);
     setPreviewLocal(null);
     setFileParaUpload(null);
@@ -115,7 +111,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
     let imagemUrl: string | null = null;
 
-    // Faz upload para o bucket Clubes se tiver imagem
     if (fileParaUpload) {
       const ext = "jpg";
       const path = `feed/${clubeId}/${user.id}/${Date.now()}.${ext}`;
@@ -166,7 +161,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             className="resize-none border-border/60 focus-visible:ring-primary/40"
           />
 
-          {/* Preview local da imagem */}
           {previewLocal && (
             <div className="relative w-full max-w-xs">
               <img
@@ -182,9 +176,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
               >
                 <X className="w-3 h-3" />
               </button>
-              <span className="absolute bottom-1 right-2 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded">
-                Storage
-              </span>
             </div>
           )}
 
@@ -193,63 +184,25 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
           />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1">
               {!parentPostId && (
-                <>
-                  {isMobile ? (
-                    <>
-                      {/* label envolve o input diretamente — único padrão confiável
-                          para capture="environment" no Android sem click programático */}
-                      <label className={cn(
-                        "inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium",
-                        "hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                        (uploading || criar.isPending) && "pointer-events-none opacity-50"
-                      )}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          className="hidden"
-                          disabled={uploading || criar.isPending}
-                          onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
-                        />
-                        {uploading
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Camera className="w-3.5 h-3.5" />}
-                        Câmera
-                      </label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => galleryRef.current?.click()}
-                        disabled={uploading || criar.isPending}
-                        className="text-xs gap-1.5 h-8"
-                      >
-                        <Images className="w-3.5 h-3.5" />
-                        Galeria
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => galleryRef.current?.click()}
-                      disabled={uploading || criar.isPending}
-                      className="text-xs gap-1.5 h-8"
-                    >
-                      {uploading
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <ImagePlus className="w-3.5 h-3.5" />}
-                      Imagem
-                    </Button>
-                  )}
-                </>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={uploading || criar.isPending}
+                  className="text-xs gap-1.5 h-8"
+                >
+                  {uploading
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <ImagePlus className="w-3.5 h-3.5" />}
+                  Imagem
+                </Button>
               )}
             </div>
 
