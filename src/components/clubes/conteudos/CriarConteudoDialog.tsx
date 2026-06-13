@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCriarConteudo } from "@/hooks/clubes/useConteudos";
+
+const draftKey = (clubeId: string) => `draft-conteudo-${clubeId}`;
 
 interface FormValues {
   titulo: string;
@@ -55,6 +57,25 @@ export const CriarConteudoDialog = ({
   const criar = useCriarConteudo(clubeId);
   const [submitting, setSubmitting] = useState(false);
 
+  // Restaura rascunho ao abrir o dialog
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(draftKey(clubeId));
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as Partial<FormValues>;
+      reset({ titulo: "", descricao: "", tipo: "video", url_conteudo: "", ordem_liberacao: proximaOrdem, liberado_apos_dias: 0, ...draft });
+    } catch {}
+  }, [open, clubeId, proximaOrdem, reset]);
+
+  // Salva rascunho automaticamente a cada alteração
+  useEffect(() => {
+    const sub = watch((values) => {
+      localStorage.setItem(draftKey(clubeId), JSON.stringify(values));
+    });
+    return () => sub.unsubscribe();
+  }, [watch, clubeId]);
+
   const onSubmit = async (v: FormValues) => {
     setSubmitting(true);
     try {
@@ -66,6 +87,7 @@ export const CriarConteudoDialog = ({
         ordem_liberacao: Number(v.ordem_liberacao) || proximaOrdem,
         liberado_apos_dias: Number(v.liberado_apos_dias) || 0,
       });
+      localStorage.removeItem(draftKey(clubeId));
       reset();
       onOpenChange(false);
     } finally {
