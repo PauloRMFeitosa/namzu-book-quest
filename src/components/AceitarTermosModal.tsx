@@ -76,16 +76,12 @@ export const AceitarTermosModal = ({ userId }: { userId: string }) => {
 
   const handleAceitar = async () => {
     setSalvando(true);
-    const agora = new Date().toISOString();
-    const { error } = await supabase
-      .from("perfis")
-      .update({ termos_aceitos_em: agora })
-      .eq("user_id", userId);
+    const { error } = await supabase.rpc("aceitar_termos");
     setSalvando(false);
     if (error) { toast.error("Erro ao salvar. Tente novamente."); return; }
     qc.setQueryData(["perfil-onboarding", userId], (old: any) => ({
       ...old,
-      termos_aceitos_em: agora,
+      termos_aceitos_em: new Date().toISOString(),
     }));
   };
 

@@ -33,10 +33,7 @@ const Signup = () => {
     });
     if (error) { setBusy(false); return toast.error(error.message); }
     if (data.user) {
-      await supabase
-        .from("perfis")
-        .update({ termos_aceitos_em: new Date().toISOString() })
-        .eq("user_id", data.user.id);
+      await supabase.rpc("aceitar_termos");
     }
     setBusy(false);
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
