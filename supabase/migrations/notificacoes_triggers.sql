@@ -1,12 +1,11 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Triggers de geração automática de notificações
--- Cobre os 6 eventos de alta prioridade:
+-- Cobre os 5 eventos disponíveis (clube_eventos ainda não existe):
 --   1. Novo comentário num post  → notifica autor do post
 --   2. Novo post no feed         → notifica todos os membros ativos
 --   3. Novo conteúdo publicado   → notifica todos os membros ativos
 --   4. Novo membro no clube      → notifica o curador
 --   5. Post curtido              → notifica autor do post
---   6. Novo evento criado        → notifica todos os membros ativos
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ── 1. Novo comentário ────────────────────────────────────────────────────────
@@ -187,31 +186,4 @@ CREATE TRIGGER trg_notify_curtida_post
   AFTER INSERT ON clube_post_curtidas
   FOR EACH ROW EXECUTE FUNCTION notify_curtida_post();
 
--- ── 6. Novo evento → notifica todos os membros ativos ─────────────────────────
-CREATE OR REPLACE FUNCTION notify_novo_evento()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
-DECLARE
-  v_clube_nome text;
-BEGIN
-  SELECT nome INTO v_clube_nome FROM clubes WHERE id = NEW.clube_id;
-
-  INSERT INTO notificacoes (user_id, tipo, titulo, mensagem, link_url, referencia_id)
-  SELECT
-    m.user_id,
-    'clube_novo_evento',
-    'Novo evento no clube',
-    'Novo evento em ' || COALESCE(v_clube_nome, 'seu clube') || ': ' || NEW.titulo,
-    '/clubes/' || NEW.clube_id::text,
-    NEW.id
-  FROM clube_membros m
-  WHERE m.clube_id = NEW.clube_id
-    AND m.status = 'ativo';
-
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_notify_novo_evento ON clube_eventos;
-CREATE TRIGGER trg_notify_novo_evento
-  AFTER INSERT ON clube_eventos
-  FOR EACH ROW EXECUTE FUNCTION notify_novo_evento();
+-- ── 6. Novo evento → será adicionado quando a tabela clube_eventos existir ────
