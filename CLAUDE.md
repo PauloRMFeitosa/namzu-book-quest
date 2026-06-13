@@ -62,9 +62,25 @@ Custom Tailwind theme in `tailwind.config.ts`: primary navy (`#1A3B8B`), seconda
 
 shadcn/ui components are configured via `components.json` and installed into `src/components/ui/`. Use the shadcn CLI to add/update UI primitives; do not manually modify generated files in that folder unless fixing a bug.
 
+## Language
+
+**All communication in this project must be in Brazilian Portuguese (pt-BR).** This applies to:
+
+- Respostas e explicações do assistente de IA (Claude)
+- Textos de interface do usuário (labels, botões, mensagens, placeholders, toasts, erros)
+- Nomes de variáveis, funções, hooks, componentes e arquivos de domínio de negócio (`clube`, `leitura`, `citacao`, `obra`, `perfil`, `curador`, etc.)
+- Comentários no código
+- Mensagens de commit
+- Títulos e descrições de pull requests
+
+Exceções permitidas (inglês obrigatório):
+- Palavras-chave da linguagem (TypeScript, SQL)
+- Nomes de bibliotecas e APIs externas (`supabase`, `useQuery`, `toast`, etc.)
+- Identificadores técnicos de infraestrutura (`edge function`, `bucket`, `RLS`, etc.)
+
 ## Key Conventions
 
-- **Language:** The UI and domain terminology are in Portuguese. Variable/function names in business-logic code follow Portuguese naming (`clube`, `leitura`, `citacao`, `obra`, `perfil`). React component filenames use PascalCase in Portuguese.
+- **Idioma do domínio:** UI e terminologia de negócio sempre em português. Nomes de variáveis/funções seguem a convenção portuguesa (`clube`, `leitura`, `citacao`, `obra`, `perfil`). Nomes de componentes React usam PascalCase em português.
 - **Path alias:** `@/` resolves to `src/`. Always use this alias rather than relative paths.
 - **TypeScript strictness is intentionally loose** (`strict: false`, `noImplicitAny: false`) to allow rapid iteration. Do not enable strict mode without a coordinated migration.
 - **`supabase/types.ts` is auto-generated.** Regenerate with `supabase gen types typescript` after schema changes; never edit manually.
