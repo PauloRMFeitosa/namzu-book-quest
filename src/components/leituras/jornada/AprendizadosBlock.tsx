@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Lightbulb, Target, Quote, BookOpenCheck, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -12,12 +13,22 @@ import { InsightDialog } from "./dialogs/InsightDialog";
 import { AplicacaoDialog } from "./dialogs/AplicacaoDialog";
 import { CitacaoDialog } from "./dialogs/CitacaoDialog";
 import { ResenhaDialog } from "./dialogs/ResenhaDialog";
+import { supabase } from "@/integrations/supabase/client";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 
 type Tipo = "insight" | "aplicacao" | "citacao" | "resenha" | null;
 
 export const AprendizadosBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [active, setActive] = useState<Tipo>(null);
+
+  const { data: clubeNome } = useQuery({
+    queryKey: ["clube-nome", livro.clube_id],
+    enabled: !!livro.clube_id,
+    queryFn: async () => {
+      const { data } = await supabase.from("clubes").select("nome").eq("id", livro.clube_id!).single();
+      return data?.nome ?? null;
+    },
+  });
 
   // Agrega tudo de todas as leituras (container + sessões antigas)
   const todosInsights = livro.leituras.flatMap((l) => l.leitura_conteudo.map((c) => ({ ...c, _leitura: l })));
@@ -127,10 +138,10 @@ export const AprendizadosBlock = ({ livro }: { livro: LivroDetalhe }) => {
         </AccordionItem>
       </Accordion>
 
-      <InsightDialog livro={livro} open={active === "insight"} onOpenChange={(o) => !o && setActive(null)} />
-      <AplicacaoDialog livro={livro} open={active === "aplicacao"} onOpenChange={(o) => !o && setActive(null)} />
-      <CitacaoDialog livro={livro} open={active === "citacao"} onOpenChange={(o) => !o && setActive(null)} />
-      <ResenhaDialog livro={livro} open={active === "resenha"} onOpenChange={(o) => !o && setActive(null)} />
+      <InsightDialog livro={livro} open={active === "insight"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
+      <AplicacaoDialog livro={livro} open={active === "aplicacao"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
+      <CitacaoDialog livro={livro} open={active === "citacao"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
+      <ResenhaDialog livro={livro} open={active === "resenha"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
     </section>
   );
 };
