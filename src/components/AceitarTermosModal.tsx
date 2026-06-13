@@ -53,7 +53,7 @@ const TermosConteudo = () => (
     </div>
     <div>
       <h3 className="font-semibold text-foreground mb-1">12. Política do Acervo</h3>
-      <p>O catálogo da NAMZU é composto por títulos cujos metadados são obtidos de fontes públicas, licenciadas ou de domínio público, conforme a legislação vigente sobre direitos autorais no Brasil (Lei nº 9.610/1998). A NAMZU não endossa opiniões ou perspectivas presentes nas obras catalogadas. Caso identifique qualquer conteúdo que viole direitos autorais, entre em contato para regularização imediata.</p>
+      <p>O catálogo da NAMZU é composto por títulos cujos metadados são obtidos de fontes públicas, licenciadas ou de domínio público, conforme a Lei nº 9.610/1998. A NAMZU não endossa opiniões ou perspectivas presentes nas obras catalogadas. Caso identifique qualquer conteúdo que viole direitos autorais, entre em contato para regularização imediata.</p>
     </div>
     <p className="text-[11px] text-muted-foreground/70 border-t border-border pt-3">
       Última atualização: Junho de 2026
@@ -65,13 +65,13 @@ export const AceitarTermosModal = ({ userId }: { userId: string }) => {
   const [leuTudo, setLeuTudo] = useState(false);
   const [aceito, setAceito] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    const chegouNoFim = el.scrollTop + el.clientHeight >= el.scrollHeight - 48;
-    if (chegouNoFim && !leuTudo) setLeuTudo(true);
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
+      setLeuTudo(true);
+    }
   };
 
   const handleAceitar = async () => {
@@ -90,55 +90,48 @@ export const AceitarTermosModal = ({ userId }: { userId: string }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 animate-in fade-in-0 px-0 sm:px-4">
-      <div className="bg-background border border-border rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md flex flex-col shadow-elevated max-h-[92vh]">
-
-        {/* Cabeçalho fixo */}
-        <div className="px-6 pt-6 pb-3 shrink-0">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 animate-in fade-in-0">
+      {/* Modal — altura explícita via dvh para evitar rodapé sobreposto */}
+      <div
+        className="bg-background border-t border-border sm:border sm:rounded-2xl w-full sm:max-w-md shadow-elevated rounded-t-3xl sm:rounded-t-2xl"
+        style={{ height: "90dvh", display: "flex", flexDirection: "column" }}
+      >
+        {/* Cabeçalho — não rola */}
+        <div className="px-6 pt-5 pb-3 border-b border-border shrink-0">
           <div className="w-10 h-1 rounded-full bg-border mx-auto mb-4 sm:hidden" />
           <h2 className="font-display text-lg font-semibold">Termos de Uso e Privacidade</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Leia com atenção antes de continuar.
-          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">Leia com atenção antes de continuar.</p>
         </div>
 
-        {/* Área de scroll dos termos */}
-        <div className="relative flex-1 min-h-0">
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="h-full overflow-y-auto px-6 pb-4"
-          >
-            <TermosConteudo />
-          </div>
+        {/* Conteúdo rolável — ocupa espaço restante */}
+        <div
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-6 py-4"
+          style={{ overflowY: "scroll" }}
+        >
+          <TermosConteudo />
+        </div>
 
-          {/* Indicador de scroll — some quando chega ao fim */}
+        {/* Rodapé — não rola, fundo sólido para não deixar conteúdo passar */}
+        <div className="px-6 pb-6 pt-4 border-t border-border shrink-0 bg-background flex flex-col gap-3">
           {!leuTudo && (
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent flex items-end justify-center pb-2 pointer-events-none">
-              <span className="flex items-center gap-1 text-xs text-muted-foreground animate-bounce">
-                <ChevronDown className="w-3.5 h-3.5" /> Role para ler tudo
-              </span>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+              Role para ler tudo antes de continuar
             </div>
           )}
-        </div>
-
-        {/* Rodapé fixo — ativa após ler tudo */}
-        <div className="px-6 pb-6 pt-3 border-t border-border shrink-0 flex flex-col gap-3">
-          <label
-            className={`flex items-start gap-3 select-none transition-opacity ${leuTudo ? "cursor-pointer opacity-100" : "opacity-40 pointer-events-none"}`}
-          >
+          <label className={`flex items-start gap-3 select-none transition-opacity ${leuTudo ? "cursor-pointer opacity-100" : "opacity-40 pointer-events-none"}`}>
             <input
               type="checkbox"
               checked={aceito}
               onChange={(e) => setAceito(e.target.checked)}
               disabled={!leuTudo}
-              className="mt-0.5 w-4 h-4 rounded border-border accent-primary shrink-0"
+              className="mt-0.5 w-4 h-4 accent-primary shrink-0"
             />
             <span className="text-sm text-muted-foreground leading-snug">
               Li e concordo com os Termos de Uso e Política de Privacidade da NAMZU.
             </span>
           </label>
-
           <Button
             disabled={!aceito || salvando}
             onClick={handleAceitar}
