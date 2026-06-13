@@ -78,6 +78,65 @@ Exceções permitidas (inglês obrigatório):
 - Nomes de bibliotecas e APIs externas (`supabase`, `useQuery`, `toast`, etc.)
 - Identificadores técnicos de infraestrutura (`edge function`, `bucket`, `RLS`, etc.)
 
+## Persistência de Rascunho em Formulários (Obrigatório)
+
+**Todo modal ou formulário de criação DEVE persistir o rascunho no `localStorage`** para que o usuário não perca dados ao sair do app e voltar (comportamento comum em mobile).
+
+### Padrão obrigatório
+
+```typescript
+import { useState, useEffect } from "react";
+
+// 1. Definir chave única fora do componente
+const draftKey = (id: string) => `draft-nome-do-form-${id}`;
+
+// 2. Dentro do componente — restaurar ao abrir
+useEffect(() => {
+  if (!open) return;
+  const raw = localStorage.getItem(draftKey(id));
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    if (d.campo !== undefined) setCampo(d.campo);
+    // ... demais campos
+  } catch {}
+}, [open, id]);
+
+// 3. Dentro do componente — salvar a cada alteração
+useEffect(() => {
+  if (!open) return;
+  localStorage.setItem(draftKey(id), JSON.stringify({ campo1, campo2 }));
+}, [open, id, campo1, campo2]);
+
+// 4. No handler de submit bem-sucedido — limpar draft
+localStorage.removeItem(draftKey(id));
+reset(); // resetar estado
+onOpenChange(false);
+```
+
+### Regras
+
+- **Chave única por entidade:** inclua sempre o ID do contexto (`clubeId`, `livro.id`, `usuarioLeituraId`) para evitar colisão entre instâncias diferentes.
+- **Nunca salvar quando fechado:** sempre guarde com `if (!open) return` no effect de save.
+- **Limpar apenas no sucesso:** cancelar mantém o rascunho para quando o usuário reabrir.
+- **Formulários de edição (não criação):** não aplicar — esses já carregam dados existentes do banco.
+- **Formulários com react-hook-form:** usar `watch()` para observar mudanças em vez de `useEffect` nos campos individuais (ver `CriarConteudoDialog.tsx`).
+
+### Formulários já implementados
+
+| Arquivo | Chave |
+|---|---|
+| `CriarConteudoDialog.tsx` | `draft-conteudo-{clubeId}` |
+| `CriarEventoDialog.tsx` | `draft-evento-{clubeId}` |
+| `AdicionarObraTrilhaDialog.tsx` | `draft-trilha-{clubeId}` |
+| `CriarClubeDialog.tsx` | `draft-criar-clube` |
+| `CriarMicrogrupoDialog.tsx` | `draft-microgrupo-{clubeId}` |
+| `CriarCanalDialog.tsx` | `draft-canal-{clubeId}` |
+| `RegistrarLeituraDialog.tsx` | `draft-registrar-leitura-{usuarioLeituraId}` |
+| `CitacaoDialog.tsx` | `draft-citacao-{livroId}` |
+| `InsightDialog.tsx` | `draft-insight-{livroId}` |
+| `AplicacaoDialog.tsx` | `draft-aplicacao-{livroId}` |
+
 ## Key Conventions
 
 - **Idioma do domínio:** UI e terminologia de negócio sempre em português. Nomes de variáveis/funções seguem a convenção portuguesa (`clube`, `leitura`, `citacao`, `obra`, `perfil`). Nomes de componentes React usam PascalCase em português.
