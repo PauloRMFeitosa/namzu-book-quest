@@ -106,10 +106,11 @@ export default function PerfilPublico() {
     queryKey: ["perfil-publico-livros", perfil?.user_id],
     enabled: !!perfil?.user_id,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("usuario_livros")
         .select("id,status,favorito,obra_id,edicao_id,obras(titulo_original,capa_padrao_url),edicoes(capa_url,num_paginas,titulo_edicao)")
         .eq("user_id", perfil!.user_id);
+      if (error) console.error("[PerfilPublico] livros:", error.message);
       return data ?? [];
     },
   });

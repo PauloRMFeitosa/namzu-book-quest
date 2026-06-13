@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Hash, Loader2, Trash2, Reply, CornerDownRight } from "lucide-react";
+import { Hash, Loader2, Trash2, Reply, CornerDownRight, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,7 @@ interface Props {
   clubeId: string;
   canal: Canal;
   isMembro: boolean;
+  onVoltar?: () => void;
 }
 
 const formatHora = (iso: string | null) => {
@@ -25,7 +26,7 @@ const formatDia = (iso: string | null) => {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-export const MensagensView = ({ clubeId: _clubeId, canal, isMembro }: Props) => {
+export const MensagensView = ({ clubeId: _clubeId, canal, isMembro, onVoltar }: Props) => {
   const { user } = useAuth();
   const { data: threadId, isLoading: loadingThread } = useThreadPadrao(canal.id);
   const { data: mensagens, isLoading } = useMensagens(threadId);
@@ -46,8 +47,17 @@ export const MensagensView = ({ clubeId: _clubeId, canal, isMembro }: Props) => 
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header */}
-      <div className="border-b border-border/60 px-4 py-3 flex items-center gap-2 shrink-0">
-        <Hash className="w-4 h-4 text-accent" />
+      <div className="border-b border-border/60 px-3 py-3 flex items-center gap-2 shrink-0">
+        {onVoltar && (
+          <button
+            onClick={onVoltar}
+            className="p-1.5 -ml-1 rounded-lg hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            aria-label="Voltar aos canais"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
+        <Hash className="w-4 h-4 text-accent shrink-0" />
         <div className="flex flex-col min-w-0">
           <span className="font-display font-semibold leading-tight truncate">{canal.nome}</span>
           {canal.descricao && (
