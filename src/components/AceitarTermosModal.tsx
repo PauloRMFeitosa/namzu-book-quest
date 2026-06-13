@@ -13,13 +13,19 @@ export const AceitarTermosModal = ({ userId }: { userId: string }) => {
 
   const handleAceitar = async () => {
     setSalvando(true);
+    const agora = new Date().toISOString();
     const { error } = await supabase
       .from("perfis")
-      .update({ termos_aceitos_em: new Date().toISOString() })
+      .update({ termos_aceitos_em: agora })
       .eq("user_id", userId);
     setSalvando(false);
     if (error) { toast.error("Erro ao salvar. Tente novamente."); return; }
-    qc.invalidateQueries({ queryKey: ["perfil-onboarding", userId] });
+    // Atualiza o cache diretamente para fechar o modal imediatamente,
+    // sem depender do refetch que pode ser atrasado pelo staleTime
+    qc.setQueryData(["perfil-onboarding", userId], (old: any) => ({
+      ...old,
+      termos_aceitos_em: agora,
+    }));
   };
 
   return (
