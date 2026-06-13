@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Loader2, Send, ImagePlus, Camera, Images, X } from "lucide-react";
 import { toast } from "sonner";
@@ -64,7 +65,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
   const [fileParaUpload, setFileParaUpload] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
   const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   const criar = useCriarPost(clubeId);
 
@@ -195,14 +195,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             className="hidden"
             onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
           />
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
-          />
 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1">
@@ -210,19 +202,26 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
                 <>
                   {isMobile ? (
                     <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => cameraRef.current?.click()}
-                        disabled={uploading || criar.isPending}
-                        className="text-xs gap-1.5 h-8"
-                      >
+                      {/* label envolve o input diretamente — único padrão confiável
+                          para capture="environment" no Android sem click programático */}
+                      <label className={cn(
+                        "inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium",
+                        "hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
+                        (uploading || criar.isPending) && "pointer-events-none opacity-50"
+                      )}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          disabled={uploading || criar.isPending}
+                          onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+                        />
                         {uploading
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           : <Camera className="w-3.5 h-3.5" />}
                         Câmera
-                      </Button>
+                      </label>
                       <Button
                         type="button"
                         size="sm"
