@@ -1,7 +1,6 @@
-import { useRef, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Send, ImagePlus, Camera, Images, X } from "lucide-react";
+import { Loader2, Send, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -63,28 +62,7 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
   const [fileParaUpload, setFileParaUpload] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  // Ref para sempre apontar para a versão mais recente de handleFile,
-  // evitando closures desatualizadas no listener nativo da câmera.
-  const handleFileRef = useRef<(f: File) => void>(() => {});
-  const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   const criar = useCriarPost(clubeId);
-
-  // Listener nativo para câmera: o onChange sintético do React pode não
-  // disparar corretamente no Android quando a página fica em background
-  // enquanto o app de câmera está ativo.
-  useEffect(() => {
-    const input = cameraInputRef.current;
-    if (!input) return;
-    const listener = () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      handleFileRef.current(file);
-      setTimeout(() => { input.value = ""; }, 0);
-    };
-    input.addEventListener("change", listener);
-    return () => input.removeEventListener("change", listener);
-  }, []);
 
   if (!user || !isMembro) {
     if (compact) return null;
@@ -97,9 +75,7 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
 
   const handleFile = async (file: File) => {
     if (parentPostId) return;
-    // Câmeras Android às vezes retornam file.type vazio — aceitar se accept="image/*" foi respeitado
     const isImage =
-      !file.type ||
       file.type.startsWith("image/") ||
       /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
     if (!isImage) { toast.error("Selecione uma imagem válida"); return; }
@@ -122,9 +98,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
       setUploading(false);
     }
   };
-
-  // Mantém ref atualizada após cada render
-  handleFileRef.current = handleFile;
 
   const removerImagem = () => {
     if (previewLocal) URL.revokeObjectURL(previewLocal);
@@ -206,7 +179,6 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             </div>
           )}
 
-          {/* Input galeria */}
           <input
             ref={galleryRef}
             type="file"
@@ -215,70 +187,22 @@ export const PostComposer = ({ clubeId, isMembro, parentPostId, compact, onDone 
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
           />
 
-          {/* Input câmera — sem onChange: usa listener nativo via useEffect */}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            disabled={uploading || criar.isPending}
-          />
-
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1">
               {!parentPostId && (
-                <>
-                  {isMobile ? (
-                    <>
-                      <label className={cn(
-                        "inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium",
-                        "hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                        (uploading || criar.isPending) && "pointer-events-none opacity-50"
-                      )}>
-                        {/* Input dentro do label apenas para acionar a câmera via toque direto.
-                            O processamento do arquivo é feito pelo listener nativo no cameraInputRef. */}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          className="hidden"
-                          disabled={uploading || criar.isPending}
-                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
-                        />
-                        {uploading
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Camera className="w-3.5 h-3.5" />}
-                        Câmera
-                      </label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => galleryRef.current?.click()}
-                        disabled={uploading || criar.isPending}
-                        className="text-xs gap-1.5 h-8"
-                      >
-                        <Images className="w-3.5 h-3.5" />
-                        Galeria
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => galleryRef.current?.click()}
-                      disabled={uploading || criar.isPending}
-                      className="text-xs gap-1.5 h-8"
-                    >
-                      {uploading
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <ImagePlus className="w-3.5 h-3.5" />}
-                      Imagem
-                    </Button>
-                  )}
-                </>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={uploading || criar.isPending}
+                  className="text-xs gap-1.5 h-8"
+                >
+                  {uploading
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <ImagePlus className="w-3.5 h-3.5" />}
+                  Imagem
+                </Button>
               )}
             </div>
 
