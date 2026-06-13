@@ -203,7 +203,7 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success("Progresso atualizado");
-      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["livros"] });
       qc.invalidateQueries({ queryKey: ["leituras"] });
     },
