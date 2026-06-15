@@ -8,9 +8,8 @@ import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 
-import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss, Library } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
-import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
 
 const Home = () => {
   const { user } = useAuth();
@@ -57,10 +56,25 @@ const Home = () => {
         .from("clube_membros")
         .select("clubes(*)")
         .eq("user_id", user!.id)
-        .eq("status", "ativo");
+        .eq("status", "ativo")
+        .order("updated_at", { ascending: false });
       return (data ?? [])
         .map((r: any) => r.clubes)
         .filter((c: any) => c && c.is_ativo);
+    },
+  });
+
+  const { data: clubesCurador = [] } = useQuery({
+    queryKey: ["minha-curadoria", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clubes")
+        .select("id, nome, descricao, imagem_capa_url, updated_at")
+        .eq("curador_id", user!.id)
+        .eq("is_ativo", true)
+        .order("updated_at", { ascending: false });
+      return data ?? [];
     },
   });
 
@@ -77,6 +91,7 @@ const Home = () => {
 
       <IniciarCodigoMeCard />
 
+      {/* Meus clubes ativos — scroll horizontal por atualização mais recente */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -95,9 +110,13 @@ const Home = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
             {clubes.map((c: any) => (
-              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-3 flex items-center gap-3 hover-lift text-left">
+              <button
+                key={c.id}
+                onClick={() => navigate(`/clubes/${c.id}`)}
+                className="card-soft p-3 flex items-center gap-3 hover-lift text-left flex-shrink-0 w-[72%] snap-start"
+              >
                 {c.imagem_capa_url ? (
                   <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
                 ) : (
@@ -114,7 +133,38 @@ const Home = () => {
         )}
       </section>
 
-      <RecomendacoesIA />
+      {/* Minha curadoria — só aparece se o usuário for curador de algum clube */}
+      {clubesCurador.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-sm text-foreground">Minha curadoria</h3>
+            </div>
+            <button onClick={() => navigate("/clubes")} className="text-xs text-primary font-medium">Gerenciar</button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
+            {clubesCurador.map((c: any) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/clubes/${c.id}`)}
+                className="card-soft p-3 flex items-center gap-3 hover-lift text-left flex-shrink-0 w-[72%] snap-start"
+              >
+                {c.imagem_capa_url ? (
+                  <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-primary font-bold text-sm shrink-0">{c.nome[0]}</div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{c.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {lendoList.length > 0 ? (
         <section>
@@ -161,7 +211,6 @@ const Home = () => {
           </Button>
         </section>
       )}
-
 
       {/* Feed de atividade social */}
       <section className="card-soft p-4">
