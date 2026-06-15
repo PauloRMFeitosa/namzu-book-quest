@@ -94,7 +94,7 @@ export const CriarClubeDialog = () => {
 
       toast.success("Clube criado!");
       localStorage.removeItem(DRAFT_KEY);
-      qc.invalidateQueries({ queryKey: ["clubes-marketplace"] });
+      qc.invalidateQueries({ queryKey: ["clubes-marketplace"], refetchType: "all" });
       setOpen(false);
       navigate(`/clubes/${data.id}`);
     } catch (e: any) {
