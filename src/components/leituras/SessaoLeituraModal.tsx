@@ -85,19 +85,28 @@ export const SessaoLeituraModal = () => {
           ? Math.min(100, Math.round((paginaInput / sessao.totalPaginas) * 100))
           : null;
 
+      // Fecha a sessão com data_fim para registrar a duração nas estatísticas de tempo
       await supabase.from("leituras").update({ data_fim: dataFim }).eq("id", sessao.leituraId);
 
-      // Salva a página ABSOLUTA (posição atual no livro) para que calcularProgresso funcione via MAX
-      await supabase.from("leitura_progresso").insert({
-        leitura_id: sessao.leituraId,
-        user_id: user.id,
-        paginas_lidas: paginaInput,
-        percentual_lido: percentual,
-        tempo_leitura_minutos: tempoMinutos,
-      });
+      // Usa a edge function para salvar o progresso — ela atualiza usuario_leituras,
+      // usuario_livros e lida corretamente com o contexto de clube (trilhas)
+      const body: Record<string, unknown> = {
+        usuario_leitura_id: sessao.usuarioLeituraId,
+        pagina_atual: paginaInput,
+        percentual: percentual ?? 0,
+        registrar_leitura_progresso: true,
+        tempo_minutos: tempoMinutos,
+      };
+      if (sessao.clubeId) body.clube_id = sessao.clubeId;
+
+      const { error } = await supabase.functions.invoke("salvar-progresso-leitura", { body });
+      if (error) throw error;
 
       qc.invalidateQueries({ queryKey: ["livro-detalhe", sessao.usuarioLeituraId], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["timeline-livro", sessao.usuarioLeituraId], refetchType: "all" });
+      if (sessao.clubeId) {
+        qc.invalidateQueries({ queryKey: ["clube-leituras", sessao.clubeId], refetchType: "all" });
+      }
       invalidateLeituras(qc);
 
       setResumo({ paginasLidas: paginasNestaSessao, segundos: snapSegundos, tempoMinutos });

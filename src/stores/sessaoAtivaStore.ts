@@ -3,6 +3,7 @@ import { create } from "zustand";
 export type SessaoAtiva = {
   leituraId: string;
   usuarioLeituraId: string;
+  clubeId?: string | null;
   titulo: string;
   autor?: string | null;
   capaUrl?: string | null;

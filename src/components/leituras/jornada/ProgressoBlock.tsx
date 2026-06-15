@@ -46,6 +46,7 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
       iniciar({
         leituraId,
         usuarioLeituraId: livro.id,
+        clubeId: livro.clube_id ?? null,
         titulo: livro.obras?.titulo_original ?? "Livro",
         autor: livro.autores?.[0]?.nome ?? null,
         capaUrl: livro.edicoes?.capa_url ?? null,
