@@ -1,24 +1,28 @@
-import { ReactNode } from "react";
+import { ReactNode, ElementType } from "react";
 import { ClubeCard } from "./ClubeCard";
 import type { ClubeCardData } from "@/hooks/clubes/useClubes";
 
 interface Props {
   titulo: string;
   legenda?: string;
+  icon?: ElementType;
   clubes: ClubeCardData[];
   emptyText?: string;
   rightSlot?: ReactNode;
 }
 
-export const SecaoCarrossel = ({ titulo, legenda, clubes, emptyText, rightSlot }: Props) => {
+export const SecaoCarrossel = ({ titulo, legenda, icon: Icon, clubes, emptyText, rightSlot }: Props) => {
   if (!clubes.length && !emptyText) return null;
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="font-display text-xl font-semibold text-foreground">{titulo}</h2>
-          {legenda && <p className="text-xs text-muted-foreground mt-0.5">{legenda}</p>}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            {Icon && <Icon className="w-4 h-4 text-primary shrink-0" />}
+            <h3 className="font-semibold text-sm text-foreground">{titulo}</h3>
+          </div>
+          {legenda && <p className="text-xs text-muted-foreground">{legenda}</p>}
         </div>
         {rightSlot}
       </div>

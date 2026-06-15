@@ -5,7 +5,7 @@ import { FiltrosBar } from "@/components/clubes/marketplace/FiltrosBar";
 import { SecaoCarrossel } from "@/components/clubes/marketplace/SecaoCarrossel";
 import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Users, Flame, BookOpen, Activity, UsersRound, Clock } from "lucide-react";
 import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
 import { CriarClubeDialog } from "@/components/clubes/marketplace/CriarClubeDialog";
 
@@ -82,6 +82,7 @@ const Marketplace = () => {
               <SecaoCarrossel
                 titulo="Meus clubes ativos"
                 legenda="Comunidades das quais você faz parte"
+                icon={Users}
                 clubes={meusAtivos}
               />
             )}
@@ -90,32 +91,38 @@ const Marketplace = () => {
                 <SecaoCarrossel
                   titulo="Em alta"
                   legenda="O que está movimentando a comunidade agora"
+                  icon={Flame}
                   clubes={secoes.em_alta}
                 />
                 <SecaoCarrossel
                   titulo="Para você"
                   legenda="Selecionados com base no seu perfil"
+                  icon={Sparkles}
                   clubes={secoes.em_alta}
                 />
                 <SecaoCarrossel
                   titulo="Mais profundos"
                   legenda="Discussões densas e leitura atenta"
+                  icon={BookOpen}
                   clubes={secoes.profundos}
                 />
                 <SecaoCarrossel
                   titulo="Mais ativos"
                   legenda="Membros que aparecem todo dia"
+                  icon={Activity}
                   clubes={secoes.ativos}
                 />
                 <SecaoCarrossel
                   titulo="Pequenos clubes"
                   legenda="Tribos íntimas, até 30 membros"
+                  icon={UsersRound}
                   clubes={secoes.pequenos}
                   emptyText="Nenhum clube pequeno disponível agora."
                 />
                 <SecaoCarrossel
                   titulo="Recém-chegados"
                   legenda="Acabaram de abrir as portas"
+                  icon={Clock}
                   clubes={secoes.novos}
                 />
               </>
@@ -130,9 +137,9 @@ const ResultadosFiltrados = ({ clubes }: { clubes: ReturnType<typeof useClubes>[
   const list = clubes ?? [];
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-display text-xl font-semibold text-foreground">
+      <h3 className="font-semibold text-sm text-foreground">
         {list.length} {list.length === 1 ? "resultado" : "resultados"}
-      </h2>
+      </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {list.map((c) => (
           <ClubeCard key={c.id} clube={c} />
@@ -145,7 +152,7 @@ const ResultadosFiltrados = ({ clubes }: { clubes: ReturnType<typeof useClubes>[
 const EmptyState = ({ busca, categoria }: { busca: string; categoria: string | null }) => (
   <div className="flex flex-col items-center justify-center gap-2 py-16 text-center border border-dashed border-border/60 rounded-2xl bg-card/40">
     <div className="text-4xl">📚</div>
-    <h3 className="font-display text-lg font-semibold">Nenhum clube encontrado</h3>
+    <h3 className="font-semibold text-sm text-foreground">Nenhum clube encontrado</h3>
     <p className="text-sm text-muted-foreground max-w-sm">
       {busca || categoria
         ? "Tente outros filtros ou termos de busca."
