@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BookMarked, Plus, ArrowRight, Share2, Calendar, Play, Timer } from "lucide-react";
+import { BookOpen, BookMarked, Plus, Share2, Calendar, Play, Timer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LeituraDetalhe from "./LeituraDetalhe";
@@ -13,14 +13,11 @@ import { Progress } from "@/components/ui/progress";
 import {
   useLendoList,
   useConcluidosRecentes,
-  useUltimaSessao,
   useEstatisticasPeriodo,
   LivroResumo,
 } from "@/hooks/leituras/useMinhasLeituras";
 import { MinhasLeiturasShareModal } from "@/components/leituras/MinhasLeiturasShareModal";
 import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
-import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
-import { toast } from "sonner";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const MESES_LONGO = [
@@ -37,48 +34,14 @@ const Capa = ({ url, titulo, className }: { url?: string | null; titulo?: string
     </div>
   );
 
-const ContinuarLendo = ({ livro, onClick }: { livro: LivroResumo; onClick: () => void }) => (
-  <section className="card-soft p-5 flex flex-col gap-4 bg-gradient-to-br from-primary/5 to-transparent">
-    <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">Continuar lendo</span>
-    <div className="flex gap-4">
-      <Capa url={livro.capa_url} titulo={livro.titulo} className="w-20 h-28 rounded-lg" />
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <h2 className="font-semibold text-lg leading-tight line-clamp-2">{livro.titulo}</h2>
-        {livro.autor && <p className="text-xs text-muted-foreground italic">{livro.autor}</p>}
-        <div className="mt-2">
-          <Progress value={livro.percentual} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>
-              {livro.total_paginas
-                ? `${livro.paginas_lidas} / ${livro.total_paginas} pgs`
-                : `${livro.paginas_lidas} pgs`}
-            </span>
-            <span>{livro.percentual}%</span>
-          </div>
-        </div>
-        {livro.ultima_sessao && (
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Última sessão: {new Date(livro.ultima_sessao).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-          </p>
-        )}
-      </div>
-    </div>
-    <Button onClick={onClick} className="rounded-2xl bg-primary hover:bg-primary-hover">
-      Continuar leitura <ArrowRight className="w-4 h-4 ml-1" />
-    </Button>
-  </section>
-);
-
 const EmAndamento = ({
   livros,
   onOpen,
   onAdd,
-  onLerAgora,
 }: {
   livros: LivroResumo[];
   onOpen: (id: string) => void;
   onAdd: () => void;
-  onLerAgora: (livro: LivroResumo) => void;
 }) => (
   <section className="flex flex-col gap-3">
     <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
@@ -100,7 +63,7 @@ const EmAndamento = ({
           </button>
           <Button
             size="sm"
-            onClick={() => onLerAgora(l)}
+            onClick={() => onOpen(l.usuario_leitura_id)}
             className="w-full rounded-xl bg-primary hover:bg-primary-hover text-xs h-7 gap-1"
           >
             <Play className="w-3 h-3" /> Ler agora
@@ -279,9 +242,7 @@ const LeiturasList = () => {
   const { user } = useAuth();
   const { data: lendo = [] } = useLendoList();
   const { data: concluidos = [] } = useConcluidosRecentes(8);
-  const { data: ultima } = useUltimaSessao();
-  const { sessao, abrirModal, iniciar } = useSessaoAtiva();
-  const [iniciando, setIniciando] = useState<string | null>(null);
+  const { sessao, abrirModal } = useSessaoAtiva();
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil-nome", user?.id],
@@ -300,36 +261,6 @@ const LeiturasList = () => {
     (user?.user_metadata?.full_name as string) ??
     user?.email?.split("@")[0] ??
     "Leitor";
-
-  const handleLerAgora = async (livro: LivroResumo) => {
-    if (!user) return;
-    if (sessao) {
-      // Já tem sessão ativa — abre o modal dela
-      abrirModal();
-      return;
-    }
-    setIniciando(livro.usuario_leitura_id);
-    try {
-      const leituraId = await iniciarLeitura({
-        usuario_leitura_id: livro.usuario_leitura_id,
-        tipo: "leitura",
-        user_id: user.id,
-      });
-      iniciar({
-        leituraId,
-        usuarioLeituraId: livro.usuario_leitura_id,
-        titulo: livro.titulo,
-        autor: livro.autor,
-        capaUrl: livro.capa_url,
-        totalPaginas: livro.total_paginas,
-        paginasAnteriores: livro.paginas_lidas,
-      });
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao iniciar sessão");
-    } finally {
-      setIniciando(null);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">
@@ -355,26 +286,10 @@ const LeiturasList = () => {
         </button>
       )}
 
-      {!sessao && (
-        ultima ? (
-          <ContinuarLendo livro={ultima} onClick={() => navigate(`/leituras/${ultima.usuario_leitura_id}`)} />
-        ) : (
-          <section className="card-soft p-6 text-center">
-            <BookOpen className="w-10 h-10 mx-auto text-primary mb-3" />
-            <p className="font-semibold">Comece sua primeira leitura</p>
-            <p className="text-sm text-muted-foreground mt-1 mb-3">Encontre um livro e abra a primeira sessão.</p>
-            <Button onClick={() => navigate("/busca")} className="rounded-2xl bg-primary hover:bg-primary-hover">
-              <Plus className="w-4 h-4 mr-1" /> Buscar livros
-            </Button>
-          </section>
-        )
-      )}
-
       <EmAndamento
         livros={lendo}
         onOpen={(id) => navigate(`/leituras/${id}`)}
         onAdd={() => navigate("/busca")}
-        onLerAgora={handleLerAgora}
       />
 
       <ConcluidosRecentes
