@@ -66,7 +66,7 @@ const EmAndamento = ({
             onClick={() => onOpen(l.usuario_leitura_id)}
             className="w-full rounded-xl bg-primary hover:bg-primary-hover text-xs h-7 gap-1"
           >
-            <Play className="w-3 h-3" /> Ler agora
+            <Play className="w-3 h-3" /> Ler
           </Button>
         </div>
       ))}

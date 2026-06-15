@@ -85,7 +85,7 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
               className="flex-1 rounded-xl h-9 bg-primary hover:bg-primary-hover"
             >
               <Play className="w-3.5 h-3.5" />
-              {estaNestaLeitura ? "Retomar sessão" : "Ler agora"}
+              {estaNestaLeitura ? "Retomar" : "Ler"}
             </Button>
           </div>
         </div>
