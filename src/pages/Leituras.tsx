@@ -18,7 +18,6 @@ import {
   LivroResumo,
 } from "@/hooks/leituras/useMinhasLeituras";
 import { MinhasLeiturasShareModal } from "@/components/leituras/MinhasLeiturasShareModal";
-import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
 import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { toast } from "sonner";
@@ -385,8 +384,6 @@ const LeiturasList = () => {
       />
 
       <EstatisticasBlock nome={nome.toUpperCase()} />
-
-      <SessaoLeituraModal />
     </div>
   );
 };

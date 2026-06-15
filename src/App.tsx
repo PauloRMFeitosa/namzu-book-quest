@@ -35,6 +35,7 @@ import PerfilPublico from "./pages/PerfilPublico";
 import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
+import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <SessaoLeituraModal />
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>
