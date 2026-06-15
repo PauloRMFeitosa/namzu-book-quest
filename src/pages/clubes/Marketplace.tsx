@@ -8,8 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles } from "lucide-react";
 import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
 import { CriarClubeDialog } from "@/components/clubes/marketplace/CriarClubeDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const Marketplace = () => {
+  const { user } = useAuth();
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<string | null>(null);
 
@@ -18,6 +20,11 @@ const Marketplace = () => {
   const meusAtivos = useMemo(
     () => clubes.filter((c) => c.is_membro),
     [clubes]
+  );
+
+  const curadoria = useMemo(
+    () => clubes.filter((c) => user && c.curador_id === user.id),
+    [clubes, user]
   );
 
   const secoes = useMemo(() => {
@@ -83,6 +90,13 @@ const Marketplace = () => {
                 titulo="Meus clubes ativos"
                 legenda="Comunidades das quais você faz parte"
                 clubes={meusAtivos}
+              />
+            )}
+            {curadoria.length > 0 && (
+              <SecaoCarrossel
+                titulo="Curadoria"
+                legenda="Clubes que você administra"
+                clubes={curadoria}
               />
             )}
             {secoes && (
