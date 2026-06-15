@@ -16,17 +16,21 @@ interface Props {
   livro: LivroDetalhe;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  clubeId?: string | null;
+  clubeNome?: string | null;
 }
 
-export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
+export const InsightDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }: Props) => {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [aprendi, setAprendi] = useState("");
   const [porque, setPorque] = useState("");
+  const [publicarNoClube, setPublicarNoClube] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setPublicarNoClube(false);
     const raw = localStorage.getItem(draftKey(livro.id));
     if (!raw) return;
     try {
@@ -52,6 +56,13 @@ export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
         conceito_principal: porque.trim() || null,
       });
       if (error) throw error;
+
+      if (publicarNoClube && clubeId && user) {
+        const titulo = livro.obras?.titulo_original ?? "livro";
+        const conteudo = `💡 *Insight sobre "${titulo}"*\n\n${aprendi.trim()}`;
+        await supabase.from("clube_posts").insert({ clube_id: clubeId, user_id: user.id, conteudo, obra_id: livro.obra_id ?? null });
+      }
+
       toast.success("Insight registrado!");
       localStorage.removeItem(draftKey(livro.id));
       setAprendi(""); setPorque("");
@@ -76,6 +87,19 @@ export const InsightDialog = ({ livro, open, onOpenChange }: Props) => {
             <label className="text-xs text-muted-foreground">Por que foi importante</label>
             <VoiceTextarea value={porque} onValueChange={setPorque} rows={2} className="mt-1" />
           </div>
+          {clubeId && clubeNome && (
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={publicarNoClube}
+                onChange={(e) => setPublicarNoClube(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-primary shrink-0"
+              />
+              <span className="text-sm text-muted-foreground leading-snug">
+                Publicar no feed do clube <strong className="text-foreground">{clubeNome}</strong>
+              </span>
+            </label>
+          )}
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">{loading ? "Salvando..." : "Salvar"}</Button>
         </div>
       </DialogContent>

@@ -46,7 +46,9 @@ export function useConcluirLeitura() {
       qc.invalidateQueries({ queryKey: ["livro-detalhe", usuarioLeituraId] });
       qc.invalidateQueries({ queryKey: ["timeline-livro", usuarioLeituraId] });
     }
-    if (clubeId) qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+    // refetchType: 'all' garante refetch mesmo em queries inativas (aba não montada),
+    // necessário porque refetchOnMount está desabilitado no QueryClient global
+    if (clubeId) qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
     invalidateLeituras(qc);
   };
 }

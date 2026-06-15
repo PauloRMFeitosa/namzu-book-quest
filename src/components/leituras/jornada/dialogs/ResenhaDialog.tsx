@@ -15,6 +15,8 @@ interface Props {
   livro: LivroDetalhe;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  clubeId?: string | null;
+  clubeNome?: string | null;
 }
 
 // ─── Star rating ───────────────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ function StarRating({
  * Resenha standalone — grava em leitura_pos.resenha (opinião + pontos) e
  * salva a avaliação (estrelas) em usuario_livros.nota.
  */
-export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
+export const ResenhaDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }: Props) => {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [opiniao, setOpiniao] = useState("");
@@ -78,10 +80,12 @@ export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
   const [negativos, setNegativos] = useState("");
   // Avaliação em estrelas (1–5), inicializada a partir de usuario_livros.nota
   const [avaliacao, setAvaliacao] = useState<number | null>(null);
+  const [publicarNoClube, setPublicarNoClube] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setPublicarNoClube(false);
     // Pré-preenche com nota existente (usuario_livros.nota, escala 1–5)
     setAvaliacao(livro.nota != null ? Math.round(livro.nota) : null);
 
@@ -131,6 +135,12 @@ export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
         .update({ nota: avaliacao })
         .eq("id", livro.usuario_livro_id);
       if (errNota) throw errNota;
+
+      if (publicarNoClube && clubeId && user) {
+        const titulo = livro.obras?.titulo_original ?? "livro";
+        const conteudo = `📖 *Resenha de "${titulo}"*\n\n${opiniao.trim()}`;
+        await supabase.from("clube_posts").insert({ clube_id: clubeId, user_id: user.id, conteudo, obra_id: livro.obra_id ?? null });
+      }
 
       toast.success(livro.leitura_pos ? "Resenha atualizada!" : "Resenha salva!");
       onOpenChange(false);
@@ -195,6 +205,19 @@ export const ResenhaDialog = ({ livro, open, onOpenChange }: Props) => {
               className="mt-1"
             />
           </div>
+          {clubeId && clubeNome && (
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={publicarNoClube}
+                onChange={(e) => setPublicarNoClube(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-primary shrink-0"
+              />
+              <span className="text-sm text-muted-foreground leading-snug">
+                Publicar no feed do clube <strong className="text-foreground">{clubeNome}</strong>
+              </span>
+            </label>
+          )}
           <Button onClick={salvar} disabled={loading} className="h-11 rounded-2xl">
             {loading ? "Salvando..." : jaTemResenha ? "Atualizar" : "Salvar"}
           </Button>

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +38,25 @@ export interface TrilhaItem {
  */
 export const useClubeLeituras = (clubeId: string | undefined) => {
   const { user } = useAuth();
+  const qc = useQueryClient();
+
+  // Realtime: atualiza a trilha quando qualquer membro conclui ou altera sua leitura
+  useEffect(() => {
+    if (!clubeId) return;
+    const channel = supabase
+      .channel(`clube-leituras-rt:${clubeId}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "usuario_leituras",
+        filter: `clube_id=eq.${clubeId}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clubeId, qc]);
+
   return useQuery({
     queryKey: ["clube-leituras", clubeId, user?.id],
     enabled: !!clubeId,
@@ -203,7 +223,7 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success("Progresso atualizado");
-      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["livros"] });
       qc.invalidateQueries({ queryKey: ["leituras"] });
     },

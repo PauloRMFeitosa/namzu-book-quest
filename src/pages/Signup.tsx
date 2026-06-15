@@ -14,6 +14,7 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [termosAceitos, setTermosAceitos] = useState(false);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -22,7 +23,7 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -30,8 +31,11 @@ const Signup = () => {
         data: { full_name: name },
       },
     });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    if (data.user) {
+      await supabase.rpc("aceitar_termos");
+    }
     setBusy(false);
-    if (error) return toast.error(error.message);
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
     navigate("/");
   };
@@ -61,7 +65,21 @@ const Signup = () => {
             <Label htmlFor="password">Senha</Label>
             <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="h-[52px] rounded-2xl mt-1" />
           </div>
-          <Button type="submit" disabled={busy} className="h-[52px] rounded-2xl text-base font-semibold mt-2 bg-primary hover:bg-primary-hover">
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={termosAceitos}
+              onChange={(e) => setTermosAceitos(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-border accent-primary shrink-0"
+            />
+            <span className="text-sm text-muted-foreground leading-snug">
+              Li e concordo com os{" "}
+              <Link to="/termos" target="_blank" className="text-primary underline underline-offset-2">
+                Termos de Uso e Política de Privacidade
+              </Link>
+            </span>
+          </label>
+          <Button type="submit" disabled={busy || !termosAceitos} className="h-[52px] rounded-2xl text-base font-semibold mt-2 bg-primary hover:bg-primary-hover">
             {busy ? "Criando..." : "Criar conta"}
           </Button>
         </form>
