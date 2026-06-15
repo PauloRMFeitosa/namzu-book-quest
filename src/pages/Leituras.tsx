@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BookMarked, Plus, ArrowRight, Share2, Calendar } from "lucide-react";
+import { BookOpen, BookMarked, Plus, ArrowRight, Share2, Calendar, Play, Timer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LeituraDetalhe from "./LeituraDetalhe";
@@ -18,6 +18,10 @@ import {
   LivroResumo,
 } from "@/hooks/leituras/useMinhasLeituras";
 import { MinhasLeiturasShareModal } from "@/components/leituras/MinhasLeiturasShareModal";
+import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
+import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
+import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
+import { toast } from "sonner";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const MESES_LONGO = [
@@ -66,25 +70,43 @@ const ContinuarLendo = ({ livro, onClick }: { livro: LivroResumo; onClick: () =>
   </section>
 );
 
-const EmAndamento = ({ livros, onOpen, onAdd }: { livros: LivroResumo[]; onOpen: (id: string) => void; onAdd: () => void }) => (
+const EmAndamento = ({
+  livros,
+  onOpen,
+  onAdd,
+  onLerAgora,
+}: {
+  livros: LivroResumo[];
+  onOpen: (id: string) => void;
+  onAdd: () => void;
+  onLerAgora: (livro: LivroResumo) => void;
+}) => (
   <section className="flex flex-col gap-3">
     <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
       Em andamento {livros.length > 0 && <span className="text-xs">({livros.length})</span>}
     </h2>
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
       {livros.map((l) => (
-        <button
+        <div
           key={l.usuario_leitura_id}
-          onClick={() => onOpen(l.usuario_leitura_id)}
-          className="card-soft p-3 hover-lift text-left flex-shrink-0 w-40 snap-start flex flex-col gap-2"
+          className="card-soft p-3 flex-shrink-0 w-40 snap-start flex flex-col gap-2"
         >
-          <Capa url={l.capa_url} titulo={l.titulo} className="w-full h-48 rounded-lg" />
-          <p className="text-sm font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{l.titulo}</p>
-          <div className="mt-auto">
-            <Progress value={l.percentual} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground mt-1">{l.percentual}% concluído</p>
-          </div>
-        </button>
+          <button onClick={() => onOpen(l.usuario_leitura_id)} className="text-left flex flex-col gap-2">
+            <Capa url={l.capa_url} titulo={l.titulo} className="w-full h-40 rounded-lg" />
+            <p className="text-sm font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{l.titulo}</p>
+            <div>
+              <Progress value={l.percentual} className="h-1.5" />
+              <p className="text-[10px] text-muted-foreground mt-1">{l.percentual}% concluído</p>
+            </div>
+          </button>
+          <Button
+            size="sm"
+            onClick={() => onLerAgora(l)}
+            className="w-full rounded-xl bg-primary hover:bg-primary-hover text-xs h-7 gap-1"
+          >
+            <Play className="w-3 h-3" /> Ler agora
+          </Button>
+        </div>
       ))}
       <button
         onClick={onAdd}
@@ -259,6 +281,8 @@ const LeiturasList = () => {
   const { data: lendo = [] } = useLendoList();
   const { data: concluidos = [] } = useConcluidosRecentes(8);
   const { data: ultima } = useUltimaSessao();
+  const { sessao, abrirModal, iniciar } = useSessaoAtiva();
+  const [iniciando, setIniciando] = useState<string | null>(null);
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil-nome", user?.id],
@@ -278,6 +302,36 @@ const LeiturasList = () => {
     user?.email?.split("@")[0] ??
     "Leitor";
 
+  const handleLerAgora = async (livro: LivroResumo) => {
+    if (!user) return;
+    if (sessao) {
+      // Já tem sessão ativa — abre o modal dela
+      abrirModal();
+      return;
+    }
+    setIniciando(livro.usuario_leitura_id);
+    try {
+      const leituraId = await iniciarLeitura({
+        usuario_leitura_id: livro.usuario_leitura_id,
+        tipo: "leitura",
+        user_id: user.id,
+      });
+      iniciar({
+        leituraId,
+        usuarioLeituraId: livro.usuario_leitura_id,
+        titulo: livro.titulo,
+        autor: livro.autor,
+        capaUrl: livro.capa_url,
+        totalPaginas: livro.total_paginas,
+        paginasAnteriores: livro.paginas_lidas,
+      });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao iniciar sessão");
+    } finally {
+      setIniciando(null);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">
       <PageHero
@@ -287,23 +341,41 @@ const LeiturasList = () => {
         description="Sua biblioteca ativa: retome, acompanhe e celebre."
       />
 
-      {ultima ? (
-        <ContinuarLendo livro={ultima} onClick={() => navigate(`/leituras/${ultima.usuario_leitura_id}`)} />
-      ) : (
-        <section className="card-soft p-6 text-center">
-          <BookOpen className="w-10 h-10 mx-auto text-primary mb-3" />
-          <p className="font-semibold">Comece sua primeira leitura</p>
-          <p className="text-sm text-muted-foreground mt-1 mb-3">Encontre um livro e abra a primeira sessão.</p>
-          <Button onClick={() => navigate("/busca")} className="rounded-2xl bg-primary hover:bg-primary-hover">
-            <Plus className="w-4 h-4 mr-1" /> Buscar livros
-          </Button>
-        </section>
+      {/* Banner de sessão ativa (quando modal está fechado) */}
+      {sessao && (
+        <button
+          onClick={abrirModal}
+          className="w-full flex items-center gap-3 bg-primary text-primary-foreground rounded-2xl px-4 py-3 hover:bg-primary-hover transition-colors"
+        >
+          <Timer className="w-5 h-5 shrink-0 animate-pulse" />
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-xs font-semibold opacity-80">Leitura em andamento</p>
+            <p className="text-sm font-bold leading-tight line-clamp-1">{sessao.titulo}</p>
+          </div>
+          <span className="text-xs font-semibold opacity-80 shrink-0">Continuar →</span>
+        </button>
+      )}
+
+      {!sessao && (
+        ultima ? (
+          <ContinuarLendo livro={ultima} onClick={() => navigate(`/leituras/${ultima.usuario_leitura_id}`)} />
+        ) : (
+          <section className="card-soft p-6 text-center">
+            <BookOpen className="w-10 h-10 mx-auto text-primary mb-3" />
+            <p className="font-semibold">Comece sua primeira leitura</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-3">Encontre um livro e abra a primeira sessão.</p>
+            <Button onClick={() => navigate("/busca")} className="rounded-2xl bg-primary hover:bg-primary-hover">
+              <Plus className="w-4 h-4 mr-1" /> Buscar livros
+            </Button>
+          </section>
+        )
       )}
 
       <EmAndamento
         livros={lendo}
         onOpen={(id) => navigate(`/leituras/${id}`)}
         onAdd={() => navigate("/busca")}
+        onLerAgora={handleLerAgora}
       />
 
       <ConcluidosRecentes
@@ -313,6 +385,8 @@ const LeiturasList = () => {
       />
 
       <EstatisticasBlock nome={nome.toUpperCase()} />
+
+      <SessaoLeituraModal />
     </div>
   );
 };
