@@ -1,6 +1,7 @@
 // Edge function: reprocessar-generos
 // Reprocessa obras sem gêneros usando Google Books e Open Library.
-// Reutiliza persistGenresForObra do shared.
+// Registra execução em integracoes_execucoes / integracoes_execucoes_itens
+// (mesmo padrão do reprocessar-autores).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeGenres, persistGenresForObra } from "../_shared/generos.ts";
@@ -49,7 +50,6 @@ async function fetchOpenLibraryByIsbn(isbn: string) {
   if (!res || !res.ok) return null;
   const data = await res.json().catch(() => null);
   if (!data) return null;
-  // collect subjects from works if needed
   let subjects: string[] = Array.isArray(data.subjects) ? data.subjects : [];
   const workKey = data.works?.[0]?.key as string | undefined;
   if (workKey && subjects.length === 0) {
@@ -70,32 +70,48 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verificação de autenticação admin
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader) return json({ error: "Não autenticado" }, 401);
+
+    const userClient = createClient(SUPABASE_URL, ANON, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData.user) return json({ error: "Token inválido" }, 401);
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: roleRow } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) return json({ error: "Acesso negado" }, 403);
+
     const body = await req.json().catch(() => ({}));
     const mode = String(body?.mode ?? "test10");
     const limit = mode === "test10" ? 10 : mode === "batch50" ? 50 : 1000;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
     // Busca obras sem gêneros, priorizando com ISBN13
-    const { data: candidatas, error: errCand } = await supabase
+    const { data: candidatas, error: errCand } = await admin
       .from("obras")
       .select("id, titulo_original, edicoes(isbn_13)")
       .limit(2000);
 
     if (errCand) return json({ error: errCand.message }, 500);
 
-    // Filtrar as que não têm gêneros
-    const { data: comGenero } = await supabase
+    const { data: comGenero } = await admin
       .from("obra_generos")
       .select("obra_id");
     const setComGenero = new Set((comGenero ?? []).map((r: any) => r.obra_id));
 
     const semGenero = (candidatas ?? []).filter((o: any) => !setComGenero.has(o.id));
 
-    // Priorizar com ISBN13
     const withIsbn = semGenero
       .map((o: any) => {
         const isbn = (o.edicoes ?? [])
@@ -106,16 +122,33 @@ Deno.serve(async (req) => {
       .sort((a, b) => (a.isbn ? -1 : 1) - (b.isbn ? -1 : 1))
       .slice(0, limit);
 
+    // Cria registro de execução
+    const { data: execRow, error: execErr } = await admin
+      .from("integracoes_execucoes")
+      .insert({
+        tipo_processo: "reprocessamento_generos",
+        fonte: "google_books+open_library",
+        status: "em_andamento",
+        quantidade_solicitada: withIsbn.length,
+      } as any)
+      .select("id")
+      .single();
+    if (execErr || !execRow) return json({ error: execErr?.message ?? "Falha ao criar execução" }, 500);
+    const execucaoId = execRow.id;
+
     const logs: LogItem[] = [];
     let sucesso = 0;
     let semRetorno = 0;
+    let erros = 0;
 
     for (const obra of withIsbn) {
-      try {
-        let fonte: LogItem["fonte"] = "nenhuma";
-        let generos: string[] = [];
-        let externalId: string | null = null;
+      let resultado: "sucesso" | "nao_encontrado" | "erro" = "nao_encontrado";
+      let fonte: LogItem["fonte"] = "nenhuma";
+      let generos: string[] = [];
+      let externalId: string | null = null;
+      let mensagem: string | null = null;
 
+      try {
         if (obra.isbn) {
           // 1. Google Books
           const g = await fetchGoogleByIsbn(obra.isbn);
@@ -126,7 +159,6 @@ Deno.serve(async (req) => {
               generos = cats;
               externalId = g.externalId;
             } else if (g.externalId) {
-              // registra fonte mesmo sem gêneros
               externalId = g.externalId;
             }
           }
@@ -146,35 +178,28 @@ Deno.serve(async (req) => {
         }
 
         if (generos.length) {
-          await persistGenresForObra(supabase as any, obra.id, generos);
+          await persistGenresForObra(admin as any, obra.id, generos);
           sucesso++;
-          logs.push({
-            obra_id: obra.id,
-            titulo: obra.titulo,
-            fonte,
-            resultado: "sucesso",
-            generos,
-          });
+          resultado = "sucesso";
+          mensagem = `${generos.length} gênero(s) via ${fonte}`;
+          logs.push({ obra_id: obra.id, titulo: obra.titulo, fonte, resultado: "sucesso", generos });
         } else {
           semRetorno++;
-          logs.push({
-            obra_id: obra.id,
-            titulo: obra.titulo,
-            fonte: "nenhuma",
-            resultado: "nao_encontrado",
-          });
+          resultado = "nao_encontrado";
+          mensagem = obra.isbn ? "ISBN encontrado mas sem gêneros" : "Sem ISBN13";
+          logs.push({ obra_id: obra.id, titulo: obra.titulo, fonte: "nenhuma", resultado: "nao_encontrado" });
         }
 
-        // Registra fonte externa em edicao (primeira com ISBN)
+        // Registra fonte externa em edição
         if (externalId && obra.isbn && fonte !== "nenhuma") {
-          const { data: edicao } = await supabase
+          const { data: edicao } = await admin
             .from("edicoes")
             .select("id")
             .eq("obra_id", obra.id)
             .eq("isbn_13", obra.isbn)
             .maybeSingle();
           if (edicao?.id) {
-            await supabase
+            await admin
               .from("edicoes_fontes_externas")
               .upsert(
                 {
@@ -188,8 +213,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Atualiza metadata
-        await supabase
+        // Atualiza metadata da obra
+        await admin
           .from("obras")
           .update({
             metadata_checked_at: new Date().toISOString(),
@@ -197,20 +222,48 @@ Deno.serve(async (req) => {
           })
           .eq("id", obra.id);
       } catch (e: any) {
-        logs.push({
-          obra_id: obra.id,
-          titulo: obra.titulo,
-          fonte: "nenhuma",
-          resultado: "erro",
-          erro: e?.message ?? "erro",
-        });
+        erros++;
+        resultado = "erro";
+        mensagem = e?.message ?? "erro";
+        logs.push({ obra_id: obra.id, titulo: obra.titulo, fonte: "nenhuma", resultado: "erro", erro: mensagem ?? undefined });
       }
+
+      // Persiste item individual na execução
+      await admin.from("integracoes_execucoes_itens").insert({
+        execucao_id: execucaoId,
+        entidade_id: obra.id,
+        tipo_entidade: "obra",
+        nome_referencia: obra.titulo,
+        status: resultado,
+        mensagem,
+        dados_resposta: generos.length ? { generos, fonte } : null,
+      } as any);
     }
 
+    const processadas = sucesso + semRetorno + erros;
+    const statusFinal = erros === 0
+      ? "concluido"
+      : erros < processadas
+        ? "concluido_com_erros"
+        : "erro";
+
+    await admin
+      .from("integracoes_execucoes")
+      .update({
+        status: statusFinal,
+        finalizado_em: new Date().toISOString(),
+        quantidade_processada: processadas,
+        quantidade_sucesso: sucesso,
+        quantidade_erro: erros,
+      } as any)
+      .eq("id", execucaoId);
+
     return json({
-      processadas: withIsbn.length,
+      execucao_id: execucaoId,
+      processadas,
       sucesso,
       sem_retorno: semRetorno,
+      erros,
       fonte: "google_books+open_library",
       executado_em: new Date().toISOString(),
       logs,
