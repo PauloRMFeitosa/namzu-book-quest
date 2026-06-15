@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -43,6 +44,21 @@ interface UseClubesParams {
 
 export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: UseClubesParams = {}) => {
   const { user } = useAuth();
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("clubes-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clubes" }, () => {
+        qc.invalidateQueries({ queryKey: ["clubes-marketplace"], refetchType: "all" });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "clube_membros" }, () => {
+        qc.invalidateQueries({ queryKey: ["clubes-marketplace"], refetchType: "all" });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["clubes-marketplace", busca, categoria, secao, user?.id],
     queryFn: async (): Promise<ClubeCardData[]> => {
