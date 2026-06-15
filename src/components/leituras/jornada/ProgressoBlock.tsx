@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Plus, CheckCircle2, Play } from "lucide-react";
+import { BookOpen, BookMarked, CheckCircle2, Timer } from "lucide-react";
 import { LivroDetalhe, calcularProgresso } from "@/hooks/leituras/useLivroDetalhe";
 import { ProgressoBar } from "@/components/leituras/ProgressoBar";
 import { ReadingProgressModal } from "@/components/leituras/ReadingProgressModal";
@@ -68,26 +68,19 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
       </div>
 
       {!concluido && (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline" className="rounded-xl h-9" onClick={() => setOpenConcluir(true)}>
-              <CheckCircle2 className="w-3.5 h-3.5" /> Concluir leitura
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1 rounded-xl h-9" onClick={() => setOpen(true)}>
-              <Plus className="w-3.5 h-3.5" /> Atualizar progresso
-            </Button>
-            <Button
-              size="sm"
-              disabled={iniciando}
-              onClick={handleLerAgora}
-              className="flex-1 rounded-xl h-9 bg-primary hover:bg-primary-hover"
-            >
-              <Play className="w-3.5 h-3.5" />
-              {estaNestaLeitura ? "Retomar sessão" : "Ler agora"}
-            </Button>
-          </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            disabled={iniciando}
+            onClick={handleLerAgora}
+            className="flex-1 rounded-xl h-9 bg-primary hover:bg-primary-hover"
+          >
+            <Timer className="w-3.5 h-3.5" />
+            {estaNestaLeitura ? "Retomar" : "Ler"}
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1 rounded-xl h-9" onClick={() => setOpen(true)}>
+            <BookMarked className="w-3.5 h-3.5" /> Registro de Leitura
+          </Button>
         </div>
       )}
 
@@ -114,6 +107,12 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
       </div>
 
       <ProgressoBar {...progresso} />
+
+      {!concluido && (
+        <Button variant="outline" className="w-full rounded-xl h-9" onClick={() => setOpenConcluir(true)}>
+          <CheckCircle2 className="w-4 h-4" /> Concluir leitura
+        </Button>
+      )}
 
       <ReadingProgressModal
         open={open}
