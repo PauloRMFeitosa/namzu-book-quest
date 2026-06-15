@@ -8,8 +8,9 @@ import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 
-import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss, Library } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
+import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
 
 const Home = () => {
   const { user } = useAuth();
@@ -78,10 +79,11 @@ const Home = () => {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-primary font-semibold">Meus clubes ativos</p>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm text-foreground">Meus clubes ativos</h3>
           </div>
-          <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Ver todos</button>
+          <button onClick={() => navigate("/clubes")} className="text-xs text-primary font-medium">Ver todos</button>
         </div>
         {clubes.length === 0 ? (
           <div className="card-soft p-6 text-center">
@@ -95,14 +97,14 @@ const Home = () => {
         ) : (
           <div className="flex flex-col gap-2">
             {clubes.map((c: any) => (
-              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
+              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-3 flex items-center gap-3 hover-lift text-left">
                 {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                  <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold text-lg">{c.nome[0]}</div>
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-primary font-bold text-sm shrink-0">{c.nome[0]}</div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{c.nome}</p>
+                  <p className="font-semibold text-sm truncate">{c.nome}</p>
                   <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-primary shrink-0" />
@@ -112,11 +114,16 @@ const Home = () => {
         )}
       </section>
 
+      <RecomendacoesIA />
+
       {lendoList.length > 0 ? (
         <section>
-          <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
-            Lendo agora {lendoList.length > 1 && `(${lendoList.length})`}
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm text-foreground">
+              Lendo agora {lendoList.length > 1 && `(${lendoList.length})`}
+            </h3>
+          </div>
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
             {lendoList.map((l: any) => (
               <button
@@ -161,7 +168,7 @@ const Home = () => {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Rss className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold text-sm">Atividade dos leitores que sigo</h3>
+            <h3 className="font-semibold text-sm text-foreground">Atividade dos leitores que sigo</h3>
           </div>
           <button onClick={() => navigate("/leitores")} className="text-xs text-primary font-medium">
             Descobrir
@@ -172,8 +179,11 @@ const Home = () => {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Últimos livros adicionados</h3>
-          <button onClick={() => navigate("/livros")} className="text-sm text-primary font-medium">Ver todos</button>
+          <div className="flex items-center gap-2">
+            <Library className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm text-foreground">Últimos livros adicionados</h3>
+          </div>
+          <button onClick={() => navigate("/livros")} className="text-xs text-primary font-medium">Ver todos</button>
         </div>
         {ultimas.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum livro ainda.</p>
