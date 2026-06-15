@@ -87,14 +87,17 @@ export const SessaoLeituraModal = () => {
 
       await supabase.from("leituras").update({ data_fim: dataFim }).eq("id", sessao.leituraId);
 
+      // Salva a página ABSOLUTA (posição atual no livro) para que calcularProgresso funcione via MAX
       await supabase.from("leitura_progresso").insert({
         leitura_id: sessao.leituraId,
         user_id: user.id,
-        paginas_lidas: paginasNestaSessao,
+        paginas_lidas: paginaInput,
         percentual_lido: percentual,
         tempo_leitura_minutos: tempoMinutos,
       });
 
+      qc.invalidateQueries({ queryKey: ["livro-detalhe", sessao.usuarioLeituraId], refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["timeline-livro", sessao.usuarioLeituraId], refetchType: "all" });
       invalidateLeituras(qc);
 
       setResumo({ paginasLidas: paginasNestaSessao, segundos: snapSegundos, tempoMinutos });
