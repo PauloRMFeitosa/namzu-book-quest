@@ -8,7 +8,7 @@ import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 
-import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss } from "lucide-react";
+import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss, Crown } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
 
 const Home = () => {
@@ -63,6 +63,20 @@ const Home = () => {
     },
   });
 
+  const { data: curadoria = [] } = useQuery({
+    queryKey: ["meus-clubes-curador", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clubes")
+        .select("*")
+        .eq("curador_id", user!.id)
+        .eq("is_ativo", true)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <PageHero
@@ -111,6 +125,34 @@ const Home = () => {
           </div>
         )}
       </section>
+
+      {curadoria.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-primary" />
+              <p className="text-xs uppercase tracking-wider text-primary font-semibold">Curadoria</p>
+            </div>
+            <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Gerenciar</button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {curadoria.map((c: any) => (
+              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
+                {c.imagem_capa_url ? (
+                  <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold text-lg">{c.nome[0]}</div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{c.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {lendoList.length > 0 ? (
         <section>
