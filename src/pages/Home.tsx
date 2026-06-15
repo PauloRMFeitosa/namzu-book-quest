@@ -6,9 +6,11 @@ import { GamificacaoHome } from "@/components/gamificacao/GamificacaoHome";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
+import { useLendoList } from "@/hooks/leituras/useMinhasLeituras";
 
-import { BookOpen, Plus, ArrowRight, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
+import { BookOpen, Play, Plus, ArrowRight, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
 
 const Home = () => {
@@ -17,22 +19,7 @@ const Home = () => {
   const { flags } = useFeatureFlags();
   const firstName = (user?.user_metadata?.full_name as string)?.split(" ")[0] || user?.email?.split("@")[0] || "leitor";
 
-  const { data: lendoList = [] } = useQuery({
-    queryKey: ["leituras-lendo", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("usuario_leituras")
-        .select("id, usuario_livros!inner(user_id, obra_id, obras(*))")
-        .eq("usuario_livros.user_id", user!.id)
-        .eq("status", "lendo")
-        .order("updated_at", { ascending: false });
-      return (data ?? []).map((d: any) => ({
-        id: d.id,
-        obras: d.usuario_livros?.obras,
-      }));
-    },
-  });
+  const { data: lendo = [] } = useLendoList();
 
   const { data: ultimas = [] } = useQuery({
     queryKey: ["ultimas-leituras", user?.id],
@@ -57,7 +44,7 @@ const Home = () => {
         .select("clubes(*)")
         .eq("user_id", user!.id)
         .eq("status", "ativo")
-        .order("updated_at", { ascending: false });
+        .order("data_entrada", { ascending: false });
       return (data ?? [])
         .map((r: any) => r.clubes)
         .filter((c: any) => c && c.is_ativo);
@@ -166,51 +153,53 @@ const Home = () => {
         </section>
       )}
 
-      {lendoList.length > 0 ? (
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold text-sm text-foreground">
-              Lendo agora {lendoList.length > 1 && `(${lendoList.length})`}
-            </h3>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
-            {lendoList.map((l: any) => (
-              <button
-                key={l.id}
-                onClick={() => navigate(`/leituras/${l.id}`)}
-                className="card-soft p-4 hover-lift text-left flex-shrink-0 w-[85%] snap-start"
-              >
-                <div className="flex gap-4">
-                  {l.obras?.capa_padrao_url ? (
-                    <img src={l.obras.capa_padrao_url} alt="" className="w-20 h-28 rounded-lg object-cover shadow-soft" />
-                  ) : (
-                    <div className="w-20 h-28 rounded-lg bg-secondary flex items-center justify-center">
-                      <BookOpen className="w-8 h-8 text-primary" />
-                    </div>
-                  )}
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <h2 className="font-semibold text-lg leading-tight line-clamp-2">{l.obras?.titulo_original}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">{l.obras?.ano_primeira_publicacao}</p>
-                    <span className="mt-auto inline-flex items-center gap-1 text-sm text-primary font-medium">
-                      Continuar lendo <ArrowRight className="w-4 h-4" />
-                    </span>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
+            Em andamento {lendo.length > 0 && <span className="text-xs">({lendo.length})</span>}
+          </h3>
+          <button onClick={() => navigate("/leituras")} className="text-xs text-primary font-medium">Ver todos</button>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+          {lendo.map((l) => (
+            <div
+              key={l.usuario_leitura_id}
+              className="card-soft p-3 flex-shrink-0 w-40 snap-start flex flex-col gap-2"
+            >
+              <button onClick={() => navigate(`/leituras/${l.usuario_leitura_id}`)} className="text-left flex flex-col gap-2">
+                {l.capa_url ? (
+                  <img src={l.capa_url} alt={l.titulo ?? ""} className="w-full h-40 rounded-lg object-cover shadow-soft" />
+                ) : (
+                  <div className="w-full h-40 rounded-lg bg-secondary flex items-center justify-center shadow-soft">
+                    <BookOpen className="w-6 h-6 text-primary" />
                   </div>
+                )}
+                <p className="text-sm font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{l.titulo}</p>
+                <div>
+                  <Progress value={l.percentual} className="h-1.5" />
+                  <p className="text-[10px] text-muted-foreground mt-1">{l.percentual}% concluído</p>
                 </div>
               </button>
-            ))}
-          </div>
-        </section>
-      ) : (
-        <section className="card-soft p-6 text-center">
-          <BookOpen className="w-10 h-10 mx-auto text-primary mb-3" />
-          <h2 className="font-semibold text-lg">Comece sua primeira leitura</h2>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">Encontre um livro e adicione à sua estante.</p>
-          <Button onClick={() => navigate("/busca")} className="h-[52px] rounded-2xl bg-primary hover:bg-primary-hover">
-            <Plus className="w-4 h-4" /> Buscar livros
-          </Button>
-        </section>
-      )}
+              <Button
+                size="sm"
+                onClick={() => navigate(`/leituras/${l.usuario_leitura_id}`)}
+                className="w-full rounded-xl bg-primary hover:bg-primary-hover text-xs h-7 gap-1"
+              >
+                <Play className="w-3 h-3" /> Ler
+              </Button>
+            </div>
+          ))}
+          <button
+            onClick={() => navigate("/busca")}
+            className="card-soft p-3 hover-lift flex-shrink-0 w-40 snap-start flex flex-col items-center justify-center gap-2 border-2 border-dashed border-primary/40 bg-primary/5"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Plus className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-sm font-semibold text-primary text-center">Adicionar leitura</p>
+          </button>
+        </div>
+      </section>
 
       {/* Feed de atividade social */}
       <section className="card-soft p-4">
