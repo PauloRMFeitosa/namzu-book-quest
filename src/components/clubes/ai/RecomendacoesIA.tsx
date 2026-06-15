@@ -29,11 +29,11 @@ export const RecomendacoesIA = () => {
   if (!isAdmin && !flags.show_clube_ai_recomendacoes) return null;
 
   return (
-    <section className="rounded-[var(--radius)] border border-accent/30 bg-gradient-to-br from-accent/5 to-transparent p-5">
+    <section className="card-soft p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent" />
-          <h2 className="font-display text-base font-semibold">Curadoria IA pra você</h2>
+          <Sparkles className="w-4 h-4 text-primary" />
+          <h3 className="font-semibold text-sm text-foreground">Curadoria IA pra você</h3>
         </div>
         <Button
           size="sm"
@@ -80,9 +80,9 @@ export const RecomendacoesIA = () => {
                   className="flex gap-3 p-3 rounded-xl bg-card hover:bg-card/70 border border-border/50 transition"
                 >
                   {c.imagem_capa_url ? (
-                    <img src={c.imagem_capa_url} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                    <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-secondary shrink-0" />
+                    <div className="w-10 h-10 rounded-lg bg-secondary shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{c.nome}</p>

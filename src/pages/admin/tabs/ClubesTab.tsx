@@ -8,11 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { CATEGORIAS } from "@/hooks/clubes/useClubes";
-import { Plus, Pencil, Trash2, Building2, Users, UserX } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
 import { CapaUploader } from "@/components/clubes/shared/CapaUploader";
 import { AdminConfirmDialog } from "../components/AdminConfirmDialog";
 import { AdminEmptyState } from "../components/AdminEmptyState";
@@ -22,7 +21,7 @@ import { AdminPageSizeSelect, PageSize } from "../components/AdminPageSizeSelect
 import { AdminModal } from "../components/AdminModal";
 import { useSortable } from "../hooks/useSortable";
 
-const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "", visibilidade: "publico", curadorUsername: "" };
+const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "", visibilidade: "publico" };
 
 export const ClubesTab = () => {
   const { user } = useAuth();
@@ -31,22 +30,13 @@ export const ClubesTab = () => {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  // Modal de edição/criação
+  // Modal state
   const [modalOpen, setModalOpen] = useState<"create" | "edit" | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Modal de membros
-  const [membrosClube, setMembrosClube] = useState<{ id: string; nome: string } | null>(null);
-  const [membros, setMembros] = useState<any[]>([]);
-  const [carregandoMembros, setCarregandoMembros] = useState(false);
-  const [removerMembro, setRemoverMembro] = useState<{ userId: string; nome: string } | null>(null);
-
   const load = async () => {
-    const { data } = await (supabase as any)
-      .from("clubes")
-      .select("id, nome, descricao, objetivo, regras, imagem_capa_url, is_ativo, duracao_tipo, preco_centavos, categoria, visibilidade, curador_id")
-      .order("created_at", { ascending: false });
+    const { data } = await (supabase as any).from("clubes").select("id, nome, descricao, objetivo, regras, imagem_capa_url, is_ativo, duracao_tipo, preco_centavos, categoria, visibilidade").order("created_at", { ascending: false });
     setRows(data ?? []);
   };
   useEffect(() => { load(); }, []);
@@ -71,23 +61,12 @@ export const ClubesTab = () => {
     setModalOpen("create");
   };
 
-  const startEdit = async (r: any) => {
+  const startEdit = (r: any) => {
     setEditing(r);
-    // Busca username do curador atual
-    let curadorUsername = "";
-    if (r.curador_id) {
-      const { data: perfil } = await supabase
-        .from("perfis")
-        .select("username")
-        .eq("user_id", r.curador_id)
-        .maybeSingle();
-      curadorUsername = perfil?.username ?? "";
-    }
     setForm({
       nome: r.nome ?? "", descricao: r.descricao ?? "", objetivo: r.objetivo ?? "",
       regras: r.regras ?? "", capa: r.imagem_capa_url ?? "", duracao_tipo: r.duracao_tipo ?? "continuo",
       preco: r.preco_centavos ?? 0, categoria: r.categoria ?? "", visibilidade: r.visibilidade ?? "publico",
-      curadorUsername,
     });
     setModalOpen("edit");
   };
@@ -112,31 +91,12 @@ export const ClubesTab = () => {
   const saveEdit = async () => {
     if (!editing) return;
     setSaving(true);
-
-    // Resolve curador_id a partir do username digitado
-    let novoCuradorId: string | undefined;
-    if (form.curadorUsername.trim()) {
-      const { data: perfil, error: pe } = await supabase
-        .from("perfis")
-        .select("user_id")
-        .eq("username", form.curadorUsername.trim())
-        .maybeSingle();
-      if (pe || !perfil) {
-        setSaving(false);
-        return toast.error(`Usuário "${form.curadorUsername}" não encontrado`);
-      }
-      novoCuradorId = perfil.user_id;
-    }
-
-    const patch: any = {
+    const { error } = await (supabase as any).from("clubes").update({
       nome: form.nome, descricao: form.descricao || null, objetivo: form.objetivo || null,
       regras: form.regras || null, imagem_capa_url: form.capa || null,
       duracao_tipo: form.duracao_tipo, preco_centavos: Number(form.preco) || 0,
       categoria: form.categoria || null, visibilidade: form.visibilidade || "publico",
-    };
-    if (novoCuradorId) patch.curador_id = novoCuradorId;
-
-    const { error } = await (supabase as any).from("clubes").update(patch).eq("id", editing.id);
+    }).eq("id", editing.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Clube atualizado");
@@ -157,38 +117,6 @@ export const ClubesTab = () => {
     setDeleteTarget(null); load();
   };
 
-  // ── Membros ──────────────────────────────────────────────────────────────
-  const abrirMembros = async (r: any) => {
-    setMembrosClube({ id: r.id, nome: r.nome });
-    setCarregandoMembros(true);
-    const { data, error } = await supabase
-      .from("clube_membros")
-      .select("user_id, status, papel, data_entrada, perfis(username, nome_exibicao, avatar_url)")
-      .eq("clube_id", r.id)
-      .order("data_entrada", { ascending: false });
-    setCarregandoMembros(false);
-    if (error) { toast.error(error.message); return; }
-    setMembros(data ?? []);
-  };
-
-  const confirmarRemover = (userId: string, nome: string) => {
-    setRemoverMembro({ userId, nome });
-  };
-
-  const doRemoverMembro = async () => {
-    if (!removerMembro || !membrosClube) return;
-    const { error } = await supabase
-      .from("clube_membros")
-      .delete()
-      .eq("clube_id", membrosClube.id)
-      .eq("user_id", removerMembro.userId);
-    if (error) { toast.error(error.message); setRemoverMembro(null); return; }
-    toast.success("Membro removido");
-    setRemoverMembro(null);
-    setMembros((prev) => prev.filter((m) => m.user_id !== removerMembro.userId));
-  };
-
-  // ── Form fields ──────────────────────────────────────────────────────────
   const clubeFormFields = (
     <div className="space-y-3">
       <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
@@ -220,18 +148,6 @@ export const ClubesTab = () => {
           </SelectContent>
         </Select>
       </div>
-      {modalOpen === "edit" && (
-        <div>
-          <Label>Curador (username)</Label>
-          <Input
-            value={form.curadorUsername}
-            onChange={(e) => setForm({ ...form, curadorUsername: e.target.value })}
-            placeholder="Digite o username do novo curador"
-            className="mt-1"
-          />
-          <p className="text-[11px] text-muted-foreground mt-1">Deixe em branco para manter o curador atual.</p>
-        </div>
-      )}
     </div>
   );
 
@@ -277,7 +193,6 @@ export const ClubesTab = () => {
                       <TableCell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" className="text-xs px-2 h-7" onClick={() => toggle2(r.id, r.is_ativo)}>{r.is_ativo ? "Desativar" : "Ativar"}</Button>
-                          <Button size="sm" variant="ghost" onClick={() => abrirMembros(r)} title="Ver membros"><Users className="w-4 h-4" /></Button>
                           <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title="Editar"><Pencil className="w-4 h-4" /></Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r.id)} title="Excluir"><Trash2 className="w-4 h-4" /></Button>
                         </div>
@@ -299,7 +214,6 @@ export const ClubesTab = () => {
         </CardContent>
       </Card>
 
-      {/* Modal criar */}
       <AdminModal
         open={modalOpen === "create"}
         onOpenChange={(o) => !o && setModalOpen(null)}
@@ -312,7 +226,6 @@ export const ClubesTab = () => {
         {clubeFormFields}
       </AdminModal>
 
-      {/* Modal editar */}
       <AdminModal
         open={modalOpen === "edit"}
         onOpenChange={(o) => { if (!o) { setModalOpen(null); setEditing(null); } }}
@@ -325,93 +238,7 @@ export const ClubesTab = () => {
         {clubeFormFields}
       </AdminModal>
 
-      {/* Modal membros */}
-      <Dialog open={!!membrosClube} onOpenChange={(o) => { if (!o) { setMembrosClube(null); setMembros([]); } }}>
-        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Membros — {membrosClube?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            {carregandoMembros ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Carregando...</p>
-            ) : membros.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum membro encontrado.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Entrada</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {membros.map((m) => {
-                    const perfil = (m as any).perfis;
-                    const nome = perfil?.nome_exibicao || perfil?.username || m.user_id.slice(0, 8);
-                    return (
-                      <TableRow key={m.user_id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">{nome}</span>
-                            {perfil?.username && perfil?.nome_exibicao && (
-                              <span className="text-xs text-muted-foreground">@{perfil.username}</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs capitalize">{m.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {m.data_entrada ? new Date(m.data_entrada).toLocaleDateString("pt-BR") : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive h-7 px-2"
-                            onClick={() => confirmarRemover(m.user_id, nome)}
-                            title="Remover membro"
-                          >
-                            <UserX className="w-3.5 h-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-          <div className="pt-2 border-t text-xs text-muted-foreground">
-            {membros.length} membro{membros.length !== 1 ? "s" : ""}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmar exclusão de clube */}
-      <AdminConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-        title="Excluir clube?"
-        description="Se houver membros ou conteúdos vinculados, prefira desativar. A exclusão é irreversível."
-        confirmLabel="Excluir clube"
-        onConfirm={doDelete}
-      />
-
-      {/* Confirmar remoção de membro */}
-      <AdminConfirmDialog
-        open={!!removerMembro}
-        onOpenChange={(o) => !o && setRemoverMembro(null)}
-        title="Remover membro?"
-        description={`"${removerMembro?.nome}" será removido do clube. O histórico de leitura permanece.`}
-        confirmLabel="Remover"
-        onConfirm={doRemoverMembro}
-      />
+      <AdminConfirmDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)} title="Excluir clube?" description="Se houver membros ou conteúdos vinculados, prefira desativar. A exclusão é irreversível." confirmLabel="Excluir clube" onConfirm={doDelete} />
     </div>
   );
 };
