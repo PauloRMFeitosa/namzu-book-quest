@@ -135,19 +135,19 @@ const Home = () => {
             </div>
             <button onClick={() => navigate("/clubes")} className="text-sm text-primary font-medium">Gerenciar</button>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
             {curadoria.map((c: any) => (
-              <button key={c.id} onClick={() => navigate(`/clubes/${c.id}`)} className="card-soft p-4 flex items-center gap-3 hover-lift text-left">
+              <button
+                key={c.id}
+                onClick={() => navigate(`/clubes/${c.id}`)}
+                className="card-soft p-3 flex flex-col gap-2 hover-lift text-left flex-shrink-0 snap-start w-[calc((100vw-3.5rem)/3)]"
+              >
                 {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                  <img src={c.imagem_capa_url} alt="" className="w-full aspect-square rounded-lg object-cover" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-primary font-bold text-lg">{c.nome[0]}</div>
+                  <div className="w-full aspect-square rounded-lg bg-secondary flex items-center justify-center text-primary font-bold text-xl">{c.nome[0]}</div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+                <p className="text-xs font-semibold line-clamp-2 leading-tight">{c.nome}</p>
               </button>
             ))}
           </div>
