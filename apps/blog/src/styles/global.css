@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+@layer base {
+  body {
+    @apply text-gray-900 bg-white antialiased;
+  }
+}
+
+@layer components {
+  .prose-namzu {
+    @apply prose prose-lg max-w-none
+      prose-headings:font-display prose-headings:text-gray-900
+      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+      prose-blockquote:border-primary prose-blockquote:bg-mint/30 prose-blockquote:rounded-r-lg
+      prose-img:rounded-2xl prose-img:shadow-md;
+  }
+}
