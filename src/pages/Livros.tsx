@@ -556,16 +556,57 @@ const Livros = () => {
       {/* ── HOME VIEW (grade + sem filtro) ── */}
       {!isFiltered && viewMode === "grade" ? (
         <>
+<<<<<<< HEAD
           {/* Biblioteca stats */}
           <div className="bg-card rounded-2xl p-3 border border-border">
             <div className="mb-3">
               <span className="text-sm font-semibold">Biblioteca</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
+=======
+          {/* Suas prateleiras */}
+          <div className="bg-card rounded-2xl p-3 border border-border">
+            <div className="mb-3">
+              <span className="text-sm font-semibold">Suas prateleiras</span>
+            </div>
+            {prateleiras.length > 0 ? (
+              <div className="grid grid-cols-3 gap-1.5">
+                {prateleiras.slice(0, 6).map((g) => (
+                  <button
+                    key={g.slug}
+                    className="text-left p-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <div className="text-lg leading-none">{getGenreEmoji(g.nome)}</div>
+                    <p className="text-xs font-medium line-clamp-1 mt-1">{g.nome}</p>
+                    <p className="text-xs text-muted-foreground">{g.count} livros</p>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-3">
+                Nenhuma categoria encontrada
+              </p>
+            )}
+            <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-lg py-2 border border-dashed border-border transition-colors">
+              <Plus className="w-3 h-3" /> Nova prateleira
+            </button>
+          </div>
+
+          {/* Biblioteca stats */}
+          <div className="bg-card rounded-2xl p-3 border border-border">
+            <div className="mb-3">
+              <span className="text-sm font-semibold">Biblioteca</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+>>>>>>> origin/main
               {[
                 { icon: BookOpen, value: stats.livros, label: "Livros" },
                 { icon: Users, value: stats.autores, label: "Autores" },
                 { icon: Tag, value: stats.categorias, label: "Categorias" },
+<<<<<<< HEAD
+=======
+                { icon: Layers, value: stats.prateleiras, label: "Prateleiras" },
+>>>>>>> origin/main
               ].map(({ icon: Icon, value, label }) => (
                 <div
                   key={label}
