@@ -15,8 +15,6 @@ import {
   List,
   Star,
   ChevronDown,
-  Barcode,
-  Upload,
   MoreVertical,
   Users,
   Tag,
@@ -779,24 +777,24 @@ const Livros = () => {
           <button
             onClick={() => setViewMode("grade")}
             className={cn(
-              "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs font-medium transition-colors",
+              "flex items-center justify-center w-8 h-7 rounded-full transition-colors",
               viewMode === "grade"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> Grade
+            <LayoutGrid className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setViewMode("lista")}
             className={cn(
-              "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs font-medium transition-colors",
+              "flex items-center justify-center w-8 h-7 rounded-full transition-colors",
               viewMode === "lista"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <List className="w-3.5 h-3.5" /> Lista
+            <List className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -804,93 +802,55 @@ const Livros = () => {
       {/* ── HOME VIEW (grade + sem filtro) ── */}
       {!isFiltered && viewMode === "grade" ? (
         <>
-          {/* Add book card */}
-          <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Adicionar Livro</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Adicione novos livros à sua biblioteca pessoal.
-                </p>
-              </div>
+          {/* Suas prateleiras */}
+          <div className="bg-card rounded-2xl p-3 border border-border">
+            <div className="mb-3">
+              <span className="text-sm font-semibold">Suas prateleiras</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { icon: Plus, label: "Adicionar\nManualmente", path: "/cadastro-manual" },
-                { icon: Barcode, label: "Buscar por\nISBN", path: "/busca" },
-                { icon: Upload, label: "Importar\nCatálogo", path: "/busca" },
-              ].map(({ icon: Icon, label, path }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(path)}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <Icon className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center leading-tight whitespace-pre-line font-medium">
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Prateleiras + Stats */}
-          <div className="flex gap-3">
-            {/* Suas prateleiras */}
-            <div className="flex-1 min-w-0 bg-card rounded-2xl p-3 border border-border">
-              <div className="mb-3">
-                <span className="text-sm font-semibold">Suas prateleiras</span>
-              </div>
-              {prateleiras.length > 0 ? (
-                <div className="grid grid-cols-2 gap-1.5">
-                  {prateleiras.slice(0, 6).map((g) => (
-                    <button
-                      key={g.slug}
-                      className="text-left p-2 rounded-lg hover:bg-muted transition-colors"
-                    >
-                      <div className="text-lg leading-none">{getGenreEmoji(g.nome)}</div>
-                      <p className="text-xs font-medium line-clamp-1 mt-1">{g.nome}</p>
-                      <p className="text-xs text-muted-foreground">{g.count} livros</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground text-center py-3">
-                  Nenhuma categoria encontrada
-                </p>
-              )}
-              <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-lg py-2 border border-dashed border-border transition-colors">
-                <Plus className="w-3 h-3" /> Nova prateleira
-              </button>
-            </div>
-
-            {/* Biblioteca stats */}
-            <div className="flex-1 min-w-0 bg-card rounded-2xl p-3 border border-border">
-              <div className="mb-3">
-                <span className="text-sm font-semibold">Biblioteca</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { icon: BookOpen, value: stats.livros, label: "Livros" },
-                  { icon: Users, value: stats.autores, label: "Autores" },
-                  { icon: Tag, value: stats.categorias, label: "Categorias" },
-                  { icon: Layers, value: stats.prateleiras, label: "Prateleiras" },
-                ].map(({ icon: Icon, value, label }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-muted/50"
+            {prateleiras.length > 0 ? (
+              <div className="grid grid-cols-3 gap-1.5">
+                {prateleiras.slice(0, 6).map((g) => (
+                  <button
+                    key={g.slug}
+                    className="text-left p-2 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <Icon className="w-4 h-4 text-primary flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold leading-none">{value}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-                    </div>
-                  </div>
+                    <div className="text-lg leading-none">{getGenreEmoji(g.nome)}</div>
+                    <p className="text-xs font-medium line-clamp-1 mt-1">{g.nome}</p>
+                    <p className="text-xs text-muted-foreground">{g.count} livros</p>
+                  </button>
                 ))}
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-3">
+                Nenhuma categoria encontrada
+              </p>
+            )}
+            <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-lg py-2 border border-dashed border-border transition-colors">
+              <Plus className="w-3 h-3" /> Nova prateleira
+            </button>
+          </div>
+
+          {/* Biblioteca stats */}
+          <div className="bg-card rounded-2xl p-3 border border-border">
+            <div className="mb-3">
+              <span className="text-sm font-semibold">Biblioteca</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { icon: BookOpen, value: stats.livros, label: "Livros" },
+                { icon: Users, value: stats.autores, label: "Autores" },
+                { icon: Tag, value: stats.categorias, label: "Categorias" },
+                { icon: Layers, value: stats.prateleiras, label: "Prateleiras" },
+              ].map(({ icon: Icon, value, label }) => (
+                <div
+                  key={label}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl bg-muted/50"
+                >
+                  <Icon className="w-4 h-4 text-primary" />
+                  <p className="text-sm font-bold leading-none">{value}</p>
+                  <p className="text-[10px] text-muted-foreground">{label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
