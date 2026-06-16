@@ -10,15 +10,12 @@ import {
   Library,
   Heart,
   Search,
-  SlidersHorizontal,
   LayoutGrid,
   List,
   Star,
-  ChevronDown,
   MoreVertical,
   Users,
   Tag,
-  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,35 +51,6 @@ type Filtro = "todos" | "lendo" | "quero_ler" | "lido" | "relendo" | "favoritos"
 type Ordenacao = "recentes" | "titulo_asc" | "titulo_desc" | "autor_asc";
 type ViewMode = "grade" | "lista";
 
-const GENRE_EMOJI_MAP: Array<[string[], string]> = [
-  [["psicologia", "psych"], "🧠"],
-  [["filosofia", "philosoph"], "💭"],
-  [["negocio", "business", "empreend", "gestao", "gestão"], "💼"],
-  [["romance", "amor", "relacao", "relação"], "❤️"],
-  [["ficcao", "ficção", "fantasia", "sci-fi", "scifi"], "🚀"],
-  [["autoajuda", "auto-ajuda", "autodesenvolvimento", "desenvolvimento pessoal"], "⭐"],
-  [["historia", "história", "historico", "histórico"], "📜"],
-  [["ciencia", "ciência", "cientif"], "🔬"],
-  [["medicina", "saude", "saúde", "medic"], "🏥"],
-  [["arte", "design", "criatividade"], "🎨"],
-  [["tecnologia", "programacao", "programação", "computacao", "computação"], "💻"],
-  [["espiritualidade", "religiao", "religião", "fé", "fe"], "🕊️"],
-  [["biografia", "autobiografia", "memoir"], "👤"],
-  [["thriller", "suspense", "misterio", "mistério", "policial"], "🔍"],
-  [["infantil", "crianca", "criança", "juvenil"], "🧒"],
-  [["culinaria", "culinária", "gastronomia", "receita"], "🍳"],
-  [["viagem", "aventura", "exploracao", "exploração"], "🌍"],
-  [["literatura", "classico", "clássico"], "📖"],
-];
-
-function getGenreEmoji(nome: string): string {
-  const lower = nome.toLowerCase();
-  for (const [keywords, emoji] of GENRE_EMOJI_MAP) {
-    if (keywords.some((k) => lower.includes(k))) return emoji;
-  }
-  return "📚";
-}
-
 const Livros = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -96,18 +64,13 @@ const Livros = () => {
   const [favoritando, setFavoritando] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
-  // Filtros avançados
-  const [filtroAutor, setFiltroAutor] = useState<string | null>(null);
-  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
 
   // Reseta paginação virtual ao mudar qualquer filtro
   useEffect(() => {
     setVisibleCount(30);
-  }, [filtro, busca, ordenacao, showAll, filtroAutor, filtroCategoria]);
+  }, [filtro, busca, ordenacao, showAll]);
 
   // Callback ref: re-observa o sentinel toda vez que ele monta/desmonta
-  // (o useRef + useEffect clássico só roda uma vez e perde a referência
-  //  quando o elemento sai do DOM ao trocar filtros)
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) {
@@ -234,11 +197,7 @@ const Livros = () => {
         ? l.obras?.titulo_original?.toLowerCase().includes(busca.toLowerCase()) ||
           l.autorNome?.toLowerCase().includes(busca.toLowerCase())
         : true;
-      const matchAutor = filtroAutor ? l.autorNome === filtroAutor : true;
-      const matchCategoria = filtroCategoria
-        ? l.obras?.obra_generos?.some((og: any) => og.generos?.slug === filtroCategoria)
-        : true;
-      return matchFiltro && matchBusca && matchAutor && matchCategoria;
+      return matchFiltro && matchBusca;
     });
 
     switch (ordenacao) {
@@ -259,44 +218,7 @@ const Livros = () => {
         break;
     }
     return result;
-  }, [data, filtro, busca, ordenacao, filtroAutor, filtroCategoria]);
-
-  // Opções derivadas da coleção para os filtros avançados
-  const autoresDisponiveis = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of data as any[]) {
-      if (l.autorNome) set.add(l.autorNome);
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [data]);
-
-  const categoriasDisponiveis = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const l of data as any[]) {
-      for (const og of (l as any).obras?.obra_generos ?? []) {
-        if (og.generos?.slug) map.set(og.generos.slug, og.generos.nome);
-      }
-    }
-    return Array.from(map.entries())
-      .map(([slug, nome]) => ({ slug, nome }))
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-  }, [data]);
-
-  // Top genres derived from user's collection
-  const prateleiras = useMemo(() => {
-    const genreCount: Record<string, { nome: string; slug: string; count: number }> = {};
-    for (const l of data as any[]) {
-      for (const og of l.obras?.obra_generos ?? []) {
-        const g = og.generos;
-        if (!g) continue;
-        if (!genreCount[g.slug]) genreCount[g.slug] = { nome: g.nome, slug: g.slug, count: 0 };
-        genreCount[g.slug].count++;
-      }
-    }
-    return Object.values(genreCount)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-  }, [data]);
+  }, [data, filtro, busca, ordenacao]);
 
   // Aggregate stats
   const stats = useMemo(() => {
@@ -314,9 +236,8 @@ const Livros = () => {
       livros: data.length,
       autores: autoresSet.size,
       categorias: categoriasSet.size,
-      prateleiras: prateleiras.length,
     };
-  }, [data, prateleiras]);
+  }, [data]);
 
   const recentes = useMemo(() => (data as any[]).slice(0, 12), [data]);
 
@@ -329,7 +250,7 @@ const Livros = () => {
     { key: "favoritos", label: "Favoritos" },
   ];
 
-  const isFiltered = filtro !== "todos" || busca !== "" || showAll || !!filtroAutor || !!filtroCategoria;
+  const isFiltered = filtro !== "todos" || busca !== "" || showAll;
 
   // Reusable book card (grade mode)
   const renderBookCard = (l: any) => {
@@ -355,7 +276,6 @@ const Livros = () => {
             </div>
           )}
 
-          {/* Barra de progresso — só para livros sendo lidos */}
           {isLendo && pct != null && pct > 0 && (
             <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1.5">
               <div className="w-full h-1.5 rounded-full bg-black/40 backdrop-blur-sm overflow-hidden">
@@ -370,7 +290,6 @@ const Livros = () => {
             </div>
           )}
 
-          {/* Badge "Lendo" para livros sem progresso registrado */}
           {isLendo && (pct == null || pct === 0) && (
             <div className="absolute bottom-1.5 left-1.5">
               <span className="text-[9px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
@@ -380,7 +299,6 @@ const Livros = () => {
           )}
         </button>
 
-        {/* Favorite button */}
         <button
           onClick={() => toggleFavorito(l.id, !!l.favorito)}
           disabled={favoritando === l.id}
@@ -400,7 +318,6 @@ const Livros = () => {
           />
         </button>
 
-        {/* 3-dot menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="absolute top-2 left-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">
@@ -427,7 +344,6 @@ const Livros = () => {
         </DropdownMenu>
       </div>
 
-      {/* Info */}
       <button
         onClick={() => navigate(`/obras/${l.obra_id}`)}
         className="w-full text-left mt-2"
@@ -484,7 +400,6 @@ const Livros = () => {
         {l.autorNome && (
           <p className="text-xs text-muted-foreground">{l.autorNome}</p>
         )}
-        {/* Mini barra de progresso no modo lista */}
         {isLendo && pct != null && pct > 0 && (
           <div className="flex items-center gap-2 mt-1">
             <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
@@ -564,170 +479,9 @@ const Livros = () => {
         <Input
           value={busca}
           onChange={(e) => { setBusca(e.target.value); setShowAll(false); }}
-          placeholder="Buscar por título, autor, ISBN, editora ou assunto..."
-          className="pl-10 pr-10 rounded-2xl bg-muted border-0 focus-visible:ring-1"
+          placeholder="Buscar por título ou autor..."
+          className="pl-10 rounded-2xl bg-muted border-0 focus-visible:ring-1"
         />
-        <button
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Filtros avançados"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* ── Advanced filter chips ── */}
-      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
-
-        {/* Título — sort toggle */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className={cn(
-              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
-              ordenacao.startsWith("titulo")
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/60"
-            )}>
-              Título <ChevronDown className="w-3 h-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setOrdenacao("titulo_asc")}>
-              A → Z {ordenacao === "titulo_asc" && "✓"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setOrdenacao("titulo_desc")}>
-              Z → A {ordenacao === "titulo_desc" && "✓"}
-            </DropdownMenuItem>
-            {ordenacao.startsWith("titulo") && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setOrdenacao("recentes")}>
-                  Limpar
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Autor */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className={cn(
-              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 max-w-[140px]",
-              filtroAutor
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/60"
-            )}>
-              <span className="truncate">{filtroAutor ?? "Autor"}</span>
-              <ChevronDown className="w-3 h-3 shrink-0" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
-            {autoresDisponiveis.length === 0 ? (
-              <DropdownMenuItem disabled>Nenhum autor</DropdownMenuItem>
-            ) : (
-              autoresDisponiveis.map((a) => (
-                <DropdownMenuItem
-                  key={a}
-                  onClick={() => setFiltroAutor(filtroAutor === a ? null : a)}
-                >
-                  {a} {filtroAutor === a && "✓"}
-                </DropdownMenuItem>
-              ))
-            )}
-            {filtroAutor && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFiltroAutor(null)}>Limpar</DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Categoria */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className={cn(
-              "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 max-w-[140px]",
-              filtroCategoria
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/60"
-            )}>
-              <span className="truncate">
-                {filtroCategoria
-                  ? (categoriasDisponiveis.find((c) => c.slug === filtroCategoria)?.nome ?? "Categoria")
-                  : "Categoria"}
-              </span>
-              <ChevronDown className="w-3 h-3 shrink-0" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
-            {categoriasDisponiveis.length === 0 ? (
-              <DropdownMenuItem disabled>Nenhuma categoria</DropdownMenuItem>
-            ) : (
-              categoriasDisponiveis.map((c) => (
-                <DropdownMenuItem
-                  key={c.slug}
-                  onClick={() => setFiltroCategoria(filtroCategoria === c.slug ? null : c.slug)}
-                >
-                  {c.nome} {filtroCategoria === c.slug && "✓"}
-                </DropdownMenuItem>
-              ))
-            )}
-            {filtroCategoria && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFiltroCategoria(null)}>Limpar</DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Editora — em breve */}
-        <button
-          className="flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0 opacity-50 cursor-not-allowed"
-          title="Em breve"
-        >
-          Editora <ChevronDown className="w-3 h-3" />
-        </button>
-
-        {/* Idioma — em breve */}
-        <button
-          className="flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-muted hover:bg-muted/60 transition-colors flex-shrink-0 opacity-50 cursor-not-allowed"
-          title="Em breve"
-        >
-          Idioma <ChevronDown className="w-3 h-3" />
-        </button>
-
-        {/* Favoritos — toggle */}
-        <button
-          onClick={() => {
-            setFiltro((f) => f === "favoritos" ? "todos" : "favoritos");
-            setShowAll(false);
-          }}
-          className={cn(
-            "flex items-center gap-1 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0",
-            filtro === "favoritos"
-              ? "bg-rose-500 text-white"
-              : "bg-muted hover:bg-muted/60"
-          )}
-        >
-          <Heart className={cn("w-3 h-3", filtro === "favoritos" && "fill-white")} />
-          Favoritos
-        </button>
-
-        {/* Limpar todos */}
-        {(filtroAutor || filtroCategoria || ordenacao.startsWith("titulo")) && (
-          <button
-            onClick={() => {
-              setFiltroAutor(null);
-              setFiltroCategoria(null);
-              setOrdenacao("recentes");
-            }}
-            className="flex items-center gap-1.5 rounded-full px-3 h-8 text-xs font-medium whitespace-nowrap bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors flex-shrink-0 ml-auto"
-          >
-            Limpar filtros
-          </button>
-        )}
       </div>
 
       {/* ── Status tabs ── */}
@@ -802,45 +556,16 @@ const Livros = () => {
       {/* ── HOME VIEW (grade + sem filtro) ── */}
       {!isFiltered && viewMode === "grade" ? (
         <>
-          {/* Suas prateleiras */}
-          <div className="bg-card rounded-2xl p-3 border border-border">
-            <div className="mb-3">
-              <span className="text-sm font-semibold">Suas prateleiras</span>
-            </div>
-            {prateleiras.length > 0 ? (
-              <div className="grid grid-cols-3 gap-1.5">
-                {prateleiras.slice(0, 6).map((g) => (
-                  <button
-                    key={g.slug}
-                    className="text-left p-2 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <div className="text-lg leading-none">{getGenreEmoji(g.nome)}</div>
-                    <p className="text-xs font-medium line-clamp-1 mt-1">{g.nome}</p>
-                    <p className="text-xs text-muted-foreground">{g.count} livros</p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center py-3">
-                Nenhuma categoria encontrada
-              </p>
-            )}
-            <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-lg py-2 border border-dashed border-border transition-colors">
-              <Plus className="w-3 h-3" /> Nova prateleira
-            </button>
-          </div>
-
           {/* Biblioteca stats */}
           <div className="bg-card rounded-2xl p-3 border border-border">
             <div className="mb-3">
               <span className="text-sm font-semibold">Biblioteca</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { icon: BookOpen, value: stats.livros, label: "Livros" },
                 { icon: Users, value: stats.autores, label: "Autores" },
                 { icon: Tag, value: stats.categorias, label: "Categorias" },
-                { icon: Layers, value: stats.prateleiras, label: "Prateleiras" },
               ].map(({ icon: Icon, value, label }) => (
                 <div
                   key={label}
@@ -912,7 +637,6 @@ const Livros = () => {
               </div>
             )}
 
-            {/* Sentinel — dispara quando visível, carrega mais 24 */}
             {visibleCount < filtrados.length && (
               <div ref={sentinelRef} className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
                 <div className="w-4 h-4 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
@@ -920,7 +644,6 @@ const Livros = () => {
               </div>
             )}
 
-            {/* Rodapé quando todos foram mostrados */}
             {visibleCount >= filtrados.length && filtrados.length > 30 && (
               <p className="text-center text-xs text-muted-foreground py-2">
                 {filtrados.length} livros exibidos
