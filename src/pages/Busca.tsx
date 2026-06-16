@@ -12,10 +12,11 @@ import {
   Check,
   BookmarkPlus,
   CheckCheck,
-  ArrowUpDown,
   X,
   Compass,
   ScanLine,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,10 +37,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type AddStatus = "quero_ler" | "lido";
 
 type Ordenacao = "titulo_asc" | "titulo_desc" | "autor_asc" | "autor_desc";
+type ViewMode = "grade" | "lista";
 
 interface AcervoItem {
   obra_id: string;
@@ -86,7 +89,7 @@ function normalize(s: string) {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .trim();
 }
 
@@ -101,12 +104,10 @@ const Busca = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  // Campos de busca separados
   const [fTitulo, setFTitulo] = useState("");
   const [fAutor, setFAutor] = useState("");
   const [fIsbn, setFIsbn] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
-  // Termo "submetido" — só muda ao clicar em Buscar
   const [submitted, setSubmitted] = useState<{ titulo: string; autor: string; isbn: string } | null>(null);
 
   const [local, setLocal] = useState<LocalResult[]>([]);
@@ -116,82 +117,34 @@ const Busca = () => {
   const [erroExterno, setErroExterno] = useState(false);
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [adicionados, setAdicionados] = useState<Set<string>>(new Set());
-  // Guard síncrono contra duplo-tap (touch + click ghost no iOS PWA)
   const inFlightRef = useRef<Set<string>>(new Set());
-  // Alvo do modal de seleção de status
   const [addTarget, setAddTarget] = useState<
     | { key: string; titulo: string; autor?: string | null; capa?: string | null; onAdd: (s: AddStatus) => void }
     | null
   >(null);
 
   // Controles do acervo
+  const [buscaAcervo, setBuscaAcervo] = useState("");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>("titulo_asc");
-  const [filtroAutor, setFiltroAutor] = useState<string>("todos");
-  const [filtroEditora, setFiltroEditora] = useState<string>("todos");
+  const [viewMode, setViewMode] = useState<ViewMode>("grade");
   const [visiveis, setVisiveis] = useState(PAGE_SIZE);
 
   const mostrandoAcervo = !submitted;
 
-  // Lista de autores para o filtro
-  const { data: autoresOpts = [] } = useQuery({
-    queryKey: ["acervo-autores"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("autores")
-        .select("id, nome_completo, nome_ordenacao")
-        .order("nome_ordenacao", { ascending: true })
-        .limit(1000);
-      return (data ?? []) as { id: string; nome_completo: string; nome_ordenacao: string }[];
-    },
-  });
-
-  // Lista de editoras para o filtro
-  const { data: editorasOpts = [] } = useQuery({
-    queryKey: ["acervo-editoras"],
-    queryFn: async () => {
-      const { data } = await supabase.from("edicoes").select("editora").limit(1000);
-      const set = new Set<string>();
-      (data ?? []).forEach((e: any) => e?.editora && set.add(e.editora));
-      return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-    },
-  });
-
   // Acervo (apenas quando não há termo de busca)
   const { data: acervo = [], isLoading: loadingAcervo } = useQuery({
-    queryKey: ["acervo-obras", filtroAutor, filtroEditora],
+    queryKey: ["acervo-obras"],
     enabled: mostrandoAcervo,
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("obras")
         .select(
           `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
            obra_autores!left(ordem, autores(nome_completo, nome_ordenacao)),
-           edicoes!left(id, editora${filtroEditora !== "todos" ? "" : ""})`,
+           edicoes!left(id)`,
         )
         .limit(500);
 
-      if (filtroAutor !== "todos") {
-        query = supabase
-          .from("obra_autores")
-          .select(
-            `autor_id, ordem,
-             autores!inner(nome_completo, nome_ordenacao),
-             obras!inner(id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url
-               ${filtroEditora !== "todos" ? ", edicoes!inner(editora)" : ""}
-             )`,
-          )
-          .eq("autor_id", filtroAutor)
-          .limit(500) as any;
-      }
-
-      if (filtroEditora !== "todos") {
-        query = (query as any).eq(
-          filtroAutor !== "todos" ? "obras.edicoes.editora" : "edicoes.editora",
-          filtroEditora,
-        );
-      }
-
-      const { data, error } = await query;
       if (error) {
         console.error("acervo query", error);
         return [] as AcervoItem[];
@@ -200,33 +153,24 @@ const Busca = () => {
       const items: AcervoItem[] = [];
       const seen = new Set<string>();
 
-      const pushObra = (o: any, autorRow?: any) => {
-        if (!o || seen.has(o.id)) return;
+      for (const o of data ?? []) {
+        if (!o || seen.has(o.id)) continue;
         seen.add(o.id);
-        const oas = o.obra_autores ?? [];
-        const principal = autorRow ??
-          oas.slice().sort((a: any, b: any) => (a.ordem ?? 99) - (b.ordem ?? 99))[0];
+        const oas: any[] = (o as any).obra_autores ?? [];
+        const principal = oas.slice().sort((a: any, b: any) => (a.ordem ?? 99) - (b.ordem ?? 99))[0];
         const autorNome = principal?.autores?.nome_completo ?? null;
         const autorOrd = principal?.autores?.nome_ordenacao ?? "zzz";
-        // Pega a primeira edição disponível (preferência: com num_paginas)
-        const edicoes: any[] = o.edicoes ?? [];
-        const edicaoId = edicoes[0]?.id ?? null;
+        const edicoes: any[] = (o as any).edicoes ?? [];
         items.push({
-          obra_id: o.id,
-          edicao_id: edicaoId,
-          titulo: o.titulo_original,
-          titulo_ordenacao: o.titulo_ordenacao ?? o.titulo_original?.toLowerCase() ?? "",
-          ano: o.ano_primeira_publicacao,
-          capa_url: o.capa_padrao_url,
+          obra_id: (o as any).id,
+          edicao_id: edicoes[0]?.id ?? null,
+          titulo: (o as any).titulo_original,
+          titulo_ordenacao: (o as any).titulo_ordenacao ?? (o as any).titulo_original?.toLowerCase() ?? "",
+          ano: (o as any).ano_primeira_publicacao,
+          capa_url: (o as any).capa_padrao_url,
           autor: autorNome,
           autor_ordenacao: autorOrd,
         });
-      };
-
-      if (filtroAutor !== "todos") {
-        (data ?? []).forEach((row: any) => pushObra(row.obras, row));
-      } else {
-        (data ?? []).forEach((o: any) => pushObra(o));
       }
       return items;
     },
@@ -251,9 +195,20 @@ const Busca = () => {
     return arr;
   }, [acervo, ordenacao]);
 
+  // Filtro textual client-side
+  const acervoFiltrado = useMemo(() => {
+    const termo = normalize(buscaAcervo.trim());
+    if (!termo) return acervoOrdenado;
+    return acervoOrdenado.filter(
+      (r) =>
+        normalize(r.titulo).includes(termo) ||
+        (r.autor && normalize(r.autor).includes(termo)),
+    );
+  }, [acervoOrdenado, buscaAcervo]);
+
   useEffect(() => {
     setVisiveis(PAGE_SIZE);
-  }, [ordenacao, filtroAutor, filtroEditora, mostrandoAcervo]);
+  }, [ordenacao, buscaAcervo, mostrandoAcervo]);
 
   // Busca disparada por submit
   useEffect(() => {
@@ -396,11 +351,7 @@ const Busca = () => {
       if (error) throw error;
       const results: ExternalResult[] = (data?.results ?? []).map((b: any) => ({
         origem: "externo" as const,
-        key: externalKey({
-          isbn13: b.isbn13 ?? null,
-          titulo: b.titulo,
-          autores: b.autores ?? [],
-        }),
+        key: externalKey({ isbn13: b.isbn13 ?? null, titulo: b.titulo, autores: b.autores ?? [] }),
         titulo: b.titulo,
         autores: b.autores ?? [],
         ano: b.ano ?? null,
@@ -413,7 +364,6 @@ const Busca = () => {
         descricao: b.descricao ?? null,
         generos: Array.isArray(b.generos) ? b.generos : [],
       }));
-      console.log("[Busca] resultados externos:", results.map((r) => ({ titulo: r.titulo, generos: r.generos })));
       if (isCancelado()) return;
       setExterno(results);
       cache.set(cacheKey, { local: locais, externo: results });
@@ -457,8 +407,6 @@ const Busca = () => {
     setSubmitted(null);
   };
 
-
-  // Invalidations fora do caminho crítico, para não travar o toast em Android mediano
   const invalidarLivros = () => {
     const run = async () => {
       const { invalidateLeituras } = await import("@/lib/queryInvalidation");
@@ -473,15 +421,12 @@ const Busca = () => {
 
   const adicionarLocal = async (obraId: string, key: string, status: AddStatus, edicaoId?: string | null) => {
     if (!user) return;
-    // Guard síncrono: bloqueia duplo-tap (touch + click ghost) antes de qualquer await
     if (inFlightRef.current.has(key) || adicionados.has(key)) return;
     inFlightRef.current.add(key);
     setAdicionando(key);
-    // Feedback otimista imediato
     setAdicionados((s) => new Set(s).add(key));
     const today = new Date().toISOString().slice(0, 10);
 
-    // Resolve edicao_id: usa o passado ou busca a primeira edição da obra
     let resolvedEdicaoId = edicaoId ?? null;
     if (!resolvedEdicaoId) {
       const { data: eds } = await supabase
@@ -504,17 +449,11 @@ const Busca = () => {
     inFlightRef.current.delete(key);
     setAdicionando(null);
     if (error) {
-      console.error("adicionarLocal error", { code: error.code, message: error.message });
       if (error.code === "23505") {
         toast.info("Este livro já está na sua biblioteca");
         return;
       }
-      // Rollback otimista em erro real
-      setAdicionados((s) => {
-        const n = new Set(s);
-        n.delete(key);
-        return n;
-      });
+      setAdicionados((s) => { const n = new Set(s); n.delete(key); return n; });
       const msg = error.message?.includes("ranking_clube") || error.message?.includes("refresh")
         ? "Erro ao atualizar ranking. Tente novamente."
         : `Não foi possível adicionar: ${error.message}`;
@@ -530,9 +469,7 @@ const Busca = () => {
     inFlightRef.current.add(b.key);
     setAdicionando(b.key);
     setAdicionados((s) => new Set(s).add(b.key));
-    const loadingId = toast.loading(
-      status === "lido" ? "Registrando como lido…" : "Adicionando em Quero ler…",
-    );
+    const loadingId = toast.loading(status === "lido" ? "Registrando como lido…" : "Adicionando em Quero ler…");
     try {
       const { data, error } = await supabase.functions.invoke("rapid-action", {
         body: {
@@ -572,31 +509,14 @@ const Busca = () => {
 
       setExterno((arr) => arr.filter((x) => x.key !== b.key));
       setLocal((arr) => [
-        {
-          origem: "local",
-          obra_id: obraId,
-          edicao_id: data?.edicao_id ?? null,
-          titulo: b.titulo,
-          autor: b.autores?.[0],
-          ano: b.ano,
-          capa_url: b.capa_url,
-          isbn13: b.isbn13 ?? undefined,
-        },
+        { origem: "local", obra_id: obraId, edicao_id: data?.edicao_id ?? null, titulo: b.titulo, autor: b.autores?.[0], ano: b.ano, capa_url: b.capa_url, isbn13: b.isbn13 ?? undefined },
         ...arr,
       ]);
-      toast.success(
-        status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler",
-        { id: loadingId },
-      );
+      toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler", { id: loadingId });
       invalidarLivros();
     } catch (e: any) {
       console.error("adicionarExterno", e);
-      // Rollback otimista
-      setAdicionados((s) => {
-        const n = new Set(s);
-        n.delete(b.key);
-        return n;
-      });
+      setAdicionados((s) => { const n = new Set(s); n.delete(b.key); return n; });
       toast.error(e?.message ?? "Erro ao adicionar", { id: loadingId });
     } finally {
       inFlightRef.current.delete(b.key);
@@ -604,7 +524,7 @@ const Busca = () => {
     }
   };
 
-
+  // Card horizontal (modo lista / resultados de busca)
   const renderCard = (
     key: string,
     capa: string | null | undefined,
@@ -630,68 +550,81 @@ const Busca = () => {
         {autor && <p className="text-xs text-muted-foreground line-clamp-1">{autor}</p>}
         <div className="flex items-center gap-2 mt-0.5">
           {ano && <p className="text-[10px] text-muted-foreground">{ano}</p>}
-          {badge && (
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              · {badge}
-            </span>
-          )}
+          {badge && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">· {badge}</span>}
         </div>
       </div>
     );
-
     return (
       <div key={key} className="card-soft p-3 flex gap-3 items-center">
         {obraId ? (
-          <button
-            onClick={() => navigate(`/obras/${obraId}`)}
-            className="flex gap-3 items-center flex-1 min-w-0 text-left hover-lift"
-          >
-            {Capa}
-            {Info}
+          <button onClick={() => navigate(`/obras/${obraId}`)} className="flex gap-3 items-center flex-1 min-w-0 text-left hover-lift">
+            {Capa}{Info}
           </button>
         ) : (
-          <>
-            {Capa}
-            {Info}
-          </>
+          <>{Capa}{Info}</>
         )}
         <Button
           size="sm"
           disabled={busy || done}
-          onClick={() =>
-            setAddTarget({
-              key,
-              titulo,
-              autor,
-              capa,
-              onAdd,
-            })
-          }
+          onClick={() => setAddTarget({ key, titulo, autor, capa, onAdd })}
           aria-label={done ? "Adicionado" : busy ? "Adicionando…" : "Adicionar à estante"}
           className="rounded-xl bg-primary hover:bg-primary-hover touch-manipulation"
         >
-          {busy ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : done ? (
-            <Check className="w-4 h-4" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : done ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
         </Button>
       </div>
     );
   };
 
+  // Card grade (modo grade do acervo)
+  const renderGradeCard = (r: AcervoItem) => {
+    const busy = adicionando === r.obra_id;
+    const done = adicionados.has(r.obra_id);
+    return (
+      <div key={r.obra_id} className="relative group">
+        <div className="relative">
+          <button onClick={() => navigate(`/obras/${r.obra_id}`)} className="w-full hover-lift block">
+            {r.capa_url ? (
+              <img src={r.capa_url} alt="" className="w-full aspect-[2/3] rounded-xl object-cover shadow-soft" />
+            ) : (
+              <div className="w-full aspect-[2/3] rounded-xl bg-secondary flex items-center justify-center">
+                <BookOpen className="w-8 h-8 text-primary" />
+              </div>
+            )}
+          </button>
+          <button
+            disabled={busy || done}
+            onClick={() => setAddTarget({
+              key: r.obra_id,
+              titulo: r.titulo,
+              autor: r.autor,
+              capa: r.capa_url,
+              onAdd: (s) => adicionarLocal(r.obra_id, r.obra_id, s, r.edicao_id),
+            })}
+            className={cn(
+              "absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-opacity",
+              done
+                ? "bg-green-500 opacity-100"
+                : "bg-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
+            )}
+          >
+            {busy
+              ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+              : done
+              ? <Check className="w-3.5 h-3.5 text-white" />
+              : <Plus className="w-3.5 h-3.5 text-white" />}
+          </button>
+        </div>
+        <button onClick={() => navigate(`/obras/${r.obra_id}`)} className="w-full text-left mt-1.5">
+          <p className="text-xs font-medium line-clamp-2 break-words min-h-[2rem]">{r.titulo}</p>
+          {r.autor && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{r.autor}</p>}
+        </button>
+      </div>
+    );
+  };
 
   const semResultadosBusca =
-    !!submitted &&
-    !loadingLocal &&
-    !loadingExterno &&
-    !erroExterno &&
-    local.length === 0 &&
-    externo.length === 0;
-
-  const filtroAtivo = filtroAutor !== "todos" || filtroEditora !== "todos" || ordenacao !== "titulo_asc";
+    !!submitted && !loadingLocal && !loadingExterno && !erroExterno && local.length === 0 && externo.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -711,6 +644,8 @@ const Busca = () => {
           <Plus className="w-5 h-5" />
         </Button>
       </div>
+
+      {/* Formulário de busca externa */}
       <div className="flex flex-col gap-2 card-soft p-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <Input
@@ -765,102 +700,102 @@ const Busca = () => {
         </div>
       </div>
 
-      {/* Controles de ordenação e filtros */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as Ordenacao)}>
-          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[150px] gap-2 text-sm">
-            <ArrowUpDown className="w-3.5 h-3.5" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="titulo_asc">Título (A→Z)</SelectItem>
-            <SelectItem value="titulo_desc">Título (Z→A)</SelectItem>
-            <SelectItem value="autor_asc">Autor (A→Z)</SelectItem>
-            <SelectItem value="autor_desc">Autor (Z→A)</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Controles do acervo — visíveis apenas quando não há busca submetida */}
+      {mostrandoAcervo && (
+        <div className="flex flex-col gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={buscaAcervo}
+              onChange={(e) => setBuscaAcervo(e.target.value)}
+              placeholder="Filtrar por título ou autor..."
+              className="pl-10 rounded-2xl bg-muted border-0 focus-visible:ring-1"
+            />
+            {buscaAcervo && (
+              <button
+                onClick={() => setBuscaAcervo("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Ordenar:</span>
+              <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as Ordenacao)}>
+                <SelectTrigger className="h-8 w-auto min-w-0 border-0 bg-muted rounded-full px-3 text-sm font-medium gap-1 focus:ring-0 focus:ring-offset-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="titulo_asc">Título A-Z</SelectItem>
+                  <SelectItem value="titulo_desc">Título Z-A</SelectItem>
+                  <SelectItem value="autor_asc">Autor A-Z</SelectItem>
+                  <SelectItem value="autor_desc">Autor Z-A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-0.5 bg-muted rounded-full p-1 flex-shrink-0">
+              <button
+                onClick={() => setViewMode("grade")}
+                className={cn(
+                  "flex items-center justify-center w-8 h-7 rounded-full transition-colors",
+                  viewMode === "grade" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("lista")}
+                className={cn(
+                  "flex items-center justify-center w-8 h-7 rounded-full transition-colors",
+                  viewMode === "lista" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <Select value={filtroAutor} onValueChange={setFiltroAutor}>
-          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[130px] text-sm">
-            <SelectValue placeholder="Autor" />
-          </SelectTrigger>
-          <SelectContent className="max-h-72">
-            <SelectItem value="todos">Todos os autores</SelectItem>
-            {autoresOpts.map((a) => (
-              <SelectItem key={a.id} value={a.id}>
-                {a.nome_completo}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filtroEditora} onValueChange={setFiltroEditora}>
-          <SelectTrigger className="h-9 rounded-xl w-auto min-w-[130px] text-sm">
-            <SelectValue placeholder="Editora" />
-          </SelectTrigger>
-          <SelectContent className="max-h-72">
-            <SelectItem value="todos">Todas as editoras</SelectItem>
-            {editorasOpts.map((e) => (
-              <SelectItem key={e} value={e}>
-                {e}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {filtroAtivo && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 rounded-xl"
-            onClick={() => {
-              setOrdenacao("titulo_asc");
-              setFiltroAutor("todos");
-              setFiltroEditora("todos");
-            }}
-          >
-            <X className="w-4 h-4 mr-1" /> Limpar
-          </Button>
-        )}
-      </div>
-
-
-      {/* Acervo (sem termo) */}
+      {/* Acervo */}
       {mostrandoAcervo && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Acervo {acervoOrdenado.length > 0 && `(${acervoOrdenado.length})`}
+            Acervo {acervoFiltrado.length > 0 && `(${acervoFiltrado.length})`}
           </h2>
           {loadingAcervo ? (
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Carregando acervo…
             </p>
-          ) : acervoOrdenado.length === 0 ? (
+          ) : acervoFiltrado.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Nenhum livro encontrado com esses filtros.
+              Nenhum livro encontrado.
             </p>
+          ) : viewMode === "grade" ? (
+            <>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {acervoFiltrado.slice(0, visiveis).map(renderGradeCard)}
+              </div>
+              {visiveis < acervoFiltrado.length && (
+                <Button variant="outline" className="rounded-xl mt-2" onClick={() => setVisiveis((v) => v + PAGE_SIZE)}>
+                  Carregar mais
+                </Button>
+              )}
+            </>
           ) : (
             <>
-              {acervoOrdenado.slice(0, visiveis).map((r) =>
+              {acervoFiltrado.slice(0, visiveis).map((r) =>
                 renderCard(
-                  r.obra_id,
-                  r.capa_url,
-                  r.titulo,
-                  r.autor,
-                  r.ano,
+                  r.obra_id, r.capa_url, r.titulo, r.autor, r.ano,
                   (status) => adicionarLocal(r.obra_id, r.obra_id, status, r.edicao_id),
-                  adicionando === r.obra_id,
-                  adicionados.has(r.obra_id),
-                  undefined,
-                  r.obra_id,
+                  adicionando === r.obra_id, adicionados.has(r.obra_id),
+                  undefined, r.obra_id,
                 ),
               )}
-              {visiveis < acervoOrdenado.length && (
-                <Button
-                  variant="outline"
-                  className="rounded-xl mt-2"
-                  onClick={() => setVisiveis((v) => v + PAGE_SIZE)}
-                >
+              {visiveis < acervoFiltrado.length && (
+                <Button variant="outline" className="rounded-xl mt-2" onClick={() => setVisiveis((v) => v + PAGE_SIZE)}>
                   Carregar mais
                 </Button>
               )}
@@ -869,7 +804,7 @@ const Busca = () => {
         </section>
       )}
 
-      {/* Busca textual */}
+      {/* Resultados de busca textual */}
       {!!submitted && loadingLocal && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Buscando no acervo…
@@ -878,32 +813,20 @@ const Busca = () => {
 
       {local.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            No acervo
-          </h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">No acervo</h2>
           {local.map((r) =>
             renderCard(
-              r.obra_id,
-              r.capa_url,
-              r.titulo,
-              r.autor,
-              r.ano,
+              r.obra_id, r.capa_url, r.titulo, r.autor, r.ano,
               (status) => adicionarLocal(r.obra_id, r.obra_id, status, r.edicao_id),
-              adicionando === r.obra_id,
-              adicionados.has(r.obra_id),
-              undefined,
-              r.obra_id,
+              adicionando === r.obra_id, adicionados.has(r.obra_id),
+              undefined, r.obra_id,
             ),
           )}
         </section>
       )}
 
       {local.length > 0 && externo.length === 0 && !loadingExterno && !erroExterno && (
-        <Button
-          variant="outline"
-          onClick={handleBuscarExterno}
-          className="rounded-xl self-center"
-        >
+        <Button variant="outline" onClick={handleBuscarExterno} className="rounded-xl self-center">
           <Globe className="w-4 h-4 mr-2" /> Buscar também em fontes externas
         </Button>
       )}
@@ -927,15 +850,9 @@ const Busca = () => {
           </h2>
           {externo.map((b) =>
             renderCard(
-              b.key,
-              b.capa_url,
-              b.titulo,
-              b.autores[0],
-              b.ano,
+              b.key, b.capa_url, b.titulo, b.autores[0], b.ano,
               (status) => adicionarExterno(b, status),
-              adicionando === b.key,
-              adicionados.has(b.key),
-              b.fonte,
+              adicionando === b.key, adicionados.has(b.key), b.fonte,
             ),
           )}
         </section>
@@ -949,14 +866,8 @@ const Busca = () => {
 
       {semResultadosBusca && (
         <div className="flex flex-col items-center gap-3 py-6">
-          <p className="text-sm text-muted-foreground text-center">
-            Nenhum livro encontrado.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/cadastro-manual")}
-            className="rounded-xl"
-          >
+          <p className="text-sm text-muted-foreground text-center">Nenhum livro encontrado.</p>
+          <Button variant="outline" onClick={() => navigate("/cadastro-manual")} className="rounded-xl">
             <Plus className="w-4 h-4 mr-2" /> Cadastrar manualmente
           </Button>
         </div>
@@ -971,12 +882,7 @@ const Busca = () => {
         }}
       />
 
-      <Dialog
-        open={!!addTarget}
-        onOpenChange={(open) => {
-          if (!open) setAddTarget(null);
-        }}
-      >
+      <Dialog open={!!addTarget} onOpenChange={(open) => { if (!open) setAddTarget(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display">Adicionar à estante</DialogTitle>
@@ -993,9 +899,7 @@ const Busca = () => {
               )}
               <div className="min-w-0">
                 <p className="font-semibold line-clamp-2">{addTarget.titulo}</p>
-                {addTarget.autor && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">{addTarget.autor}</p>
-                )}
+                {addTarget.autor && <p className="text-xs text-muted-foreground line-clamp-1">{addTarget.autor}</p>}
               </div>
             </div>
           )}
@@ -1004,12 +908,7 @@ const Busca = () => {
               size="lg"
               className="rounded-xl bg-primary hover:bg-primary-hover justify-start touch-manipulation"
               disabled={!!adicionando}
-              onClick={() => {
-                const t = addTarget;
-                if (!t) return;
-                setAddTarget(null);
-                t.onAdd("quero_ler");
-              }}
+              onClick={() => { const t = addTarget; if (!t) return; setAddTarget(null); t.onAdd("quero_ler"); }}
             >
               <BookmarkPlus className="w-5 h-5 mr-2" /> Quero ler
             </Button>
@@ -1018,20 +917,11 @@ const Busca = () => {
               variant="outline"
               className="rounded-xl justify-start touch-manipulation"
               disabled={!!adicionando}
-              onClick={() => {
-                const t = addTarget;
-                if (!t) return;
-                setAddTarget(null);
-                t.onAdd("lido");
-              }}
+              onClick={() => { const t = addTarget; if (!t) return; setAddTarget(null); t.onAdd("lido"); }}
             >
               <CheckCheck className="w-5 h-5 mr-2" /> Já li
             </Button>
-            <Button
-              variant="ghost"
-              className="rounded-xl"
-              onClick={() => setAddTarget(null)}
-            >
+            <Button variant="ghost" className="rounded-xl" onClick={() => setAddTarget(null)}>
               Cancelar
             </Button>
           </div>
