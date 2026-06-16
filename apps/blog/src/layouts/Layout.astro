@@ -1,0 +1,102 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  pubDate?: Date;
+  author?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title,
+  description,
+  image = '/blog/og-default.png',
+  pubDate,
+  author,
+  type = 'website',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/blog/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- SEO primário -->
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={author ?? 'Equipe NAMZU'} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:site_name" content="Blog NAMZU" />
+    <meta property="og:locale" content="pt_BR" />
+    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(image, Astro.site)} />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- RSS -->
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Blog NAMZU"
+      href={new URL('/blog/rss.xml', Astro.site)}
+    />
+  </head>
+  <body class="min-h-screen bg-white">
+    <!-- Header -->
+    <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm sticky top-0 z-50">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <a href="/blog" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm font-display">N</div>
+          <span class="font-semibold text-gray-900 group-hover:text-primary transition-colors">Blog NAMZU</span>
+        </a>
+        <nav class="flex items-center gap-4 text-sm">
+          <a href="/blog" class="text-gray-600 hover:text-primary transition-colors">Artigos</a>
+          <a
+            href="https://namzu.com.br"
+            class="bg-primary text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-blue-900 transition-colors"
+          >
+            Abrir app
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main>
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-100 mt-20">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500">© {new Date().getFullYear()} NAMZU. Todos os direitos reservados.</p>
+        <div class="flex items-center gap-4 text-sm text-gray-500">
+          <a href="https://namzu.com.br" class="hover:text-primary transition-colors">App</a>
+          <a href="/blog/rss.xml" class="hover:text-primary transition-colors">RSS</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
