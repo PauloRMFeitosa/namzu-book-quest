@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {
+      "source": "/blog/:path*",
+      "destination": "https://namzu-book-quest-apps-blog.vercel.app/blog/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
