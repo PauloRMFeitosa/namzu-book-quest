@@ -63,19 +63,20 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
       href={new URL('/blog/rss.xml', Astro.site)}
     />
   </head>
-  <body class="min-h-screen bg-white">
-    <!-- Header -->
-    <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm sticky top-0 z-50">
-      <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <a href="/blog" class="flex items-center gap-2.5 group">
-          <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm font-display">N</div>
-          <span class="font-semibold text-gray-900 group-hover:text-primary transition-colors">Blog NAMZU</span>
+  <body class="min-h-screen">
+    <!-- Header — idêntico ao portal -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-soft">
+      <div class="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
+        <a href="/blog" class="flex items-center gap-2 hover-lift" aria-label="Ir para o Blog NAMZU">
+          <img src="/blog/logo-namzu.png" alt="NAMZU" class="w-8 h-8 object-contain" />
+          <span class="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
         </a>
-        <nav class="flex items-center gap-4 text-sm">
-          <a href="/blog" class="text-gray-600 hover:text-primary transition-colors">Artigos</a>
+        <span class="hidden sm:inline text-sm text-muted-foreground">Blog</span>
+        <nav class="ml-auto flex items-center gap-4 text-sm">
+          <a href="/blog" class="text-muted-foreground hover:text-primary transition-colors">Artigos</a>
           <a
             href="https://namzu.com.br"
-            class="bg-primary text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-blue-900 transition-colors"
+            class="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
           >
             Abrir app
           </a>
@@ -84,15 +85,18 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
     </header>
 
     <!-- Conteúdo principal -->
-    <main>
+    <main class="relative z-10 pt-14 animate-fade-in">
       <slot />
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-100 mt-20">
+    <footer class="relative z-10 border-t border-border/60 mt-20">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-gray-500">© {new Date().getFullYear()} NAMZU. Todos os direitos reservados.</p>
-        <div class="flex items-center gap-4 text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+          <img src="/blog/logo-namzu.png" alt="" class="w-5 h-5 object-contain opacity-50" />
+          <p class="text-sm text-muted-foreground">© {new Date().getFullYear()} NAMZU. Todos os direitos reservados.</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-muted-foreground">
           <a href="https://namzu.com.br" class="hover:text-primary transition-colors">App</a>
           <a href="/blog/rss.xml" class="hover:text-primary transition-colors">RSS</a>
         </div>
