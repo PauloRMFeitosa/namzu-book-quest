@@ -115,7 +115,6 @@ Crie um momento de revisão:
 
 Essa revisão espaçada consolida o que aprendeu de forma muito mais eficiente do que uma leitura de marathon.
 
----
 
 Anotar bem é uma habilidade. Como toda habilidade, exige prática e paciência com o próprio processo de aprendizado. Mas quando você encontra o sistema que funciona para você, a leitura muda de nível.
 

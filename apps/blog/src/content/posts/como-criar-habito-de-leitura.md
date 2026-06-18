@@ -82,7 +82,6 @@ A teoria popular diz 21 dias. A ciência diz que depende da pessoa e do comporta
 
 Isso significa que você precisa de consistência, não perfeição. Se pulou um dia, retome no próximo. O hábito não quebra por uma falta — quebra pelo abandono.
 
----
 
 Criar o hábito de leitura é um dos investimentos mais rentáveis que você pode fazer em si mesmo. Cada livro é uma conversa com alguém que dedicou anos pensando sobre um assunto — e você tem acesso a isso em horas.
 
