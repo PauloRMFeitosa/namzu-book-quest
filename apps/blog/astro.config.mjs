@@ -6,7 +6,9 @@ export default defineConfig({
   site: 'https://blog.namzu.com.br',
   integrations: [
     tailwind({ applyBaseStyles: false }),
-    sitemap(),
+    sitemap({
+      filter: (page) => !page.includes('/rss'),
+    }),
   ],
   markdown: {
     shikiConfig: {
