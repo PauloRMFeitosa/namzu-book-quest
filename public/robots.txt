@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://blog.namzu.com.br/sitemap-index.xml
+Sitemap: https://blog.namzu.com.br/sitemap.xml
