@@ -24,7 +24,6 @@ Antes de comparar ferramentas, vale clarear o que você quer:
 
 Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são excelentes em uma coisa específica. Conhecer suas prioridades ajuda a escolher melhor.
 
----
 
 ## Goodreads
 
@@ -45,7 +44,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** catalogar uma biblioteca grande e acompanhar o que amigos estão lendo (se eles também usarem Goodreads).
 
----
 
 ## Skoob
 
@@ -66,7 +64,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** leitores brasileiros que querem catalogar e descobrir o que a comunidade nacional está lendo.
 
----
 
 ## Kindle (Amazon)
 
@@ -86,7 +83,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** quem quer uma biblioteca digital com boa experiência de leitura.
 
----
 
 ## StoryGraph
 
@@ -106,7 +102,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** leitores que querem descobrir novos livros com recomendações personalizadas precisas.
 
----
 
 ## NAMZU
 
@@ -128,7 +123,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** leitores brasileiros que querem uma experiência social completa — registrar progresso, participar de clubes, salvar citações e conectar com outros leitores com gostos parecidos.
 
----
 
 ## Audible (Amazon)
 
@@ -146,7 +140,6 @@ Muitos apps tentam fazer tudo e acabam fazendo tudo mais ou menos. Outros são e
 
 **Melhor para:** quem quer ouvir audiobooks, especialmente em inglês.
 
----
 
 ## Como escolher o app certo para você
 
@@ -172,7 +165,6 @@ Sim, e muitos leitores fazem isso. A combinação mais comum entre brasileiros s
 
 Cada ferramenta tem seu papel. O importante é não deixar o gerenciamento das ferramentas consumir o tempo que deveria ser de leitura.
 
----
 
 O melhor app de leitura é aquele que você realmente usa. Teste os gratuitos primeiro, veja qual se encaixa no seu jeito de ler, e ignore o resto.
 

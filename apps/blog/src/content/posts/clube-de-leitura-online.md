@@ -101,7 +101,6 @@ Existe uma distinção sutil mas importante: num **grupo de livros**, as pessoas
 
 Ambos têm valor. Mas se você quer aquela sensação de "experimentar um livro com outras pessoas", o clube é a escolha.
 
----
 
 Criar um clube de leitura online é um dos atos mais generosos que um leitor pode fazer: você está criando um espaço para que outras pessoas descubram o prazer de ler junto.
 

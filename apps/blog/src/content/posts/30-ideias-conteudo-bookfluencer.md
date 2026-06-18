@@ -60,7 +60,6 @@ Separamos 30 ideias organizadas por formato — escolha uma e já comece.
 29. **"O que o algoritmo favorece em conteúdo literário (o que aprendi)"**
 30. **"Por que o BookTok brasileiro está crescendo tanto?"**
 
----
 
 ## Dica extra: organize sua base de conteúdo no Namzu
 
