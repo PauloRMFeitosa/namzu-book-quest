@@ -1,70 +1,72 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Este arquivo fornece orientações ao Claude Code (claude.ai/code) ao trabalhar com o código deste repositório.
 
-## Project Overview
+**Proprietário do projeto:** Paulo Feitosa
 
-NAMZU is a Portuguese-language social reading platform. Users manage personal libraries, record reading progress, save quotes, participate in reading clubs, and discover other readers through intelligent matching. The codebase is a React SPA backed by Supabase (PostgreSQL + Edge Functions), deployed on Vercel.
+## Visão Geral do Projeto
 
-## Commands
+O NAMZU é uma plataforma social de leitura em português brasileiro. Os usuários gerenciam bibliotecas pessoais, registram progresso de leitura, salvam citações, participam de clubes de leitura e descobrem outros leitores por meio de matching inteligente. O código é um SPA em React com backend no Supabase (PostgreSQL + Edge Functions), implantado no Vercel.
+
+## Comandos
 
 ```bash
-npm run dev        # Vite dev server on port 8080
-npm run build      # Production build
-npm run lint       # ESLint check
-npm run test       # Run all tests once (Vitest)
-npm run test:watch # Watch mode
+npm run dev        # Servidor de desenvolvimento Vite na porta 8080
+npm run build      # Build de produção
+npm run lint       # Verificação ESLint
+npm run test       # Executa todos os testes uma vez (Vitest)
+npm run test:watch # Modo watch
 ```
 
-To run a single test file:
+Para executar um arquivo de teste específico:
 ```bash
 npx vitest run src/path/to/file.test.ts
 ```
 
-Environment variables required (copy from `.env.example`):
+Variáveis de ambiente necessárias (copiar de `.env.example`):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-## Architecture
+## Arquitetura
 
 ### Frontend
 
-- **`src/App.tsx`** — Router root. All routes that need auth are wrapped in `<ProtectedRoute>`. Feature-flagged pages are additionally wrapped in `<FeatureRoute flag="...">`. Admin-only pages use `<AdminRoute>`.
-- **`src/pages/`** — One file per route. Portuguese names match the URL segments (`/clubes` → `Clubes.tsx`, `/leituras` → `Leituras.tsx`).
-- **`src/components/`** — Grouped by feature domain: `clubes/`, `leituras/`, `gamificacao/`, `social/`, `avaliacoes/`, `admin/`. Shared Radix/shadcn primitives live in `components/ui/`.
-- **`src/hooks/`** — Feature hooks colocated with their logic. `useAuth` (auth context + Supabase session), `useFeatureFlags` (flag table reader), `useTheme`, `useFontSize`.
-- **`src/stores/`** — Zustand stores for UI-only state (e.g., `canalUIStore.ts` tracks the selected channel, reply drafts, pending messages inside a club's channel view).
-- **`src/integrations/supabase/`** — `client.ts` (singleton Supabase client), `types.ts` (auto-generated from Supabase schema — do not hand-edit).
-- **`src/services/`** — Thin wrappers around Supabase queries for reuse across components.
-- **`src/constants/queryKeys.ts`** — Centralized React Query key factory. Add new keys here instead of inline strings.
+- **`src/App.tsx`** — Raiz do roteador. Todas as rotas que precisam de autenticação são envolvidas em `<ProtectedRoute>`. Páginas com feature flag usam adicionalmente `<FeatureRoute flag="...">`. Páginas exclusivas de admin usam `<AdminRoute>`.
+- **`src/pages/`** — Um arquivo por rota. Nomes em português correspondem aos segmentos de URL (`/clubes` → `Clubes.tsx`, `/leituras` → `Leituras.tsx`).
+- **`src/components/`** — Agrupados por domínio de funcionalidade: `clubes/`, `leituras/`, `gamificacao/`, `social/`, `avaliacoes/`, `admin/`. Primitivos compartilhados do Radix/shadcn ficam em `components/ui/`.
+- **`src/hooks/`** — Hooks de funcionalidade colocalizados com sua lógica. `useAuth` (contexto de autenticação + sessão Supabase), `useFeatureFlags` (leitor da tabela de flags), `useTheme`, `useFontSize`.
+- **`src/stores/`** — Stores Zustand para estado de UI (ex.: `canalUIStore.ts` rastreia o canal selecionado, rascunhos de resposta e mensagens pendentes dentro da visualização de canal de um clube).
+- **`src/integrations/supabase/`** — `client.ts` (cliente Supabase singleton), `types.ts` (gerado automaticamente pelo schema do Supabase — não editar manualmente).
+- **`src/services/`** — Wrappers finos sobre queries do Supabase para reutilização entre componentes.
+- **`src/constants/queryKeys.ts`** — Fábrica centralizada de chaves do React Query. Adicione novas chaves aqui em vez de strings inline.
 
-### React Query Setup
+### Configuração do React Query
 
-`QueryClient` in `App.tsx` sets global defaults: `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus/Reconnect/Mount: false`, `retry: 1`. These are intentional — changing them will cause excessive Supabase requests.
+O `QueryClient` em `App.tsx` define padrões globais: `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus/Reconnect/Mount: false`, `retry: 1`. Esses valores são intencionais — alterá-los causará requisições excessivas ao Supabase.
 
 ### Feature Flags
 
-Flags are stored in the `app_settings` Supabase table and read via `useFeatureFlags()`. The full list of valid flag keys is the `FeatureFlagKey` union in `src/hooks/useFeatureFlags.ts`. Admins bypass all flags. When adding a new gated feature:
-1. Add the flag key to `FeatureFlagKey` and its default to `DEFAULTS`.
-2. Wrap the route with `<FeatureRoute flag="your_flag">`.
+As flags são armazenadas na tabela `app_settings` do Supabase e lidas via `useFeatureFlags()`. A lista completa de chaves válidas é a union `FeatureFlagKey` em `src/hooks/useFeatureFlags.ts`. Admins ignoram todas as flags. Ao adicionar uma nova funcionalidade controlada por flag:
+1. Adicione a chave da flag em `FeatureFlagKey` e seu padrão em `DEFAULTS`.
+2. Envolva a rota com `<FeatureRoute flag="sua_flag">`.
 
 ### Backend (Supabase)
 
-- **Edge Functions** live in `supabase/functions/`. Each function is a self-contained Deno module. The `_shared/` directory holds utilities shared across functions (genre normalization, etc.).
-- **Migrations** in `supabase/migrations/`. The main schema file is `fase4_citacoes_e_matches.sql`, which defines quotes (`leitura_citacoes`), intelligent user matching RPC (`calcular_matches`), and the scoring formula: `(common_interests × 3) + (common_genres × 2) + (common_books × 5)`, normalized 0–100.
-- **`supabase/config.toml`** — Edge function registration. New functions must be added here to be deployed.
+- **Edge Functions** ficam em `supabase/functions/`. Cada função é um módulo Deno independente. O diretório `_shared/` contém utilitários compartilhados entre funções (normalização de gênero, etc.).
+- **Migrações** em `supabase/migrations/`. O arquivo principal de schema é `fase4_citacoes_e_matches.sql`, que define citações (`leitura_citacoes`), RPC de matching inteligente entre usuários (`calcular_matches`) e a fórmula de pontuação: `(interesses_comuns × 3) + (generos_comuns × 2) + (livros_comuns × 5)`, normalizada de 0 a 100.
+- **`supabase/config.toml`** — Registro de Edge Functions. Novas funções devem ser adicionadas aqui para serem implantadas.
 
-### Styling
+### Estilização
 
-Custom Tailwind theme in `tailwind.config.ts`: primary navy (`#1A3B8B`), secondary mint (`#D1F2E5`). Custom shadows (`soft`, `elevated`, `glow`), gradients, and two font families — `Inter` (sans) and `Fraunces` (display/serif). CSS variables are in `src/index.css`.
+Tema Tailwind customizado em `tailwind.config.ts`: azul navy primário (`#1A3B8B`), mint secundário (`#D1F2E5`). Sombras customizadas (`soft`, `elevated`, `glow`), gradientes e duas famílias de fonte — `Inter` (sans) e `Fraunces` (display/serif). Variáveis CSS estão em `src/index.css`.
 
-shadcn/ui components are configured via `components.json` and installed into `src/components/ui/`. Use the shadcn CLI to add/update UI primitives; do not manually modify generated files in that folder unless fixing a bug.
+Componentes shadcn/ui são configurados via `components.json` e instalados em `src/components/ui/`. Use o CLI do shadcn para adicionar/atualizar primitivos de UI; não modifique manualmente os arquivos gerados nessa pasta, exceto para corrigir bugs.
 
-## Language
+## Idioma
 
-**All communication in this project must be in Brazilian Portuguese (pt-BR).** This applies to:
+**Toda a comunicação neste projeto deve ser em português brasileiro (pt-BR).** Isso se aplica a:
 
 - Respostas e explicações do assistente de IA (Claude)
 - Textos de interface do usuário (labels, botões, mensagens, placeholders, toasts, erros)
@@ -108,7 +110,7 @@ useEffect(() => {
   localStorage.setItem(draftKey(id), JSON.stringify({ campo1, campo2 }));
 }, [open, id, campo1, campo2]);
 
-// 4. No handler de submit bem-sucedido — limpar draft
+// 4. No handler de submit bem-sucedido — limpar rascunho
 localStorage.removeItem(draftKey(id));
 reset(); // resetar estado
 onOpenChange(false);
@@ -137,10 +139,10 @@ onOpenChange(false);
 | `InsightDialog.tsx` | `draft-insight-{livroId}` |
 | `AplicacaoDialog.tsx` | `draft-aplicacao-{livroId}` |
 
-## Key Conventions
+## Convenções Principais
 
 - **Idioma do domínio:** UI e terminologia de negócio sempre em português. Nomes de variáveis/funções seguem a convenção portuguesa (`clube`, `leitura`, `citacao`, `obra`, `perfil`). Nomes de componentes React usam PascalCase em português.
-- **Path alias:** `@/` resolves to `src/`. Always use this alias rather than relative paths.
-- **TypeScript strictness is intentionally loose** (`strict: false`, `noImplicitAny: false`) to allow rapid iteration. Do not enable strict mode without a coordinated migration.
-- **`supabase/types.ts` is auto-generated.** Regenerate with `supabase gen types typescript` after schema changes; never edit manually.
-- **Service worker** (`public/sw.js`) uses a kill-switch pattern — it only activates in production and performs cleanup on dev/preview to prevent stale-cache regressions.
+- **Alias de path:** `@/` resolve para `src/`. Sempre use esse alias em vez de caminhos relativos.
+- **TypeScript em modo relaxado** (`strict: false`, `noImplicitAny: false`) para permitir iteração rápida. Não ative o modo strict sem uma migração coordenada.
+- **`supabase/types.ts` é gerado automaticamente.** Regenere com `supabase gen types typescript` após mudanças no schema; nunca edite manualmente.
+- **Service worker** (`public/sw.js`) usa um padrão de kill-switch — só ativa em produção e faz limpeza em dev/preview para evitar regressões de cache obsoleto.
