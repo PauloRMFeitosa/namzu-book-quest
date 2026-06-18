@@ -10,7 +10,7 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const post = await getEntry('posts', slug!);
 
-if (!post) return Astro.redirect('/blog');
+if (!post) return Astro.redirect('/');
 
 const { Content } = await post.render();
 
@@ -32,7 +32,7 @@ const formattedDate = post.data.pubDate.toLocaleDateString('pt-BR', {
   <article class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-      <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
+      <a href="/" class="hover:text-primary transition-colors">Blog</a>
       <span>›</span>
       <span class="text-foreground/70 line-clamp-1">{post.data.title}</span>
     </nav>
@@ -94,7 +94,7 @@ const formattedDate = post.data.pubDate.toLocaleDateString('pt-BR', {
 
     <!-- Voltar -->
     <div class="mt-10 pt-8 border-t border-border/60">
-      <a href="/blog" class="text-sm text-primary font-medium hover:underline">← Voltar ao blog</a>
+      <a href="/" class="text-sm text-primary font-medium hover:underline">← Voltar ao blog</a>
     </div>
   </article>
 </Layout>

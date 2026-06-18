@@ -13,7 +13,7 @@ interface Props {
 const {
   title,
   description,
-  image = '/blog/og-default.png',
+  image = '/og-default.png',
   pubDate,
   author,
   type = 'website',
@@ -28,7 +28,7 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/blog/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalURL} />
 
     <!-- SEO primário -->
@@ -60,20 +60,20 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
       rel="alternate"
       type="application/rss+xml"
       title="Blog NAMZU"
-      href={new URL('/blog/rss.xml', Astro.site)}
+      href={new URL('/rss.xml', Astro.site)}
     />
   </head>
   <body class="min-h-screen">
     <!-- Header — idêntico ao portal -->
     <header class="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-soft">
       <div class="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
-        <a href="/blog" class="flex items-center gap-2 hover-lift" aria-label="Ir para o Blog NAMZU">
-          <img src="/blog/logo-namzu.png" alt="NAMZU" width="32" height="32" class="w-8 h-8 object-contain flex-shrink-0" />
+        <a href="/" class="flex items-center gap-2 hover-lift" aria-label="Ir para o Blog NAMZU">
+          <img src="/logo-namzu.png" alt="NAMZU" width="32" height="32" class="w-8 h-8 object-contain flex-shrink-0" />
           <span class="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
         </a>
         <span class="hidden sm:inline text-sm text-muted-foreground">Blog</span>
         <nav class="ml-auto flex items-center gap-4 text-sm">
-          <a href="/blog" class="text-muted-foreground hover:text-primary transition-colors">Artigos</a>
+          <a href="/" class="text-muted-foreground hover:text-primary transition-colors">Artigos</a>
           <a
             href="https://namzu.com.br"
             class="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
@@ -93,12 +93,12 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
     <footer class="relative z-10 border-t border-border/60 mt-20">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <img src="/blog/logo-namzu.png" alt="" width="20" height="20" class="w-5 h-5 object-contain opacity-50 flex-shrink-0" />
+          <img src="/logo-namzu.png" alt="" width="20" height="20" class="w-5 h-5 object-contain opacity-50 flex-shrink-0" />
           <p class="text-sm text-muted-foreground">© {new Date().getFullYear()} NAMZU. Todos os direitos reservados.</p>
         </div>
         <div class="flex items-center gap-4 text-sm text-muted-foreground">
           <a href="https://namzu.com.br" class="hover:text-primary transition-colors">App</a>
-          <a href="/blog/rss.xml" class="hover:text-primary transition-colors">RSS</a>
+          <a href="/rss.xml" class="hover:text-primary transition-colors">RSS</a>
         </div>
       </div>
     </footer>
