@@ -31,6 +31,17 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalURL} />
 
+    <!-- Aplica tema antes do render para evitar flash -->
+    <script is:inline>
+      (function () {
+        const saved = localStorage.getItem('tema');
+        const prefereDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefereDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
     <!-- SEO primário -->
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
@@ -72,8 +83,26 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
           <span class="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
         </a>
         <span class="hidden sm:inline text-sm text-muted-foreground">Blog</span>
-        <nav class="ml-auto flex items-center gap-4 text-sm">
+        <nav class="ml-auto flex items-center gap-3 text-sm">
           <a href="/" class="text-muted-foreground hover:text-primary transition-colors">Artigos</a>
+
+          <!-- Botão dark mode -->
+          <button
+            id="tema-toggle"
+            aria-label="Alternar tema escuro"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+          >
+            <!-- Ícone sol (modo claro) -->
+            <svg id="icone-sol" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+            <!-- Ícone lua (modo escuro) -->
+            <svg id="icone-lua" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </button>
+
           <a
             href="https://namzu.com.br"
             class="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
@@ -102,5 +131,32 @@ const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
         </div>
       </div>
     </footer>
+
+    <script is:inline>
+      (function () {
+        const btn = document.getElementById('tema-toggle');
+        const sol = document.getElementById('icone-sol');
+        const lua = document.getElementById('icone-lua');
+        const html = document.documentElement;
+
+        function atualizarIcone() {
+          if (html.classList.contains('dark')) {
+            sol.classList.remove('hidden');
+            lua.classList.add('hidden');
+          } else {
+            sol.classList.add('hidden');
+            lua.classList.remove('hidden');
+          }
+        }
+
+        atualizarIcone();
+
+        btn.addEventListener('click', function () {
+          html.classList.toggle('dark');
+          localStorage.setItem('tema', html.classList.contains('dark') ? 'dark' : 'light');
+          atualizarIcone();
+        });
+      })();
+    </script>
   </body>
 </html>
