@@ -1,21 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
-
 @layer base {
+  :root {
+    --background: 120 14% 97%;
+    --foreground: 213 54% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 54% 16%;
+
+    --primary: 223 68% 33%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 223 65% 43%;
+
+    --secondary: 157 55% 88%;
+    --secondary-foreground: 213 54% 16%;
+
+    --muted: 120 14% 94%;
+    --muted-foreground: 213 20% 45%;
+
+    --accent: 207 49% 69%;
+    --accent-foreground: 213 54% 16%;
+
+    --border: 213 20% 85%;
+
+    --gradient-warm: linear-gradient(135deg, hsl(223 68% 33%) 0%, hsl(207 49% 69%) 100%);
+    --gradient-paper: linear-gradient(180deg, hsl(120 14% 97%) 0%, hsl(120 14% 94%) 100%);
+
+    --shadow-soft: 0 4px 14px hsl(213 54% 16% / 0.06);
+    --shadow-elevated: 0 14px 40px -12px hsl(213 54% 16% / 0.16);
+    --shadow-glow: 0 8px 32px -8px hsl(207 49% 69% / 0.35);
+  }
+
   body {
-    @apply text-gray-900 bg-white antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+    position: relative;
+    isolation: isolate;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% -5%, hsl(var(--accent) / 0.14), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 85% 110%, hsl(var(--accent) / 0.10), transparent 65%),
+      radial-gradient(ellipse 55% 40% at 10% 90%, hsl(var(--secondary) / 0.35), transparent 70%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 220px 220px;
+  }
+
+  h1, h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    letter-spacing: -0.02em;
+  }
+
+  h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
+  .card-soft {
+    @apply bg-card rounded-2xl;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .card-editorial {
+    @apply bg-card rounded-xl border border-border/60 overflow-hidden;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-editorial:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+  }
+
+  .hover-lift {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-lift:hover {
+    transform: scale(1.02);
+  }
+
+  .gradient-warm { background: var(--gradient-warm); }
+  .gradient-paper { background: var(--gradient-paper); }
+
   .prose-namzu {
     @apply prose prose-lg max-w-none
-      prose-headings:font-display prose-headings:text-gray-900
+      prose-headings:font-display prose-headings:text-foreground
       prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-      prose-blockquote:border-primary prose-blockquote:bg-mint/30 prose-blockquote:rounded-r-lg
+      prose-blockquote:border-primary prose-blockquote:bg-secondary/30 prose-blockquote:rounded-r-lg
       prose-img:rounded-2xl prose-img:shadow-md;
   }
 }
