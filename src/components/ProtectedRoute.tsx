@@ -39,7 +39,16 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       </div>
     );
   }
-  if (!user) return <Navigate to={flags.show_onboarding ? "/onboarding" : "/login"} replace />;
+  if (!user) {
+    const destino = flags.show_onboarding ? "/comecar" : "/login";
+    return (
+      <Navigate
+        to={destino}
+        state={{ returnTo: location.pathname + location.search }}
+        replace
+      />
+    );
+  }
 
   // Onboarding: verificar localStorage (rápido) + banco (confiável)
   const localFlag =
@@ -47,9 +56,9 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const dbFlag = perfil?.onboarding_completo ?? false;
   const onboardingDone = localFlag || dbFlag;
 
-  // Se o onboarding está desabilitado no admin, bypass completo do redirect
+  // Onboarding incompleto com fluxo novo ativo → retomar em /comecar
   if (!onboardingDone && flags.show_onboarding) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/comecar" replace />;
   }
 
   // Se o Código ME está desabilitado no admin, bypass do redirect para interesses

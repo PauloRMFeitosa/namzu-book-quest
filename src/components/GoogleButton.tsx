@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { authService } from "@/services/auth";
 import { toast } from "sonner";
 
-export const GoogleButton = forwardRef<HTMLButtonElement, { label?: string }>(
-  ({ label = "Continuar com Google" }, ref) => {
+export const GoogleButton = forwardRef<HTMLButtonElement, { label?: string; returnTo?: string }>(
+  ({ label = "Continuar com Google", returnTo }, ref) => {
     const handleGoogle = async () => {
       try {
-        await authService.signInWithGoogle();
+        await authService.signInWithGoogle(returnTo);
       } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : "Erro ao autenticar com Google");
       }
