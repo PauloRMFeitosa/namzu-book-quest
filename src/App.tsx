@@ -36,6 +36,8 @@ import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
 import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
+import { OnboardingAutoMerge } from "@/components/OnboardingAutoMerge";
+import Comecar from "./pages/Comecar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +73,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/comecar" element={<Comecar />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/onboarding-interesses" element={<OnboardingInteresses />} />
             <Route path="/login" element={<Login />} />
@@ -99,6 +102,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <SessaoLeituraModal />
+          <OnboardingAutoMerge />
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>

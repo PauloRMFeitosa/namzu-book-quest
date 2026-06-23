@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { GoogleButton } from "@/components/GoogleButton";
 import logoNamzu from "@/assets/logo-namzu.png";
+import { executarMergeOnboarding } from "@/services/onboardingMerge";
+import { temDadosDeOnboarding } from "@/stores/onboardingStore";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -34,6 +36,12 @@ const Signup = () => {
     if (error) { setBusy(false); return toast.error(error.message); }
     if (data.user) {
       await supabase.rpc("aceitar_termos");
+      // Sessão imediata (sem confirmação de e-mail): executar merge aqui.
+      // Se e-mail precisar de confirmação, data.session será null e o
+      // OnboardingAutoMerge intercepta quando o usuário confirmar e logar.
+      if (data.session && temDadosDeOnboarding()) {
+        try { await executarMergeOnboarding(data.user.id); } catch {}
+      }
     }
     setBusy(false);
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
