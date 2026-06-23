@@ -36,6 +36,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import NotFound from "./pages/NotFound";
 import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
+import { OnboardingAutoMerge } from "@/components/OnboardingAutoMerge";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <SessaoLeituraModal />
+          <OnboardingAutoMerge />
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>
