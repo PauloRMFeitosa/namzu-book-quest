@@ -11,10 +11,30 @@ interface Props {
   onAvancar: () => void;
 }
 
+function BookCard({ obra }: { obra: Obra }) {
+  return (
+    <div className="rounded-lg overflow-hidden bg-secondary/50 aspect-[2/3]">
+      {obra.capa_padrao_url ? (
+        <img
+          src={obra.capa_padrao_url}
+          alt={obra.titulo_original}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <BookOpen className="w-5 h-5 text-primary/30" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TelaEstantePronta({ onAvancar }: Props) {
-  const { generos, objetivo } = useOnboardingStore();
+  const { generos, objetivo, livrosAmados } = useOnboardingStore();
   const [clubes, setClubes] = useState<Clube[]>([]);
-  const [obras, setObras] = useState<Obra[]>([]);
+  const [livrosSelecionados, setLivrosSelecionados] = useState<Obra[]>([]);
+  const [sugestoes, setSugestoes] = useState<Obra[]>([]);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
@@ -32,26 +52,37 @@ export function TelaEstantePronta({ onAvancar }: Props) {
 
       if (clubesRes.data) setClubes(clubesRes.data);
 
+      // Linha 1: livros que o usuário escolheu no T3
+      if (livrosAmados.length > 0) {
+        const { data } = await supabase
+          .from("obras")
+          .select("id, titulo_original, capa_padrao_url")
+          .in("id", livrosAmados);
+        if (data) setLivrosSelecionados(data);
+      }
+
+      // Linha 2: 3 sugestões por gênero (excluindo já escolhidos)
       const ids = (generosRes.data ?? []).map((g: { id: string }) => g.id);
       if (ids.length > 0) {
         const { data } = await supabase
           .from("obra_generos")
           .select("obra_id, obras(id, titulo_original, capa_padrao_url)")
           .in("genero_id", ids)
-          .limit(24);
+          .limit(20);
 
-        const seen = new Set<string>();
+        const excluir = new Set<string>(livrosAmados);
         const lista: Obra[] = [];
         for (const row of data ?? []) {
           const obra = (row as any).obras as Obra | null;
-          if (obra && !seen.has(obra.id)) {
-            seen.add(obra.id);
+          if (obra && !excluir.has(obra.id)) {
+            excluir.add(obra.id);
             lista.push(obra);
-            if (lista.length >= 12) break;
+            if (lista.length >= 3) break;
           }
         }
-        setObras(lista);
+        setSugestoes(lista);
       }
+
       setCarregando(false);
     }
     carregar();
@@ -68,7 +99,7 @@ export function TelaEstantePronta({ onAvancar }: Props) {
           Montei sua estante.
         </h2>
         <p className="text-muted-foreground mb-6">
-          12 livros, 3 clubes e uma trilha — no seu gosto.
+          Seus livros e sugestões no seu gosto.
         </p>
 
         {carregando ? (
@@ -79,8 +110,34 @@ export function TelaEstantePronta({ onAvancar }: Props) {
           </div>
         ) : (
           <>
-            {clubes.length > 0 && (
+            {livrosSelecionados.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Seus livros
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {livrosSelecionados.map((obra) => (
+                    <BookCard key={obra.id} obra={obra} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sugestoes.length > 0 && (
               <div className="mb-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Sugestões
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {sugestoes.map((obra) => (
+                    <BookCard key={obra.id} obra={obra} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {clubes.length > 0 && (
+              <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Clubes pra você
                 </p>
@@ -99,35 +156,6 @@ export function TelaEstantePronta({ onAvancar }: Props) {
                           </p>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {obras.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Sua estante
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {obras.map((obra) => (
-                    <div
-                      key={obra.id}
-                      className="rounded-lg overflow-hidden bg-secondary/50 aspect-[2/3]"
-                    >
-                      {obra.capa_padrao_url ? (
-                        <img
-                          src={obra.capa_padrao_url}
-                          alt={obra.titulo_original}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-primary/30" />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
