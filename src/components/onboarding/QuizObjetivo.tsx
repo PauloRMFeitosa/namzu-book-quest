@@ -59,6 +59,7 @@ export function QuizObjetivo({ onAvancar, onPular }: Props) {
                 aria-pressed={ativo}
                 className={[
                   "flex items-center gap-4 w-full rounded-2xl border p-4 text-left transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   ativo
                     ? "border-primary bg-primary/5"
                     : "border-border bg-background hover:border-primary/40",

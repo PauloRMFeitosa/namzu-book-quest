@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { temDadosDeOnboarding } from "@/stores/onboardingStore";
 import { executarMergeOnboarding } from "@/services/onboardingMerge";
+import { trackOnboarding } from "@/services/analyticsOnboarding";
 
 // Componente invisível montado em App.tsx.
 // Intercepta o SIGNED_IN (OAuth Google ou confirmação de e-mail) e:
@@ -19,9 +20,11 @@ export function OnboardingAutoMerge() {
         if (mergeEmAndamento.current) return;
 
         mergeEmAndamento.current = true;
+        const tinhaOnboarding = temDadosDeOnboarding();
         try {
-          if (temDadosDeOnboarding()) {
+          if (tinhaOnboarding) {
             await executarMergeOnboarding(session.user.id);
+            trackOnboarding("onboarding_signup_concluido", { metodo_signup: "google" });
           }
         } catch {
           // falha silenciosa — o usuário continua navegando normalmente

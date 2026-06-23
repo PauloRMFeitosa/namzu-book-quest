@@ -10,6 +10,7 @@ import { executarMergeOnboarding } from "@/services/onboardingMerge";
 import { temDadosDeOnboarding } from "@/stores/onboardingStore";
 import { BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
+import { trackOnboarding } from "@/services/analyticsOnboarding";
 
 type Vista = "opcoes" | "email";
 
@@ -44,6 +45,7 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
       }
     }
     setBusy(false);
+    trackOnboarding("onboarding_signup_concluido", { metodo_signup: "email" });
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
     navigate(returnTo, { replace: true });
   };
