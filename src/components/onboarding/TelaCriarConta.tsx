@@ -12,7 +12,7 @@ import { BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { trackOnboarding } from "@/services/analyticsOnboarding";
 
-type Vista = "opcoes" | "email" | "login";
+type Vista = "opcoes" | "email" | "login" | "login-email";
 
 interface Props {
   returnTo?: string;
@@ -67,7 +67,45 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
     navigate(returnTo, { replace: true });
   };
 
+  // Tela de login: opções (Google + e-mail)
   if (vista === "login") {
+    return (
+      <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
+        <div className="flex-1">
+          <h2 className="font-display text-2xl font-bold text-foreground mb-1">
+            Entrar
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Bem-vindo de volta ao NAMZU.
+          </p>
+          <div className="flex flex-col gap-3">
+            <GoogleButton label="Entrar com Google" returnTo={returnTo} />
+            <Button
+              variant="outline"
+              className="h-[52px] rounded-2xl text-base font-semibold"
+              onClick={() => setVista("login-email")}
+            >
+              Entrar com e-mail
+            </Button>
+          </div>
+        </div>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Não tem conta?{" "}
+            <button
+              onClick={() => setVista("opcoes")}
+              className="text-primary font-semibold"
+            >
+              Criar conta
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Tela de login: formulário e-mail + senha
+  if (vista === "login-email") {
     return (
       <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
         <div className="flex-1">
@@ -110,7 +148,7 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setVista("opcoes")}
+              onClick={() => setVista("login")}
               className="text-muted-foreground"
             >
               ← Voltar
@@ -132,6 +170,7 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
     );
   }
 
+  // Tela de cadastro: opcoes ou formulário e-mail
   return (
     <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
       <div className="flex-1">
