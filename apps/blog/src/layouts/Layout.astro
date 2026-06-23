@@ -1,0 +1,165 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  pubDate?: Date;
+  author?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title,
+  description,
+  image = '/og-default.png',
+  pubDate,
+  author,
+  type = 'website',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title.includes('NAMZU') ? title : `${title} | Blog NAMZU`;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Aplica tema antes do render para evitar flash -->
+    <script is:inline>
+      (function () {
+        const saved = localStorage.getItem('tema');
+        const prefereDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefereDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
+    <!-- SEO primário -->
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={author ?? 'Equipe NAMZU'} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:site_name" content="Blog NAMZU" />
+    <meta property="og:locale" content="pt_BR" />
+    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(image, Astro.site)} />
+
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="1FNiEpFYWYir2F9eOG9ziy8vFFeJohTvuHsftkMOnhw" />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- RSS -->
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Blog NAMZU"
+      href={new URL('/rss.xml', Astro.site)}
+    />
+  </head>
+  <body class="min-h-screen">
+    <!-- Header — idêntico ao portal -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-soft">
+      <div class="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
+        <a href="/" class="flex items-center gap-2 hover-lift" aria-label="Ir para o Blog NAMZU">
+          <img src="/logo-namzu.png" alt="NAMZU" width="32" height="32" class="w-8 h-8 object-contain flex-shrink-0" />
+          <span class="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
+        </a>
+        <span class="hidden sm:inline text-sm text-muted-foreground">Blog</span>
+        <nav class="ml-auto flex items-center gap-3 text-sm">
+          <a href="/" class="text-muted-foreground hover:text-primary transition-colors">Artigos</a>
+
+          <!-- Botão dark mode -->
+          <button
+            id="tema-toggle"
+            aria-label="Alternar tema escuro"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+          >
+            <!-- Ícone sol (modo claro) -->
+            <svg id="icone-sol" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+            <!-- Ícone lua (modo escuro) -->
+            <svg id="icone-lua" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </button>
+
+          <a
+            href="https://namzu.com.br"
+            class="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Abrir app
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main class="relative z-10 pt-14 animate-fade-in">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-border/60 mt-20">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <img src="/logo-namzu.png" alt="" width="20" height="20" class="w-5 h-5 object-contain opacity-50 flex-shrink-0" />
+          <p class="text-sm text-muted-foreground">© {new Date().getFullYear()} NAMZU. Todos os direitos reservados.</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-muted-foreground">
+          <a href="https://namzu.com.br" class="hover:text-primary transition-colors">App</a>
+          <a href="/rss.xml" class="hover:text-primary transition-colors">RSS</a>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function () {
+        const btn = document.getElementById('tema-toggle');
+        const sol = document.getElementById('icone-sol');
+        const lua = document.getElementById('icone-lua');
+        const html = document.documentElement;
+
+        function atualizarIcone() {
+          if (html.classList.contains('dark')) {
+            sol.classList.remove('hidden');
+            lua.classList.add('hidden');
+          } else {
+            sol.classList.add('hidden');
+            lua.classList.remove('hidden');
+          }
+        }
+
+        atualizarIcone();
+
+        btn.addEventListener('click', function () {
+          html.classList.toggle('dark');
+          localStorage.setItem('tema', html.classList.contains('dark') ? 'dark' : 'light');
+          atualizarIcone();
+        });
+      })();
+    </script>
+  </body>
+</html>

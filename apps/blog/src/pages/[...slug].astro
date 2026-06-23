@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection, getEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.slug } }));
+}
+
+const { slug } = Astro.params;
+const post = await getEntry('posts', slug!);
+
+if (!post) return Astro.redirect('/');
+
+const { Content } = await post.render();
+
+const formattedDate = post.data.pubDate.toLocaleDateString('pt-BR', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  image={post.data.heroImage}
+  pubDate={post.data.pubDate}
+  author={post.data.author}
+  type="article"
+>
+  <article class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+      <a href="/" class="hover:text-primary transition-colors">Blog</a>
+      <span>›</span>
+      <span class="text-foreground/70 line-clamp-1">{post.data.title}</span>
+    </nav>
+
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      {post.data.tags.map((tag) => (
+        <span class="text-xs font-medium text-primary bg-secondary/60 px-3 py-1 rounded-full capitalize">
+          {tag}
+        </span>
+      ))}
+    </div>
+
+    <!-- Título -->
+    <h1 class="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight mb-4">
+      {post.data.title}
+    </h1>
+
+    <!-- Meta -->
+    <div class="flex items-center gap-3 text-sm text-muted-foreground mb-8 pb-8 border-b border-border/60">
+      <span class="font-medium text-foreground/80">{post.data.author}</span>
+      <span>·</span>
+      <time datetime={post.data.pubDate.toISOString()}>{formattedDate}</time>
+      {post.data.updatedDate && (
+        <>
+          <span>·</span>
+          <span>
+            Atualizado em {post.data.updatedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
+        </>
+      )}
+    </div>
+
+    <!-- Hero image -->
+    {post.data.heroImage && (
+      <img
+        src={post.data.heroImage}
+        alt={post.data.title}
+        class="w-full rounded-2xl shadow-soft mb-10 object-cover max-h-[420px]"
+      />
+    )}
+
+    <!-- Conteúdo -->
+    <div class="prose-namzu">
+      <Content />
+    </div>
+
+    <!-- CTA final — gradient-warm igual ao portal -->
+    <div class="mt-16 gradient-warm rounded-2xl p-8 text-center text-white">
+      <p class="font-display text-xl font-semibold mb-2">Organize sua leitura no NAMZU</p>
+      <p class="text-white/80 text-sm mb-5">Biblioteca pessoal, clubes de leitura e progresso — tudo em um só lugar.</p>
+      <a
+        href="https://namzu.com.br"
+        class="inline-flex items-center gap-2 bg-white text-primary px-6 py-3 rounded-full font-medium hover:bg-white/90 transition-colors"
+      >
+        Começar gratuitamente →
+      </a>
+    </div>
+
+    <!-- Voltar -->
+    <div class="mt-10 pt-8 border-t border-border/60">
+      <a href="/" class="text-sm text-primary font-medium hover:underline">← Voltar ao blog</a>
+    </div>
+  </article>
+</Layout>

@@ -1,5 +1,13 @@
 {
   "rewrites": [
+    {
+      "source": "/blog",
+      "destination": "https://namzu-book-quest.vercel.app/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "https://namzu-book-quest.vercel.app/blog/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
