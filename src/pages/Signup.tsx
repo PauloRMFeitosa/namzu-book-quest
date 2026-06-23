@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,10 @@ const Signup = () => {
   const [termosAceitos, setTermosAceitos] = useState(false);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo: string = (location.state as any)?.returnTo ?? "/";
   const { user, loading } = useAuth();
-  if (!loading && user) return <Navigate to="/" replace />;
+  if (!loading && user) return <Navigate to={returnTo} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +47,12 @@ const Signup = () => {
     }
     setBusy(false);
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
-    navigate("/");
+    navigate(returnTo, { replace: true });
   };
 
   return (
     <div className="relative z-10 min-h-screen flex flex-col px-6 py-8">
-      <button onClick={() => navigate("/onboarding")} className="self-start text-muted-foreground p-2 -ml-2">
+      <button onClick={() => navigate(-1)} className="self-start text-muted-foreground p-2 -ml-2">
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
@@ -96,7 +98,7 @@ const Signup = () => {
           <span className="text-xs text-muted-foreground">ou</span>
           <div className="h-px bg-border flex-1" />
         </div>
-        <GoogleButton label="Cadastrar com Google" />
+        <GoogleButton label="Cadastrar com Google" returnTo={returnTo} />
         <p className="text-sm text-center mt-6 text-muted-foreground">
           Já tem conta? <Link to="/login" className="text-primary font-semibold">Entrar</Link>
         </p>

@@ -13,7 +13,11 @@ import { Link } from "react-router-dom";
 
 type Vista = "opcoes" | "email";
 
-export function TelaCriarConta() {
+interface Props {
+  returnTo?: string;
+}
+
+export function TelaCriarConta({ returnTo = "/" }: Props) {
   const navigate = useNavigate();
   const [vista, setVista] = useState<Vista>("opcoes");
   const [nome, setNome] = useState("");
@@ -41,7 +45,7 @@ export function TelaCriarConta() {
     }
     setBusy(false);
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
-    navigate("/");
+    navigate(returnTo, { replace: true });
   };
 
   return (
@@ -60,7 +64,7 @@ export function TelaCriarConta() {
 
         {vista === "opcoes" ? (
           <div className="flex flex-col gap-3">
-            <GoogleButton label="Cadastrar com Google" />
+            <GoogleButton label="Cadastrar com Google" returnTo={returnTo} />
             <Button
               variant="outline"
               className="h-[52px] rounded-2xl text-base font-semibold"
