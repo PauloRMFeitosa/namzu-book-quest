@@ -23,6 +23,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { iniciarLeitura, registrarProgresso } from "@/hooks/leituras/useLeituraActions";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { PercentualProgressoControl } from "./PercentualProgressoControl";
+import { temDicaPendente, dispensarDica } from "@/hooks/useDicaPrimeiraVez";
+
+function dicaPrimeiraLeitura() {
+  if (!temDicaPendente("primeira_leitura")) return;
+  dispensarDica("primeira_leitura");
+  toast.info("💡 Continue registrando a cada sessão — suas estatísticas de leitura ficam mais ricas!", {
+    duration: 7000,
+  });
+}
 
 type Citacao = { texto: string; pagina: string };
 type Aplicacao = { descricao: string; plano_acao: any };
@@ -277,6 +286,7 @@ export const RegistrarLeituraDialog = ({
       }
 
       toast.success(isEdit ? "Leitura atualizada!" : "Leitura registrada!");
+      if (!isEdit) dicaPrimeiraLeitura();
       if (DRAFT_KEY) localStorage.removeItem(DRAFT_KEY);
       snapshotRef.current = currentState();
       reset();

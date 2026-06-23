@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { temDicaPendente, dispensarDica } from "@/hooks/useDicaPrimeiraVez";
 
 type ClubePostRow = Database["public"]["Tables"]["clube_posts"]["Row"];
 type AutorPerfil = Pick<
@@ -287,6 +288,15 @@ export const useCurtirPost = (clubeId: string | undefined) => {
         old ? old.map(withUpdatedLike(postId, curtido)) : old,
       );
       return { prev, prevRespostas };
+    },
+    onSuccess: (_data, variables) => {
+      // Dica de primeira curtida (só quando o usuário está curtindo, não descurtindo)
+      if (!variables.curtido && temDicaPendente("primeira_curtida")) {
+        dispensarDica("primeira_curtida");
+        toast.info("💡 Responda um post para começar uma conversa com outros leitores!", {
+          duration: 7000,
+        });
+      }
     },
     onError: (e, _v, ctx) => {
       ctx?.prev?.forEach(([key, data]) => qc.setQueryData(key as QueryKey, data));

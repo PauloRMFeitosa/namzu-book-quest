@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { temDicaPendente, dispensarDica } from "@/hooks/useDicaPrimeiraVez";
+import { pedirPermissaoNotificacao } from "@/hooks/usePermissaoNotificacao";
 
 export interface ClubeDetalhe {
   id: string;
@@ -172,6 +174,13 @@ export const useEntrarClube = (clubeId: string | undefined) => {
     onSuccess: (status) => {
       if (status === "ativo") {
         toast.success("Bem-vindo ao clube!");
+        if (temDicaPendente("primeiro_clube")) {
+          dispensarDica("primeiro_clube");
+          toast.info("💡 No feed do clube você troca ideias com outros leitores — tente responder um post!", {
+            duration: 7000,
+          });
+        }
+        pedirPermissaoNotificacao("Avisar quando houver novidades neste clube?");
       } else {
         toast.success("Solicitação enviada! Aguarde aprovação do curador.");
       }
