@@ -12,7 +12,7 @@ import { BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { trackOnboarding } from "@/services/analyticsOnboarding";
 
-type Vista = "opcoes" | "email";
+type Vista = "opcoes" | "email" | "login";
 
 interface Props {
   returnTo?: string;
@@ -24,6 +24,8 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [emailLogin, setEmailLogin] = useState("");
+  const [senhaLogin, setSenhaLogin] = useState("");
   const [busy, setBusy] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -49,6 +51,86 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
     toast.success("Conta criada! Bem-vindo ao NAMZU.");
     navigate(returnTo, { replace: true });
   };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailLogin,
+      password: senhaLogin,
+    });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    if (data.user && temDadosDeOnboarding()) {
+      try { await executarMergeOnboarding(data.user.id); } catch {}
+    }
+    setBusy(false);
+    navigate(returnTo, { replace: true });
+  };
+
+  if (vista === "login") {
+    return (
+      <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
+        <div className="flex-1">
+          <h2 className="font-display text-2xl font-bold text-foreground mb-1">
+            Entrar
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Bem-vindo de volta ao NAMZU.
+          </p>
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div>
+              <Label htmlFor="login-email">E-mail</Label>
+              <Input
+                id="login-email"
+                type="email"
+                required
+                value={emailLogin}
+                onChange={(e) => setEmailLogin(e.target.value)}
+                className="h-[52px] rounded-2xl mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="login-senha">Senha</Label>
+              <Input
+                id="login-senha"
+                type="password"
+                required
+                value={senhaLogin}
+                onChange={(e) => setSenhaLogin(e.target.value)}
+                className="h-[52px] rounded-2xl mt-1"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={busy}
+              className="h-[52px] rounded-2xl text-base font-semibold bg-primary hover:bg-primary/90 mt-2"
+            >
+              {busy ? "Entrando…" : "Entrar"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setVista("opcoes")}
+              className="text-muted-foreground"
+            >
+              ← Voltar
+            </Button>
+          </form>
+        </div>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Não tem conta?{" "}
+            <button
+              onClick={() => setVista("opcoes")}
+              className="text-primary font-semibold"
+            >
+              Criar conta
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
@@ -139,9 +221,12 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
         </p>
         <p className="text-sm text-muted-foreground mt-4">
           Já tem conta?{" "}
-          <Link to="/login" className="text-primary font-semibold">
+          <button
+            onClick={() => setVista("login")}
+            className="text-primary font-semibold"
+          >
             Entrar
-          </Link>
+          </button>
         </p>
       </div>
     </div>
