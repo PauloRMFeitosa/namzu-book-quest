@@ -25,15 +25,11 @@ export async function executarMergeOnboarding(userId: string): Promise<void> {
   // 2. Popular estante inicial
   await supabase.rpc("seed_estante_inicial", { p_user_id: userId });
 
-  // 3. Match de clubes e auto-join
-  const { data: clubes } = await supabase.rpc("match_clubes_por_gosto", {
-    p_generos: generosFinais,
-    p_objetivo: objetivoFinal,
-  });
-
-  if (clubes && clubes.length > 0) {
-    const membros = clubes.map((c: { clube_id: string }) => ({
-      clube_id: c.clube_id,
+  // 3. Auto-join nos clubes que o usuário manteve selecionados na T5
+  const { clubesSelecionados } = useOnboardingStore.getState();
+  if (clubesSelecionados.length > 0) {
+    const membros = clubesSelecionados.map((clube_id) => ({
+      clube_id,
       user_id: userId,
       status: "ativo",
       papel: "membro",
