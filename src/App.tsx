@@ -1,14 +1,13 @@
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { FontSizeProvider } from "@/hooks/useFontSize";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Onboarding from "./pages/Onboarding";
 import OnboardingInteresses from "./pages/OnboardingInteresses";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -74,7 +73,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/comecar" element={<Comecar />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding" element={<Navigate to="/comecar" replace />} />
             <Route path="/onboarding-interesses" element={<OnboardingInteresses />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
