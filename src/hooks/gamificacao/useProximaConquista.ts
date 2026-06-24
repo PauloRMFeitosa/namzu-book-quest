@@ -10,24 +10,18 @@ type Conquista = {
   descricao: string;
   xp_recompensa: number;
   categoria?: string | null;
+  raridade?: string | null;
+  meta_valor?: number | null;
+  meta_categoria?: string | null;
 };
 
-// metas implícitas pelo código
-const META_POR_CODIGO: Record<string, { meta: number; unidade: string; categoria: string }> = {
-  leitura_1: { meta: 1, unidade: "livros", categoria: "leitura" },
-  leitura_5: { meta: 5, unidade: "livros", categoria: "leitura" },
-  leitura_10: { meta: 10, unidade: "livros", categoria: "leitura" },
-  leitura_50: { meta: 50, unidade: "livros", categoria: "leitura" },
-  leitura_100: { meta: 100, unidade: "livros", categoria: "leitura" },
-  consistencia_7: { meta: 7, unidade: "dias", categoria: "consistencia" },
-  consistencia_30: { meta: 30, unidade: "dias", categoria: "consistencia" },
-  consistencia_100: { meta: 100, unidade: "dias", categoria: "consistencia" },
-  conhecimento_1: { meta: 1, unidade: "insights", categoria: "conhecimento" },
-  conhecimento_10: { meta: 10, unidade: "insights", categoria: "conhecimento" },
-  conhecimento_100: { meta: 100, unidade: "insights", categoria: "conhecimento" },
-  comunidade_1: { meta: 1, unidade: "clubes", categoria: "comunidade" },
-  comunidade_50: { meta: 50, unidade: "publicações", categoria: "comunidade" },
-  comunidade_500: { meta: 500, unidade: "curtidas", categoria: "comunidade" },
+const UNIDADE_POR_CATEGORIA: Record<string, string> = {
+  leitura:             "livros",
+  consistencia:        "dias",
+  conhecimento:        "insights",
+  comunidade_clubes:   "clubes",
+  comunidade_posts:    "publicações",
+  comunidade_curtidas: "curtidas",
 };
 
 export const useProximaConquista = () => {
@@ -72,43 +66,53 @@ export const useProximaConquista = () => {
         insightsCount = (c1.count ?? 0) + (c2.count ?? 0);
       }
 
-      const counts: Record<string, number> = {
-        leitura: (leiturasConcRes.data ?? []).length,
-        consistencia: streak?.atual ?? 0,
-        conhecimento: insightsCount,
-        comunidade_clubes: (clubesRes.data ?? []).length,
-        comunidade_posts: (postsRes.data ?? []).length,
-        comunidade_curtidas: 0, // TODO: somar de clube_posts.curtidas_count posts próprios
-      };
-      // soma curtidas recebidas
       const { data: meusPosts } = await supabase
         .from("clube_posts")
         .select("curtidas_count")
         .eq("user_id", user!.id);
-      counts.comunidade_curtidas = (meusPosts ?? []).reduce(
+      const curtidas = (meusPosts ?? []).reduce(
         (s: number, p: any) => s + (p.curtidas_count ?? 0),
         0,
       );
 
+      const counts: Record<string, number> = {
+        leitura:             (leiturasConcRes.data ?? []).length,
+        consistencia:        streak?.atual ?? 0,
+        conhecimento:        insightsCount,
+        comunidade_clubes:   (clubesRes.data ?? []).length,
+        comunidade_posts:    (postsRes.data ?? []).length,
+        comunidade_curtidas: curtidas,
+      };
+
       const owned = new Set((ownedRes.data ?? []).map((r: any) => r.conquista_id));
       const todas = ((conqRes.data ?? []) as unknown) as Conquista[];
 
-      let melhor: { conquista: Conquista; falta: number; unidade: string; atual: number; meta: number } | null = null;
+      let melhor: {
+        conquista: Conquista;
+        falta: number;
+        unidade: string;
+        atual: number;
+        meta: number;
+      } | null = null;
+
       for (const c of todas) {
         if (owned.has(c.id)) continue;
-        const meta = META_POR_CODIGO[c.codigo];
-        if (!meta) continue;
-        let atual = 0;
-        if (meta.categoria === "leitura") atual = counts.leitura;
-        else if (meta.categoria === "consistencia") atual = counts.consistencia;
-        else if (meta.categoria === "conhecimento") atual = counts.conhecimento;
-        else if (c.codigo === "comunidade_1") atual = counts.comunidade_clubes;
-        else if (c.codigo === "comunidade_50") atual = counts.comunidade_posts;
-        else if (c.codigo === "comunidade_500") atual = counts.comunidade_curtidas;
-        const falta = Math.max(0, meta.meta - atual);
+        // usa meta_valor/meta_categoria do banco (elimina META_POR_CODIGO)
+        if (!c.meta_valor || !c.meta_categoria) continue;
+
+        const cat = c.meta_categoria;
+        const atual = counts[cat] ?? 0;
+        const falta = Math.max(0, c.meta_valor - atual);
         if (falta === 0) continue;
+
         if (!melhor || falta < melhor.falta) {
-          melhor = { conquista: c, falta, unidade: meta.unidade, atual, meta: meta.meta };
+          melhor = {
+            conquista: c,
+            falta,
+            unidade: UNIDADE_POR_CATEGORIA[cat] ?? "",
+            atual,
+            meta: c.meta_valor,
+          };
         }
       }
       return melhor;

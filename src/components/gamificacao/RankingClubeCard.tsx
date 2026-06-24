@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { Crown, Flame } from "lucide-react";
+import { Crown, Calendar } from "lucide-react";
 import { useRankingClube } from "@/hooks/gamificacao/useRankingClube";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
+
+function formatarSemana(inicio: string, fim: string): string {
+  const fmt = (d: string) => {
+    const [, m, day] = d.split("-");
+    return `${parseInt(day)}/${parseInt(m)}`;
+  };
+  return `${fmt(inicio)} – ${fmt(fim)}`;
+}
 
 export const RankingClubeCard = () => {
   const { data } = useRankingClube();
@@ -14,9 +22,15 @@ export const RankingClubeCard = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-primary font-semibold">
-            Ranking do clube
+            Liga da semana
           </p>
           <p className="font-bold leading-tight truncate">{data.clube.nome}</p>
+          {data.semana && (
+            <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+              <Calendar className="w-3 h-3" />
+              {formatarSemana(data.semana.inicio, data.semana.fim)}
+            </p>
+          )}
         </div>
         <button
           onClick={() => navigate(`/clubes/${data.clube.id}`)}
@@ -32,15 +46,15 @@ export const RankingClubeCard = () => {
             className={`flex items-center gap-3 px-3 py-2 rounded-xl ${r.isMe ? "bg-primary/5 ring-1 ring-primary/20" : ""}`}
           >
             <span className="w-6 text-center text-base">
-              {MEDALS[r.posicao - 1] ?? <span className="text-xs text-muted-foreground">{r.posicao}º</span>}
+              {MEDALS[r.posicao - 1] ?? (
+                <span className="text-xs text-muted-foreground">{r.posicao}º</span>
+              )}
             </span>
-            <Crown className={`w-4 h-4 ${r.posicao === 1 ? "text-yellow-500" : "text-muted-foreground"}`} />
+            <Crown
+              className={`w-4 h-4 ${r.posicao === 1 ? "text-yellow-500" : "text-muted-foreground"}`}
+            />
             <span className="flex-1 font-medium truncate text-sm">{r.nome}</span>
             <span className="text-sm font-bold tabular-nums">{r.xp} XP</span>
-            <span className="flex items-center gap-0.5 text-xs text-orange-500 tabular-nums">
-              <Flame className="w-3 h-3" />
-              {r.streak}
-            </span>
           </div>
         ))}
         {data.minhaPosicao && data.minhaPosicao > 5 && (

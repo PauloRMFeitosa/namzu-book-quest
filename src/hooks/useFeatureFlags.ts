@@ -31,7 +31,8 @@ export type FeatureFlagKey =
   | "show_menu_inferior_perfil"
   // fluxos de entrada
   | "show_onboarding"
-  | "show_codigo_me";
+  | "show_codigo_me"
+  | "show_gamificacao_clube";
 
 const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clubes: true,
@@ -61,6 +62,7 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_menu_inferior_perfil: true,
   show_onboarding: true,
   show_codigo_me: true,
+  show_gamificacao_clube: false,
 };
 
 export const useFeatureFlags = () => {
