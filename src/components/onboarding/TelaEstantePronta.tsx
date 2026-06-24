@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useOnboardingStore } from "@/stores/onboardingStore";
-import { BookOpen, Users, Sparkles } from "lucide-react";
+import { BookOpen, CheckCircle2, Circle, Sparkles, Users } from "lucide-react";
 
 type Clube = { clube_id: string; nome: string; descricao: string };
 type Obra = { id: string; titulo_original: string; capa_padrao_url: string | null };
@@ -31,8 +31,9 @@ function BookCard({ obra }: { obra: Obra }) {
 }
 
 export function TelaEstantePronta({ onAvancar }: Props) {
-  const { generos, objetivo, livrosAmados } = useOnboardingStore();
+  const { generos, objetivo, livrosAmados, setClubesSelecionados } = useOnboardingStore();
   const [clubes, setClubes] = useState<Clube[]>([]);
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [livrosSelecionados, setLivrosSelecionados] = useState<Obra[]>([]);
   const [sugestoes, setSugestoes] = useState<Obra[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -50,9 +51,12 @@ export function TelaEstantePronta({ onAvancar }: Props) {
         supabase.from("generos").select("id").in("slug", generosParaUsar),
       ]);
 
-      if (clubesRes.data) setClubes(clubesRes.data);
+      if (clubesRes.data) {
+        setClubes(clubesRes.data);
+        // todos selecionados por padrão
+        setMarcados(new Set(clubesRes.data.map((c: Clube) => c.clube_id)));
+      }
 
-      // Linha 1: livros que o usuário escolheu no T3
       if (livrosAmados.length > 0) {
         const { data } = await supabase
           .from("obras")
@@ -61,7 +65,6 @@ export function TelaEstantePronta({ onAvancar }: Props) {
         if (data) setLivrosSelecionados(data);
       }
 
-      // Linha 2: 3 sugestões por gênero (excluindo já escolhidos)
       const ids = (generosRes.data ?? []).map((g: { id: string }) => g.id);
       if (ids.length > 0) {
         const { data } = await supabase
@@ -87,6 +90,19 @@ export function TelaEstantePronta({ onAvancar }: Props) {
     }
     carregar();
   }, []);
+
+  const toggleClube = (id: string) => {
+    setMarcados((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleAvancar = () => {
+    setClubesSelecionados(Array.from(marcados));
+    onAvancar();
+  };
 
   return (
     <div className="flex flex-col min-h-screen px-6 pt-6 pb-8">
@@ -142,23 +158,45 @@ export function TelaEstantePronta({ onAvancar }: Props) {
                   Clubes pra você
                 </p>
                 <div className="flex flex-col gap-2">
-                  {clubes.map((c) => (
-                    <div
-                      key={c.clube_id}
-                      className="flex items-center gap-3 bg-secondary/50 rounded-2xl px-4 py-3"
-                    >
-                      <Users className="w-4 h-4 text-primary shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{c.nome}</p>
-                        {c.descricao && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {c.descricao}
+                  {clubes.map((c) => {
+                    const ativo = marcados.has(c.clube_id);
+                    return (
+                      <button
+                        key={c.clube_id}
+                        onClick={() => toggleClube(c.clube_id)}
+                        aria-pressed={ativo}
+                        className={[
+                          "flex items-center gap-3 w-full rounded-2xl border px-4 py-3 text-left transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                          ativo
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-background opacity-50",
+                        ].join(" ")}
+                      >
+                        <Users className={["w-4 h-4 shrink-0", ativo ? "text-primary" : "text-muted-foreground"].join(" ")} />
+                        <div className="min-w-0 flex-1">
+                          <p className={["text-sm font-semibold truncate", ativo ? "" : "text-muted-foreground"].join(" ")}>
+                            {c.nome}
                           </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                          {c.descricao && (
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {c.descricao}
+                            </p>
+                          )}
+                        </div>
+                        {ativo
+                          ? <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                          : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
+                        }
+                      </button>
+                    );
+                  })}
                 </div>
+                {marcados.size < clubes.length && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Você pode entrar nos clubes desmarcados depois, quando quiser.
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -167,7 +205,7 @@ export function TelaEstantePronta({ onAvancar }: Props) {
 
       <div className="mt-8">
         <Button
-          onClick={onAvancar}
+          onClick={handleAvancar}
           className="h-[52px] w-full rounded-2xl text-base font-semibold bg-primary hover:bg-primary/90"
         >
           Guardar minha estante
