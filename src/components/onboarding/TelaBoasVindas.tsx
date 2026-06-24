@@ -68,7 +68,7 @@ export function TelaBoasVindas({ onAvancar }: Props) {
         >
           Começar
         </Button>
-        <Button variant="ghost" asChild className="h-[52px] text-muted-foreground">
+        <Button variant="ghost" asChild className="h-[52px] rounded-2xl text-muted-foreground">
           <Link to="/login">Já tenho conta</Link>
         </Button>
       </div>

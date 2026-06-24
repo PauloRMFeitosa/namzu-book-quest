@@ -13,7 +13,7 @@ const Configuracoes = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const destination = flags.show_onboarding ? "/onboarding" : "/login";
+    const destination = flags.show_onboarding ? "/comecar" : "/login";
     await signOut();
     navigate(destination);
   };
