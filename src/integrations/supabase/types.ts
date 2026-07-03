@@ -3233,6 +3233,8 @@ export type Database = {
           ator_id: string
           ator_nome: string
           ator_username: string
+          autor_id: string
+          autor_nome: string
           ocorreu_em: string
           referencia_capa: string
           referencia_id: string

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +18,8 @@ interface AtividadeItem {
   referencia_id: string;
   referencia_nome: string;
   referencia_capa: string | null;
+  autor_id: string | null;
+  autor_nome: string | null;
   ocorreu_em: string;
 }
 
@@ -70,23 +73,43 @@ function AtividadeCard({ item }: { item: AtividadeItem }) {
     addSuffix: true,
     locale: ptBR,
   });
+  // A referência só é uma obra nos eventos de livro (em conquistas é o id da conquista)
+  const ehLivro = item.tipo.startsWith("livro_");
 
   return (
     <div className="flex gap-3 items-start py-3 border-b border-border/60 last:border-0">
-      {/* Avatar */}
-      <Avatar className="w-9 h-9 shrink-0">
-        <AvatarImage src={item.ator_avatar ?? undefined} alt={item.ator_nome} />
-        <AvatarFallback className="text-xs font-semibold bg-secondary text-secondary-foreground">
-          {initials(item.ator_nome ?? "?")}
-        </AvatarFallback>
-      </Avatar>
+      {/* Avatar → perfil público */}
+      <Link to={`/perfis/${item.ator_id}`} className="shrink-0">
+        <Avatar className="w-9 h-9">
+          <AvatarImage src={item.ator_avatar ?? undefined} alt={item.ator_nome} />
+          <AvatarFallback className="text-xs font-semibold bg-secondary text-secondary-foreground">
+            {initials(item.ator_nome ?? "?")}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
 
       {/* Texto */}
       <div className="flex-1 min-w-0">
         <p className="text-sm leading-snug">
-          <span className="font-semibold">{item.ator_nome}</span>{" "}
+          <Link to={`/perfis/${item.ator_id}`} className="font-semibold hover:underline">
+            {item.ator_nome}
+          </Link>{" "}
           <span className="text-muted-foreground">{cfg.label}</span>{" "}
-          <span className="font-medium">«{item.referencia_nome}»</span>
+          {ehLivro ? (
+            <Link to={`/obras/${item.referencia_id}`} className="font-medium hover:underline">
+              «{item.referencia_nome}»
+            </Link>
+          ) : (
+            <span className="font-medium">«{item.referencia_nome}»</span>
+          )}
+          {ehLivro && item.autor_id && item.autor_nome && (
+            <span className="text-muted-foreground">
+              , de{" "}
+              <Link to={`/autores/${item.autor_id}`} className="font-medium text-foreground hover:underline">
+                {item.autor_nome}
+              </Link>
+            </span>
+          )}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">{quando}</p>
       </div>
@@ -98,16 +121,19 @@ function AtividadeCard({ item }: { item: AtividadeItem }) {
         <Icon className="w-3.5 h-3.5" />
       </div>
 
-      {/* Capa do livro (quando disponível) */}
+      {/* Capa do livro (quando disponível, só existe em eventos de livro) → página da obra */}
       {item.referencia_capa && (
-        <div className="shrink-0 w-9 aspect-[2/3] rounded overflow-hidden border border-border/60">
+        <Link
+          to={`/obras/${item.referencia_id}`}
+          className="shrink-0 w-9 aspect-[2/3] rounded overflow-hidden border border-border/60"
+        >
           <img
             src={item.referencia_capa}
             alt={item.referencia_nome}
             className="w-full h-full object-cover"
             loading="lazy"
           />
-        </div>
+        </Link>
       )}
     </div>
   );
