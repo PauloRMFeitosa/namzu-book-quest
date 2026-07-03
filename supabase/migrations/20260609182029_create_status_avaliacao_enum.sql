@@ -1,0 +1,7 @@
+
+CREATE TYPE status_avaliacao_tipo AS ENUM (
+  'PENDENTE',
+  'AVALIADO',
+  'DISPENSADO_TEMPORARIO',
+  'DISPENSADO_DEFINITIVO'
+);
