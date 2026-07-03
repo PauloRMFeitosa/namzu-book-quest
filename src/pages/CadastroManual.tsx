@@ -18,6 +18,7 @@ import { TagsInput } from "@/components/leituras/TagsInput";
 import { AutorAutocomplete } from "@/components/cadastro-manual/AutorAutocomplete";
 import { ObraAutocomplete } from "@/components/cadastro-manual/ObraAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -152,6 +153,7 @@ const CadastroManual = () => {
       const edicaoId: string | null = data?.edicao_id ?? null;
       if (!obraId) throw new Error("Resposta inválida");
 
+      // edicao_id ausente é preenchido pelo trigger fn_auto_edicao_id_from_obra
       const { error: ulErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
@@ -160,7 +162,7 @@ const CadastroManual = () => {
         data_inicio: obraStatus !== "quero_ler" ? dataInicio || null : null,
         data_fim: obraStatus === "concluido" ? dataFim || null : null,
         nota: obraStatus === "concluido" && nota ? Number(nota) : null,
-      });
+      } as TablesInsert<"usuario_livros">);
       if (ulErr && ulErr.code !== "23505") throw ulErr;
 
       toast.success("Obra cadastrada");

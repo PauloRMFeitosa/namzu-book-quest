@@ -55,7 +55,7 @@ As flags são armazenadas na tabela `app_settings` do Supabase e lidas via `useF
 ### Backend (Supabase)
 
 - **Edge Functions** ficam em `supabase/functions/`. Cada função é um módulo Deno independente. O diretório `_shared/` contém utilitários compartilhados entre funções (normalização de gênero, etc.).
-- **Migrações** em `supabase/migrations/`. O arquivo principal de schema é `fase4_citacoes_e_matches.sql`, que define citações (`leitura_citacoes`), RPC de matching inteligente entre usuários (`calcular_matches`) e a fórmula de pontuação: `(interesses_comuns × 3) + (generos_comuns × 2) + (livros_comuns × 5)`, normalizada de 0 a 100.
+- **Migrações** em `supabase/migrations/` — arquivos versionados (`<timestamp>_<nome>.sql`) espelham o histórico real aplicado ao projeto remoto (ver `supabase/migrations/README.md`). Toda mudança de schema deve gerar um arquivo aqui e ser aplicada no remoto com a mesma versão. Arquivos antigos sem versionamento ficam em `legado/` (ex.: `fase4_citacoes_e_matches.sql`, que define citações, a RPC `calcular_matches` e a fórmula de pontuação `(interesses_comuns × 3) + (generos_comuns × 2) + (livros_comuns × 5)`, normalizada de 0 a 100).
 - **`supabase/config.toml`** — Registro de Edge Functions. Novas funções devem ser adicionadas aqui para serem implantadas.
 
 ### Estilização

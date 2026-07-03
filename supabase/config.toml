@@ -36,3 +36,9 @@ verify_jwt = false
 [functions.conciliar-autor]
 verify_jwt = false
 
+[functions.reprocessar-generos]
+verify_jwt = false
+
+[functions.reprocessar-obras]
+verify_jwt = false
+

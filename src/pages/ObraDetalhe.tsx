@@ -1,6 +1,7 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, BookOpen, Star, BookmarkPlus, CheckCheck, Loader2, Quote, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -223,13 +224,14 @@ const ObraDetalhe = () => {
     const edicaoId = obra.edicoes?.[0]?.id ?? undefined;
     const { data: novo, error } = await supabase
       .from("usuario_livros")
+      // edicao_id ausente é preenchido pelo trigger fn_auto_edicao_id_from_obra
       .insert({
         user_id: user.id,
         obra_id: id!,
         ...(edicaoId ? { edicao_id: edicaoId } : {}),
         status,
         ...(status === "lido" ? { data_fim: today } : {}),
-      })
+      } as TablesInsert<"usuario_livros">)
       .select("id")
       .single();
     setAdicionando(false);
