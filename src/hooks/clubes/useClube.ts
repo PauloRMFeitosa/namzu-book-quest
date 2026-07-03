@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { temDicaPendente, dispensarDica } from "@/hooks/useDicaPrimeiraVez";
@@ -142,7 +143,8 @@ async function sincronizarLivrosClube(userId: string, clubeId: string) {
     if (!ex) {
       const { data: novo } = await supabase
         .from("usuario_livros")
-        .insert({ user_id: userId, obra_id, status: "quero_ler" })
+        // edicao_id é preenchido pelo trigger fn_auto_edicao_id_from_obra
+        .insert({ user_id: userId, obra_id, status: "quero_ler" } as TablesInsert<"usuario_livros">)
         .select("id")
         .single();
       usuarioLivroId = novo?.id;

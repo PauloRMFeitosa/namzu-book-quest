@@ -253,6 +253,38 @@ export type Database = {
           },
         ]
       }
+      clube_gamificacao: {
+        Row: {
+          clube_id: string
+          nivel: number
+          updated_at: string | null
+          xp_proximo_nivel: number
+          xp_total: number
+        }
+        Insert: {
+          clube_id: string
+          nivel?: number
+          updated_at?: string | null
+          xp_proximo_nivel?: number
+          xp_total?: number
+        }
+        Update: {
+          clube_id?: string
+          nivel?: number
+          updated_at?: string | null
+          xp_proximo_nivel?: number
+          xp_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_gamificacao_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: true
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_membros: {
         Row: {
           clube_id: string
@@ -407,9 +439,11 @@ export type Database = {
           created_at: string | null
           curtidas_count: number | null
           id: string
+          imagem_url: string | null
           is_destaque_curador: boolean | null
           obra_id: string | null
           parent_post_id: string | null
+          tipo: string
           user_id: string
         }
         Insert: {
@@ -418,9 +452,11 @@ export type Database = {
           created_at?: string | null
           curtidas_count?: number | null
           id?: string
+          imagem_url?: string | null
           is_destaque_curador?: boolean | null
           obra_id?: string | null
           parent_post_id?: string | null
+          tipo?: string
           user_id: string
         }
         Update: {
@@ -429,9 +465,11 @@ export type Database = {
           created_at?: string | null
           curtidas_count?: number | null
           id?: string
+          imagem_url?: string | null
           is_destaque_curador?: boolean | null
           obra_id?: string | null
           parent_post_id?: string | null
+          tipo?: string
           user_id?: string
         }
         Relationships: [
@@ -536,6 +574,50 @@ export type Database = {
           },
         ]
       }
+      clube_temporadas_ranking: {
+        Row: {
+          clube_id: string
+          created_at: string | null
+          id: string
+          posicao: number | null
+          semana_fim: string
+          semana_inicio: string
+          updated_at: string | null
+          user_id: string
+          xp_na_semana: number
+        }
+        Insert: {
+          clube_id: string
+          created_at?: string | null
+          id?: string
+          posicao?: number | null
+          semana_fim: string
+          semana_inicio: string
+          updated_at?: string | null
+          user_id: string
+          xp_na_semana?: number
+        }
+        Update: {
+          clube_id?: string
+          created_at?: string | null
+          id?: string
+          posicao?: number | null
+          semana_fim?: string
+          semana_inicio?: string
+          updated_at?: string | null
+          user_id?: string
+          xp_na_semana?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_temporadas_ranking_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_threads: {
         Row: {
           canal_id: string | null
@@ -630,6 +712,7 @@ export type Database = {
           objetivo: string | null
           preco_centavos: number | null
           regras: string | null
+          updated_at: string
           visibilidade: string
         }
         Insert: {
@@ -645,6 +728,7 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          updated_at?: string
           visibilidade?: string
         }
         Update: {
@@ -660,6 +744,7 @@ export type Database = {
           objetivo?: string | null
           preco_centavos?: number | null
           regras?: string | null
+          updated_at?: string
           visibilidade?: string
         }
         Relationships: []
@@ -707,7 +792,10 @@ export type Database = {
           descricao: string
           icone_url: string | null
           id: string
+          meta_categoria: string | null
+          meta_valor: number | null
           nome: string
+          raridade: string
           xp_recompensa: number | null
         }
         Insert: {
@@ -716,7 +804,10 @@ export type Database = {
           descricao: string
           icone_url?: string | null
           id?: string
+          meta_categoria?: string | null
+          meta_valor?: number | null
           nome: string
+          raridade?: string
           xp_recompensa?: number | null
         }
         Update: {
@@ -725,7 +816,10 @@ export type Database = {
           descricao?: string
           icone_url?: string | null
           id?: string
+          meta_categoria?: string | null
+          meta_valor?: number | null
           nome?: string
+          raridade?: string
           xp_recompensa?: number | null
         }
         Relationships: []
@@ -1106,6 +1200,8 @@ export type Database = {
         Row: {
           nivel: number
           streak_atual: number
+          streak_freezes_disponiveis: number
+          streak_freezes_usados_total: number
           streak_maximo: number
           ultima_atividade_date: string | null
           updated_at: string | null
@@ -1116,6 +1212,8 @@ export type Database = {
         Insert: {
           nivel?: number
           streak_atual?: number
+          streak_freezes_disponiveis?: number
+          streak_freezes_usados_total?: number
           streak_maximo?: number
           ultima_atividade_date?: string | null
           updated_at?: string | null
@@ -1126,6 +1224,8 @@ export type Database = {
         Update: {
           nivel?: number
           streak_atual?: number
+          streak_freezes_disponiveis?: number
+          streak_freezes_usados_total?: number
           streak_maximo?: number
           ultima_atividade_date?: string | null
           updated_at?: string | null
@@ -1642,6 +1742,63 @@ export type Database = {
           },
         ]
       }
+      leitura_resenha: {
+        Row: {
+          created_at: string
+          id: string
+          leitura_id: string | null
+          nota: number | null
+          obra_id: string
+          tem_spoiler: boolean
+          texto: string
+          titulo: string | null
+          updated_at: string
+          user_id: string
+          visibilidade: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leitura_id?: string | null
+          nota?: number | null
+          obra_id: string
+          tem_spoiler?: boolean
+          texto: string
+          titulo?: string | null
+          updated_at?: string
+          user_id: string
+          visibilidade?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leitura_id?: string | null
+          nota?: number | null
+          obra_id?: string
+          tem_spoiler?: boolean
+          texto?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id?: string
+          visibilidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leitura_resenha_leitura_id_fkey"
+            columns: ["leitura_id"]
+            isOneToOne: false
+            referencedRelation: "leituras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leitura_resenha_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leitura_tags: {
         Row: {
           created_at: string | null
@@ -1916,6 +2073,7 @@ export type Database = {
           lida: boolean | null
           link_url: string | null
           mensagem: string
+          referencia_id: string | null
           tipo: string
           titulo: string
           user_id: string
@@ -1926,6 +2084,7 @@ export type Database = {
           lida?: boolean | null
           link_url?: string | null
           mensagem: string
+          referencia_id?: string | null
           tipo: string
           titulo: string
           user_id: string
@@ -1936,6 +2095,7 @@ export type Database = {
           lida?: boolean | null
           link_url?: string | null
           mensagem?: string
+          referencia_id?: string | null
           tipo?: string
           titulo?: string
           user_id?: string
@@ -2061,6 +2221,59 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      obras_candidatos_wikidata: {
+        Row: {
+          ano_publicacao: number | null
+          created_at: string
+          dados_externos: Json
+          descricao: string | null
+          id: string
+          idioma_original: string | null
+          obra_id: string
+          qid: string
+          score_namzu: number
+          titulo: string
+          updated_at: string
+          url_wikidata: string
+        }
+        Insert: {
+          ano_publicacao?: number | null
+          created_at?: string
+          dados_externos?: Json
+          descricao?: string | null
+          id?: string
+          idioma_original?: string | null
+          obra_id: string
+          qid: string
+          score_namzu: number
+          titulo: string
+          updated_at?: string
+          url_wikidata: string
+        }
+        Update: {
+          ano_publicacao?: number | null
+          created_at?: string
+          dados_externos?: Json
+          descricao?: string | null
+          id?: string
+          idioma_original?: string | null
+          obra_id?: string
+          qid?: string
+          score_namzu?: number
+          titulo?: string
+          updated_at?: string
+          url_wikidata?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_candidatos_wikidata_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       obras_duplicadas: {
         Row: {
@@ -2261,6 +2474,36 @@ export type Database = {
           },
         ]
       }
+      perfil_preferencias: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          generos: string[]
+          livros_amados: string[]
+          objetivo: string | null
+          ritmo: string | null
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          generos?: string[]
+          livros_amados?: string[]
+          objetivo?: string | null
+          ritmo?: string | null
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          generos?: string[]
+          livros_amados?: string[]
+          objetivo?: string | null
+          ritmo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           avatar_url: string | null
@@ -2275,6 +2518,7 @@ export type Database = {
           mostrar_insights: boolean
           nivel_intelectual: number | null
           nome_exibicao: string
+          onboarding_completo: boolean
           pais: string | null
           perfil_publico: boolean
           score_consistencia: number | null
@@ -2283,6 +2527,7 @@ export type Database = {
           score_social: number | null
           site_url: string | null
           slug: string | null
+          termos_aceitos_em: string | null
           tiktok_url: string | null
           tipo_perfil: string
           updated_at: string | null
@@ -2304,6 +2549,7 @@ export type Database = {
           mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao: string
+          onboarding_completo?: boolean
           pais?: string | null
           perfil_publico?: boolean
           score_consistencia?: number | null
@@ -2312,6 +2558,7 @@ export type Database = {
           score_social?: number | null
           site_url?: string | null
           slug?: string | null
+          termos_aceitos_em?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
@@ -2333,6 +2580,7 @@ export type Database = {
           mostrar_insights?: boolean
           nivel_intelectual?: number | null
           nome_exibicao?: string
+          onboarding_completo?: boolean
           pais?: string | null
           perfil_publico?: boolean
           score_consistencia?: number | null
@@ -2341,6 +2589,7 @@ export type Database = {
           score_social?: number | null
           site_url?: string | null
           slug?: string | null
+          termos_aceitos_em?: string | null
           tiktok_url?: string | null
           tipo_perfil?: string
           updated_at?: string | null
@@ -2567,12 +2816,64 @@ export type Database = {
           },
         ]
       }
+      usuario_livro_avaliacao: {
+        Row: {
+          created_at: string
+          dispensado_em: string | null
+          notificacao_enviada: boolean
+          notificacao_enviada_em: string | null
+          status: Database["public"]["Enums"]["status_avaliacao_tipo"]
+          updated_at: string
+          usuario_livro_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispensado_em?: string | null
+          notificacao_enviada?: boolean
+          notificacao_enviada_em?: string | null
+          status?: Database["public"]["Enums"]["status_avaliacao_tipo"]
+          updated_at?: string
+          usuario_livro_id: string
+        }
+        Update: {
+          created_at?: string
+          dispensado_em?: string | null
+          notificacao_enviada?: boolean
+          notificacao_enviada_em?: string | null
+          status?: Database["public"]["Enums"]["status_avaliacao_tipo"]
+          updated_at?: string
+          usuario_livro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "usuario_livros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "vw_livros_lendo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "vw_ultimos_lidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuario_livros: {
         Row: {
           created_at: string | null
           data_fim: string | null
           data_inicio: string | null
-          edicao_id: string | null
+          edicao_id: string
           favorito: boolean | null
           id: string
           nota: number | null
@@ -2586,7 +2887,7 @@ export type Database = {
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
-          edicao_id?: string | null
+          edicao_id: string
           favorito?: boolean | null
           id?: string
           nota?: number | null
@@ -2600,7 +2901,7 @@ export type Database = {
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
-          edicao_id?: string | null
+          edicao_id?: string
           favorito?: boolean | null
           id?: string
           nota?: number | null
@@ -2631,6 +2932,7 @@ export type Database = {
         Row: {
           concluida: boolean | null
           concluida_em: string | null
+          data: string
           missao_id: string
           progresso_atual: number | null
           user_id: string
@@ -2638,6 +2940,7 @@ export type Database = {
         Insert: {
           concluida?: boolean | null
           concluida_em?: string | null
+          data?: string
           missao_id: string
           progresso_atual?: number | null
           user_id: string
@@ -2645,6 +2948,7 @@ export type Database = {
         Update: {
           concluida?: boolean | null
           concluida_em?: string | null
+          data?: string
           missao_id?: string
           progresso_atual?: number | null
           user_id?: string
@@ -2661,6 +2965,52 @@ export type Database = {
       }
     }
     Views: {
+      pendencias_avaliacao_home: {
+        Row: {
+          avaliacao_criada_em: string | null
+          capa_padrao_url: string | null
+          data_conclusao: string | null
+          dispensado_em: string | null
+          obra_id: string | null
+          status_avaliacao:
+            | Database["public"]["Enums"]["status_avaliacao_tipo"]
+            | null
+          titulo_original: string | null
+          total_pendencias: number | null
+          user_id: string | null
+          usuario_livro_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "usuario_livros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "vw_livros_lendo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livro_avaliacao_usuario_livro_id_fkey"
+            columns: ["usuario_livro_id"]
+            isOneToOne: true
+            referencedRelation: "vw_ultimos_lidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_livros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ranking_clube: {
         Row: {
           clube_id: string | null
@@ -2677,6 +3027,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clubes"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_seguidores: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          nome_exibicao: string | null
+          seguidor_id: string | null
+          slug: string | null
+          username: string | null
+          usuario_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conexoes_seguido_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conexoes_seguidor_id_fkey"
+            columns: ["seguidor_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      v_seguindo: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          nome_exibicao: string | null
+          seguido_id: string | null
+          slug: string | null
+          username: string | null
+          usuario_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conexoes_seguido_id_fkey"
+            columns: ["seguido_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conexoes_seguidor_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -2770,6 +3174,8 @@ export type Database = {
       }
     }
     Functions: {
+      aceitar_termos: { Args: never; Returns: undefined }
+      calcular_matches: { Args: { p_user_id?: string }; Returns: undefined }
       calcular_similaridade_obras: {
         Args: { p_obra_a: string; p_obra_b: string }
         Returns: {
@@ -2791,16 +3197,7 @@ export type Database = {
           maximo: number
         }[]
       }
-      criar_usuario_leitura: {
-        Args: {
-          p_clube_id: string
-          p_edicao_id: string
-          p_obra_id: string
-          p_tipo_origem: string
-        }
-        Returns: string
-      }
-      dar_xp: {
+      conceder_xp: {
         Args: {
           p_acao: string
           p_clube_id?: string
@@ -2810,9 +3207,105 @@ export type Database = {
         }
         Returns: undefined
       }
+      concluir_onboarding: { Args: never; Returns: undefined }
+      criar_usuario_leitura: {
+        Args: {
+          p_clube_id: string
+          p_edicao_id: string
+          p_obra_id: string
+          p_tipo_origem: string
+        }
+        Returns: string
+      }
+      desbloquear_conquista: {
+        Args: { p_codigo: string; p_user_id: string }
+        Returns: undefined
+      }
+      desseguir_usuario: { Args: { p_seguido_id: string }; Returns: undefined }
+      dispensar_avaliacao: {
+        Args: { p_definitivo?: boolean; p_usuario_livro_id: string }
+        Returns: undefined
+      }
+      feed_atividade: {
+        Args: { p_limite?: number }
+        Returns: {
+          ator_avatar: string
+          ator_id: string
+          ator_nome: string
+          ator_username: string
+          ocorreu_em: string
+          referencia_capa: string
+          referencia_id: string
+          referencia_nome: string
+          tipo: string
+        }[]
+      }
       finalizar_leitura: {
         Args: { p_usuario_leitura_id: string }
         Returns: undefined
+      }
+      fn_renotificar_avaliacoes_dispensadas: { Args: never; Returns: undefined }
+      get_contagem_social: {
+        Args: { p_user_id: string }
+        Returns: {
+          seguidores: number
+          seguindo: number
+        }[]
+      }
+      get_generos_lidos: {
+        Args: { p_user_id?: string }
+        Returns: {
+          genero: string
+          total: number
+        }[]
+      }
+      get_livros_por_mes: {
+        Args: { p_user_id?: string }
+        Returns: {
+          mes: string
+          total: number
+        }[]
+      }
+      get_meus_matches: {
+        Args: { p_limite?: number }
+        Returns: {
+          avatar_url: string
+          compatibilidade: number
+          motivos: Json
+          nome_exibicao: string
+          outro_user_id: string
+          total_lidos: number
+          username: string
+        }[]
+      }
+      get_minhas_citacoes: {
+        Args: never
+        Returns: {
+          autor_nome: string
+          created_at: string
+          id: string
+          obra_capa: string
+          obra_id: string
+          obra_titulo: string
+          pagina: number
+          texto: string
+        }[]
+      }
+      get_progresso_lendo: {
+        Args: never
+        Returns: {
+          percentual_lido: number
+          usuario_livro_id: string
+        }[]
+      }
+      get_stats_leitura: {
+        Args: { p_user_id?: string }
+        Returns: {
+          paginas_estimadas: number
+          streak_atual: number
+          total_citacoes: number
+          total_lidos: number
+        }[]
       }
       has_role: {
         Args: {
@@ -2833,12 +3326,30 @@ export type Database = {
         Args: { _clube: string; _user: string }
         Returns: boolean
       }
+      is_seguindo: { Args: { p_seguido_id: string }; Returns: boolean }
+      match_clubes_por_gosto: {
+        Args: { p_generos: string[]; p_objetivo: string }
+        Returns: {
+          categoria: string
+          clube_id: string
+          descricao: string
+          nome: string
+          score: number
+        }[]
+      }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
+      recalcular_meus_matches: { Args: never; Returns: undefined }
       refresh_ranking: { Args: never; Returns: undefined }
       registrar_progresso: {
         Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
         Returns: undefined
       }
+      registrar_progresso_missao: {
+        Args: { p_incremento?: number; p_meta_acao: string; p_user_id: string }
+        Returns: undefined
+      }
+      seed_estante_inicial: { Args: { p_user_id: string }; Returns: undefined }
+      seguir_usuario: { Args: { p_seguido_id: string }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       texto_similarity: {
@@ -2848,6 +3359,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      feed_tipo:
+        | "livro_adicionado"
+        | "livro_iniciado"
+        | "livro_concluido"
+        | "conquista_desbloqueada"
+      status_avaliacao_tipo:
+        | "PENDENTE"
+        | "AVALIADO"
+        | "DISPENSADO_TEMPORARIO"
+        | "DISPENSADO_DEFINITIVO"
       tipo_entidade_enum: "autor" | "obra" | "edicao" | "editora"
     }
     CompositeTypes: {
@@ -2977,6 +3498,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      feed_tipo: [
+        "livro_adicionado",
+        "livro_iniciado",
+        "livro_concluido",
+        "conquista_desbloqueada",
+      ],
+      status_avaliacao_tipo: [
+        "PENDENTE",
+        "AVALIADO",
+        "DISPENSADO_TEMPORARIO",
+        "DISPENSADO_DEFINITIVO",
+      ],
       tipo_entidade_enum: ["autor", "obra", "edicao", "editora"],
     },
   },

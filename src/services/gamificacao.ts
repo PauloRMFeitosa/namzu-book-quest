@@ -8,6 +8,8 @@ const DEFAULT_PERFIL: GamificacaoPerfil = {
   xp_total: 0,
   nivel: 1,
   streak_atual: 0,
+  streak_freezes_disponiveis: 0,
+  streak_freezes_usados_total: 0,
   streak_maximo: 0,
   xp_proximo_nivel: 100,
   ultima_atividade_date: null,

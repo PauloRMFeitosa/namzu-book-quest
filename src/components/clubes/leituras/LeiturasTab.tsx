@@ -22,6 +22,7 @@ import {
   useSalvarProgresso,
 } from "@/hooks/clubes/useClubeLeituras";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -118,7 +119,8 @@ const TrilhaCard = ({
     if (ul?.id) return { id: ul.id as string, status: ul.status as string };
     const { data: novo, error } = await supabase
       .from("usuario_livros")
-      .insert({ user_id: user.id, obra_id: trilha.obra_id, status: "quero_ler" })
+      // edicao_id é preenchido pelo trigger fn_auto_edicao_id_from_obra
+      .insert({ user_id: user.id, obra_id: trilha.obra_id, status: "quero_ler" } as TablesInsert<"usuario_livros">)
       .select("id, status")
       .single();
     if (error) throw error;

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -493,13 +494,14 @@ const Busca = () => {
       const edicaoId: string | null = data?.edicao_id ?? null;
 
       const today = new Date().toISOString().slice(0, 10);
+      // edicao_id ausente é preenchido pelo trigger fn_auto_edicao_id_from_obra
       const { error: insErr } = await supabase.from("usuario_livros").insert({
         user_id: user.id,
         obra_id: obraId,
         ...(edicaoId ? { edicao_id: edicaoId } : {}),
         status,
         ...(status === "lido" ? { data_fim: today, data_inicio: today } : {}),
-      });
+      } as TablesInsert<"usuario_livros">);
       if (insErr && insErr.code !== "23505") {
         const msg = insErr.message?.includes("ranking_clube") || insErr.message?.includes("refresh")
           ? "Erro ao atualizar ranking. Tente novamente."
