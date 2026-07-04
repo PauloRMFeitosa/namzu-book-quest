@@ -48,6 +48,7 @@ const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_clube_ai_resumo", label: "IA · Resumo da discussão", desc: "Exibir o botão Resumo IA no feed do clube." },
   { key: "show_clube_ai_matchmaking", label: "IA · Encontrar afinidades", desc: "Exibir o botão Encontrar afinidades nos microgrupos." },
   { key: "show_clube_ai_recomendacoes", label: "IA · Recomendações de clubes", desc: "Exibir o bloco Curadoria IA no marketplace." },
+  { key: "show_gamificacao_clube", label: "Gamificação do clube", desc: "Exibir liga semanal e nível do clube na página do clube." },
 ];
 
 // ─── Presets ─────────────────────────────────────────────────────────────────

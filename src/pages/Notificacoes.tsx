@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHero } from "@/components/PageHero";
-import { Bell, BellRing, Star, UserPlus, Heart, CalendarDays, CheckCheck, MessageCircle, Rss, PlayCircle } from "lucide-react";
+import { Bell, BellRing, Star, UserPlus, Heart, CalendarDays, CheckCheck, MessageCircle, Rss, PlayCircle, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ const TIPO_CONFIG: Record<string, { icon: React.ElementType; cor: string; label:
   clube_novo_comentario:{ icon: MessageCircle, cor: "text-sky-500",     label: "Comentário"   },
   clube_novo_post:      { icon: Rss,           cor: "text-emerald-500", label: "Novo post"    },
   clube_novo_conteudo:  { icon: PlayCircle,    cor: "text-teal-500",    label: "Conteúdo"     },
+  conquista:            { icon: Trophy,        cor: "text-yellow-500",  label: "Conquista"    },
 };
 const TIPO_DEFAULT = { icon: Bell, cor: "text-primary", label: "Aviso" };
 

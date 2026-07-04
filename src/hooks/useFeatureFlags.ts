@@ -20,6 +20,7 @@ export type FeatureFlagKey =
   | "show_clube_ai_resumo"
   | "show_clube_ai_matchmaking"
   | "show_clube_ai_recomendacoes"
+  | "show_gamificacao_clube"
   // visibilidade global de páginas (override sem alterar flags individuais)
   | "pages_global_visible"
   // menu inferior por página
@@ -52,6 +53,8 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clube_ai_resumo: true,
   show_clube_ai_matchmaking: true,
   show_clube_ai_recomendacoes: true,
+  // desligada por padrão até a gamificação de clube ser validada (Fase 4)
+  show_gamificacao_clube: false,
   pages_global_visible: true,
   show_menu_inferior_home: true,
   show_menu_inferior_clubes: true,
