@@ -53,7 +53,7 @@ export const RevisaoManualAutorDialog = ({ autor, open, onClose }: Props) => {
       setCandidatos((cands ?? []) as Candidato[]);
       setLoading(false);
     })();
-  }, [open, autor.id]);
+  }, [open, autor.id, autor.nome_completo]);
 
   const conciliar = async (c: Candidato) => {
     setActing(c.id);

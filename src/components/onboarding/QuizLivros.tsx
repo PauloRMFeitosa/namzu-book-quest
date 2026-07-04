@@ -33,6 +33,8 @@ export function QuizLivros({ onAvancar, onPular }: Props) {
         .in("id", livrosAmados)
         .then(({ data }) => { if (data) setSelecionados(data); });
     }
+    // executa somente na montagem: restaura a seleção persistida no store
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

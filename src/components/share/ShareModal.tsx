@@ -194,7 +194,6 @@ export const ShareModal = ({ open, onOpenChange, data, templates, defaultTemplat
     try {
       const blob = await generatePng();
       if (!blob) return;
-      // @ts-ignore
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       toast.success("Imagem copiada");
     } catch {

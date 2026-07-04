@@ -48,7 +48,7 @@ export const useClubes = ({ busca = "", categoria = null, secao = "todos" }: Use
     queryFn: async (): Promise<ClubeCardData[]> => {
       // IDs de clubes privados que o usuário pode ver (curador, moderador ou membro ativo)
       let allowedPrivadoIds: string[] = [];
-      let membroIds = new Set<string>();
+      const membroIds = new Set<string>();
       if (user) {
         const [curadorRes, modRes, membroRes] = await Promise.all([
           supabase.from("clubes").select("id").eq("curador_id", user.id),

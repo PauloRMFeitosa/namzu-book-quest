@@ -119,7 +119,7 @@ export function normalizeGenres(input: unknown): string[] {
     if (typeof item !== "string") continue;
     // separa por "/", ">", "--", ","
     const parts = item
-      .split(/[\/>]|--|,/)
+      .split(/[/>]|--|,/)
       .map((p) => p.replace(/\s+/g, " ").trim())
       .filter(Boolean);
     for (const p of parts) {
@@ -158,7 +158,7 @@ export async function persistGenresForObra(
   for (const nome of nomes) {
     const slug = slugifyGenre(nome);
     if (!slug) continue;
-    let { data: existing } = await supabase
+    const { data: existing } = await supabase
       .from("generos")
       .select("id")
       .eq("slug", slug)

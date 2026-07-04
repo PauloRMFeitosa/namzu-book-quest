@@ -33,7 +33,6 @@ export function trackOnboarding(evento: EventoOnboarding, props: Props = {}): vo
       window.gtag("event", evento, { event_category: "onboarding", ...props });
     }
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.info("[analytics:onboarding]", evento, props);
     }
   } catch {

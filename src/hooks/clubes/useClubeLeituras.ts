@@ -110,8 +110,8 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
       const leituraIds = leiturasUsuario.map((l) => l.id);
 
       // Carrega sessões + último progresso registrado por usuario_leitura
-      let percentualPorUL = new Map<string, number>();
-      let paginaPorUL = new Map<string, number | null>();
+      const percentualPorUL = new Map<string, number>();
+      const paginaPorUL = new Map<string, number | null>();
       if (leituraIds.length) {
         const { data: sessoes } = await supabase
           .from("leituras")

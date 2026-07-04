@@ -89,12 +89,15 @@ export function TelaEstantePronta({ onAvancar }: Props) {
       setCarregando(false);
     }
     carregar();
+    // executa somente na montagem: carrega sugestões com o estado do onboarding
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleClube = (id: string) => {
     setMarcados((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
