@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export function useNotificacoesTotal() {
   const { user } = useAuth();
+  const userId = user?.id;
   const qc = useQueryClient();
 
   const { data = 0 } = useQuery({
@@ -28,21 +29,21 @@ export function useNotificacoesTotal() {
 
   // Realtime: invalidar contagem ao receber INSERT ou UPDATE em notificacoes
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     const channel = supabase
-      .channel(`notificacoes-badge-${user.id}`)
+      .channel(`notificacoes-badge-${userId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notificacoes",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
-          qc.invalidateQueries({ queryKey: ["notificacoes-count", user.id] });
-          qc.invalidateQueries({ queryKey: ["notificacoes", user.id] });
+          qc.invalidateQueries({ queryKey: ["notificacoes-count", userId] });
+          qc.invalidateQueries({ queryKey: ["notificacoes", userId] });
         }
       )
       .subscribe();
@@ -50,7 +51,7 @@ export function useNotificacoesTotal() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, qc]);
+  }, [userId, qc]);
 
   return data;
 }

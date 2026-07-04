@@ -136,10 +136,11 @@ const EstatisticasBlock = ({ nome }: { nome: string }) => {
   const { data: stats } = useEstatisticasPeriodo(mes, ano);
 
   const anos = useMemo(() => {
+    const atual = new Date().getFullYear();
     const arr: number[] = [];
-    for (let a = now.getFullYear(); a >= now.getFullYear() - 4; a--) arr.push(a);
+    for (let a = atual; a >= atual - 4; a--) arr.push(a);
     return arr;
-  }, [now]);
+  }, []);
 
   const periodoLabel = mes === "all" ? `Ano ${ano}` : `${MESES_LONGO[(mes as number) - 1]} ${ano}`;
 

@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     const obra: any = ul.obras;
     const ctx = `Livro: ${obra?.titulo_original ?? ""} (${obra?.ano_primeira_publicacao ?? "?"})\nSinopse: ${obra?.sinopse_padrao ?? "—"}\nIntenção do leitor: ${pre?.intencao ?? "—"}\nDomínio prévio: ${pre?.dominio_previo ?? "—"}`;
 
-    let system = "Você é um copiloto de leitura erudito, conciso e provocativo.";
+    const system = "Você é um copiloto de leitura erudito, conciso e provocativo.";
     let userMsg = "";
     if (modo === "perguntas_guia") {
       userMsg = `Com base no contexto, gere 5 perguntas-guia para o leitor refletir enquanto lê.\n\n${ctx}`;

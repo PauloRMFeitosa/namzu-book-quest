@@ -13,20 +13,21 @@ import { toast } from "sonner";
  */
 export function useConquistaRealtime() {
   const { user } = useAuth();
+  const userId = user?.id;
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     const channel = supabase
-      .channel(`conquistas-realtime-${user.id}`)
+      .channel(`conquistas-realtime-${userId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "usuario_conquistas",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
           // Buscar detalhes da conquista para o toast
@@ -52,9 +53,9 @@ export function useConquistaRealtime() {
           });
 
           // Invalida queries de gamificação e notificações
-          qc.invalidateQueries({ queryKey: ["minhas-conquistas", user.id] });
-          qc.invalidateQueries({ queryKey: ["notificacoes-count", user.id] });
-          qc.invalidateQueries({ queryKey: ["notificacoes", user.id] });
+          qc.invalidateQueries({ queryKey: ["minhas-conquistas", userId] });
+          qc.invalidateQueries({ queryKey: ["notificacoes-count", userId] });
+          qc.invalidateQueries({ queryKey: ["notificacoes", userId] });
           qc.invalidateQueries({ queryKey: ["gamificacao"] });
         }
       )
@@ -63,5 +64,5 @@ export function useConquistaRealtime() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, qc]);
+  }, [userId, qc]);
 }

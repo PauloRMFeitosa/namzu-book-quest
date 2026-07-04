@@ -38,12 +38,10 @@ export const useIsAdmin = () => {
           .maybeSingle();
         admin = !error && !!data;
         if (error) {
-          // eslint-disable-next-line no-console
           console.warn("[useIsAdmin] fallback query error", { error, userId: user.id });
         }
       }
 
-      // eslint-disable-next-line no-console
       console.info("[useIsAdmin] check", {
         userId: user.id,
         email: user.email,

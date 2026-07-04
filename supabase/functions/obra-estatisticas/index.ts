@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
     const ids = (livros ?? []).map((l: any) => l.id);
 
     // Considera também leituras concluídas/lendo registradas em usuario_leituras
-    let lendoExtra = new Set<string>();
-    let concluidoExtra = new Set<string>();
+    const lendoExtra = new Set<string>();
+    const concluidoExtra = new Set<string>();
     if (ids.length) {
       const { data: exps } = await supabase
         .from("usuario_leituras")

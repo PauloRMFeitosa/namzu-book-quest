@@ -5,7 +5,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // dist e artefatos gerados pelo Astro (blog) não são lintados
+  { ignores: ["dist", "apps/blog/.astro"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -19,8 +20,23 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // Desligado: variantes do shadcn (cva) e providers de contexto convivem
+      // com componentes no mesmo arquivo por convenção do projeto.
+      "react-refresh/only-export-components": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      // Coerente com o modo relaxado do tsconfig (strict: false,
+      // noImplicitAny: false) — ver CLAUDE.md.
+      "@typescript-eslint/no-explicit-any": "off",
+      // catch {} vazio é o padrão documentado de restauração de rascunhos
+      // (ver "Persistência de Rascunho em Formulários" no CLAUDE.md)
+      "no-empty": ["error", { allowEmptyCatch: true }],
+    },
+  },
+  {
+    // arquivos de declaração usam triple-slash por exigência do Astro/Vite
+    files: ["**/*.d.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": "off",
     },
   },
 );
