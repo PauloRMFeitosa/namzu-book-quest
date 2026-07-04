@@ -62,7 +62,7 @@ const App = () => (
     persistOptions={{
       persister,
       maxAge: 30 * 60 * 1000, // mantém cache por 30 min entre sessões
-      buster: "v1",            // incrementar aqui para forçar invalidação do cache
+      buster: "v2",            // incrementar aqui para forçar invalidação do cache
     }}
   >
     <ThemeProvider>

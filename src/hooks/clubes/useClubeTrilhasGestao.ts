@@ -41,8 +41,12 @@ export const useTrilhasGestao = (clubeId: string | undefined) => {
 };
 
 const invalidate = (qc: ReturnType<typeof useQueryClient>, clubeId?: string) => {
-  qc.invalidateQueries({ queryKey: ["clube-trilhas-gestao", clubeId] });
-  qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId] });
+  // refetchType "all": a query da trilha (clube-leituras) fica inativa enquanto
+  // o curador está na aba de gestão; com o refetch padrão ("active") ela só era
+  // marcada como stale e, como o app usa refetchOnMount: false + cache persistido
+  // no localStorage, a trilha nunca era rebuscada e o livro novo não aparecia.
+  qc.invalidateQueries({ queryKey: ["clube-trilhas-gestao", clubeId], refetchType: "all" });
+  qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
 };
 
 export const useAdicionarTrilha = (clubeId: string | undefined) => {
