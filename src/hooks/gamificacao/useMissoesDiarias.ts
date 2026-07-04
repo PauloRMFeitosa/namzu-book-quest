@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/constants/queryKeys";
 
 const MISSOES_CODIGOS = [
   "diaria_ler_10pg",
@@ -8,63 +9,45 @@ const MISSOES_CODIGOS = [
   "diaria_publicar_clube",
 ];
 
+/**
+ * Missões diárias lidas do servidor: o progresso é mantido em usuario_missoes
+ * pelo motor de missões (registrar_progresso_missao + triggers), então o hook
+ * apenas combina o catálogo ativo com o progresso do dia — sem recalcular
+ * contagens no cliente.
+ */
 export const useMissoesDiarias = () => {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["missoes-diarias", user?.id],
+    queryKey: queryKeys.gamificacao.missoesDiarias(user?.id ?? ""),
     enabled: !!user,
     queryFn: async () => {
       const hoje = new Date();
-      const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
+      const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
 
-      const [missoesRes, lidasRes, insightContRes, insightCitRes, postsRes, leiturasRes] =
-        await Promise.all([
-          supabase.from("missoes").select("*").in("codigo", MISSOES_CODIGOS),
-          supabase
-            .from("leitura_progresso")
-            .select("paginas_lidas")
-            .eq("user_id", user!.id)
-            .gte("data_registro", inicioHoje),
-          supabase
-            .from("leitura_conteudo")
-            .select("id, leitura_id")
-            .gte("created_at", inicioHoje),
-          supabase
-            .from("leitura_citacoes")
-            .select("id, leitura_id")
-            .gte("created_at", inicioHoje),
-          supabase
-            .from("clube_posts")
-            .select("id")
-            .eq("user_id", user!.id)
-            .gte("created_at", inicioHoje),
-          supabase.from("leituras").select("id").eq("user_id", user!.id),
-        ]);
+      const [missoesRes, progressoRes] = await Promise.all([
+        supabase.from("missoes").select("*").in("codigo", MISSOES_CODIGOS),
+        supabase
+          .from("usuario_missoes")
+          .select("missao_id, progresso_atual, concluida")
+          .eq("user_id", user!.id)
+          .eq("data", hojeStr),
+      ]);
 
-      const meusLeituraIds = new Set((leiturasRes.data ?? []).map((l: any) => l.id));
-      const paginasHoje = (lidasRes.data ?? []).reduce(
-        (s: number, r: any) => s + (r.paginas_lidas ?? 0),
-        0,
+      const progresso = new Map(
+        (progressoRes.data ?? []).map((p) => [p.missao_id, p]),
       );
-      const insightsHoje =
-        (insightContRes.data ?? []).filter((r: any) => meusLeituraIds.has(r.leitura_id)).length +
-        (insightCitRes.data ?? []).filter((r: any) => meusLeituraIds.has(r.leitura_id)).length;
-      const postsHoje = (postsRes.data ?? []).length;
 
       const missoes = (missoesRes.data ?? []).map((m: any) => {
-        let atual = 0;
-        if (m.codigo === "diaria_ler_10pg") atual = paginasHoje;
-        else if (m.codigo === "diaria_registrar_insight") atual = insightsHoje;
-        else if (m.codigo === "diaria_publicar_clube") atual = postsHoje;
+        const p = progresso.get(m.id);
+        const atual = p?.progresso_atual ?? 0;
         return {
           ...m,
           atual,
-          concluida: atual >= m.meta_valor,
+          concluida: p?.concluida ?? atual >= m.meta_valor,
           percentual: Math.min(100, Math.round((atual / m.meta_valor) * 100)),
         };
       });
 
-      // Ordenar conforme briefing
       missoes.sort(
         (a: any, b: any) =>
           MISSOES_CODIGOS.indexOf(a.codigo) - MISSOES_CODIGOS.indexOf(b.codigo),

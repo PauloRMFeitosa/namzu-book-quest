@@ -8,5 +8,7 @@ export const queryKeys = {
   },
   gamificacao: {
     perfil: (userId: string) => ["gamificacao", userId] as const,
+    clube: (clubeId: string) => ["gamificacao-clube", clubeId] as const,
+    missoesDiarias: (userId: string) => ["missoes-diarias", userId] as const,
   },
 } as const;

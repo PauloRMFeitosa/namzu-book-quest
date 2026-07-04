@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { MembrosOnline } from "@/components/clubes/canais/MembrosOnline";
+import { LigaSemanalClubeCard } from "@/components/gamificacao/LigaSemanalClubeCard";
 
 interface Props {
   clubeId: string;
@@ -20,6 +21,7 @@ export const ClubeSidebar = ({ clubeId, membrosCount, ativos7d, ativos30d }: Pro
   const { flags } = useFeatureFlags();
   const { isAdmin } = useIsAdmin();
   const showEventos = isAdmin || flags.show_clube_eventos;
+  const showGamificacaoClube = isAdmin || flags.show_gamificacao_clube;
   const pctAtivos = membrosCount > 0 ? Math.round((ativos7d / membrosCount) * 100) : 0;
 
   return (
@@ -50,6 +52,9 @@ export const ClubeSidebar = ({ clubeId, membrosCount, ativos7d, ativos30d }: Pro
           </div>
         )}
       </div>
+
+      {/* Liga semanal + nível do clube (Fase 4 da gamificação) */}
+      {showGamificacaoClube && <LigaSemanalClubeCard clubeId={clubeId} />}
 
       {/* Ranking */}
       <div className="card-soft p-4 flex flex-col gap-3">
