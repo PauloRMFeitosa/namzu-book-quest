@@ -40,9 +40,13 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  // Realtime: atualiza a trilha quando qualquer membro conclui ou altera sua leitura
+  // Realtime: atualiza a trilha quando qualquer membro conclui ou altera sua leitura,
+  // ou quando o curador adiciona/remove/reordena obras na trilha
   useEffect(() => {
     if (!clubeId) return;
+    const invalidar = () => {
+      qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
+    };
     const channel = supabase
       .channel(`clube-leituras-rt:${clubeId}`)
       .on("postgres_changes", {
@@ -50,8 +54,15 @@ export const useClubeLeituras = (clubeId: string | undefined) => {
         schema: "public",
         table: "usuario_leituras",
         filter: `clube_id=eq.${clubeId}`,
+      }, invalidar)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "clube_trilhas",
+        filter: `clube_id=eq.${clubeId}`,
       }, () => {
-        qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
+        invalidar();
+        qc.invalidateQueries({ queryKey: ["clube-trilhas-gestao", clubeId], refetchType: "all" });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
