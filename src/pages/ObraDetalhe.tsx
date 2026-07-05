@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareModal } from "@/components/share/ShareModal";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { resolverCapa } from "@/lib/capaLivro";
 import { ConclusaoLivroModal } from "@/components/avaliacoes/ConclusaoLivroModal";
 import { AvaliacaoModal } from "@/components/avaliacoes/AvaliacaoModal";
 
@@ -253,7 +254,7 @@ const ObraDetalhe = () => {
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
   if (!obra) return <p className="text-muted-foreground">Livro não encontrado.</p>;
 
-  const capa = obra.edicoes?.[0]?.capa_url || obra.capa_padrao_url;
+  const capa = resolverCapa(obra.capa_padrao_url, obra.edicoes?.[0]?.capa_url);
 
   return (
     <div className="flex flex-col gap-6">

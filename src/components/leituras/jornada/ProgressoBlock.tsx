@@ -10,6 +10,7 @@ import { useConcluirLeitura } from "@/hooks/leituras/useConcluirLeitura";
 import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
 import { iniciarLeitura } from "@/hooks/leituras/useLeituraActions";
 import { useAuth } from "@/hooks/useAuth";
+import { resolverCapa } from "@/lib/capaLivro";
 import { toast } from "sonner";
 
 export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
@@ -49,7 +50,7 @@ export const ProgressoBlock = ({ livro }: { livro: LivroDetalhe }) => {
         clubeId: livro.clube_id ?? null,
         titulo: livro.obras?.titulo_original ?? "Livro",
         autor: livro.autores?.[0]?.nome ?? null,
-        capaUrl: livro.edicoes?.capa_url ?? null,
+        capaUrl: resolverCapa(livro.obras?.capa_padrao_url, livro.edicoes?.capa_url),
         totalPaginas: livro.edicoes?.num_paginas ?? null,
         paginasAnteriores: paginaAtual,
       });
