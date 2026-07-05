@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Calendar, FileText, Building2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { resolverCapa } from "@/lib/capaLivro";
 
 interface Props {
   usuarioLivroId: string;
@@ -32,7 +33,7 @@ export const LivroHeader = ({ usuarioLivroId }: Props) => {
     .map((oa: any) => oa.autores?.nome_completo)
     .filter(Boolean);
   const ano = obra?.ano_primeira_publicacao;
-  const capa = edicao?.capa_url || obra?.capa_padrao_url;
+  const capa = resolverCapa(obra?.capa_padrao_url, edicao?.capa_url);
 
   return (
     <div className="card-soft p-4 flex gap-4">

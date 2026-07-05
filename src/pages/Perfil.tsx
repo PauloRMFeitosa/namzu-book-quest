@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { resolverCapa } from "@/lib/capaLivro";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGamificacao } from "@/hooks/useGamificacao";
@@ -525,7 +526,7 @@ const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
     ) : (
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
         {itens.slice(0, 20).map((l: any) => {
-          const capa = l.edicoes?.capa_url ?? l.obras?.capa_padrao_url;
+          const capa = resolverCapa(l.obras?.capa_padrao_url, l.edicoes?.capa_url);
           const titulo = l.edicoes?.titulo_edicao ?? l.obras?.titulo_original ?? "—";
           return (
             <div key={l.id} className="shrink-0 w-20">

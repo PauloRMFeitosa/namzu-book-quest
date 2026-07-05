@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeituraCopilotoButton } from "@/components/clubes/ai/LeituraCopilotoButton";
 import { ShareModal } from "@/components/share/ShareModal";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { resolverCapa } from "@/lib/capaLivro";
 import { ConclusaoLivroModal } from "@/components/avaliacoes/ConclusaoLivroModal";
 
 interface Props {
@@ -105,7 +106,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
         data={{
           titulo: livro.obras?.titulo_original ?? "",
           autor: livro.autores.map((a) => a.nome).join(", ") || undefined,
-          capaUrl: livro.edicoes?.capa_url || livro.obras?.capa_padrao_url,
+          capaUrl: resolverCapa(livro.obras?.capa_padrao_url, livro.edicoes?.capa_url),
           percentual: progresso.percentual,
           paginasLidas: progresso.paginasLidas,
           totalPaginas: progresso.totalPaginas,
@@ -187,7 +188,7 @@ export const LeituraExperienciaCard = ({ usuarioLeituraId }: Props) => {
         onOpenChange={setConclusaoOpen}
         usuarioLivroId={livro.usuario_livro_id}
         titulo={livro.obras?.titulo_original ?? ""}
-        capaUrl={livro.edicoes?.capa_url || livro.obras?.capa_padrao_url}
+        capaUrl={resolverCapa(livro.obras?.capa_padrao_url, livro.edicoes?.capa_url)}
       />
     </div>
   );
