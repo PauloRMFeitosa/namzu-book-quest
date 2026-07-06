@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Pause, Play, Trash2, Check, BookMarked } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Pause, Play, Trash2, Check, BookMarked, Timer } from "lucide-react";
 import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,7 +22,17 @@ function formatTimer(totalSec: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-type Step = "ativa" | "finalizar" | "resumo";
+function formatTempoFora(ms: number) {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+const CHAVE_MANTER_TELA = "namzu-manter-tela-ligada";
+
+type Step = "recuperada" | "ativa" | "finalizar" | "resumo";
 
 type ResumoData = {
   paginasLidas: number;
@@ -29,7 +41,8 @@ type ResumoData = {
 };
 
 export const SessaoLeituraModal = () => {
-  const { sessao, modalAberto, pausar, retomar, fecharModal, limpar } = useSessaoAtiva();
+  const { sessao, modalAberto, recuperada, tempoForaMs, pausar, retomar, confirmarRecuperacao, fecharModal, limpar } =
+    useSessaoAtiva();
   const { user } = useAuth();
   const qc = useQueryClient();
 
@@ -38,6 +51,24 @@ export const SessaoLeituraModal = () => {
   const [paginaInput, setPaginaInput] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [resumo, setResumo] = useState<ResumoData | null>(null);
+  const [manterTela, setManterTela] = useState(() => {
+    try {
+      return localStorage.getItem(CHAVE_MANTER_TELA) !== "0";
+    } catch {
+      return true;
+    }
+  });
+
+  const { suportado: wakeLockSuportado } = useWakeLock(
+    !!sessao && sessao.pausadoEm === null && manterTela
+  );
+
+  const alterarManterTela = (ligado: boolean) => {
+    setManterTela(ligado);
+    try {
+      localStorage.setItem(CHAVE_MANTER_TELA, ligado ? "1" : "0");
+    } catch {}
+  };
 
   const calcSegundos = useCallback(() => {
     if (!sessao) return 0;
@@ -48,7 +79,7 @@ export const SessaoLeituraModal = () => {
   }, [sessao]);
 
   useEffect(() => {
-    if (!sessao || step !== "ativa") return;
+    if (!sessao || (step !== "ativa" && step !== "recuperada")) return;
     const tick = () => setSegundos(calcSegundos());
     tick();
     const id = setInterval(tick, 1000);
@@ -57,7 +88,7 @@ export const SessaoLeituraModal = () => {
 
   useEffect(() => {
     if (modalAberto) {
-      setStep("ativa");
+      setStep(useSessaoAtiva.getState().recuperada ? "recuperada" : "ativa");
       setResumo(null);
     }
   }, [modalAberto]);
@@ -137,6 +168,81 @@ export const SessaoLeituraModal = () => {
       }}
     >
       <DialogContent className="sm:max-w-sm p-0 gap-0 overflow-hidden [&>button]:hidden">
+        {step === "recuperada" && (
+          <div className="flex flex-col gap-5 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Timer className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold leading-tight">Sessão recuperada</h2>
+                <p className="text-xs text-muted-foreground">
+                  O cronômetro continuou contando enquanto o app esteve fechado.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-muted/40 rounded-xl p-4 flex flex-col items-center gap-1">
+              <p className="text-sm font-semibold text-center line-clamp-2">{sessao.titulo}</p>
+              <span className="text-3xl font-bold tabular-nums tracking-tight">
+                {formatTimer(segundos)}
+              </span>
+              {sessao.pausadoEm !== null ? (
+                <p className="text-xs text-muted-foreground">⏸ A sessão estava pausada</p>
+              ) : (
+                tempoForaMs >= 5 * 60000 && (
+                  <p className="text-xs text-muted-foreground">
+                    ~{formatTempoFora(tempoForaMs)} com o app fechado
+                  </p>
+                )
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  confirmarRecuperacao(false);
+                  setStep("ativa");
+                }}
+                className="w-full rounded-2xl bg-primary hover:bg-primary-hover"
+              >
+                Continuar sessão
+              </Button>
+              {sessao.pausadoEm === null && tempoForaMs >= 5 * 60000 && (
+                <Button
+                  variant="outline"
+                  className="w-full rounded-2xl"
+                  onClick={() => {
+                    confirmarRecuperacao(true);
+                    setStep("ativa");
+                  }}
+                >
+                  Continuar descontando {formatTempoFora(tempoForaMs)} fora do app
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-2xl"
+                  onClick={() => {
+                    confirmarRecuperacao(false);
+                    setStep("finalizar");
+                  }}
+                >
+                  Finalizar
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 rounded-2xl text-destructive hover:text-destructive"
+                  onClick={handleDescartar}
+                >
+                  Descartar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {step === "ativa" && (
           <div className="flex flex-col items-center gap-6 p-6">
             <div className="w-full flex items-start justify-between gap-3">
@@ -177,6 +283,13 @@ export const SessaoLeituraModal = () => {
                 {estaRodando ? "📖 Lendo..." : "⏸ Pausado"}
               </span>
             </div>
+
+            {wakeLockSuportado && (
+              <label className="flex items-center gap-2 -mt-2 cursor-pointer">
+                <Switch checked={manterTela} onCheckedChange={alterarManterTela} />
+                <span className="text-xs text-muted-foreground">Manter tela ligada</span>
+              </label>
+            )}
 
             <div className="flex gap-8 justify-center">
               <button
