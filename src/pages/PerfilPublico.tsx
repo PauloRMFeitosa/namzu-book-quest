@@ -6,6 +6,7 @@ import { resolverCapa } from "@/lib/capaLivro";
 import { useContagemSocial } from "@/hooks/social/useSeguir";
 import { EstatisticasLeitura } from "@/components/EstatisticasLeitura";
 import { BotaoSeguir } from "@/components/social/BotaoSeguir";
+import { MapaAtividades } from "@/components/perfil/MapaAtividades";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -215,50 +216,44 @@ export default function PerfilPublico() {
         transition={{ duration: 0.4 }}
         className="relative overflow-hidden rounded-[var(--radius)] border border-border/60 bg-card"
       >
-        <div
-          className="h-28 md:h-40 w-full bg-gradient-paper relative"
-          style={
-            perfil.banner_url
-              ? { backgroundImage: `url(${perfil.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-              : undefined
-          }
-        >
-          <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
+        {/* Mapa anual de atividades de leitura (substitui o banner) */}
+        <div className="px-4 pt-4 md:px-5 md:pt-5">
+          <MapaAtividades userId={perfil.user_id} />
         </div>
 
-        <div className="px-5 pb-5 -mt-10 relative">
-          <div className="flex items-end justify-between gap-3">
-            <Avatar className="w-20 h-20 border-4 border-card shadow-md">
-              <AvatarImage src={perfil.avatar_url ?? undefined} alt={nome} />
-              <AvatarFallback className="text-xl font-semibold bg-secondary text-secondary-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="pb-1">
-              <BotaoSeguir seguidoId={perfil.user_id} />
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-display text-2xl font-semibold leading-tight">{nome}</h1>
-              {perfil.verificado && <Badge variant="secondary">Verificado</Badge>}
-            </div>
-            <p className="text-sm text-muted-foreground">{username}</p>
-            {perfil.bio && (
-              <p className="text-sm text-foreground/80 mt-2 max-w-xl">{perfil.bio}</p>
-            )}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-              {(perfil.cidade || perfil.pais) && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {[perfil.cidade, perfil.pais].filter(Boolean).join(", ")}
-                </span>
+        <div className="px-5 pb-5 relative">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0 pt-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-display text-2xl font-semibold leading-tight">{nome}</h1>
+                {perfil.verificado && <Badge variant="secondary">Verificado</Badge>}
+              </div>
+              <p className="text-sm text-muted-foreground">{username}</p>
+              {perfil.bio && (
+                <p className="text-sm text-foreground/80 mt-2 max-w-xl">{perfil.bio}</p>
               )}
-              <span className="inline-flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                Entrou em {formatDate(perfil.created_at)}
-              </span>
+              <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+                {(perfil.cidade || perfil.pais) && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {[perfil.cidade, perfil.pais].filter(Boolean).join(", ")}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1">
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  Entrou em {formatDate(perfil.created_at)}
+                </span>
+              </div>
+            </div>
+            {/* Foto à direita, sobrepondo parcialmente a base do mapa */}
+            <div className="flex flex-col items-center gap-2 shrink-0 -mt-8 md:-mt-10 relative z-10">
+              <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-card shadow-md">
+                <AvatarImage src={perfil.avatar_url ?? undefined} alt={nome} />
+                <AvatarFallback className="text-xl font-semibold bg-secondary text-secondary-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <BotaoSeguir seguidoId={perfil.user_id} />
             </div>
           </div>
 

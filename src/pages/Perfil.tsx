@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useContagemSocial } from "@/hooks/social/useSeguir";
 import { EstatisticasLeitura } from "@/components/EstatisticasLeitura";
 import { useStatsLeitura } from "@/hooks/useEstatisticas";
+import { MapaAtividades } from "@/components/perfil/MapaAtividades";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -155,25 +156,13 @@ const Perfil = () => {
         transition={{ duration: 0.5 }}
         className="relative overflow-hidden rounded-[var(--radius)] border border-border/60 bg-card"
       >
-        <div
-          className="h-32 md:h-44 w-full bg-gradient-paper relative"
-          style={
-            perfil?.banner_url
-              ? { backgroundImage: `url(${perfil.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-              : undefined
-          }
-        >
-          <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
+        {/* Mapa anual de atividades de leitura (substitui o banner) */}
+        <div className="px-4 pt-4 md:px-5 md:pt-5">
+          <MapaAtividades userId={user?.id} />
         </div>
-        <div className="px-5 pb-5 -mt-12 relative">
-          <div className="flex flex-col md:flex-row md:items-end gap-4">
-            <Avatar className="w-24 h-24 border-4 border-card shadow-md">
-              <AvatarImage src={perfil?.avatar_url ?? undefined} alt={nome} />
-              <AvatarFallback className="text-xl font-semibold bg-secondary text-secondary-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
+        <div className="px-5 pb-5 relative">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0 pt-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl md:text-3xl font-semibold leading-tight">
                   {nome}
@@ -197,6 +186,13 @@ const Perfil = () => {
                 </span>
               </div>
             </div>
+            {/* Foto à direita, sobrepondo parcialmente a base do mapa */}
+            <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-card shadow-md shrink-0 -mt-8 md:-mt-10 relative z-10">
+              <AvatarImage src={perfil?.avatar_url ?? undefined} alt={nome} />
+              <AvatarFallback className="text-xl font-semibold bg-secondary text-secondary-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </div>
 
           {/* Contadores sociais */}

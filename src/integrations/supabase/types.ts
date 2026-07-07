@@ -3208,6 +3208,10 @@ export type Database = {
         Returns: undefined
       }
       concluir_onboarding: { Args: never; Returns: undefined }
+      creditar_xp_clube: {
+        Args: { p_clube_id: string; p_user_id: string; p_xp: number }
+        Returns: undefined
+      }
       criar_usuario_leitura: {
         Args: {
           p_clube_id: string
@@ -3226,6 +3230,7 @@ export type Database = {
         Args: { p_definitivo?: boolean; p_usuario_livro_id: string }
         Returns: undefined
       }
+      fechar_liga_semanal: { Args: never; Returns: undefined }
       feed_atividade: {
         Args: { p_limite?: number }
         Returns: {
@@ -3247,6 +3252,13 @@ export type Database = {
         Returns: undefined
       }
       fn_renotificar_avaliacoes_dispensadas: { Args: never; Returns: undefined }
+      get_atividade_leitura_anual: {
+        Args: { p_user_id?: string }
+        Returns: {
+          dia: string
+          total_paginas: number
+        }[]
+      }
       get_contagem_social: {
         Args: { p_user_id: string }
         Returns: {
