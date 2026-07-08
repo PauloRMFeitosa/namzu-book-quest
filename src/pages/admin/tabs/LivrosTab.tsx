@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, BookOpen, X, Users, Tag } from "lucide-react";
+import { Plus, Trash2, Pencil, BookOpen, X, Users, Tag, Globe } from "lucide-react";
 import { AdminConfirmDialog } from "../components/AdminConfirmDialog";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminSearchBar } from "../components/AdminSearchBar";
@@ -17,6 +17,7 @@ import { AdminSortableHead } from "../components/AdminSortableHead";
 import { AdminPageSizeSelect, PageSize } from "../components/AdminPageSizeSelect";
 import { AdminModal } from "../components/AdminModal";
 import { useSortable } from "../hooks/useSortable";
+import { EnriquecerObraWikidataDialog } from "./livros/EnriquecerObraWikidataDialog";
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -31,6 +32,7 @@ export const LivrosTab = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [wikidataTarget, setWikidataTarget] = useState<{ id: string; titulo_original: string } | null>(null);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState<"create" | "edit" | null>(null);
@@ -372,6 +374,7 @@ export const LivrosTab = () => {
                       <TableCell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title="Editar"><Pencil className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => setWikidataTarget({ id: r.id, titulo_original: r.titulo_original })} title="Enriquecer via Wikidata"><Globe className="w-4 h-4" /></Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r.id)} title="Excluir"><Trash2 className="w-4 h-4" /></Button>
                         </div>
                       </TableCell>
@@ -421,6 +424,17 @@ export const LivrosTab = () => {
         description="Este livro será removido permanentemente do catálogo, incluindo vínculos com autores e gêneros."
         onConfirm={doDelete}
       />
+
+      {wikidataTarget && (
+        <EnriquecerObraWikidataDialog
+          obra={wikidataTarget}
+          open={!!wikidataTarget}
+          onClose={(refresh) => {
+            setWikidataTarget(null);
+            if (refresh) load();
+          }}
+        />
+      )}
     </div>
   );
 };

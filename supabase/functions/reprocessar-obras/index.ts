@@ -1,9 +1,11 @@
-// Edge function: reprocessar-obras v1
+// Edge function: reprocessar-obras v2
 // Conciliação Wikidata para obras:
-//   - Busca obras sem metadata_score (nunca tentadas)
+//   - Modo lote (cron): busca obras sem metadata_score (nunca tentadas)
+//   - Modo direcionado (body.obra_id, exige admin): reprocessa uma obra
+//     específica sem auto-conciliar e retorna os candidatos na resposta
 //   - Para cada obra, busca candidatos no Wikidata
 //   - Salva em obras_candidatos_wikidata
-//   - Auto-concilia se score >= 80 (atualiza obra com dados Wikidata)
+//   - Auto-concilia se score >= 80 (somente no modo lote)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -34,6 +36,18 @@ type WikiCandidato = {
   dados_externos: Record<string, unknown>;
 };
 
+type CandidatoResumo = {
+  qid: string;
+  url_wikidata: string;
+  titulo: string;
+  descricao: string | null;
+  ano_publicacao: number | null;
+  idioma_original: string | null;
+  score: number;
+  autor_qids: string[];
+  autor_labels: string[];
+};
+
 type ResultadoObra = {
   obra_id: string;
   titulo: string;
@@ -42,6 +56,8 @@ type ResultadoObra = {
   qid?: string;
   num_candidatos?: number;
   erro?: string;
+  /** preenchido apenas no modo direcionado (obra_id) */
+  candidatos?: CandidatoResumo[];
 };
 
 // ── Utilitários de string ─────────────────────────────────────────────────
@@ -249,7 +265,12 @@ async function processarObra(
     idioma_original: string;
     autorNomes: string[];
   },
+  opts: { autoConciliar?: boolean; incluirCandidatos?: boolean } = {},
 ): Promise<ResultadoObra> {
+  const autoConciliar = opts.autoConciliar ?? true;
+  // No modo direcionado (autoConciliar=false) não tocamos em metadata_score:
+  // a decisão fica com o admin no dialog (conciliar ou marcar sem correspondência).
+  const atualizarBookkeeping = autoConciliar;
   const obraInfo: ObraInfo = {
     titulo: obra.titulo_original,
     ano: obra.ano_primeira_publicacao,
@@ -268,11 +289,19 @@ async function processarObra(
   }
 
   if (!searchResults.length) {
-    await supabase.from("obras").update({
-      metadata_score: 0,
-      metadata_checked_at: new Date().toISOString(),
-    }).eq("id", obra.id);
-    return { obra_id: obra.id, titulo: obra.titulo_original, resultado: "nao_encontrado", score: 0 };
+    if (atualizarBookkeeping) {
+      await supabase.from("obras").update({
+        metadata_score: 0,
+        metadata_checked_at: new Date().toISOString(),
+      }).eq("id", obra.id);
+    }
+    return {
+      obra_id: obra.id,
+      titulo: obra.titulo_original,
+      resultado: "nao_encontrado",
+      score: 0,
+      candidatos: opts.incluirCandidatos ? [] : undefined,
+    };
   }
 
   // 2. Recupera detalhes dos candidatos
@@ -319,11 +348,19 @@ async function processarObra(
   }
 
   if (!candidatos.length) {
-    await supabase.from("obras").update({
-      metadata_score: 0,
-      metadata_checked_at: new Date().toISOString(),
-    }).eq("id", obra.id);
-    return { obra_id: obra.id, titulo: obra.titulo_original, resultado: "nao_encontrado", score: 0 };
+    if (atualizarBookkeeping) {
+      await supabase.from("obras").update({
+        metadata_score: 0,
+        metadata_checked_at: new Date().toISOString(),
+      }).eq("id", obra.id);
+    }
+    return {
+      obra_id: obra.id,
+      titulo: obra.titulo_original,
+      resultado: "nao_encontrado",
+      score: 0,
+      candidatos: opts.incluirCandidatos ? [] : undefined,
+    };
   }
 
   // Ordena por score desc
@@ -351,9 +388,23 @@ async function processarObra(
     } catch { /* ignora erro de upsert individual */ }
   }
 
-  // 4. Auto-concilia se score >= 80
+  const candidatosResumo: CandidatoResumo[] | undefined = opts.incluirCandidatos
+    ? candidatos.slice(0, 5).map((c) => ({
+        qid: c.qid,
+        url_wikidata: c.url_wikidata,
+        titulo: c.titulo,
+        descricao: c.descricao,
+        ano_publicacao: c.ano_publicacao,
+        idioma_original: c.idioma_original,
+        score: c.score,
+        autor_qids: c.autor_qids,
+        autor_labels: c.autor_labels,
+      }))
+    : undefined;
+
+  // 4. Auto-concilia se score >= 80 (somente no modo lote)
   const AUTO_THRESHOLD = 80;
-  if (melhor.score >= AUTO_THRESHOLD) {
+  if (autoConciliar && melhor.score >= AUTO_THRESHOLD) {
     const obraUpdate: Record<string, any> = {
       metadata_score: melhor.score,
       metadata_source: "wikidata",
@@ -383,10 +434,12 @@ async function processarObra(
   }
 
   // 5. Candidatos para revisão manual
-  await supabase.from("obras").update({
-    metadata_score: melhor.score,
-    metadata_checked_at: new Date().toISOString(),
-  }).eq("id", obra.id);
+  if (atualizarBookkeeping) {
+    await supabase.from("obras").update({
+      metadata_score: melhor.score,
+      metadata_checked_at: new Date().toISOString(),
+    }).eq("id", obra.id);
+  }
 
   return {
     obra_id: obra.id,
@@ -394,6 +447,7 @@ async function processarObra(
     resultado: "candidatos",
     score: melhor.score,
     num_candidatos: candidatos.length,
+    candidatos: candidatosResumo,
   };
 }
 
@@ -409,12 +463,62 @@ Deno.serve(async (req) => {
     const mode = String(body?.mode ?? "test5");
     const limit = mode === "test5" ? 5 : mode === "test10" ? 10 : mode === "batch50" ? 50 : 200;
     const autoThreshold = Number(body?.threshold ?? 80);
+    const obraIdEspecifico: string | null = body?.obra_id ?? null;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // ── Modo direcionado: reprocessa uma obra específica ────────────────
+    // Exige admin autenticado (o modo lote permanece aberto para o cron).
+    if (obraIdEspecifico) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (!authHeader) return json({ error: "Não autenticado" }, 401);
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData.user) return json({ error: "Token inválido" }, 401);
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleRow) return json({ error: "Acesso negado" }, 403);
+
+      const { data: obraRow, error: errObra } = await supabase
+        .from("obras")
+        .select(`
+          id, titulo_original, ano_primeira_publicacao,
+          sinopse_padrao, idioma_original,
+          obra_autores(autores(nome_completo))
+        `)
+        .eq("id", obraIdEspecifico)
+        .maybeSingle();
+      if (errObra) return json({ error: errObra.message }, 500);
+      if (!obraRow) return json({ error: "Obra não encontrada" }, 404);
+
+      // Limpa candidatos antigos para a nova busca não misturar resultados
+      await supabase.from("obras_candidatos_wikidata").delete().eq("obra_id", obraIdEspecifico);
+
+      const obra = {
+        ...(obraRow as any),
+        autorNomes: ((obraRow as any).obra_autores ?? [])
+          .map((oa: any) => oa.autores?.nome_completo)
+          .filter(Boolean),
+      };
+      const resultado = await processarObra(supabase, obra, {
+        autoConciliar: false,
+        incluirCandidatos: true,
+      });
+      return json({ ...resultado, executado_em: new Date().toISOString() });
+    }
+
+    // ── Modo lote ────────────────────────────────────────────────────────
     // Busca obras ainda não tentadas (metadata_score IS NULL)
     const { data: obras, error: errObras } = await supabase
       .from("obras")
