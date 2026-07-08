@@ -254,7 +254,6 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
         .gte("data_registro", inicioISO)
         .lt("data_registro", fimISO);
 
-      const paginasLidas = (progs ?? []).reduce((s, p) => s + (p.paginas_lidas ?? 0), 0);
       const sessoesLeitura = progs?.length ?? 0;
 
       // Tempo: soma dos minutos gravados pelo cronômetro/registro manual
@@ -271,6 +270,7 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
       const leituraIds = Array.from(new Set((progs ?? []).map((p: any) => p.leitura_id).filter(Boolean)));
       let livros: LivroResumo[] = [];
       const expIdsAtivos = new Set<string>();
+      const sessaoParaExp: Record<string, string> = {};
 
       if (leituraIds.length) {
         const { data: leits } = await supabase
@@ -278,7 +278,10 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
           .select("id, usuario_leitura_id, data_inicio, data_fim")
           .in("id", leituraIds);
         for (const l of leits ?? []) {
-          if (l.usuario_leitura_id) expIdsAtivos.add(l.usuario_leitura_id);
+          if (l.usuario_leitura_id) {
+            expIdsAtivos.add(l.usuario_leitura_id);
+            sessaoParaExp[l.id] = l.usuario_leitura_id;
+          }
           // Fallback para sessões antigas sem tempo gravado: usa a duração
           // data_inicio → data_fim da própria sessão (sem contar em dobro)
           if (!leiturasComTempo.has(l.id) && l.data_inicio && l.data_fim) {
@@ -287,6 +290,45 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
               tempoMinutos = (tempoMinutos ?? 0) + Math.round(ms / 60000);
             }
           }
+        }
+      }
+
+      // Páginas lidas no período: paginas_lidas guarda a página atual, então
+      // o avanço de cada experiência é a maior página registrada no período
+      // menos a maior página registrada antes dele.
+      const maxNoPeriodo: Record<string, number> = {};
+      for (const p of progs ?? []) {
+        const exp = sessaoParaExp[p.leitura_id ?? ""];
+        if (!exp || p.paginas_lidas == null) continue;
+        maxNoPeriodo[exp] = Math.max(maxNoPeriodo[exp] ?? 0, p.paginas_lidas);
+      }
+      let paginasLidas = 0;
+      const expsComPaginas = Object.keys(maxNoPeriodo);
+      if (expsComPaginas.length) {
+        const { data: todasSessoes } = await supabase
+          .from("leituras")
+          .select("id, usuario_leitura_id")
+          .in("usuario_leitura_id", expsComPaginas)
+          .eq("tipo", "leitura");
+        const todasSessaoParaExp: Record<string, string> = {};
+        (todasSessoes ?? []).forEach((l: any) => (todasSessaoParaExp[l.id] = l.usuario_leitura_id));
+        const maxAntes: Record<string, number> = {};
+        const todasSessIds = Object.keys(todasSessaoParaExp);
+        if (todasSessIds.length) {
+          const { data: progsAntes } = await supabase
+            .from("leitura_progresso")
+            .select("leitura_id, paginas_lidas")
+            .eq("user_id", user!.id)
+            .in("leitura_id", todasSessIds)
+            .lt("data_registro", inicioISO);
+          for (const p of progsAntes ?? []) {
+            const exp = todasSessaoParaExp[p.leitura_id ?? ""];
+            if (!exp || p.paginas_lidas == null) continue;
+            maxAntes[exp] = Math.max(maxAntes[exp] ?? 0, p.paginas_lidas);
+          }
+        }
+        for (const exp of expsComPaginas) {
+          paginasLidas += Math.max(0, maxNoPeriodo[exp] - (maxAntes[exp] ?? 0));
         }
       }
 
