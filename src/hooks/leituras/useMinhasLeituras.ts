@@ -16,8 +16,12 @@ export type LivroResumo = {
   status: string;
 };
 
+type ProgressoAgg = { paginas: number; percentual: number; ultima: string | null };
+
+const AGG_VAZIO: ProgressoAgg = { paginas: 0, percentual: 0, ultima: null };
+
 async function aggregateProgresso(expIds: string[]) {
-  const agg: Record<string, { paginas: number; ultima: string | null }> = {};
+  const agg: Record<string, ProgressoAgg> = {};
   if (!expIds.length) return agg;
   const { data: leituras } = await supabase
     .from("leituras")
@@ -30,25 +34,63 @@ async function aggregateProgresso(expIds: string[]) {
   if (!leituraIds.length) return agg;
   const { data: prog } = await supabase
     .from("leitura_progresso")
-    .select("leitura_id, paginas_lidas, data_registro")
+    .select("leitura_id, paginas_lidas, percentual_lido, data_registro")
     .in("leitura_id", leituraIds);
   for (const p of prog ?? []) {
     const exp = idToExp[p.leitura_id ?? ""];
     if (!exp) continue;
-    if (!agg[exp]) agg[exp] = { paginas: 0, ultima: null };
-    agg[exp].paginas += p.paginas_lidas ?? 0;
+    if (!agg[exp]) agg[exp] = { ...AGG_VAZIO };
+    // paginas_lidas guarda a página atual do registro, não um delta —
+    // o progresso é o maior valor registrado (mesma regra de calcularProgresso).
+    agg[exp].paginas = Math.max(agg[exp].paginas, p.paginas_lidas ?? 0);
+    agg[exp].percentual = Math.max(agg[exp].percentual, p.percentual_lido ?? 0);
     const dr = p.data_registro ?? null;
     if (dr && (!agg[exp].ultima || dr > agg[exp].ultima!)) agg[exp].ultima = dr;
   }
   return agg;
 }
 
-function toLivroResumo(exp: any, paginas: number, ultima: string | null): LivroResumo {
-  const total = exp.usuario_livros?.edicoes?.num_paginas ?? null;
+/**
+ * Para experiências cuja edição vinculada não tem num_paginas, busca qualquer
+ * outra edição da mesma obra que tenha — mesma regra do useLivroDetalhe.
+ * Retorna um mapa obra_id → num_paginas.
+ */
+async function carregarTotaisAlternativos(exps: any[]): Promise<Record<string, number>> {
+  const obraIds = Array.from(
+    new Set(
+      exps
+        .filter((e: any) => !e.usuario_livros?.edicoes?.num_paginas)
+        .map((e: any) => e.usuario_livros?.obra_id)
+        .filter(Boolean),
+    ),
+  );
+  if (!obraIds.length) return {};
+  const { data } = await supabase
+    .from("edicoes")
+    .select("obra_id, num_paginas")
+    .in("obra_id", obraIds)
+    .not("num_paginas", "is", null);
+  const map: Record<string, number> = {};
+  for (const e of data ?? []) {
+    if (e.obra_id && e.num_paginas && map[e.obra_id] == null) map[e.obra_id] = e.num_paginas;
+  }
+  return map;
+}
+
+function toLivroResumo(exp: any, agg: ProgressoAgg, totaisAlt: Record<string, number>): LivroResumo {
+  const { paginas, percentual: percentualSalvo, ultima } = agg;
+  const total =
+    exp.usuario_livros?.edicoes?.num_paginas ??
+    totaisAlt[exp.usuario_livros?.obra_id ?? ""] ??
+    null;
   const obra = exp.usuario_livros?.obras;
   const autor =
     obra?.obra_autores?.[0]?.autores?.nome_completo ?? null;
-  const percentual = total && total > 0 ? Math.min(100, Math.round((paginas / total) * 100)) : 0;
+  // Mesma regra de calcularProgresso (useLivroDetalhe): com total conhecido,
+  // deriva da página atual; sem total, usa o último percentual salvo.
+  const percentual = total && total > 0
+    ? Math.min(100, Math.round((paginas / total) * 100))
+    : Math.min(100, Math.round(percentualSalvo));
   return {
     usuario_leitura_id: exp.id,
     usuario_livro_id: exp.usuario_livro_id,
@@ -65,7 +107,7 @@ function toLivroResumo(exp: any, paginas: number, ultima: string | null): LivroR
 }
 
 const SELECT_EXP =
-  "id, status, data_fim, data_inicio, usuario_livro_id, usuario_livros!inner(id, user_id, obras(titulo_original, capa_padrao_url, obra_autores(ordem, autores(nome_completo))), edicoes(num_paginas))";
+  "id, status, data_fim, data_inicio, usuario_livro_id, usuario_livros!inner(id, user_id, obra_id, obras(titulo_original, capa_padrao_url, obra_autores(ordem, autores(nome_completo))), edicoes(num_paginas))";
 
 export function useLendoList() {
   const { user } = useAuth();
@@ -80,11 +122,11 @@ export function useLendoList() {
         .eq("status", "lendo")
         .order("updated_at", { ascending: false });
       const expIds = (exps ?? []).map((e: any) => e.id);
-      const agg = await aggregateProgresso(expIds);
-      return (exps ?? []).map((e: any) => {
-        const a = agg[e.id] ?? { paginas: 0, ultima: null };
-        return toLivroResumo(e, a.paginas, a.ultima);
-      });
+      const [agg, totaisAlt] = await Promise.all([
+        aggregateProgresso(expIds),
+        carregarTotaisAlternativos(exps ?? []),
+      ]);
+      return (exps ?? []).map((e: any) => toLivroResumo(e, agg[e.id] ?? AGG_VAZIO, totaisAlt));
     },
   });
 }
@@ -103,11 +145,11 @@ export function useConcluidosRecentes(limit = 8) {
         .order("data_fim", { ascending: false })
         .limit(limit);
       const expIds = (exps ?? []).map((e: any) => e.id);
-      const agg = await aggregateProgresso(expIds);
-      return (exps ?? []).map((e: any) => {
-        const a = agg[e.id] ?? { paginas: 0, ultima: null };
-        return toLivroResumo(e, a.paginas, a.ultima);
-      });
+      const [agg, totaisAlt] = await Promise.all([
+        aggregateProgresso(expIds),
+        carregarTotaisAlternativos(exps ?? []),
+      ]);
+      return (exps ?? []).map((e: any) => toLivroResumo(e, agg[e.id] ?? AGG_VAZIO, totaisAlt));
     },
   });
 }
@@ -171,9 +213,12 @@ export function useUltimaSessao() {
         .eq("id", expIdAtivo)
         .maybeSingle();
       if (!exp) return null;
-      const agg = await aggregateProgresso([expIdAtivo]);
-      const a = agg[expIdAtivo] ?? { paginas: 0, ultima: ultimaData };
-      return toLivroResumo(exp, a.paginas, a.ultima ?? ultimaData);
+      const [agg, totaisAlt] = await Promise.all([
+        aggregateProgresso([expIdAtivo]),
+        carregarTotaisAlternativos([exp]),
+      ]);
+      const a = agg[expIdAtivo] ?? { ...AGG_VAZIO, ultima: ultimaData };
+      return toLivroResumo(exp, { ...a, ultima: a.ultima ?? ultimaData }, totaisAlt);
     },
   });
 }
@@ -252,9 +297,12 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
           .select(SELECT_EXP)
           .eq("usuario_livros.user_id", user!.id)
           .in("id", expIds);
-        const agg = await aggregateProgresso(expIds);
+        const [agg, totaisAlt] = await Promise.all([
+          aggregateProgresso(expIds),
+          carregarTotaisAlternativos(exps ?? []),
+        ]);
         livros = (exps ?? [])
-          .map((e: any) => toLivroResumo(e, agg[e.id]?.paginas ?? 0, agg[e.id]?.ultima ?? null))
+          .map((e: any) => toLivroResumo(e, agg[e.id] ?? AGG_VAZIO, totaisAlt))
           .sort((a, b) => (b.ultima_sessao ?? "").localeCompare(a.ultima_sessao ?? ""));
       }
 
