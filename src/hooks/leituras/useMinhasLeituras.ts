@@ -204,7 +204,7 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
       // Páginas + sessões a partir de leitura_progresso
       const { data: progs } = await supabase
         .from("leitura_progresso")
-        .select("leitura_id, paginas_lidas, data_registro")
+        .select("leitura_id, paginas_lidas, data_registro, tempo_leitura_minutos")
         .eq("user_id", user!.id)
         .gte("data_registro", inicioISO)
         .lt("data_registro", fimISO);
@@ -212,10 +212,19 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
       const paginasLidas = (progs ?? []).reduce((s, p) => s + (p.paginas_lidas ?? 0), 0);
       const sessoesLeitura = progs?.length ?? 0;
 
+      // Tempo: soma dos minutos gravados pelo cronômetro/registro manual
+      let tempoMinutos: number | null = null;
+      const leiturasComTempo = new Set<string>();
+      for (const p of progs ?? []) {
+        if (p.tempo_leitura_minutos != null) {
+          tempoMinutos = (tempoMinutos ?? 0) + p.tempo_leitura_minutos;
+          if (p.leitura_id) leiturasComTempo.add(p.leitura_id);
+        }
+      }
+
       // Livros tocados no período
       const leituraIds = Array.from(new Set((progs ?? []).map((p: any) => p.leitura_id).filter(Boolean)));
       let livros: LivroResumo[] = [];
-      let tempoMinutos: number | null = null;
       const expIdsAtivos = new Set<string>();
 
       if (leituraIds.length) {
@@ -225,7 +234,9 @@ export function useEstatisticasPeriodo(mes: number | "all", ano: number) {
           .in("id", leituraIds);
         for (const l of leits ?? []) {
           if (l.usuario_leitura_id) expIdsAtivos.add(l.usuario_leitura_id);
-          if (l.data_inicio && l.data_fim) {
+          // Fallback para sessões antigas sem tempo gravado: usa a duração
+          // data_inicio → data_fim da própria sessão (sem contar em dobro)
+          if (!leiturasComTempo.has(l.id) && l.data_inicio && l.data_fim) {
             const ms = new Date(l.data_fim).getTime() - new Date(l.data_inicio).getTime();
             if (ms > 0 && ms < 1000 * 60 * 60 * 12) {
               tempoMinutos = (tempoMinutos ?? 0) + Math.round(ms / 60000);

@@ -116,11 +116,10 @@ export const SessaoLeituraModal = () => {
           ? Math.min(100, Math.round((paginaInput / sessao.totalPaginas) * 100))
           : null;
 
-      // Fecha a sessão com data_fim para registrar a duração nas estatísticas de tempo
-      await supabase.from("leituras").update({ data_fim: dataFim }).eq("id", sessao.leituraId);
-
       // Usa a edge function para salvar o progresso — ela atualiza usuario_leituras,
-      // usuario_livros e lida corretamente com o contexto de clube (trilhas)
+      // usuario_livros e lida corretamente com o contexto de clube (trilhas).
+      // Importante: a sessão precisa estar ABERTA (data_fim nula) neste momento,
+      // senão a função cria uma nova linha em `leituras` e o tempo fica órfão.
       const body: Record<string, unknown> = {
         usuario_leitura_id: sessao.usuarioLeituraId,
         pagina_atual: paginaInput,
@@ -132,6 +131,9 @@ export const SessaoLeituraModal = () => {
 
       const { error } = await supabase.functions.invoke("salvar-progresso-leitura", { body });
       if (error) throw error;
+
+      // Fecha a sessão com data_fim para registrar a duração nas estatísticas de tempo
+      await supabase.from("leituras").update({ data_fim: dataFim }).eq("id", sessao.leituraId);
 
       qc.invalidateQueries({ queryKey: ["livro-detalhe", sessao.usuarioLeituraId], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["timeline-livro", sessao.usuarioLeituraId], refetchType: "all" });
