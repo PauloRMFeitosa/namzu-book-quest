@@ -68,6 +68,37 @@ function parseTimeClaim(v: any): string | null {
   return `${year}-${month}-${day}`;
 }
 
+// ── Helpers de claims para obras ────────────────────────────────────────────
+
+/** QIDs referenciados por uma claim de item (ex.: P50 autor, P31 instance of) */
+export function claimEntityIds(entity: any, prop: string): string[] {
+  return extractClaimValues(entity, prop)
+    .filter((v: any) => v && typeof v === "object" && v["entity-type"] === "item")
+    .map((v: any) => v.id);
+}
+
+/** Ano de uma claim de tempo (padrão P577 — publication date) */
+export function claimYear(entity: any, prop = "P577"): number | null {
+  for (const v of extractClaimValues(entity, prop)) {
+    if (v && typeof v === "object" && v.time) {
+      const m = /(\d{4})/.exec(String(v.time));
+      if (m) return parseInt(m[1]);
+    }
+  }
+  return null;
+}
+
+/** Código de idioma a partir de P407 (language of work) */
+const IDIOMA_QID_MAP: Record<string, string> = {
+  Q5146: "pt", Q1860: "en", Q150: "fr", Q188: "de",
+  Q652: "it", Q1321: "es", Q7737: "ru", Q5885: "ja",
+};
+
+export function claimIdioma(entity: any): string | null {
+  const qids = claimEntityIds(entity, "P407");
+  return qids.map((q) => IDIOMA_QID_MAP[q]).find(Boolean) ?? null;
+}
+
 export async function resolveLabels(qids: string[], lang = "pt"): Promise<Record<string, string>> {
   if (!qids.length) return {};
   const out: Record<string, string> = {};

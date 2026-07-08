@@ -42,3 +42,6 @@ verify_jwt = false
 [functions.reprocessar-obras]
 verify_jwt = false
 
+[functions.conciliar-obra]
+verify_jwt = false
+
