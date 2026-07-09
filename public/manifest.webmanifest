@@ -2,6 +2,8 @@
   "name": "Namzu",
   "short_name": "Namzu",
   "description": "A sabedoria começa aqui",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

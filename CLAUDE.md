@@ -2,7 +2,7 @@
 
 Este arquivo fornece orientações ao Claude Code (claude.ai/code) ao trabalhar com o código deste repositório.
 
-**Proprietário do projeto:** Paulo Feitosa
+**Proprietário e desenvolvedor do projeto:** Paulo Moura
 
 ## Visão Geral do Projeto
 
