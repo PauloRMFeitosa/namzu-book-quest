@@ -139,6 +139,7 @@ onOpenChange(false);
 | `InsightDialog.tsx` | `draft-insight-{livroId}` |
 | `AplicacaoDialog.tsx` | `draft-aplicacao-{livroId}` |
 | `ReportarConteudoDialog.tsx` | `draft-denuncia-{conteudoId}` |
+| `FeedbackDialog.tsx` | `draft-feedback-geral` |
 
 ## Convenções Principais
 

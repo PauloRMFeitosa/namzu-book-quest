@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
-import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield, FileText } from "lucide-react";
+import { Home, Users, Search, BookOpen, BookMarked, Menu, User, Target, History, Bell, Settings, LogOut, Shield, FileText, MessageSquareWarning } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -12,6 +12,7 @@ import logoNamzu from "@/assets/logo-namzu.png";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
 import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
 import { useConquistaRealtime } from "@/hooks/useConquistaRealtime";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 
 
 const navItems = [
@@ -32,6 +33,7 @@ const drawerItems = [
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
+  const [feedbackAberto, setFeedbackAberto] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
   const { flags } = useFeatureFlags();
@@ -92,6 +94,16 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>
           <div className="ml-auto flex items-center gap-2">
             <InstallPWAButton />
+
+            {/* Denunciar, comunicar erro ou enviar sugestão */}
+            <button
+              onClick={() => setFeedbackAberto(true)}
+              aria-label="Denunciar, comunicar erro ou enviar sugestão"
+              title="Denunciar, comunicar erro ou enviar sugestão"
+              className="flex items-center hover-lift p-1.5 rounded-xl text-accent hover:text-primary transition-colors"
+            >
+              <MessageSquareWarning className="w-5 h-5" />
+            </button>
 
             {/* Sino de notificações */}
             <Link
@@ -168,6 +180,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           </button>
         </div>
       </nav>}
+
+      <FeedbackDialog open={feedbackAberto} onOpenChange={setFeedbackAberto} />
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-72">
