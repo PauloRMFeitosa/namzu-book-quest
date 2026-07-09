@@ -23,7 +23,7 @@ const formatDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : "—";
 
 // ─── Prateleira ───────────────────────────────────────────────────────────────
-const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
+const Prateleira = ({ titulo, itens, aoAbrirLivro }: { titulo: string; itens: any[]; aoAbrirLivro: (usuarioLivroId: string) => void }) => (
   <div>
     <div className="flex items-center justify-between mb-2">
       <h4 className="text-sm font-semibold">{titulo}</h4>
@@ -37,7 +37,12 @@ const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
           const capa = resolverCapa(l.obras?.capa_padrao_url, l.edicoes?.capa_url);
           const titulo = l.edicoes?.titulo_edicao ?? l.obras?.titulo_original ?? "—";
           return (
-            <div key={l.id} className="shrink-0 w-20">
+            <button
+              key={l.id}
+              onClick={() => aoAbrirLivro(l.id)}
+              className="shrink-0 w-20 text-left hover-lift"
+              aria-label={`Ver jornada de leitura de ${titulo}`}
+            >
               <div className="aspect-[2/3] rounded-md overflow-hidden bg-muted border border-border/60">
                 {capa ? (
                   <img src={capa} alt={titulo} className="w-full h-full object-cover" loading="lazy" />
@@ -48,7 +53,7 @@ const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
                 )}
               </div>
               <p className="text-[10px] mt-1 line-clamp-2 leading-tight">{titulo}</p>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -205,6 +210,9 @@ export default function PerfilPublico() {
 
   const ownedMap = new Map(conquistas.map((c: any) => [c.conquista_id, c.desbloqueado_em]));
 
+  const abrirLivro = (usuarioLivroId: string) =>
+    navigate(`/perfis/${id}/livros/${usuarioLivroId}`);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Voltar */}
@@ -302,10 +310,10 @@ export default function PerfilPublico() {
 
         {/* BIBLIOTECA */}
         <TabsContent value="biblioteca" className="flex flex-col gap-5 mt-4">
-          <Prateleira titulo="Lendo" itens={lendo} />
-          <Prateleira titulo="Concluídos" itens={concluidos} />
-          <Prateleira titulo="Quero Ler" itens={queroLer} />
-          <Prateleira titulo="Favoritos" itens={favoritos} />
+          <Prateleira titulo="Lendo" itens={lendo} aoAbrirLivro={abrirLivro} />
+          <Prateleira titulo="Concluídos" itens={concluidos} aoAbrirLivro={abrirLivro} />
+          <Prateleira titulo="Quero Ler" itens={queroLer} aoAbrirLivro={abrirLivro} />
+          <Prateleira titulo="Favoritos" itens={favoritos} aoAbrirLivro={abrirLivro} />
         </TabsContent>
 
         {/* CONQUISTAS */}
