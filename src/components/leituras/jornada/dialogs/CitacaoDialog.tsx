@@ -13,6 +13,10 @@ import { invalidateLeituras } from "@/lib/queryInvalidation";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
 const draftKey = (id: string) => `draft-citacao-${id}`;
 
+// Lei 9.610/98, art. 46, III: citação permitida em passagens curtas,
+// na medida justificada, com indicação de autor e origem
+const LIMITE_CITACAO = 1000;
+
 interface Props {
   livro: LivroDetalhe;
   open: boolean;
@@ -81,7 +85,8 @@ export const CitacaoDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }:
 
       if (publicarNoClube && clubeId && user) {
         const titulo = livro.obras?.titulo_original ?? "livro";
-        const conteudo = `💬 *Citação de "${titulo}"*\n\n"${textoFinal}"`;
+        const autor = livro.autores?.[0]?.nome;
+        const conteudo = `💬 *Citação de "${titulo}"${autor ? `, de ${autor}` : ""}*\n\n"${textoFinal}"`;
         await supabase.from("clube_posts").insert({ clube_id: clubeId, user_id: user.id, conteudo, obra_id: livro.obra_id ?? null });
       }
 
@@ -103,7 +108,21 @@ export const CitacaoDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }:
         <div className="flex flex-col gap-3">
           <div>
             <label className="text-xs text-muted-foreground">Texto *</label>
-            <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={3} className="rounded-xl mt-1" />
+            <Textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value.slice(0, LIMITE_CITACAO))}
+              maxLength={LIMITE_CITACAO}
+              rows={3}
+              className="rounded-xl mt-1"
+            />
+            <div className="flex items-start justify-between gap-2 mt-1">
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Transcreva apenas trechos curtos, indicando a página — a citação de passagens é permitida pela Lei 9.610/98 (art. 46) na medida justificada e com indicação da fonte.
+              </p>
+              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                {texto.length}/{LIMITE_CITACAO}
+              </span>
+            </div>
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Página</label>

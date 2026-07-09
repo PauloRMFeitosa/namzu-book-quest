@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,8 +7,9 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { resolverCapa } from "@/lib/capaLivro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReportarConteudoDialog } from "@/components/ReportarConteudoDialog";
 import {
-  ArrowLeft, BookOpen, BookOpenCheck, CalendarDays, Lightbulb,
+  ArrowLeft, BookOpen, BookOpenCheck, CalendarDays, Flag, Lightbulb,
   Lock, Quote, Star, Target,
 } from "lucide-react";
 
@@ -31,6 +33,7 @@ export default function PerfilLeituraDetalhe() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const [reportarAberto, setReportarAberto] = useState(false);
 
   const { data: livro, isLoading: carregandoLivro } = useQuery({
     queryKey: ["perfil-livro", usuarioLivroId],
@@ -288,9 +291,11 @@ export default function PerfilLeituraDetalhe() {
                 {citacoes.map((c: any) => (
                   <blockquote key={c.id} className="px-3 py-2 rounded-xl bg-muted/40 border-l-2 border-primary/40">
                     <p className="text-sm italic whitespace-pre-wrap">"{c.texto}"</p>
-                    {c.pagina != null && (
-                      <p className="text-xs text-muted-foreground mt-1">Página {c.pagina}</p>
-                    )}
+                    {/* Atribuição exigida pela Lei 9.610/98, art. 46: autor e origem */}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      — {autores ? `${autores}, ` : ""}{titulo}
+                      {c.pagina != null ? ` · p. ${c.pagina}` : ""}
+                    </p>
                   </blockquote>
                 ))}
               </div>
@@ -326,6 +331,25 @@ export default function PerfilLeituraDetalhe() {
               </div>
               <p className="text-sm text-foreground/80 whitespace-pre-wrap">{resenha}</p>
             </section>
+          )}
+
+          {/* Canal de denúncia (notice and takedown) — apenas para conteúdo de terceiros */}
+          {!ehDono && (
+            <>
+              <button
+                onClick={() => setReportarAberto(true)}
+                className="self-center inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors py-2"
+              >
+                <Flag className="w-3.5 h-3.5" /> Reportar conteúdo
+              </button>
+              <ReportarConteudoDialog
+                open={reportarAberto}
+                onOpenChange={setReportarAberto}
+                tipoConteudo="leitura"
+                conteudoId={livro.id}
+                denunciadoUserId={livro.user_id}
+              />
+            </>
           )}
         </>
       )}
