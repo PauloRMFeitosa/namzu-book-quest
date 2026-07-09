@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 import { useLendoList } from "@/hooks/leituras/useMinhasLeituras";
 
-import { BookOpen, Play, Plus, ArrowRight, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
+import { BookOpen, Play, Plus, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
 
 const Home = () => {
@@ -65,6 +66,17 @@ const Home = () => {
     },
   });
 
+  // Unifica curadoria + participação: curador vem primeiro, sem duplicar clube
+  const meusClubes = useMemo(() => {
+    const idsCurador = new Set(clubesCurador.map((c: any) => c.id));
+    return [
+      ...clubesCurador.map((c: any) => ({ ...c, ehCurador: true })),
+      ...clubes
+        .filter((c: any) => !idsCurador.has(c.id))
+        .map((c: any) => ({ ...c, ehCurador: c.curador_id === user?.id })),
+    ];
+  }, [clubes, clubesCurador, user?.id]);
+
   return (
     <div className="flex flex-col gap-6">
       <PageHero
@@ -78,16 +90,16 @@ const Home = () => {
 
       <IniciarCodigoMeCard />
 
-      {/* Meus clubes ativos — scroll horizontal por atualização mais recente */}
+      {/* Meus clubes — curadoria e participação unificadas; curador vem primeiro com badge */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold text-sm text-foreground">Meus clubes ativos</h3>
+            <h3 className="font-semibold text-sm text-foreground">Meus clubes</h3>
           </div>
           <button onClick={() => navigate("/clubes")} className="text-xs text-primary font-medium">Ver todos</button>
         </div>
-        {clubes.length === 0 ? (
+        {meusClubes.length === 0 ? (
           <div className="card-soft p-6 text-center">
             <Users className="w-10 h-10 mx-auto text-primary mb-3" />
             <p className="font-semibold">Você ainda não participa de nenhum clube ativo</p>
@@ -97,61 +109,36 @@ const Home = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
-            {clubes.map((c: any) => (
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0">
+            {meusClubes.map((c: any) => (
               <button
                 key={c.id}
                 onClick={() => navigate(`/clubes/${c.id}`)}
-                className="card-soft p-3 flex items-center gap-3 hover-lift text-left flex-shrink-0 w-[72%] snap-start"
+                className="card-soft p-5 h-full flex flex-col items-center text-center hover-lift shrink-0 w-[78%] snap-start md:w-auto"
               >
-                {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-primary font-bold text-sm shrink-0">{c.nome[0]}</div>
+                {c.ehCurador && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                    <Crown className="w-3 h-3" /> Curador
+                  </span>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-3">
+                  {c.imagem_capa_url ? (
+                    <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-soft" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary font-bold text-xl">
+                      {c.nome[0]}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold leading-tight line-clamp-1">{c.nome}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{c.descricao}</p>
+                  </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
               </button>
             ))}
           </div>
         )}
       </section>
-
-      {/* Minha curadoria — só aparece se o usuário for curador de algum clube */}
-      {clubesCurador.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-sm text-foreground">Minha curadoria</h3>
-            </div>
-            <button onClick={() => navigate("/clubes")} className="text-xs text-primary font-medium">Gerenciar</button>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
-            {clubesCurador.map((c: any) => (
-              <button
-                key={c.id}
-                onClick={() => navigate(`/clubes/${c.id}`)}
-                className="card-soft p-3 flex items-center gap-3 hover-lift text-left flex-shrink-0 w-[72%] snap-start"
-              >
-                {c.imagem_capa_url ? (
-                  <img src={c.imagem_capa_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-primary font-bold text-sm shrink-0">{c.nome[0]}</div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{c.descricao}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-primary shrink-0" />
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
