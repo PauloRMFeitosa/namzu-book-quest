@@ -82,6 +82,9 @@ export const InsightDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }:
           <div>
             <label className="text-xs text-muted-foreground">O que aprendi *</label>
             <VoiceTextarea value={aprendi} onValueChange={setAprendi} rows={3} className="mt-1" />
+            <p className="text-[11px] text-muted-foreground leading-snug mt-1">
+              Escreva com suas próprias palavras — para transcrever trechos da obra, use o registro de citação.
+            </p>
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Por que foi importante</label>

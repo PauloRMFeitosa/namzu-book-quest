@@ -186,6 +186,9 @@ export const ResenhaDialog = ({ livro, open, onOpenChange, clubeId, clubeNome }:
               placeholder="O que você achou do livro?"
               className="mt-1"
             />
+            <p className="text-[11px] text-muted-foreground leading-snug mt-1">
+              Escreva com suas próprias palavras — para transcrever trechos da obra, use o registro de citação.
+            </p>
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Pontos positivos</label>

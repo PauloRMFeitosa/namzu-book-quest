@@ -17,6 +17,7 @@ import {
   PanelLeftOpen,
   Globe,
   ClipboardList,
+  Flag,
 } from "lucide-react";
 import { GamificacaoTab } from "./tabs/GamificacaoTab";
 import { UsuariosTab } from "./tabs/UsuariosTab";
@@ -32,6 +33,7 @@ import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
 import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
 import { WikidataAutoresTab } from "./tabs/WikidataAutoresTab";
 import { JobsTab } from "./tabs/JobsTab";
+import { DenunciasTab } from "./tabs/DenunciasTab";
 
 type TabKey =
   | "visibilidade"
@@ -47,7 +49,8 @@ type TabKey =
   | "mapeamento-generos"
   | "wikidata-obras"
   | "wikidata-autores"
-  | "jobs";
+  | "jobs"
+  | "denuncias";
 
 interface NavItem {
   key: TabKey;
@@ -67,6 +70,7 @@ const PLATFORM_NAV: NavItem[] = [
   { key: "metas", label: "Metas", icon: Target },
   { key: "conquistas", label: "Conquistas", icon: Trophy },
   { key: "visibilidade", label: "Visibilidade", icon: Eye },
+  { key: "denuncias", label: "Denúncias", icon: Flag },
 ];
 
 const TOOLS_NAV: NavItem[] = [
@@ -277,6 +281,7 @@ const Admin = () => {
           {tab === "wikidata-obras" && <WikidataObrasTab />}
           {tab === "wikidata-autores" && <WikidataAutoresTab />}
           {tab === "jobs" && <JobsTab />}
+          {tab === "denuncias" && <DenunciasTab />}
         </div>
       </div>
     </div>

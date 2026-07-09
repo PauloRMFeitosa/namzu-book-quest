@@ -138,6 +138,7 @@ onOpenChange(false);
 | `CitacaoDialog.tsx` | `draft-citacao-{livroId}` |
 | `InsightDialog.tsx` | `draft-insight-{livroId}` |
 | `AplicacaoDialog.tsx` | `draft-aplicacao-{livroId}` |
+| `ReportarConteudoDialog.tsx` | `draft-denuncia-{conteudoId}` |
 
 ## Convenções Principais
 

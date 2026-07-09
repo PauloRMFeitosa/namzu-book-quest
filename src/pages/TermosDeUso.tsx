@@ -22,7 +22,7 @@ const sections = [
   { id: "acervo", label: "12. Política do Acervo" },
 ];
 
-const lastUpdated = "Junho de 2026";
+const lastUpdated = "Julho de 2026";
 
 export default function TermosDeUso() {
   const navigate = useNavigate();
@@ -169,6 +169,17 @@ export default function TermosDeUso() {
           <p>Os conteúdos publicados permanecem sob responsabilidade de seus respectivos autores.</p>
           <p>Ao publicar conteúdo na plataforma, o usuário concede à NAMZU autorização para armazenar, processar e exibir esse conteúdo conforme necessário para o funcionamento dos serviços.</p>
           <p className="font-medium text-foreground">O usuário declara possuir os direitos necessários sobre os materiais enviados.</p>
+          <p className="font-medium text-foreground">Sobre citações de obras</p>
+          <p>
+            O registro e o compartilhamento de citações na NAMZU devem observar o <span className="font-medium text-foreground">art. 46, inciso III, da Lei nº 9.610/1998</span>, que permite a citação de passagens de qualquer obra para fins de estudo, crítica ou polêmica, na medida justificada para o fim a atingir e com a indicação do nome do autor e da origem da obra. Por isso, o campo de citação é limitado a trechos curtos e toda citação é exibida acompanhada do autor e da obra de origem.
+          </p>
+          <p>
+            É vedada a transcrição integral ou substancial de obras protegidas. Conteúdos que excedam os limites legais poderão ser removidos pela equipe da NAMZU.
+          </p>
+          <p className="font-medium text-foreground">Notificação e remoção (notice and takedown)</p>
+          <p>
+            Titulares de direitos autorais, ou seus representantes, podem notificar a NAMZU sobre conteúdo supostamente infrator por meio do recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível no aplicativo, ou pelo e-mail <span className="font-medium text-foreground">contato@namzu.com.br</span> — canais oficiais para esse fim. Recebida a notificação, a equipe analisará o caso e, constatada a violação, removerá ou tornará indisponível o conteúdo apontado com a maior brevidade possível.
+          </p>
         </Section>
 
         <hr className="border-border/60" />
@@ -233,7 +244,8 @@ export default function TermosDeUso() {
         <hr className="border-border/60" />
 
         <Section id="contato" title="11. Contato">
-          <p>Dúvidas, solicitações ou questões relacionadas a estes termos podem ser encaminhadas para os canais oficiais de atendimento da NAMZU.</p>
+          <p>Dúvidas, solicitações ou questões relacionadas a estes termos podem ser encaminhadas para o e-mail <span className="font-medium text-foreground">contato@namzu.com.br</span> ou pelos demais canais oficiais de atendimento da NAMZU.</p>
+          <p>Notificações sobre violação de direitos autorais ou conteúdo inadequado devem ser feitas pelo recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível nas páginas de conteúdo do aplicativo, ou pelo mesmo e-mail.</p>
         </Section>
 
         <hr className="border-border/60" />
