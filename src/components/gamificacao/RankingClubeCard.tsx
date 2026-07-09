@@ -10,7 +10,7 @@ export const RankingClubeCard = () => {
   if (!data || !data.top?.length) return null;
 
   return (
-    <div className="card-soft p-5">
+    <div className="card-soft p-5 h-full">
       <div className="flex items-center justify-between mb-3">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-primary font-semibold">
