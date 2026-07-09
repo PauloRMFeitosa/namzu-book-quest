@@ -178,7 +178,7 @@ export default function TermosDeUso() {
           </p>
           <p className="font-medium text-foreground">Notificação e remoção (notice and takedown)</p>
           <p>
-            Titulares de direitos autorais, ou seus representantes, podem notificar a NAMZU sobre conteúdo supostamente infrator por meio do recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível no aplicativo — canal oficial para esse fim. Recebida a notificação, a equipe analisará o caso e, constatada a violação, removerá ou tornará indisponível o conteúdo apontado com a maior brevidade possível.
+            Titulares de direitos autorais, ou seus representantes, podem notificar a NAMZU sobre conteúdo supostamente infrator por meio do recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível no aplicativo, ou pelo e-mail <span className="font-medium text-foreground">contato@namzu.com.br</span> — canais oficiais para esse fim. Recebida a notificação, a equipe analisará o caso e, constatada a violação, removerá ou tornará indisponível o conteúdo apontado com a maior brevidade possível.
           </p>
         </Section>
 
@@ -244,8 +244,8 @@ export default function TermosDeUso() {
         <hr className="border-border/60" />
 
         <Section id="contato" title="11. Contato">
-          <p>Dúvidas, solicitações ou questões relacionadas a estes termos podem ser encaminhadas para os canais oficiais de atendimento da NAMZU.</p>
-          <p>Notificações sobre violação de direitos autorais ou conteúdo inadequado devem ser feitas pelo recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível nas páginas de conteúdo do aplicativo.</p>
+          <p>Dúvidas, solicitações ou questões relacionadas a estes termos podem ser encaminhadas para o e-mail <span className="font-medium text-foreground">contato@namzu.com.br</span> ou pelos demais canais oficiais de atendimento da NAMZU.</p>
+          <p>Notificações sobre violação de direitos autorais ou conteúdo inadequado devem ser feitas pelo recurso <span className="font-medium text-foreground">"Reportar conteúdo"</span>, disponível nas páginas de conteúdo do aplicativo, ou pelo mesmo e-mail.</p>
         </Section>
 
         <hr className="border-border/60" />
