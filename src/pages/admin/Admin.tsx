@@ -70,7 +70,7 @@ const PLATFORM_NAV: NavItem[] = [
   { key: "metas", label: "Metas", icon: Target },
   { key: "conquistas", label: "Conquistas", icon: Trophy },
   { key: "visibilidade", label: "Visibilidade", icon: Eye },
-  { key: "denuncias", label: "Denúncias", icon: Flag },
+  { key: "denuncias", label: "Denúncias e Sugestões", icon: Flag },
 ];
 
 const TOOLS_NAV: NavItem[] = [
