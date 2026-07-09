@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { BookOpen, Users } from "lucide-react";
 
-const LIVROS_DEMO = Array.from({ length: 12 }, (_, i) => i);
+const LIVROS_DEMO = Array.from({ length: 6 }, (_, i) => i);
+const CLUBES_DEMO = Array.from({ length: 3 }, (_, i) => i);
 
 interface Props {
   onAvancar: () => void;
@@ -27,8 +28,15 @@ export function TelaBoasVindas({ onAvancar }: Props) {
           Estante, progresso e clube — tudo no seu ritmo.
         </p>
 
+        <div className="flex items-start gap-3 bg-secondary/40 rounded-2xl px-4 py-3 mb-5">
+          <Users className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+          <p className="text-sm text-foreground leading-snug">
+            Monte sua estante agora — sem criar conta ainda.
+          </p>
+        </div>
+
         {/* Estante demo */}
-        <div className="grid grid-cols-4 gap-2 mb-5">
+        <div className="grid grid-cols-3 gap-2 mb-3">
           {LIVROS_DEMO.map((i) => (
             <div
               key={i}
@@ -39,10 +47,22 @@ export function TelaBoasVindas({ onAvancar }: Props) {
           ))}
         </div>
 
+        {/* Clubes demo */}
+        <div className="grid grid-cols-3 gap-2 mb-5">
+          {CLUBES_DEMO.map((i) => (
+            <div
+              key={i}
+              className="bg-secondary/70 rounded-lg aspect-[3/2] flex items-center justify-center"
+            >
+              <Users className="w-5 h-5 text-primary/30" />
+            </div>
+          ))}
+        </div>
+
         {/* Stats */}
-        <div className="flex gap-8 mb-6">
+        <div className="flex gap-8">
           {[
-            { valor: "12", label: "livros" },
+            { valor: "6", label: "livros" },
             { valor: "3", label: "clubes" },
             { valor: "1", label: "trilha" },
           ].map(({ valor, label }) => (
@@ -51,13 +71,6 @@ export function TelaBoasVindas({ onAvancar }: Props) {
               <p className="text-xs text-muted-foreground">{label}</p>
             </div>
           ))}
-        </div>
-
-        <div className="flex items-start gap-3 bg-secondary/40 rounded-2xl px-4 py-3">
-          <Users className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-          <p className="text-sm text-foreground leading-snug">
-            Monte sua estante agora — sem criar conta ainda.
-          </p>
         </div>
       </div>
 
