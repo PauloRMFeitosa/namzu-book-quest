@@ -3,13 +3,14 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BotaoSeguir } from "@/components/social/BotaoSeguir";
 import { useMeusMatches, useRecalcularMatches } from "@/hooks/useMatches";
-import { Search, Users, BookOpen, Sparkles, RefreshCw } from "lucide-react";
+import { Search, Users, BookOpen, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── tipos ───────────────────────────────────────────────────────────────────
@@ -22,6 +23,7 @@ interface PerfilCard {
   slug: string | null;
   bio: string | null;
   interesses?: string[];
+  perfil_publico?: boolean;
 }
 
 // ─── sub-componente: card de leitor ──────────────────────────────────────────
@@ -54,7 +56,12 @@ function LeitorCard({ p }: { p: PerfilCard }) {
         className="flex-1 min-w-0 text-left"
         onClick={() => navigate(`/perfis/${p.slug ?? p.user_id}`)}
       >
-        <p className="text-sm font-semibold truncate leading-tight">{p.nome_exibicao}</p>
+        <span className="flex items-center gap-1.5 min-w-0">
+          <p className="text-sm font-semibold truncate leading-tight">{p.nome_exibicao}</p>
+          {p.perfil_publico === false && (
+            <Lock className="w-3 h-3 text-muted-foreground shrink-0" aria-label="Perfil privado" />
+          )}
+        </span>
         <p className="text-xs text-muted-foreground truncate">@{p.username}</p>
         {p.bio && (
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.bio}</p>
@@ -82,20 +89,24 @@ function LeitorCard({ p }: { p: PerfilCard }) {
 
 function AbaDescoberta({ busca }: { busca: string }) {
   const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
 
   const { data: leitores = [], isLoading } = useQuery({
-    queryKey: ["leitores-descoberta"],
+    queryKey: ["leitores-descoberta", isAdmin],
+    enabled: !adminLoading,
     staleTime: 2 * 60_000,
     queryFn: async () => {
-      const { data } = await supabase
+      // Admins veem todos os perfis, inclusive privados (marcados com cadeado)
+      let query = supabase
         .from("perfis")
         .select(
           "user_id, nome_exibicao, username, avatar_url, slug, bio, perfil_publico"
         )
-        .eq("perfil_publico", true)
         .neq("user_id", user?.id ?? "")
         .order("score_reputacao", { ascending: false })
         .limit(100);
+      if (!isAdmin) query = query.eq("perfil_publico", true);
+      const { data } = await query;
       return (data ?? []) as PerfilCard[];
     },
   });
@@ -111,7 +122,7 @@ function AbaDescoberta({ busca }: { busca: string }) {
     );
   }, [leitores, busca]);
 
-  if (isLoading) {
+  if (isLoading || adminLoading) {
     return (
       <div className="flex flex-col gap-2">
         {Array.from({ length: 5 }).map((_, i) => (

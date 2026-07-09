@@ -8,6 +8,7 @@ export const queryKeys = {
   },
   perfil: {
     atividadeAnual: (userId: string) => ["atividade-anual", userId] as const,
+    privacidade: (userId: string) => ["perfil-privacidade", userId] as const,
   },
   gamificacao: {
     perfil: (userId: string) => ["gamificacao", userId] as const,

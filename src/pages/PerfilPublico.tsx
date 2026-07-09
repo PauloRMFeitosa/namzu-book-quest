@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { resolverCapa } from "@/lib/capaLivro";
 import { useContagemSocial } from "@/hooks/social/useSeguir";
 import { EstatisticasLeitura } from "@/components/EstatisticasLeitura";
@@ -78,6 +79,7 @@ export default function PerfilPublico() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
 
   // Resolve perfil por slug ou user_id
   const { data: perfil, isLoading, isError } = useQuery({
@@ -138,7 +140,8 @@ export default function PerfilPublico() {
   });
 
   // ── Estados derivados ──
-  if (isLoading) {
+  // Perfis privados aguardam a checagem de admin para decidir entre bloquear ou exibir
+  if (isLoading || (perfil && !perfil.perfil_publico && adminLoading)) {
     return (
       <div className="flex flex-col gap-4 animate-pulse">
         <div className="h-44 rounded-2xl bg-muted" />
@@ -163,8 +166,8 @@ export default function PerfilPublico() {
     );
   }
 
-  // Perfil privado e não é o próprio usuário
-  if (!perfil.perfil_publico) {
+  // Perfil privado e não é o próprio usuário (admins veem tudo)
+  if (!perfil.perfil_publico && !isAdmin) {
     const nome = perfil.nome_exibicao ?? "Leitor";
     const initials = nome.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
     return (
@@ -227,6 +230,11 @@ export default function PerfilPublico() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl font-semibold leading-tight">{nome}</h1>
                 {perfil.verificado && <Badge variant="secondary">Verificado</Badge>}
+                {!perfil.perfil_publico && (
+                  <Badge variant="outline" className="gap-1 text-muted-foreground">
+                    <Lock className="w-3 h-3" /> Privado
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">{username}</p>
               {perfil.bio && (
