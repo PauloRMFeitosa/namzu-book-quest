@@ -8,7 +8,7 @@ export const DesafioMesCard = () => {
   const { paginas, meta, percentual, missao } = data;
 
   return (
-    <div className="card-soft p-5 h-full">
+    <div className="card-soft p-5 h-full shrink-0 w-[78%] snap-start md:w-auto">
       <div className="flex items-start gap-3 mb-3">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
           <BookOpen className="w-6 h-6 text-primary" />

@@ -7,7 +7,7 @@ export const ProximaConquistaCard = () => {
   const { conquista, falta, unidade, atual, meta } = data;
 
   return (
-    <div className="card-soft p-5 h-full flex flex-col items-center text-center">
+    <div className="card-soft p-5 h-full flex flex-col items-center text-center shrink-0 w-[78%] snap-start md:w-auto">
       <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
         Próxima conquista
       </p>
