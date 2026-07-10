@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 import { useLendoList } from "@/hooks/leituras/useMinhasLeituras";
+import { useClubes } from "@/hooks/clubes/useClubes";
+import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
 
-import { BookOpen, Play, Plus, HomeIcon, Users, Rss, Library, Crown } from "lucide-react";
+import { BookOpen, Play, Plus, HomeIcon, Users, Rss, Library } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
 
 const Home = () => {
@@ -36,46 +38,15 @@ const Home = () => {
     },
   });
 
-  const { data: clubes = [] } = useQuery({
-    queryKey: ["meus-clubes-ativos", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("clube_membros")
-        .select("clubes(*)")
-        .eq("user_id", user!.id)
-        .eq("status", "ativo")
-        .order("data_entrada", { ascending: false });
-      return (data ?? [])
-        .map((r: any) => r.clubes)
-        .filter((c: any) => c && c.is_ativo);
-    },
-  });
-
-  const { data: clubesCurador = [] } = useQuery({
-    queryKey: ["minha-curadoria", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("clubes")
-        .select("id, nome, descricao, imagem_capa_url, updated_at")
-        .eq("curador_id", user!.id)
-        .eq("is_ativo", true)
-        .order("updated_at", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  // Unifica curadoria + participação: curador vem primeiro, sem duplicar clube
-  const meusClubes = useMemo(() => {
-    const idsCurador = new Set(clubesCurador.map((c: any) => c.id));
-    return [
-      ...clubesCurador.map((c: any) => ({ ...c, ehCurador: true })),
-      ...clubes
-        .filter((c: any) => !idsCurador.has(c.id))
-        .map((c: any) => ({ ...c, ehCurador: c.curador_id === user?.id })),
-    ];
-  }, [clubes, clubesCurador, user?.id]);
+  // Mesma consulta da página de Clubes (cache compartilhado); filtra membro ou curador
+  const { data: todosClubes = [] } = useClubes();
+  const meusClubes = useMemo(
+    () =>
+      todosClubes
+        .filter((c) => c.is_membro || c.curador_id === user?.id)
+        .sort((a, b) => Number(b.curador_id === user?.id) - Number(a.curador_id === user?.id)),
+    [todosClubes, user?.id]
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -109,32 +80,9 @@ const Home = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0">
-            {meusClubes.map((c: any) => (
-              <button
-                key={c.id}
-                onClick={() => navigate(`/clubes/${c.id}`)}
-                className="card-soft p-5 h-full flex flex-col items-center text-center hover-lift shrink-0 w-[78%] snap-start md:w-auto"
-              >
-                {c.ehCurador && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                    <Crown className="w-3 h-3" /> Curador
-                  </span>
-                )}
-                <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-3">
-                  {c.imagem_capa_url ? (
-                    <img src={c.imagem_capa_url} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-soft" />
-                  ) : (
-                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary font-bold text-xl">
-                      {c.nome[0]}
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-bold leading-tight line-clamp-1">{c.nome}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{c.descricao}</p>
-                  </div>
-                </div>
-              </button>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
+            {meusClubes.map((c) => (
+              <ClubeCard key={c.id} clube={c} variant="carousel" ehCurador={c.curador_id === user?.id} />
             ))}
           </div>
         )}

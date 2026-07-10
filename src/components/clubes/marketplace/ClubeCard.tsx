@@ -1,15 +1,17 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Users, Flame, BookOpen } from "lucide-react";
+import { Users, Flame, BookOpen, Crown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ClubeCardData } from "@/hooks/clubes/useClubes";
 
 interface Props {
   clube: ClubeCardData;
   variant?: "grid" | "carousel";
+  /** exibe pílula "Curador" sobre a capa quando o usuário logado é o curador do clube */
+  ehCurador?: boolean;
 }
 
-export const ClubeCard = ({ clube, variant = "grid" }: Props) => {
+export const ClubeCard = ({ clube, variant = "grid", ehCurador = false }: Props) => {
   const navigate = useNavigate();
   const widthClass = variant === "carousel" ? "min-w-[260px] w-[260px]" : "w-full";
 
@@ -42,6 +44,11 @@ export const ClubeCard = ({ clube, variant = "grid" }: Props) => {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        {ehCurador && (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+            <Crown className="w-3 h-3" /> Curador
+          </span>
+        )}
         {clube.tags.length > 0 && (
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
             {clube.tags.slice(0, 2).map((t) => (
