@@ -18,6 +18,7 @@ import {
 } from "@/hooks/leituras/useMinhasLeituras";
 import { MinhasLeiturasShareModal } from "@/components/leituras/MinhasLeiturasShareModal";
 import { useSessaoAtiva } from "@/stores/sessaoAtivaStore";
+import { CarrosselHorizontal } from "@/components/CarrosselHorizontal";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const MESES_LONGO = [
@@ -47,7 +48,7 @@ const EmAndamento = ({
     <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
       Em andamento {livros.length > 0 && <span className="text-xs">({livros.length})</span>}
     </h2>
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+    <CarrosselHorizontal>
       {livros.map((l) => (
         <div
           key={l.usuario_leitura_id}
@@ -79,7 +80,7 @@ const EmAndamento = ({
         </div>
         <p className="text-sm font-semibold text-primary text-center">Adicionar leitura</p>
       </button>
-    </div>
+    </CarrosselHorizontal>
   </section>
 );
 
@@ -91,7 +92,7 @@ const ConcluidosRecentes = ({ livros, onOpen, onVerTodos }: { livros: LivroResum
         <h2 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">Concluídos recentemente</h2>
         <button onClick={onVerTodos} className="text-xs text-primary font-medium">Ver todos</button>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+      <CarrosselHorizontal>
         {livros.map((l) => (
           <button
             key={l.usuario_leitura_id}
@@ -107,7 +108,7 @@ const ConcluidosRecentes = ({ livros, onOpen, onVerTodos }: { livros: LivroResum
             )}
           </button>
         ))}
-      </div>
+      </CarrosselHorizontal>
     </section>
   );
 };

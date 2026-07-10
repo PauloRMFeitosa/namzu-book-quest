@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { CarrosselHorizontal } from "@/components/CarrosselHorizontal";
 import { resolverCapa } from "@/lib/capaLivro";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -520,7 +521,7 @@ const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
     {itens.length === 0 ? (
       <p className="text-xs text-muted-foreground italic">Nenhum livro nesta prateleira.</p>
     ) : (
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+      <CarrosselHorizontal className="-mx-1 px-1">
         {itens.slice(0, 20).map((l: any) => {
           const capa = resolverCapa(l.obras?.capa_padrao_url, l.edicoes?.capa_url);
           const titulo = l.edicoes?.titulo_edicao ?? l.obras?.titulo_original ?? "—";
@@ -539,7 +540,7 @@ const Prateleira = ({ titulo, itens }: { titulo: string; itens: any[] }) => (
             </div>
           );
         })}
-      </div>
+      </CarrosselHorizontal>
     )}
   </div>
 );
