@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Heart, MessageCircle, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Loader2, Trash2, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { PerguntasProfundasButton } from "@/components/clubes/ai/PerguntasProfundasButton";
 import { PostComposer } from "./PostComposer";
+import { PostShareModal } from "./PostShareModal";
 
 interface Props {
   post: FeedPost;
@@ -30,6 +31,7 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply, curadorId, c
   const curtir = useCurtirPost(clubeId);
   const excluir = useExcluirPost(clubeId);
   const [openRespostas, setOpenRespostas] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const respostas = useRespostasPost(post.id, openRespostas);
 
   const isOwn = !!user && user.id === post.user_id;
@@ -117,6 +119,16 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply, curadorId, c
           </button>
         )}
         {!isReply && <PerguntasProfundasButton postId={post.id} />}
+        {!isReply && (
+          <button
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+            title="Compartilhar publicação"
+            aria-label="Compartilhar publicação"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         {canDelete && (
           <AlertDialog>
@@ -177,6 +189,14 @@ export const PostCard = ({ post, clubeId, isMembro = true, isReply, curadorId, c
           </motion.div>
         )}
       </AnimatePresence>
+
+      {!isReply && (
+        <PostShareModal
+          post={post}
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </motion.article>
   );
 };

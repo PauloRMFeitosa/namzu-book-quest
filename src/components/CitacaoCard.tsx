@@ -5,7 +5,7 @@ import type { Citacao } from "@/hooks/useCitacoes";
 export type CitacaoTema = "papel" | "mint" | "ink";
 
 // Fixed pixel values — used for PNG export at 1080×1350
-const TEMAS: Record<CitacaoTema, {
+export const TEMAS: Record<CitacaoTema, {
   bg: string; text: string; accent: string;
   muted: string; ornament: string; namzu: string;
 }> = {
