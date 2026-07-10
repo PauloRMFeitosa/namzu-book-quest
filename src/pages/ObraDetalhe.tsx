@@ -17,6 +17,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareModal } from "@/components/share/ShareModal";
+import { CitacaoShareModal } from "@/components/CitacaoShareModal";
+import type { Citacao } from "@/hooks/useCitacoes";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { resolverCapa } from "@/lib/capaLivro";
 import { ConclusaoLivroModal } from "@/components/avaliacoes/ConclusaoLivroModal";
@@ -80,6 +82,7 @@ const ObraDetalhe = () => {
   const [conclusaoOpen, setConclusaoOpen] = useState(false);
   const [conclusaoLivroId, setConclusaoLivroId] = useState<string | null>(null);
   const [avaliacaoOpen, setAvaliacaoOpen] = useState(false);
+  const [citacaoParaCompartilhar, setCitacaoParaCompartilhar] = useState<Citacao | null>(null);
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra-detalhe", id],
@@ -108,6 +111,18 @@ const ObraDetalhe = () => {
     .filter(Boolean);
   const autorPrincipal = autores[0];
   const editora = obra?.edicoes?.[0]?.editora ?? null;
+
+  // Monta o objeto Citacao esperado pelo CitacaoShareModal a partir dos dados da obra
+  const montarCitacao = (c: any): Citacao => ({
+    id: c.id,
+    texto: c.texto,
+    pagina: c.pagina,
+    created_at: c.created_at,
+    obra_id: id ?? "",
+    obra_titulo: obra?.titulo_original ?? "",
+    obra_capa: resolverCapa(obra?.capa_padrao_url, obra?.edicoes?.[0]?.capa_url),
+    autor_nome: autores.map((a: any) => a.nome_completo).join(", ") || null,
+  });
   const numPaginas = obra?.edicoes?.[0]?.num_paginas ?? null;
   const generos: { id: string; nome: string; slug: string }[] = ((obra as any)?.obra_generos ?? [])
     .map((og: any) => og.generos)
@@ -196,7 +211,7 @@ const ObraDetalhe = () => {
       if (leituraIds.length === 0) return [];
       const { data: cits } = await supabase
         .from("leitura_citacoes")
-        .select("id, texto, pagina")
+        .select("id, texto, pagina, created_at")
         .in("leitura_id", leituraIds)
         .limit(20);
       return cits ?? [];
@@ -302,6 +317,12 @@ const ObraDetalhe = () => {
         }}
         templates={["recommend"]}
         defaultTemplate="recommend"
+      />
+
+      <CitacaoShareModal
+        citacao={citacaoParaCompartilhar}
+        open={!!citacaoParaCompartilhar}
+        onClose={() => setCitacaoParaCompartilhar(null)}
       />
 
       <Dialog open={confirmIniciarOpen} onOpenChange={setConfirmIniciarOpen}>
@@ -543,12 +564,22 @@ const ObraDetalhe = () => {
           citacoes.map((c: any) => (
             <div key={c.id} className="card-soft p-4 flex gap-3">
               <Quote className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm italic leading-relaxed">"{c.texto}"</p>
                 {c.pagina && (
                   <p className="text-[10px] text-muted-foreground mt-1">pág. {c.pagina}</p>
                 )}
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary"
+                title="Compartilhar citação"
+                aria-label="Compartilhar citação"
+                onClick={() => setCitacaoParaCompartilhar(montarCitacao(c))}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </Button>
             </div>
           ))
         )}
