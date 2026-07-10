@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import logoNamzu from "@/assets/logo-namzu.png";
 import type { Citacao } from "@/hooks/useCitacoes";
 
 export type CitacaoTema = "papel" | "mint" | "ink";
@@ -150,21 +151,29 @@ export const CitacaoCard = forwardRef<HTMLDivElement, CitacaoCardProps>(
           </div>
         </div>
 
-        {/* Namzu watermark */}
+        {/* Rodapé: logo + endereço do site */}
         <div style={{
-          position: "absolute", bottom: 52,
-          left: 0, right: 0, textAlign: "center",
+          position: "absolute", bottom: 44,
+          left: 0, right: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
         }}>
+          <img
+            src={logoNamzu}
+            alt=""
+            style={{ width: 60, height: "auto", opacity: 0.9 }}
+          />
           <span style={{
-            fontSize: 18,
-            letterSpacing: "0.3em",
-            fontWeight: 700,
+            fontSize: 22,
+            letterSpacing: "0.12em",
+            fontWeight: 600,
             color: t.namzu,
-            opacity: 0.45,
+            opacity: 0.7,
             fontFamily: "'Inter', system-ui, sans-serif",
-            textTransform: "uppercase",
           }}>
-            namzu
+            www.namzu.com.br
           </span>
         </div>
       </div>
