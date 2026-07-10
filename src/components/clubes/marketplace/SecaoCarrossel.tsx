@@ -1,5 +1,6 @@
 import { ReactNode, ElementType } from "react";
 import { ClubeCard } from "./ClubeCard";
+import { CarrosselHorizontal } from "@/components/CarrosselHorizontal";
 import type { ClubeCardData } from "@/hooks/clubes/useClubes";
 
 interface Props {
@@ -32,11 +33,11 @@ export const SecaoCarrossel = ({ titulo, legenda, icon: Icon, clubes, emptyText,
           {emptyText}
         </p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory -mx-4 px-4 pb-2">
+        <CarrosselHorizontal>
           {clubes.map((c) => (
             <ClubeCard key={c.id} clube={c} variant="carousel" />
           ))}
-        </div>
+        </CarrosselHorizontal>
       )}
     </section>
   );

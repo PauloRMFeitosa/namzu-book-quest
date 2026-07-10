@@ -12,6 +12,7 @@ import { IniciarCodigoMeCard } from "@/components/IniciarCodigoMeCard";
 import { useLendoList } from "@/hooks/leituras/useMinhasLeituras";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
+import { CarrosselHorizontal } from "@/components/CarrosselHorizontal";
 
 import { BookOpen, Play, Plus, HomeIcon, Users, Rss, Library } from "lucide-react";
 import { FeedAtividade } from "@/components/social/FeedAtividade";
@@ -80,11 +81,11 @@ const Home = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2 snap-x snap-mandatory">
+          <CarrosselHorizontal>
             {meusClubes.map((c) => (
               <ClubeCard key={c.id} clube={c} variant="carousel" ehCurador={c.curador_id === user?.id} />
             ))}
-          </div>
+          </CarrosselHorizontal>
         )}
       </section>
 
