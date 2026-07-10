@@ -13,7 +13,7 @@ export type LeituraFull = {
   percentual_lido: number | null;
   leitura_pre: { intencao: string; dominio_previo: string | null; observacao: string | null } | null;
   leitura_conteudo: { id: string; resumo: string | null; conceito_principal: string | null }[];
-  leitura_citacoes: { id: string; texto: string; pagina: number | null }[];
+  leitura_citacoes: { id: string; texto: string; pagina: number | null; created_at: string }[];
   leitura_aplicacoes: { id: string; descricao: string; plano_acao: any }[];
   leitura_links: { id: string; tipo: string | null; url: string; descricao: string | null }[];
   leitura_tags: { tag_id: string; tags: { id: string; nome: string } | null }[];
@@ -61,7 +61,7 @@ export function useLivroDetalhe(usuarioLeituraId: string | undefined) {
           id, tipo, data_inicio, data_fim, created_at,
           leitura_pre(intencao, dominio_previo, observacao),
           leitura_conteudo(id, resumo, conceito_principal),
-          leitura_citacoes(id, texto, pagina),
+          leitura_citacoes(id, texto, pagina, created_at),
           leitura_aplicacoes(id, descricao, plano_acao),
           leitura_links(id, tipo, url, descricao),
           leitura_tags(tag_id, tags(id, nome)),

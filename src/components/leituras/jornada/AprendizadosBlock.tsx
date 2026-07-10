@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Lightbulb, Target, Quote, BookOpenCheck, Plus } from "lucide-react";
+import { Lightbulb, Target, Quote, BookOpenCheck, Plus, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -13,13 +13,29 @@ import { InsightDialog } from "./dialogs/InsightDialog";
 import { AplicacaoDialog } from "./dialogs/AplicacaoDialog";
 import { CitacaoDialog } from "./dialogs/CitacaoDialog";
 import { ResenhaDialog } from "./dialogs/ResenhaDialog";
+import { CitacaoShareModal } from "@/components/CitacaoShareModal";
 import { supabase } from "@/integrations/supabase/client";
+import { resolverCapa } from "@/lib/capaLivro";
 import type { LivroDetalhe } from "@/hooks/leituras/useLivroDetalhe";
+import type { Citacao } from "@/hooks/useCitacoes";
 
 type Tipo = "insight" | "aplicacao" | "citacao" | "resenha" | null;
 
 export const AprendizadosBlock = ({ livro }: { livro: LivroDetalhe }) => {
   const [active, setActive] = useState<Tipo>(null);
+  const [citacaoParaCompartilhar, setCitacaoParaCompartilhar] = useState<Citacao | null>(null);
+
+  // Monta o objeto Citacao esperado pelo CitacaoShareModal a partir dos dados do livro
+  const montarCitacao = (c: LivroDetalhe["leituras"][number]["leitura_citacoes"][number]): Citacao => ({
+    id: c.id,
+    texto: c.texto,
+    pagina: c.pagina,
+    created_at: c.created_at,
+    obra_id: livro.obra_id ?? "",
+    obra_titulo: livro.obras?.titulo_original ?? "",
+    obra_capa: resolverCapa(livro.obras?.capa_padrao_url, livro.edicoes?.capa_url),
+    autor_nome: livro.autores.map((a) => a.nome).join(", ") || null,
+  });
 
   const { data: clubeNome } = useQuery({
     queryKey: ["clube-nome", livro.clube_id],
@@ -119,8 +135,20 @@ export const AprendizadosBlock = ({ livro }: { livro: LivroDetalhe }) => {
           <AccordionContent className="pb-3 flex flex-col gap-2">
             {todasCitacoes.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma citação ainda.</p>}
             {todasCitacoes.map((c) => (
-              <div key={c.id} className="text-sm border-l-2 border-primary pl-2 italic whitespace-pre-wrap">
-                "{c.texto}"{c.pagina ? <span className="text-xs not-italic text-muted-foreground"> · pg {c.pagina}</span> : null}
+              <div key={c.id} className="flex items-start gap-1.5">
+                <div className="flex-1 min-w-0 text-sm border-l-2 border-primary pl-2 italic whitespace-pre-wrap">
+                  "{c.texto}"{c.pagina ? <span className="text-xs not-italic text-muted-foreground"> · pg {c.pagina}</span> : null}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-primary"
+                  title="Compartilhar citação"
+                  aria-label="Compartilhar citação"
+                  onClick={() => setCitacaoParaCompartilhar(montarCitacao(c))}
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </Button>
               </div>
             ))}
           </AccordionContent>
@@ -142,6 +170,12 @@ export const AprendizadosBlock = ({ livro }: { livro: LivroDetalhe }) => {
       <AplicacaoDialog livro={livro} open={active === "aplicacao"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
       <CitacaoDialog livro={livro} open={active === "citacao"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
       <ResenhaDialog livro={livro} open={active === "resenha"} onOpenChange={(o) => !o && setActive(null)} clubeId={livro.clube_id} clubeNome={clubeNome ?? null} />
+
+      <CitacaoShareModal
+        citacao={citacaoParaCompartilhar}
+        open={!!citacaoParaCompartilhar}
+        onClose={() => setCitacaoParaCompartilhar(null)}
+      />
     </section>
   );
 };
