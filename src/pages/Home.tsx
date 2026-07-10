@@ -96,7 +96,7 @@ const Home = () => {
           </h3>
           <button onClick={() => navigate("/leituras")} className="text-xs text-primary font-medium">Ver todos</button>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+        <CarrosselHorizontal>
           {lendo.map((l) => (
             <div
               key={l.usuario_leitura_id}
@@ -134,7 +134,7 @@ const Home = () => {
             </div>
             <p className="text-sm font-semibold text-primary text-center">Adicionar leitura</p>
           </button>
-        </div>
+        </CarrosselHorizontal>
       </section>
 
       {/* Feed de atividade social */}
@@ -162,7 +162,7 @@ const Home = () => {
         {ultimas.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum livro ainda.</p>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+          <CarrosselHorizontal>
             {ultimas.map((l: any) => (
               <button key={l.id} onClick={() => navigate(`/obras/${l.obra_id}`)} className="flex-shrink-0 w-24 hover-lift flex flex-col">
                 {l.obras?.capa_padrao_url ? (
@@ -175,7 +175,7 @@ const Home = () => {
                 <p className="text-xs mt-1 line-clamp-2 break-words font-medium min-h-[2rem] text-left">{l.obras?.titulo_original}</p>
               </button>
             ))}
-          </div>
+          </CarrosselHorizontal>
         )}
       </section>
 
