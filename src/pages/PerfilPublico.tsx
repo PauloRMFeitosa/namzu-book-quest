@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
+import { CarrosselHorizontal } from "@/components/CarrosselHorizontal";
 
 const formatDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : "—";
@@ -32,7 +33,7 @@ const Prateleira = ({ titulo, itens, aoAbrirLivro }: { titulo: string; itens: an
     {itens.length === 0 ? (
       <p className="text-xs text-muted-foreground italic">Nenhum livro nesta prateleira.</p>
     ) : (
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+      <CarrosselHorizontal className="-mx-1 px-1">
         {itens.slice(0, 20).map((l: any) => {
           const capa = resolverCapa(l.obras?.capa_padrao_url, l.edicoes?.capa_url);
           const titulo = l.edicoes?.titulo_edicao ?? l.obras?.titulo_original ?? "—";
@@ -56,7 +57,7 @@ const Prateleira = ({ titulo, itens, aoAbrirLivro }: { titulo: string; itens: an
             </button>
           );
         })}
-      </div>
+      </CarrosselHorizontal>
     )}
   </div>
 );
