@@ -19,6 +19,7 @@ import {
   List,
 } from "lucide-react";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import { DetalhesLivroExternoDialog } from "@/components/busca/DetalhesLivroExternoDialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -123,6 +124,7 @@ const Busca = () => {
     | { key: string; titulo: string; autor?: string | null; capa?: string | null; onAdd: (s: AddStatus) => void }
     | null
   >(null);
+  const [detalheExterno, setDetalheExterno] = useState<ExternalResult | null>(null);
 
   // Controles do acervo
   const [buscaAcervo, setBuscaAcervo] = useState("");
@@ -538,6 +540,7 @@ const Busca = () => {
     done: boolean,
     badge?: string,
     obraId?: string,
+    onOpenDetalhes?: () => void,
   ) => {
     const Capa = capa ? (
       <img src={capa} alt="" className="w-14 h-20 rounded-md object-cover" />
@@ -560,6 +563,10 @@ const Busca = () => {
       <div key={key} className="card-soft p-3 flex gap-3 items-center">
         {obraId ? (
           <button onClick={() => navigate(`/obras/${obraId}`)} className="flex gap-3 items-center flex-1 min-w-0 text-left hover-lift">
+            {Capa}{Info}
+          </button>
+        ) : onOpenDetalhes ? (
+          <button onClick={onOpenDetalhes} className="flex gap-3 items-center flex-1 min-w-0 text-left hover-lift">
             {Capa}{Info}
           </button>
         ) : (
@@ -638,12 +645,11 @@ const Busca = () => {
       />
       <div className="flex items-center justify-end gap-3">
         <Button
-          size="icon"
+          variant="outline"
           onClick={() => navigate("/cadastro-manual")}
-          className="rounded-full bg-primary hover:bg-primary-hover shrink-0"
-          title="Cadastrar manualmente"
+          className="rounded-xl shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 mr-2" /> Cadastrar livro
         </Button>
       </div>
 
@@ -850,11 +856,15 @@ const Busca = () => {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <Globe className="w-3.5 h-3.5" /> Encontrados na internet
           </h2>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Toque em um resultado para ver os detalhes e conferir a edição.
+          </p>
           {externo.map((b) =>
             renderCard(
               b.key, b.capa_url, b.titulo, b.autores[0], b.ano,
               (status) => adicionarExterno(b, status),
               adicionando === b.key, adicionados.has(b.key), b.fonte,
+              undefined, () => setDetalheExterno(b),
             ),
           )}
         </section>
@@ -868,9 +878,23 @@ const Busca = () => {
 
       {semResultadosBusca && (
         <div className="flex flex-col items-center gap-3 py-6">
-          <p className="text-sm text-muted-foreground text-center">Nenhum livro encontrado.</p>
-          <Button variant="outline" onClick={() => navigate("/cadastro-manual")} className="rounded-xl">
-            <Plus className="w-4 h-4 mr-2" /> Cadastrar manualmente
+          <p className="text-sm text-muted-foreground text-center">
+            Nenhum livro encontrado. Você pode cadastrá-lo manualmente — os dados da sua busca já
+            vão preenchidos.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (submitted?.titulo) params.set("titulo", submitted.titulo);
+              if (submitted?.autor) params.set("autor", submitted.autor);
+              if (submitted?.isbn) params.set("isbn", submitted.isbn);
+              const query = params.toString();
+              navigate(`/cadastro-manual${query ? `?${query}` : ""}`);
+            }}
+            className="rounded-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Cadastrar este livro
           </Button>
         </div>
       )}
@@ -881,6 +905,28 @@ const Busca = () => {
         onDetected={(isbn) => {
           setFIsbn(isbn);
           setSubmitted({ titulo: fTitulo.trim(), autor: fAutor.trim(), isbn });
+        }}
+      />
+
+      <DetalhesLivroExternoDialog
+        livro={detalheExterno}
+        onOpenChange={(open) => {
+          if (!open) setDetalheExterno(null);
+        }}
+        onAdd={(status) => {
+          const b = detalheExterno;
+          if (!b) return;
+          setDetalheExterno(null);
+          adicionarExterno(b, status);
+        }}
+        adicionando={detalheExterno ? adicionando === detalheExterno.key : false}
+        adicionado={detalheExterno ? adicionados.has(detalheExterno.key) : false}
+        onBuscarPorIsbn={(isbn) => {
+          setDetalheExterno(null);
+          setFTitulo("");
+          setFAutor("");
+          setFIsbn(isbn);
+          setSubmitted({ titulo: "", autor: "", isbn });
         }}
       />
 
