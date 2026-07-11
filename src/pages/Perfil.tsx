@@ -82,18 +82,32 @@ const Perfil = () => {
         .from("leituras")
         .select(`
           id,
-          leitura_conteudo(id, resumo, conceito_principal),
-          leitura_aplicacoes(id, descricao, plano_acao),
-          leitura_citacoes(id, texto, pagina),
+          leitura_conteudo(id, resumo, conceito_principal, created_at),
+          leitura_aplicacoes(id, descricao, plano_acao, created_at),
+          leitura_citacoes(id, texto, pagina, created_at),
           usuario_leituras(data_inicio, created_at, usuario_livros(obras(titulo_original, capa_padrao_url)))
         `)
         .eq("user_id", user!.id);
       // Só mostrar leituras com conteúdo de aprendizado (sem pré/pós-leitura)
-      return (data ?? []).filter((l: any) =>
+      const comConteudo = (data ?? []).filter((l: any) =>
         l.leitura_conteudo?.length > 0 ||
         l.leitura_aplicacoes?.length > 0 ||
         l.leitura_citacoes?.length > 0
       );
+      // Ordena tudo do mais novo para o mais antigo
+      const porDataDesc = (a: any, b: any) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+      for (const l of comConteudo) {
+        l.leitura_conteudo?.sort(porDataDesc);
+        l.leitura_aplicacoes?.sort(porDataDesc);
+        l.leitura_citacoes?.sort(porDataDesc);
+      }
+      comConteudo.sort((a: any, b: any) => {
+        const dataA = a.usuario_leituras?.data_inicio ?? a.usuario_leituras?.created_at ?? 0;
+        const dataB = b.usuario_leituras?.data_inicio ?? b.usuario_leituras?.created_at ?? 0;
+        return new Date(dataB).getTime() - new Date(dataA).getTime();
+      });
+      return comConteudo;
     },
   });
 
