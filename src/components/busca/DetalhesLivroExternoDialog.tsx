@@ -18,6 +18,7 @@ import {
   Search,
   CircleCheck,
   CircleAlert,
+  LibraryBig,
 } from "lucide-react";
 
 export interface LivroExterno {
@@ -47,6 +48,9 @@ interface Props {
   adicionando: boolean;
   adicionado: boolean;
   onBuscarPorIsbn: (isbn: string) => void;
+  /** Somente admin: cadastra no acervo sem entrar na biblioteca pessoal */
+  onAddAcervo?: () => void;
+  adicionandoAcervo?: boolean;
 }
 
 const NOMES_IDIOMA: Record<string, string> = {
@@ -67,6 +71,8 @@ export const DetalhesLivroExternoDialog = ({
   adicionando,
   adicionado,
   onBuscarPorIsbn,
+  onAddAcervo,
+  adicionandoAcervo,
 }: Props) => {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [conferencia, setConferencia] = useState<Conferencia | null>(null);
@@ -238,6 +244,22 @@ export const DetalhesLivroExternoDialog = ({
                     className="rounded-xl justify-start touch-manipulation"
                   >
                     <CheckCheck className="w-5 h-5 mr-2" /> Já li
+                  </Button>
+                )}
+                {onAddAcervo && !adicionado && (
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    disabled={adicionando || adicionandoAcervo}
+                    onClick={onAddAcervo}
+                    className="rounded-xl justify-start touch-manipulation"
+                  >
+                    {adicionandoAcervo ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <LibraryBig className="w-5 h-5 mr-2" />
+                    )}
+                    Adicionar apenas ao acervo (admin)
                   </Button>
                 )}
               </div>
