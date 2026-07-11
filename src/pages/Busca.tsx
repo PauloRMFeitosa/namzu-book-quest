@@ -17,12 +17,14 @@ import {
   ScanLine,
   LayoutGrid,
   List,
+  LibraryBig,
 } from "lucide-react";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { DetalhesLivroExternoDialog } from "@/components/busca/DetalhesLivroExternoDialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -103,6 +105,7 @@ function externalKey(b: { isbn13: string | null; titulo: string; autores: string
 
 const Busca = () => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -125,6 +128,7 @@ const Busca = () => {
     | null
   >(null);
   const [detalheExterno, setDetalheExterno] = useState<ExternalResult | null>(null);
+  const [adicionandoAcervo, setAdicionandoAcervo] = useState<string | null>(null);
 
   // Controles do acervo
   const [buscaAcervo, setBuscaAcervo] = useState("");
@@ -528,6 +532,51 @@ const Busca = () => {
     }
   };
 
+  // Somente admin: cadastra a obra no acervo sem adicioná-la à biblioteca pessoal
+  const adicionarAoAcervo = async (b: ExternalResult) => {
+    if (!isAdmin) return;
+    const flightKey = `acervo:${b.key}`;
+    if (inFlightRef.current.has(flightKey)) return;
+    inFlightRef.current.add(flightKey);
+    setAdicionandoAcervo(b.key);
+    const loadingId = toast.loading("Adicionando ao acervo…");
+    try {
+      const { data, error } = await supabase.functions.invoke("rapid-action", {
+        body: {
+          mode: "registrar_resultado",
+          titulo: b.titulo,
+          autores: b.autores ?? [],
+          ano: b.ano,
+          isbn13: b.isbn13 ?? null,
+          capa_url: b.capa_url ?? null,
+          editora: b.editora ?? null,
+          num_paginas: b.num_paginas ?? null,
+          idioma: b.idioma ?? null,
+          descricao: b.descricao ?? null,
+          sourceId: b.isbn13 ?? b.key,
+          generos: b.generos ?? [],
+        },
+      });
+      if (error) throw error;
+      const obraId = data?.obra?.id ?? data?.obra_id;
+      if (!obraId) throw new Error("Resposta inválida da função");
+
+      setExterno((arr) => arr.filter((x) => x.key !== b.key));
+      setLocal((arr) => [
+        { origem: "local", obra_id: obraId, edicao_id: data?.edicao_id ?? null, titulo: b.titulo, autor: b.autores?.[0], ano: b.ano, capa_url: b.capa_url, isbn13: b.isbn13 ?? undefined },
+        ...arr,
+      ]);
+      qc.invalidateQueries({ queryKey: ["acervo-obras"] });
+      toast.success("Adicionado ao acervo (sem entrar na sua biblioteca)", { id: loadingId });
+    } catch (e: any) {
+      console.error("adicionarAoAcervo", e);
+      toast.error(e?.message ?? "Erro ao adicionar ao acervo", { id: loadingId });
+    } finally {
+      inFlightRef.current.delete(flightKey);
+      setAdicionandoAcervo(null);
+    }
+  };
+
   // Card horizontal (modo lista / resultados de busca)
   const renderCard = (
     key: string,
@@ -541,6 +590,8 @@ const Busca = () => {
     badge?: string,
     obraId?: string,
     onOpenDetalhes?: () => void,
+    onAddAcervo?: () => void,
+    acervoBusy?: boolean,
   ) => {
     const Capa = capa ? (
       <img src={capa} alt="" className="w-14 h-20 rounded-md object-cover" />
@@ -571,6 +622,19 @@ const Busca = () => {
           </button>
         ) : (
           <>{Capa}{Info}</>
+        )}
+        {onAddAcervo && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={acervoBusy || busy || done}
+            onClick={onAddAcervo}
+            aria-label="Adicionar apenas ao acervo (admin)"
+            title="Adicionar apenas ao acervo (admin)"
+            className="rounded-xl touch-manipulation"
+          >
+            {acervoBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LibraryBig className="w-4 h-4" />}
+          </Button>
         )}
         <Button
           size="sm"
@@ -865,6 +929,8 @@ const Busca = () => {
               (status) => adicionarExterno(b, status),
               adicionando === b.key, adicionados.has(b.key), b.fonte,
               undefined, () => setDetalheExterno(b),
+              isAdmin ? () => adicionarAoAcervo(b) : undefined,
+              adicionandoAcervo === b.key,
             ),
           )}
         </section>
@@ -921,6 +987,17 @@ const Busca = () => {
         }}
         adicionando={detalheExterno ? adicionando === detalheExterno.key : false}
         adicionado={detalheExterno ? adicionados.has(detalheExterno.key) : false}
+        onAddAcervo={
+          isAdmin
+            ? () => {
+                const b = detalheExterno;
+                if (!b) return;
+                setDetalheExterno(null);
+                adicionarAoAcervo(b);
+              }
+            : undefined
+        }
+        adicionandoAcervo={detalheExterno ? adicionandoAcervo === detalheExterno.key : false}
         onBuscarPorIsbn={(isbn) => {
           setDetalheExterno(null);
           setFTitulo("");
