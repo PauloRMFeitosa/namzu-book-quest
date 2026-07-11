@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -64,11 +64,13 @@ const CadastroManual = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  // Pré-preenchimento vindo da busca sem resultados (/busca → "Cadastrar este livro")
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState("obra");
 
   // ---------- OBRA ----------
-  const [obraTitulo, setObraTitulo] = useState("");
-  const [obraAutor, setObraAutor] = useState("");
+  const [obraTitulo, setObraTitulo] = useState(() => searchParams.get("titulo") ?? "");
+  const [obraAutor, setObraAutor] = useState(() => searchParams.get("autor") ?? "");
   const [coautores, setCoautores] = useState<string[]>([]);
   const [obraAno, setObraAno] = useState("");
   const [obraIdioma, setObraIdioma] = useState("pt-BR");
@@ -96,7 +98,7 @@ const CadastroManual = () => {
   const [edEditora, setEdEditora] = useState("");
   const [edFormato, setEdFormato] = useState<"ebook" | "fisico_brochura" | "fisico_capa_dura" | "audiobook">("fisico_brochura");
   const [edIdioma, setEdIdioma] = useState("pt-BR");
-  const [edIsbn, setEdIsbn] = useState("");
+  const [edIsbn, setEdIsbn] = useState(() => searchParams.get("isbn") ?? "");
   const [edPaginas, setEdPaginas] = useState("");
   const [edCapa, setEdCapa] = useState("");
   const [edPreco, setEdPreco] = useState("");
