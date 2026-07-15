@@ -963,6 +963,48 @@ export type Database = {
         }
         Relationships: []
       }
+      denuncias_conteudo: {
+        Row: {
+          conteudo_id: string | null
+          contexto_url: string | null
+          created_at: string
+          denunciado_user_id: string | null
+          denunciante_id: string
+          id: string
+          motivo: string
+          observacao_admin: string | null
+          resolvido_em: string | null
+          status: string
+          tipo_conteudo: string
+        }
+        Insert: {
+          conteudo_id?: string | null
+          contexto_url?: string | null
+          created_at?: string
+          denunciado_user_id?: string | null
+          denunciante_id: string
+          id?: string
+          motivo: string
+          observacao_admin?: string | null
+          resolvido_em?: string | null
+          status?: string
+          tipo_conteudo: string
+        }
+        Update: {
+          conteudo_id?: string | null
+          contexto_url?: string | null
+          created_at?: string
+          denunciado_user_id?: string | null
+          denunciante_id?: string
+          id?: string
+          motivo?: string
+          observacao_admin?: string | null
+          resolvido_em?: string | null
+          status?: string
+          tipo_conteudo?: string
+        }
+        Relationships: []
+      }
       edicoes: {
         Row: {
           atualizado_em: string | null
@@ -3221,6 +3263,10 @@ export type Database = {
         }
         Returns: string
       }
+      definir_perfil_publico: {
+        Args: { p_publico: boolean }
+        Returns: undefined
+      }
       desbloquear_conquista: {
         Args: { p_codigo: string; p_user_id: string }
         Returns: undefined
@@ -3271,6 +3317,14 @@ export type Database = {
         Returns: {
           genero: string
           total: number
+        }[]
+      }
+      get_interacoes_diarias: {
+        Args: { p_dias?: number; p_user_id?: string }
+        Returns: {
+          categorias: string
+          dia: string
+          percentual: number
         }[]
       }
       get_livros_por_mes: {
@@ -3352,6 +3406,7 @@ export type Database = {
         }[]
       }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
+      pode_ver_leituras_de: { Args: { p_dono: string }; Returns: boolean }
       recalcular_meus_matches: { Args: never; Returns: undefined }
       refresh_ranking: { Args: never; Returns: undefined }
       registrar_progresso: {

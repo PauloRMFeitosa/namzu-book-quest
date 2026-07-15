@@ -10,13 +10,14 @@ import {
   Pie,
   Legend,
 } from "recharts";
-import { BookOpen, Quote, Flame, FileText } from "lucide-react";
+import { BookOpen, Quote, Flame, FileText, Activity } from "lucide-react";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   useLivrosPorMes,
   useGenerosLidos,
   useStatsLeitura,
+  useInteracoesDiarias,
 } from "@/hooks/useEstatisticas";
 import { cn } from "@/lib/utils";
 
@@ -176,6 +177,94 @@ function GraficoGeneros({ userId }: { userId?: string }) {
   );
 }
 
+// ─── Interações diárias ──────────────────────────────────────────────────────
+// Percentual de uso do dia: progresso de leitura = 50, feed = 25, livro lido = 25
+
+const ROTULOS_CATEGORIA: Record<string, string> = {
+  progresso: "Progresso de leitura",
+  feed: "Post no feed",
+  livro_lido: "Livro concluído",
+};
+
+function InteracoesDiarias({ userId }: { userId?: string }) {
+  const DIAS = 14;
+  const { data = [], isLoading } = useInteracoesDiarias(userId, DIAS);
+
+  if (isLoading) {
+    return <div className="h-64 rounded-xl bg-muted animate-pulse" />;
+  }
+
+  const porDia = new Map(data.map((d) => [d.dia, d]));
+
+  // Últimos N dias, do mais novo para o mais antigo, preenchendo zeros
+  const linhas = Array.from({ length: DIAS }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const chave = format(d, "yyyy-MM-dd");
+    const registro = porDia.get(chave);
+    return {
+      chave,
+      rotulo: format(d, "EEE dd/MM", { locale: ptBR }),
+      percentual: registro?.percentual ?? 0,
+      categorias: registro?.categorias ?? "",
+    };
+  });
+
+  const tudoZerado = linhas.every((l) => l.percentual === 0);
+  if (tudoZerado) {
+    return (
+      <div className="h-24 flex items-center justify-center rounded-xl bg-muted/40">
+        <p className="text-xs text-muted-foreground">
+          Nenhuma interação nos últimos {DIAS} dias
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {linhas.map((l) => (
+        <div
+          key={l.chave}
+          className="flex items-center gap-2"
+          title={
+            l.categorias
+              ? l.categorias
+                  .split(", ")
+                  .map((c) => ROTULOS_CATEGORIA[c] ?? c)
+                  .join(" · ")
+              : "Sem interações"
+          }
+        >
+          <span className="w-20 shrink-0 text-[11px] text-muted-foreground capitalize">
+            {l.rotulo}
+          </span>
+          <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                l.percentual >= 75
+                  ? "bg-primary"
+                  : l.percentual >= 50
+                  ? "bg-primary/70"
+                  : "bg-primary/40",
+              )}
+              style={{ width: `${l.percentual}%` }}
+            />
+          </div>
+          <span className="w-10 shrink-0 text-right text-xs font-medium">
+            {l.percentual}%
+          </span>
+        </div>
+      ))}
+      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+        <Activity className="w-3 h-3" />
+        Progresso de leitura vale 50%, post no feed 25% e livro concluído 25%.
+      </p>
+    </div>
+  );
+}
+
 // ─── Stats numéricos ─────────────────────────────────────────────────────────
 
 function StatCard({
@@ -259,6 +348,12 @@ export function EstatisticasLeitura({
             />
           </div>
         )}
+      </div>
+
+      {/* ── Interações diárias ── */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Interações diárias</h3>
+        <InteracoesDiarias userId={userId} />
       </div>
 
       {/* ── Livros por mês ── */}
