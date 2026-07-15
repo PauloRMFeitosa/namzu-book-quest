@@ -40,6 +40,28 @@ export function useGenerosLidos(userId?: string) {
   });
 }
 
+export type InteracaoDiaria = {
+  dia: string;
+  percentual: number;
+  categorias: string;
+};
+
+export function useInteracoesDiarias(userId?: string, dias = 14) {
+  return useQuery({
+    queryKey: ["interacoes-diarias", userId, dias],
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<InteracaoDiaria[]> => {
+      const { data, error } = await supabase.rpc("get_interacoes_diarias", {
+        p_user_id: userId ?? null,
+        p_dias: dias,
+      });
+      if (error) throw error;
+      return (data ?? []) as InteracaoDiaria[];
+    },
+  });
+}
+
 export function useStatsLeitura(userId?: string) {
   return useQuery({
     queryKey: ["stats-leitura", userId],
