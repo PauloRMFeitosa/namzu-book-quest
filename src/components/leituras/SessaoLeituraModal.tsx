@@ -95,7 +95,7 @@ export const SessaoLeituraModal = () => {
 
   useEffect(() => {
     if (sessao && step === "finalizar") {
-      setPaginaInput(Math.max(1, sessao.paginasAnteriores + 1));
+      setPaginaInput(Math.max(0, sessao.paginasAnteriores));
     }
   }, [step, sessao]);
 
@@ -350,10 +350,10 @@ export const SessaoLeituraModal = () => {
               <div className="flex items-center justify-center gap-3">
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   max={sessao.totalPaginas ?? 99999}
                   value={paginaInput}
-                  onChange={(e) => setPaginaInput(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => setPaginaInput(Math.max(0, Number(e.target.value)))}
                   className="w-24 text-center text-2xl font-bold bg-background border border-border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 {sessao.totalPaginas && (
@@ -364,7 +364,7 @@ export const SessaoLeituraModal = () => {
               </div>
               {sessao.totalPaginas && (
                 <Slider
-                  min={1}
+                  min={0}
                   max={sessao.totalPaginas}
                   step={1}
                   value={[paginaInput]}
