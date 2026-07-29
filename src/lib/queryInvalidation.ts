@@ -63,24 +63,31 @@ const ALL_USER_KEYS = [
 const matcher = (keys: string[]) => (q: { queryKey: readonly unknown[] }) =>
   keys.includes(q.queryKey[0] as string);
 
+// refetchType: 'all' garante refetch mesmo em queries inativas (páginas/abas não
+// montadas no momento), necessário porque refetchOnMount está desabilitado no
+// QueryClient global (App.tsx). Sem isso, listas como "Em andamento"/"Concluídos"
+// (minhas-leituras-lendo/-concluidos) apenas ficam stale ao finalizar uma sessão
+// e continuam mostrando o cache antigo quando o usuário volta para a tela.
+
 /** Invalida tudo que depende de dados do usuário autenticado. */
 export function invalidateUserData(qc: QueryClient) {
-  qc.invalidateQueries({ predicate: matcher(ALL_USER_KEYS) });
+  qc.invalidateQueries({ predicate: matcher(ALL_USER_KEYS), refetchType: "all" });
 }
 
 /** Invalida apenas gamificação (XP, nível, streak, conquistas, missões, ranking). */
 export function invalidateGamificacao(qc: QueryClient) {
-  qc.invalidateQueries({ predicate: matcher(GAMIFICACAO_KEYS) });
+  qc.invalidateQueries({ predicate: matcher(GAMIFICACAO_KEYS), refetchType: "all" });
 }
 
 /** Invalida biblioteca + gamificação (uso típico após registrar/alterar leituras). */
 export function invalidateLeituras(qc: QueryClient) {
   qc.invalidateQueries({
     predicate: matcher([...BIBLIOTECA_KEYS, ...GAMIFICACAO_KEYS]),
+    refetchType: "all",
   });
 }
 
 /** Invalida Código ME (após gravar/alterar perfil_interesses). */
 export function invalidateCodigoMe(qc: QueryClient) {
-  qc.invalidateQueries({ predicate: matcher(CODIGO_ME_KEYS) });
+  qc.invalidateQueries({ predicate: matcher(CODIGO_ME_KEYS), refetchType: "all" });
 }
