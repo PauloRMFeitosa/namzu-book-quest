@@ -173,12 +173,20 @@ const CadastroManual = () => {
         .single();
       if (ulErr && ulErr.code !== "23505") throw ulErr;
 
-      // Ao marcar como "Lendo", cria a experiência em usuario_leituras — mesmo
-      // fluxo do "Iniciar leitura" — para o livro aparecer nas listas "Em
-      // andamento" (Home) e "Lendo" (Leituras), que leem de usuario_leituras.
-      if (obraStatus === "lendo" && ulNovo?.id) {
+      // Ao marcar como "Lendo" ou "Já lido", cria a experiência em
+      // usuario_leituras — mesmo fluxo do "Iniciar leitura" — para o livro
+      // aparecer nas listas "Em andamento"/"Lendo" (Home e Leituras) e em
+      // "Concluídos recentes", que leem de usuario_leituras. Experiência
+      // individual (clube_id nulo) não dispara XP, então não há pontuação
+      // duplicada.
+      if ((obraStatus === "lendo" || obraStatus === "concluido") && ulNovo?.id) {
         try {
-          await criarUsuarioLeitura({ usuario_livro_id: ulNovo.id });
+          await criarUsuarioLeitura({
+            usuario_livro_id: ulNovo.id,
+            status: obraStatus,
+            data_inicio: dataInicio || null,
+            data_fim: obraStatus === "concluido" ? dataFim || null : null,
+          });
         } catch (e) {
           console.warn("Falha ao criar experiência de leitura", e);
         }

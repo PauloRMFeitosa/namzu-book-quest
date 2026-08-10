@@ -10,6 +10,12 @@ export async function criarUsuarioLeitura(opts: {
   usuario_livro_id: string;
   tipo_origem?: "individual" | "clube";
   clube_id?: string | null;
+  /** Status inicial da experiência. Padrão "lendo". */
+  status?: "lendo" | "concluido";
+  /** Data de início. Padrão: hoje. */
+  data_inicio?: string | null;
+  /** Data de fim (usada quando status = "concluido"). */
+  data_fim?: string | null;
 }): Promise<string> {
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
@@ -18,8 +24,9 @@ export async function criarUsuarioLeitura(opts: {
       usuario_livro_id: opts.usuario_livro_id,
       tipo_origem: opts.tipo_origem ?? "individual",
       clube_id: opts.clube_id ?? null,
-      status: "lendo",
-      data_inicio: today,
+      status: opts.status ?? "lendo",
+      data_inicio: opts.data_inicio ?? today,
+      ...(opts.data_fim !== undefined ? { data_fim: opts.data_fim } : {}),
     })
     .select("id")
     .single();
