@@ -35,6 +35,7 @@ const BIBLIOTECA_KEYS = [
   "leituras-lendo",
   "meu-livro-obra",
   "livro-detalhe",
+  "timeline-livro",
   "livro-experiencias",
   "obra-citacoes",
   "obra-estatisticas",

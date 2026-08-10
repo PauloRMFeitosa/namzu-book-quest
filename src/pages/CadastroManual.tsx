@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import { criarUsuarioLeitura } from "@/hooks/leituras/useLeituraActions";
+import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
 
@@ -156,20 +158,42 @@ const CadastroManual = () => {
       if (!obraId) throw new Error("Resposta inválida");
 
       // edicao_id ausente é preenchido pelo trigger fn_auto_edicao_id_from_obra
-      const { error: ulErr } = await supabase.from("usuario_livros").insert({
-        user_id: user.id,
-        obra_id: obraId,
-        ...(edicaoId ? { edicao_id: edicaoId } : {}),
-        status: obraStatus,
-        data_inicio: obraStatus !== "quero_ler" ? dataInicio || null : null,
-        data_fim: obraStatus === "concluido" ? dataFim || null : null,
-        nota: obraStatus === "concluido" && nota ? Number(nota) : null,
-      } as TablesInsert<"usuario_livros">);
+      const { data: ulNovo, error: ulErr } = await supabase
+        .from("usuario_livros")
+        .insert({
+          user_id: user.id,
+          obra_id: obraId,
+          ...(edicaoId ? { edicao_id: edicaoId } : {}),
+          status: obraStatus,
+          data_inicio: obraStatus !== "quero_ler" ? dataInicio || null : null,
+          data_fim: obraStatus === "concluido" ? dataFim || null : null,
+          nota: obraStatus === "concluido" && nota ? Number(nota) : null,
+        } as TablesInsert<"usuario_livros">)
+        .select("id")
+        .single();
       if (ulErr && ulErr.code !== "23505") throw ulErr;
 
+      // Ao marcar como "Lendo" ou "Já lido", cria a experiência em
+      // usuario_leituras — mesmo fluxo do "Iniciar leitura" — para o livro
+      // aparecer nas listas "Em andamento"/"Lendo" (Home e Leituras) e em
+      // "Concluídos recentes", que leem de usuario_leituras. Experiência
+      // individual (clube_id nulo) não dispara XP, então não há pontuação
+      // duplicada.
+      if ((obraStatus === "lendo" || obraStatus === "concluido") && ulNovo?.id) {
+        try {
+          await criarUsuarioLeitura({
+            usuario_livro_id: ulNovo.id,
+            status: obraStatus,
+            data_inicio: dataInicio || null,
+            data_fim: obraStatus === "concluido" ? dataFim || null : null,
+          });
+        } catch (e) {
+          console.warn("Falha ao criar experiência de leitura", e);
+        }
+      }
+
       toast.success("Obra cadastrada");
-      qc.invalidateQueries({ queryKey: ["meus-livros"] });
-      qc.invalidateQueries({ queryKey: ["ultimas-leituras"] });
+      invalidateLeituras(qc);
 
       if (acaoDepois === "ver") {
         navigate(`/livros`);

@@ -466,7 +466,7 @@ const Busca = () => {
         : `Não foi possível adicionar: ${error.message}`;
       return toast.error(msg);
     }
-    toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
+    toast.success(status === "lido" ? "Marcado como lido (+50 XP)" : "Adicionado em Quero ler");
     invalidarLivros();
   };
 
@@ -520,7 +520,7 @@ const Busca = () => {
         { origem: "local", obra_id: obraId, edicao_id: data?.edicao_id ?? null, titulo: b.titulo, autor: b.autores?.[0], ano: b.ano, capa_url: b.capa_url, isbn13: b.isbn13 ?? undefined },
         ...arr,
       ]);
-      toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler", { id: loadingId });
+      toast.success(status === "lido" ? "Marcado como lido (+50 XP)" : "Adicionado em Quero ler", { id: loadingId });
       invalidarLivros();
     } catch (e: any) {
       console.error("adicionarExterno", e);
