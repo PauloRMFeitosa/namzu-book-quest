@@ -255,7 +255,7 @@ const ObraDetalhe = () => {
       if (error.code === "23505") return toast.info("Já está na sua lista");
       return toast.error(error.message);
     }
-    toast.success(status === "lido" ? "Marcado como lido (+100 XP)" : "Adicionado em Quero ler");
+    toast.success(status === "lido" ? "Marcado como lido (+50 XP)" : "Adicionado em Quero ler");
     qc.invalidateQueries({ queryKey: ["meu-livro-obra", user.id, id] });
     invalidateLeituras(qc);
 
