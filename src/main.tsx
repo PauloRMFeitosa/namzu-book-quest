@@ -37,8 +37,16 @@ if ("serviceWorker" in navigator) {
       });
     }).catch(() => {});
   } else {
+    // Se o usuário ativou lembretes por push, mantém o SW dedicado (/push-sw.js),
+    // que também limpa caches obsoletos. Caso contrário, registra o kill-switch.
+    let pushAtivo = false;
+    try {
+      pushAtivo = localStorage.getItem("namzu-push-enabled") === "1";
+    } catch {
+      pushAtivo = false;
+    }
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register(pushAtivo ? "/push-sw.js" : "/sw.js").catch(() => {});
     });
   }
 }
