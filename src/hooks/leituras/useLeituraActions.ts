@@ -58,12 +58,14 @@ export async function registrarProgresso(opts: {
   user_id: string;
   paginas?: number | null;
   percentual?: number | null;
+  minutos?: number | null;
 }) {
   const { error } = await supabase.from("leitura_progresso").insert({
     leitura_id: opts.leitura_id,
     user_id: opts.user_id,
     paginas_lidas: opts.paginas ?? null,
     percentual_lido: opts.percentual ?? null,
+    tempo_leitura_minutos: opts.minutos ?? null,
   });
   if (error) throw error;
 }

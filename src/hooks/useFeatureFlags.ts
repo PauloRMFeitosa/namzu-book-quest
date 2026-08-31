@@ -8,6 +8,7 @@ export type FeatureFlagKey =
   | "show_notificacoes"
   | "show_leituras"
   | "show_gamificacao_home"
+  | "show_meta_diaria"
   | "show_clube_feed"
   | "show_clube_leituras"
   | "show_clube_canais"
@@ -41,6 +42,7 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_notificacoes: true,
   show_leituras: true,
   show_gamificacao_home: true,
+  show_meta_diaria: true,
   show_clube_feed: true,
   show_clube_leituras: true,
   show_clube_canais: true,

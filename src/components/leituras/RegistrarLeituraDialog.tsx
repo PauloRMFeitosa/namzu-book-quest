@@ -83,6 +83,7 @@ export const RegistrarLeituraDialog = ({
   const [conceito, setConceito] = useState(c0?.conceito_principal ?? "");
   const [paginasLidas, setPaginasLidas] = useState(leitura?.paginas_lidas?.toString() ?? "");
   const [percentual, setPercentual] = useState(leitura?.percentual_lido?.toString() ?? "");
+  const [minutosLidos, setMinutosLidos] = useState("");
   const [citacoes, setCitacoes] = useState<Citacao[]>(
     leitura?.leitura_citacoes?.length
       ? leitura.leitura_citacoes.map((q) => ({ texto: q.texto, pagina: q.pagina?.toString() ?? "" }))
@@ -115,6 +116,7 @@ export const RegistrarLeituraDialog = ({
       if (d.conceito !== undefined) setConceito(d.conceito);
       if (d.paginasLidas !== undefined) setPaginasLidas(d.paginasLidas);
       if (d.percentual !== undefined) setPercentual(d.percentual);
+      if (d.minutosLidos !== undefined) setMinutosLidos(d.minutosLidos);
       if (d.citacoes?.length) setCitacoes(d.citacoes);
       if (d.aplicacoes?.length) setAplicacoes(d.aplicacoes);
       if (d.tags?.length) setTags(d.tags);
@@ -126,13 +128,13 @@ export const RegistrarLeituraDialog = ({
   // Salva rascunho a cada alteração (apenas modo novo registro)
   useEffect(() => {
     if (!open || isEdit || !DRAFT_KEY) return;
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links }));
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ resumo, conceito, paginasLidas, percentual, minutosLidos, citacoes, aplicacoes, tags, links }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isEdit, resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links]);
+  }, [open, isEdit, resumo, conceito, paginasLidas, percentual, minutosLidos, citacoes, aplicacoes, tags, links]);
 
   const snapshotRef = useRef<string>("");
   const currentState = () =>
-    JSON.stringify({ resumo, conceito, paginasLidas, percentual, citacoes, aplicacoes, tags, links });
+    JSON.stringify({ resumo, conceito, paginasLidas, percentual, minutosLidos, citacoes, aplicacoes, tags, links });
 
   // Captura snapshot toda vez que o dialog abre (após estados estarem populados)
   useEffect(() => {
@@ -155,7 +157,7 @@ export const RegistrarLeituraDialog = ({
 
   const reset = () => {
     if (isEdit) return;
-    setResumo(""); setConceito(""); setPaginasLidas(""); setPercentual("");
+    setResumo(""); setConceito(""); setPaginasLidas(""); setPercentual(""); setMinutosLidos("");
     setCitacoes([{ texto: "", pagina: "" }]);
     setAplicacoes([{ descricao: "", plano_acao: null }]);
     setTags([]);
@@ -164,7 +166,7 @@ export const RegistrarLeituraDialog = ({
 
   const salvar = async () => {
     const temConteudo = resumo.trim() || conceito.trim();
-    const temProgresso = paginasLidas || percentual;
+    const temProgresso = paginasLidas || percentual || minutosLidos;
     const temCitacoes = citacoes.some((c) => c.texto.trim());
     const temAplicacoes = aplicacoes.some((a) => a.descricao.trim());
     const temTags = tags.length > 0;
@@ -196,12 +198,13 @@ export const RegistrarLeituraDialog = ({
       }
 
       // Progresso
-      if (paginasLidas || percentual) {
+      if (paginasLidas || percentual || minutosLidos) {
         await registrarProgresso({
           leitura_id: lid,
           user_id: user!.id,
           paginas: paginasLidas ? Number(paginasLidas) : null,
           percentual: percentual ? Number(percentual) : null,
+          minutos: minutosLidos ? Number(minutosLidos) : null,
         });
 
         // Invalida cache do clube vinculado (progresso agora é derivado de usuario_leituras/leitura_progresso)
@@ -348,6 +351,23 @@ export const RegistrarLeituraDialog = ({
               onPaginaChange={setPaginasLidas}
               totalPaginas={totalPaginas}
             />
+            <div className="flex items-center gap-2">
+              <label htmlFor="minutos-lidos" className="text-sm font-medium whitespace-nowrap">
+                Tempo de leitura (min)
+              </label>
+              <Input
+                id="minutos-lidos"
+                type="number"
+                min={0}
+                placeholder="min"
+                value={minutosLidos}
+                onChange={(e) => setMinutosLidos(e.target.value)}
+                className="w-24 rounded-xl"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Conta para a sua meta diária por minutos.
+            </p>
           </TabsContent>
 
           <TabsContent value="citacoes" className="flex flex-col gap-2 mt-0">

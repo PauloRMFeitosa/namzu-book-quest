@@ -3,6 +3,9 @@ project_id = "qiiuvlmauztjitflqcfd"
 [functions.search-books]
 verify_jwt = false
 
+[functions.enviar-lembretes-meta]
+verify_jwt = false
+
 [functions.rapid-action]
 verify_jwt = false
 
