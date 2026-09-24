@@ -9,7 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, BookOpen, X, Users, Tag, Globe } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Trash2, Pencil, BookOpen, X, Users, Tag, Globe, BookCopy } from "lucide-react";
 import { AdminConfirmDialog } from "../components/AdminConfirmDialog";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminSearchBar } from "../components/AdminSearchBar";
@@ -18,11 +19,24 @@ import { AdminPageSizeSelect, PageSize } from "../components/AdminPageSizeSelect
 import { AdminModal } from "../components/AdminModal";
 import { useSortable } from "../hooks/useSortable";
 import { EnriquecerObraWikidataDialog } from "./livros/EnriquecerObraWikidataDialog";
+import { EdicoesObraSection } from "./livros/EdicoesObraSection";
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-const empty = { titulo_original: "", ano: "", sinopse: "", capa_url: "", idioma: "pt-BR" };
+const empty = {
+  titulo_original: "",
+  titulo_ordenacao: "",
+  slug: "",
+  ano: "",
+  sinopse: "",
+  capa_url: "",
+  idioma: "pt-BR",
+  metadata_source: "",
+  metadata_score: "",
+};
+
+type AbaEdicao = "dados" | "relacoes" | "edicoes";
 
 type Autor = { id: string; nome_completo: string };
 type Genero = { id: string; nome: string };
@@ -39,6 +53,7 @@ export const LivrosTab = () => {
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
+  const [abaEdicao, setAbaEdicao] = useState<AbaEdicao>("dados");
 
   // Author + genre lists (loaded once)
   const [autoresList, setAutoresList] = useState<Autor[]>([]);
@@ -54,7 +69,7 @@ export const LivrosTab = () => {
   const load = async () => {
     const { data } = await (supabase as any)
       .from("obras")
-      .select("id, titulo_original, ano_primeira_publicacao, idioma_original, obra_autores(ordem, autores(id, nome_completo))")
+      .select("id, titulo_original, ano_primeira_publicacao, idioma_original, capa_padrao_url, obra_autores(ordem, autores(id, nome_completo)), edicoes(count)")
       .order("created_at", { ascending: false })
       .limit(200);
     setRows(data ?? []);
@@ -78,6 +93,8 @@ export const LivrosTab = () => {
       .sort((a: any, b: any) => (a.ordem ?? 1) - (b.ordem ?? 1))[0]
       ?.autores?.nome_completo ?? "—";
 
+  const qtdEdicoes = (row: any) => row.edicoes?.[0]?.count ?? 0;
+
   const filtered = rows.filter((r) =>
     r.titulo_original?.toLowerCase().includes(search.toLowerCase())
   );
@@ -88,6 +105,7 @@ export const LivrosTab = () => {
     if (col === "autor") return primaryAutor(row);
     if (col === "ano") return row.ano_primeira_publicacao ?? 0;
     if (col === "idioma") return row.idioma_original ?? "";
+    if (col === "edicoes") return qtdEdicoes(row);
     return "";
   });
   const paged = sorted.slice(0, pageSize);
@@ -109,26 +127,43 @@ export const LivrosTab = () => {
     setModalOpen("create");
   };
 
-  const startEdit = async (r: any) => {
+  const startEdit = async (r: any, aba: AbaEdicao = "dados") => {
     setEditing(r);
     setForm({
+      ...empty,
       titulo_original: r.titulo_original ?? "",
       ano: r.ano_primeira_publicacao?.toString() ?? "",
-      sinopse: "",
-      capa_url: "",
+      capa_url: r.capa_padrao_url ?? "",
       idioma: r.idioma_original ?? "pt-BR",
     });
+    setAutorIds(new Set());
+    setGeneroIds(new Set());
     setAutorSearch("");
     setGeneroSearch("");
+    setAbaEdicao(aba);
     setModalOpen("edit");
 
-    // Load full sinopse + capa + relations in parallel
+    // Carrega todos os campos da obra + relações em paralelo
     const [{ data: obra }, { data: oas }, { data: ogs }] = await Promise.all([
-      (supabase as any).from("obras").select("sinopse_padrao, capa_padrao_url").eq("id", r.id).single(),
+      (supabase as any)
+        .from("obras")
+        .select("titulo_ordenacao, slug, sinopse_padrao, capa_padrao_url, metadata_source, metadata_score")
+        .eq("id", r.id)
+        .single(),
       (supabase as any).from("obra_autores").select("autor_id").eq("obra_id", r.id),
       (supabase as any).from("obra_generos").select("genero_id").eq("obra_id", r.id),
     ]);
-    if (obra) setForm((f) => ({ ...f, sinopse: obra.sinopse_padrao ?? "", capa_url: obra.capa_padrao_url ?? "" }));
+    if (obra) {
+      setForm((f) => ({
+        ...f,
+        titulo_ordenacao: obra.titulo_ordenacao ?? "",
+        slug: obra.slug ?? "",
+        sinopse: obra.sinopse_padrao ?? "",
+        capa_url: obra.capa_padrao_url ?? "",
+        metadata_source: obra.metadata_source ?? "",
+        metadata_score: obra.metadata_score?.toString() ?? "",
+      }));
+    }
     setAutorIds(new Set((oas ?? []).map((oa: any) => oa.autor_id)));
     setGeneroIds(new Set((ogs ?? []).map((og: any) => og.genero_id)));
   };
@@ -159,21 +194,28 @@ export const LivrosTab = () => {
 
   // ── CRUD ─────────────────────────────────────────────────
   const buildPayload = () => ({
-    titulo_original: form.titulo_original,
-    titulo_ordenacao: form.titulo_original,
-    idioma_original: form.idioma,
+    titulo_original: form.titulo_original.trim(),
+    titulo_ordenacao: form.titulo_ordenacao.trim() || form.titulo_original.trim(),
+    idioma_original: form.idioma.trim() || "pt-BR",
     sinopse_padrao: form.sinopse || null,
-    capa_padrao_url: form.capa_url || null,
+    capa_padrao_url: form.capa_url.trim() || null,
     ano_primeira_publicacao: form.ano ? Number(form.ano) : null,
+    metadata_source: form.metadata_source.trim() || null,
+    metadata_score: form.metadata_score ? Number(form.metadata_score) : null,
   });
 
   const create = async () => {
     if (!form.titulo_original) return toast.error("Título obrigatório");
     setSaving(true);
-    const slug = slugify(form.titulo_original) + "-" + Date.now().toString(36).slice(-4);
+    const slug = form.slug.trim()
+      ? slugify(form.slug)
+      : slugify(form.titulo_original) + "-" + Date.now().toString(36).slice(-4);
     const { data: newObra, error } = await (supabase as any)
       .from("obras").insert({ ...buildPayload(), slug }).select("id").single();
-    if (error) { setSaving(false); return toast.error(error.message); }
+    if (error) {
+      setSaving(false);
+      return toast.error(error.code === "23505" ? "Já existe outro livro com este slug" : error.message);
+    }
     await saveRelations(newObra.id);
     toast.success("Livro criado");
     setSaving(false);
@@ -183,9 +225,18 @@ export const LivrosTab = () => {
 
   const saveEdit = async () => {
     if (!editing) return;
+    if (!form.titulo_original.trim()) return toast.error("Título obrigatório");
+    const slug = slugify(form.slug);
+    if (!slug) return toast.error("Slug obrigatório");
     setSaving(true);
-    const { error } = await (supabase as any).from("obras").update(buildPayload()).eq("id", editing.id);
-    if (error) { setSaving(false); return toast.error(error.message); }
+    const { error } = await (supabase as any)
+      .from("obras")
+      .update({ ...buildPayload(), slug, updated_at: new Date().toISOString() })
+      .eq("id", editing.id);
+    if (error) {
+      setSaving(false);
+      return toast.error(error.code === "23505" ? "Já existe outro livro com este slug" : error.message);
+    }
     await saveRelations(editing.id);
     toast.success("Livro atualizado");
     setSaving(false);
@@ -213,36 +264,58 @@ export const LivrosTab = () => {
   const selectedGenerosList = generosList.filter((g) => generoIds.has(g.id));
 
   // ── Form JSX ──────────────────────────────────────────────
-  const formFields = (
-    <div className="space-y-4">
-      {/* Core fields */}
-      <div className="space-y-3">
+  const dadosFields = (
+    <div className="space-y-3">
+      <div>
+        <Label>Título original <span className="text-destructive">*</span></Label>
+        <Input value={form.titulo_original} onChange={(e) => setForm({ ...form, titulo_original: e.target.value })} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <Label>Título <span className="text-destructive">*</span></Label>
-          <Input value={form.titulo_original} onChange={(e) => setForm({ ...form, titulo_original: e.target.value })} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Ano de publicação</Label>
-            <Input type="number" placeholder="ex: 1956" value={form.ano} onChange={(e) => setForm({ ...form, ano: e.target.value })} />
-          </div>
-          <div>
-            <Label>Idioma original</Label>
-            <Input value={form.idioma} onChange={(e) => setForm({ ...form, idioma: e.target.value })} placeholder="pt-BR, en, es…" />
-          </div>
+          <Label>Título para ordenação</Label>
+          <Input value={form.titulo_ordenacao} onChange={(e) => setForm({ ...form, titulo_ordenacao: e.target.value })} placeholder="Igual ao título se vazio" />
         </div>
         <div>
-          <Label>Capa (URL)</Label>
-          <Input value={form.capa_url} onChange={(e) => setForm({ ...form, capa_url: e.target.value })} placeholder="https://…" />
+          <Label>Slug {modalOpen === "edit" && <span className="text-destructive">*</span>}</Label>
+          <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder={modalOpen === "create" ? "Gerado automaticamente se vazio" : ""} />
         </div>
         <div>
-          <Label>Sinopse</Label>
-          <Textarea rows={3} value={form.sinopse} onChange={(e) => setForm({ ...form, sinopse: e.target.value })} />
+          <Label>Ano de publicação</Label>
+          <Input type="number" placeholder="ex: 1956" value={form.ano} onChange={(e) => setForm({ ...form, ano: e.target.value })} />
+        </div>
+        <div>
+          <Label>Idioma original</Label>
+          <Input value={form.idioma} onChange={(e) => setForm({ ...form, idioma: e.target.value })} placeholder="pt-BR, en, es…" />
         </div>
       </div>
+      <div>
+        <Label>Capa padrão (URL)</Label>
+        <div className="flex gap-3 items-start">
+          <Input value={form.capa_url} onChange={(e) => setForm({ ...form, capa_url: e.target.value })} placeholder="https://…" />
+          {form.capa_url && <img src={form.capa_url} alt="" className="w-10 h-14 object-cover rounded shrink-0 bg-muted" />}
+        </div>
+      </div>
+      <div>
+        <Label>Sinopse</Label>
+        <Textarea rows={5} value={form.sinopse} onChange={(e) => setForm({ ...form, sinopse: e.target.value })} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label>Fonte dos metadados</Label>
+          <Input value={form.metadata_source} onChange={(e) => setForm({ ...form, metadata_source: e.target.value })} placeholder="manual, wikidata…" />
+        </div>
+        <div>
+          <Label>Score dos metadados</Label>
+          <Input type="number" value={form.metadata_score} onChange={(e) => setForm({ ...form, metadata_score: e.target.value })} />
+        </div>
+      </div>
+    </div>
+  );
 
+  const relacoesFields = (
+    <div className="space-y-4">
       {/* Autores */}
-      <div className="border-t pt-4 space-y-2">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <Label className="text-sm font-medium">Autores</Label>
@@ -358,22 +431,37 @@ export const LivrosTab = () => {
                 <TableHeader>
                   <TableRow>
                     <AdminSortableHead col="titulo" label="Título" sort={sort} onToggle={toggle} />
-                    <AdminSortableHead col="autor" label="Autor principal" sort={sort} onToggle={toggle} />
-                    <AdminSortableHead col="ano" label="Ano" sort={sort} onToggle={toggle} />
-                    <AdminSortableHead col="idioma" label="Idioma" sort={sort} onToggle={toggle} />
-                    <TableHead>Ações</TableHead>
+                    <AdminSortableHead col="autor" label="Autor principal" sort={sort} onToggle={toggle} className="hidden md:table-cell" />
+                    <AdminSortableHead col="ano" label="Ano" sort={sort} onToggle={toggle} className="hidden lg:table-cell" />
+                    <AdminSortableHead col="idioma" label="Idioma" sort={sort} onToggle={toggle} className="hidden lg:table-cell" />
+                    <AdminSortableHead col="edicoes" label="Edições" sort={sort} onToggle={toggle} className="hidden sm:table-cell" />
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paged.map((r) => (
                     <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.titulo_original}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{primaryAutor(r)}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.ano_primeira_publicacao ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{r.idioma_original ?? "—"}</TableCell>
+                      <TableCell className="font-medium">
+                        <button type="button" className="text-left hover:underline" onClick={() => startEdit(r)}>
+                          {r.titulo_original}
+                        </button>
+                        <p className="md:hidden text-xs font-normal text-muted-foreground">
+                          {primaryAutor(r)}
+                          <span className="sm:hidden"> · {qtdEdicoes(r)} {qtdEdicoes(r) === 1 ? "edição" : "edições"}</span>
+                        </p>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{primaryAutor(r)}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">{r.ano_primeira_publicacao ?? "—"}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{r.idioma_original ?? "—"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => startEdit(r, "edicoes")}>
+                          <BookCopy className="w-3.5 h-3.5" />{qtdEdicoes(r)}
+                        </Button>
+                      </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title="Editar"><Pencil className="w-4 h-4" /></Button>
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title="Editar livro"><Pencil className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="sm:hidden" onClick={() => startEdit(r, "edicoes")} title="Edições"><BookCopy className="w-4 h-4" /></Button>
                           <Button size="sm" variant="ghost" onClick={() => setWikidataTarget({ id: r.id, titulo_original: r.titulo_original })} title="Enriquecer via Wikidata"><Globe className="w-4 h-4" /></Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r.id)} title="Excluir"><Trash2 className="w-4 h-4" /></Button>
                         </div>
@@ -401,7 +489,11 @@ export const LivrosTab = () => {
         isLoading={saving}
         size="lg"
       >
-        {formFields}
+        <div className="space-y-4">
+          {dadosFields}
+          <div className="border-t pt-4">{relacoesFields}</div>
+          <p className="text-xs text-muted-foreground">As edições podem ser cadastradas depois que o livro for criado.</p>
+        </div>
       </AdminModal>
 
       {/* Edit modal */}
@@ -409,12 +501,29 @@ export const LivrosTab = () => {
         open={modalOpen === "edit"}
         onOpenChange={(o) => { if (!o) { setModalOpen(null); setEditing(null); } }}
         title="Editar livro"
+        description={editing?.titulo_original}
         onConfirm={saveEdit}
-        confirmLabel="Salvar"
+        confirmLabel="Salvar livro"
         isLoading={saving}
         size="lg"
       >
-        {formFields}
+        <Tabs value={abaEdicao} onValueChange={(v) => setAbaEdicao(v as AbaEdicao)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="relacoes">Autores e gêneros</TabsTrigger>
+            <TabsTrigger value="edicoes">Edições</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dados" className="pt-2">{dadosFields}</TabsContent>
+          <TabsContent value="relacoes" className="pt-2">{relacoesFields}</TabsContent>
+          <TabsContent value="edicoes" className="pt-2">
+            {editing && (
+              <>
+                <EdicoesObraSection obraId={editing.id} tituloObra={editing.titulo_original} onChange={load} />
+                <p className="text-xs text-muted-foreground mt-3">Alterações nas edições são salvas individualmente.</p>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </AdminModal>
 
       <AdminConfirmDialog
