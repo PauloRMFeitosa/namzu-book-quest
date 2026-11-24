@@ -1,5 +1,6 @@
 -- Fase 0 (docs/roadmap.md) — endurecimento de permissões de funções.
 --
+-- Aplicada no remoto em 24/11/2026 (versão 20261124173944).
 -- Diagnóstico feito em 24/11/2026 no projeto remoto com consultas de leitura
 -- (pg_proc, pg_policies, pg_trigger, cron.job) e busca por `.rpc(` no app.
 --

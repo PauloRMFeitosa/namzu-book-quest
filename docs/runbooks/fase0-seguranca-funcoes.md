@@ -1,7 +1,22 @@
 # Runbook — Fase 0: segurança de funções (banco e Edge Functions)
 
 **Escopo:** primeira entrega de segurança da Fase 0 do `docs/roadmap.md`.
-**Situação:** código pronto e testado localmente. **Nada foi aplicado em produção.** A aplicação depende de aprovação de Paulo.
+**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Falta o teste de fumaça no app, descrito abaixo.
+
+## Registro da aplicação
+
+| Passo | Resultado |
+|---|---|
+| `ensure-profiles` publicada | versão 15. Sem credencial e com a chave pública responde 401 |
+| `rapid-action` publicada | versão 33. Sem credencial e com a chave pública responde 401; preflight CORS responde 200 |
+| Migração aplicada | registrada no remoto como `20261124173944_fase0_seguranca_funcoes` |
+| Funções internas ainda acessíveis pela API | 0 |
+| Funções `SECURITY DEFINER` executáveis por `anon` | 5, as exceções previstas |
+| Funções sem `search_path` | 2, as exceções previstas |
+| RPCs usadas pelo app seguem executáveis por `authenticated` | sim |
+| `postgres` (cron) e `service_role` seguem com acesso às funções internas | sim |
+
+**Desvio encontrado na hora de publicar:** a `rapid-action` do repositório era uma versão de junho, diferente da que rodava em produção. A versão de produção devolve `edicao_id`, campo que o app atual usa, e delega a busca para `search-books`. Publicar a versão do repo teria causado regressão. A proteção foi aplicada sobre o código de produção, e esse código passou a ser o do repositório.
 
 ## O que muda
 
@@ -14,13 +29,13 @@
 | `definir_perfil_publico`, `get_atividade_leitura_anual`, `get_interacoes_diarias` | Aceitam `anon` | Somente `authenticated` |
 | 32 funções sem `search_path` | Caminho de busca mutável | `search_path = public, extensions` |
 
-Arquivos: `supabase/functions/_shared/auth.ts`, `supabase/functions/rapid-action/index.ts`, `supabase/functions/ensure-profiles/index.ts`, `supabase/migrations/20261124173000_fase0_seguranca_funcoes.sql`.
+Arquivos: `supabase/functions/_shared/auth.ts`, `supabase/functions/rapid-action/index.ts`, `supabase/functions/ensure-profiles/index.ts`, `supabase/migrations/20261124173944_fase0_seguranca_funcoes.sql`.
 
 ## Como foi verificado
 
 - **Assinaturas:** as 56 assinaturas usadas na migração foram conferidas contra o banco remoto com `to_regprocedure` (consulta de leitura). Nenhuma inexistente.
 - **Quem chama o quê:** `pg_proc.prosrc` mostrou que as 8 funções internas só são chamadas por funções `SECURITY DEFINER`, que rodam como o dono (`postgres`). O app (`grep` por `.rpc(`) não chama nenhuma delas. Os jobs do `pg_cron` rodam como `postgres`.
-- **Políticas RLS:** `has_role`, `is_clube_curador`, `is_clube_membro` e `pode_ver_leituras_de` aparecem em 84 políticas, várias avaliadas para `anon`. Por isso **não** são revogadas.
+- **Políticas RLS:** `has_role`, `is_clube_curador`, `is_clube_membro` e `pode_ver_leituras_de` são referenciadas 84 vezes em políticas RLS, várias avaliadas para `anon`. Por isso **não** são revogadas.
 - **Teste em Postgres 16 local** com funções de mesmo modelo de segurança:
   - antes da migração, usuário logado concedeu XP a outra pessoa chamando `conceder_xp` direto (a falha);
   - depois, a mesma chamada falha com `permission denied`;
@@ -28,14 +43,14 @@ Arquivos: `supabase/functions/_shared/auth.ts`, `supabase/functions/rapid-action
   - `definir_perfil_publico` funciona para `authenticated` e falha para `anon`;
   - leitura anônima de tabela cuja política usa `has_role` continua funcionando; e quebra se `has_role` for revogada (controle que justifica a exceção).
 - **Sintaxe:** a migração completa rodou sem erro contra 56 stubs com as assinaturas de produção (36 `REVOKE`, 3 `GRANT`, 32 `ALTER`).
-- **Edge Functions:** `deno check` limpo em `_shared/auth.ts` e `ensure-profiles`. `rapid-action` tem 7 erros de tipo que já existiam na `main` (em `_shared/generos.ts`); a mudança não adicionou nenhum.
+- **Edge Functions:** `deno check` limpo em `_shared/auth.ts`, `ensure-profiles` e `rapid-action`.
 
-O que **não** foi possível testar fora de produção: as Edge Functions rodando de verdade e a migração contra o schema real. Por isso a ordem e o teste de fumaça abaixo.
+O caminho autenticado das Edge Functions não pôde ser testado por mim, porque exige a sessão de um usuário real. É o que o teste de fumaça abaixo cobre.
 
 ## Ordem de aplicação
 
 1. Publicar `ensure-profiles` e `rapid-action` (com `_shared/auth.ts` e `_shared/generos.ts`).
-2. Aplicar a migração. Se a versão gerada pelo Supabase for diferente de `20261124173000`, renomear o arquivo para a versão registrada, conforme `supabase/migrations/README.md`.
+2. Aplicar a migração e renomear o arquivo para a versão registrada pelo Supabase, conforme `supabase/migrations/README.md`.
 3. Rodar a verificação e o teste de fumaça.
 
 ## Verificação pós-aplicação
@@ -96,4 +111,5 @@ TO anon;
 3. **`search-books` e `obra-estatisticas`** continuam públicas. São só leitura, mas `search-books` consome cota de APIs externas; avaliar limite de taxa.
 4. **Proteção contra senha vazada** é uma chave no painel do Supabase Auth; não é configurável por migração.
 5. **`ranking_clube`** (materialized view) segue legível por `anon`.
-6. **Erros de tipo antigos** em `_shared/generos.ts` (7 no `deno check`).
+6. **Erros de tipo antigos** em `_shared/generos.ts` (5 no `deno check`). O arquivo deixou de ser usado pela `rapid-action`; conferir se outra função publicada ainda depende dele.
+7. **Desvio entre repo e produção nas demais Edge Functions.** A `rapid-action` estava diferente; as outras ainda não foram conferidas.
