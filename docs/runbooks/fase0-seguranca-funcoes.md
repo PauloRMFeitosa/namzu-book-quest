@@ -18,6 +18,8 @@
 
 **Desvio encontrado na hora de publicar:** a `rapid-action` do repositório era uma versão de junho, diferente da que rodava em produção. A versão de produção devolve `edicao_id`, campo que o app atual usa, e delega a busca para `search-books`. Publicar a versão do repo teria causado regressão. A proteção foi aplicada sobre o código de produção, e esse código passou a ser o do repositório.
 
+**Diferença conhecida entre o repo e a versão 33 publicada:** duas correções de lint sem efeito no comportamento (`let` trocado por `const` e um escape desnecessário removido de uma expressão regular). Elas entram em produção no próximo deploy da função.
+
 ## O que muda
 
 | Item | Antes | Depois |

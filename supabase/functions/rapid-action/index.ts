@@ -81,7 +81,7 @@ function normalizeGenres(input: unknown): string[] {
   const out = new Set<string>();
   for (const item of arr) {
     if (typeof item !== "string") continue;
-    const parts = item.split(/[\/>]|--|,/).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const parts = item.split(/[/>]|--|,/).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
     for (const p of parts) {
       if (STOP.has(p.toLowerCase())) continue;
       const translated = translateGenre(p);
@@ -102,7 +102,7 @@ async function persistGenresForObra(obraId: string, rawGenres: unknown): Promise
   for (const nome of nomes) {
     const slug = slugifyGenre(nome);
     if (!slug) continue;
-    let { data: existing } = await supabase.from("generos").select("id").eq("slug", slug).maybeSingle();
+    const { data: existing } = await supabase.from("generos").select("id").eq("slug", slug).maybeSingle();
     let generoId: string | null = existing?.id ?? null;
     if (!generoId) {
       const { data: inserted, error } = await supabase.from("generos").insert({ nome, slug }).select("id").single();
