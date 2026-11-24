@@ -1,7 +1,7 @@
 # Runbook — Fase 0: segurança de funções (banco e Edge Functions)
 
 **Escopo:** primeira entrega de segurança da Fase 0 do `docs/roadmap.md`.
-**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Falta o teste de fumaça no app, descrito abaixo.
+**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Teste de fumaça no app feito por Paulo no mesmo dia, sem problemas. Os jobs agendados das 17:45 UTC rodaram com sucesso após a migração.
 
 ## Registro da aplicação
 
@@ -106,9 +106,33 @@ GRANT EXECUTE ON FUNCTION
 TO anon;
 ```
 
+## Entrega 2 — RPCs de leitura respeitam perfil privado
+
+**Situação:** migração pronta e testada localmente em `supabase/migrations/20261124180000_fase0_privacidade_rpcs_leitura.sql`. **Ainda não aplicada em produção.**
+
+**O que muda:** `get_stats_leitura`, `get_generos_lidos`, `get_livros_por_mes`, `calcular_streak_leitura` e `get_interacoes_diarias` passam a aplicar a regra de `pode_ver_leituras_de`: o dono, um admin ou qualquer pessoa quando o perfil é público. Quem não pode ver recebe zeros ou lista vazia, sem erro. Chamadas com a chave de serviço seguem liberadas. `get_contagem_social` não muda, porque contagem de seguidores não é dado de leitura.
+
+**Impacto hoje:** nenhum perfil está privado em produção (29 perfis, todos públicos), então nenhuma tela muda de comportamento agora. A correção fecha a brecha para quando alguém marcar o perfil como privado.
+
+**Teste em Postgres 16 local**, com as definições de `has_role` e `pode_ver_leituras_de` copiadas de produção:
+
+| Quem chama | Alvo | Resultado |
+|---|---|---|
+| Usuário comum | perfil público de outra pessoa | dados completos |
+| Usuário comum | perfil **privado** de outra pessoa | zeros e listas vazias |
+| O próprio dono | seu perfil privado, com e sem parâmetro | dados completos |
+| Admin | perfil privado | dados completos |
+| Chave de serviço | perfil privado | dados completos |
+
+A `get_stats_leitura` foi reestruturada para avaliar a regra uma única vez; a versão nova devolve exatamente o mesmo resultado da antiga para quem pode ver. A versão antiga devolvia os dados do perfil privado ao usuário comum, o que confirma a brecha.
+
+**Teste de fumaça após aplicar:** abrir o próprio perfil e conferir os números de estatísticas; abrir a tela de leituras e conferir a sequência de dias; abrir o perfil público de outro usuário.
+
+**Reversão:** as funções aceitam `CREATE OR REPLACE`. Basta reaplicar a migração sem as linhas do filtro `pode_ver_leituras_de`.
+
 ## Achados que ficam para a próxima entrega
 
-1. **Privacidade em RPCs de leitura.** `get_stats_leitura`, `get_generos_lidos`, `get_livros_por_mes`, `get_contagem_social`, `calcular_streak_leitura` e `get_interacoes_diarias` recebem `p_user_id` e não consultam `perfil_publico` nem `pode_ver_leituras_de`. Um usuário logado consegue ler estatísticas de um perfil privado. A correção exige reescrever o corpo dessas funções.
+1. ~~Privacidade em RPCs de leitura.~~ Tratado na Entrega 2, acima.
 2. **Endpoints de lote abertos.** `reprocessar-generos`, `reprocessar-autores` e `reprocessar-obras` são chamados pelo `pg_cron` sem credencial. Proteger com um segredo de cron no cabeçalho, como já faz `enviar-lembretes-meta`.
 3. **`search-books` e `obra-estatisticas`** continuam públicas. São só leitura, mas `search-books` consome cota de APIs externas; avaliar limite de taxa.
 4. **Proteção contra senha vazada** é uma chave no painel do Supabase Auth; não é configurável por migração.
