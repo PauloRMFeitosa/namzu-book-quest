@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import slugify from "https://esm.sh/slugify@1.6.6";
 import { persistGenresForObra } from "../_shared/generos.ts";
+import { autenticarUsuario } from "../_shared/auth.ts";
 
 
 const corsHeaders = {
@@ -417,6 +418,12 @@ serve(async (req) => {
   }
 
   try {
+    // Esta função grava no acervo com a chave de serviço (sem RLS), então só
+    // atende usuários autenticados. Todas as chamadas do app partem de
+    // páginas protegidas e já enviam o JWT da sessão.
+    const auth = await autenticarUsuario(req);
+    if (!auth.ok) return json({ error: auth.erro }, auth.status);
+
     const payload = await req.json();
     const { mode } = payload;
 
