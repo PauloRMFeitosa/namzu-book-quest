@@ -65,7 +65,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Proteger os endpoints de lote chamados pelo cron com segredo guardado no Vault. As quatro funções aceitam só o agendador ou um admin. Aplicado em 24/11/2026 (`docs/runbooks/fase0-segredo-agendador.md`).
 - [x] Fixar `search_path` em 32 das 34 funções. As 2 restantes são SQL imutáveis e ficaram de fora de propósito. Aplicado em 24/11/2026.
 - [ ] Ativar proteção contra senha vazada no Auth.
-- [ ] Confirmar que as variáveis `VITE_*` estão cadastradas na Vercel; só então tirar `.env` do git e incluí-lo no `.gitignore`.
+- [ ] Confirmar que as variáveis `VITE_*` estão cadastradas na Vercel; só então tirar `.env` do git e incluí-lo no `.gitignore`. Depende de Paulo: o conector da Vercel não tem acesso ao time do projeto. O arquivo só guarda a URL e a chave pública, então o risco de mantê-lo é baixo.
 
 **Reprodutibilidade**
 - [ ] Gerar baseline do schema com `supabase db pull`.
@@ -82,12 +82,14 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] CI no GitHub Actions: lint, tipos, testes e build em todo PR.
 - [x] Modelo de pull request com checklist do projeto.
 - [x] `CHANGELOG.md` e política de versão (seção 10).
-- [ ] Proteger a branch `main`: merge só com CI verde.
-- [ ] Renomear o pacote para `namzu`, manter um único lockfile, remover `lovable-tagger`.
+- [ ] Proteger a branch `main`: merge só com CI verde. Configuração do GitHub, a cargo de Paulo.
+- [x] Renomear o pacote para `namzu`, manter um único lockfile (`package-lock.json`), remover `lovable-tagger`.
 - [ ] Monitoramento de erros em produção (Sentry ou equivalente).
 - [ ] Confirmar política de backup do banco no plano atual do Supabase.
 
 **Critério de saída:** advisor de segurança sem função de escrita exposta a `anon`; lista de migrações do repo idêntica à do remoto; `main` protegida com CI obrigatório; tag `v0.2.0`.
+
+**Situação em 24/11/2026:** os dois primeiros critérios estão cumpridos e a versão `0.2.0` está registrada no `package.json` e no `CHANGELOG.md`. Faltam a proteção da `main` e a tag, além dos itens abertos acima.
 
 ---
 
@@ -140,6 +142,8 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 | Comunicação | Aviso do organizador para todos, por notificação e e-mail | Não existe |
 
 **App do membro:** entrar pelo link, ver livro e meta da semana, registrar progresso em um toque, confirmar presença, participar da discussão. Nada além disso na primeira tela.
+
+**Dependência a resolver antes desta fase:** `clube-ai` e `leitura-copiloto` chamam o gateway de IA do Lovable (`ai.gateway.lovable.dev`, com a variável `LOVABLE_API_KEY`) para usar modelos Gemini. A mediação com IA é o diferencial do produto e hoje depende de uma conta de outra plataforma. Decidir o provedor próprio e migrar antes de construir sobre isso.
 
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.

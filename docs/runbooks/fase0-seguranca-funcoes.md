@@ -108,7 +108,7 @@ TO anon;
 
 ## Entrega 2 — RPCs de leitura respeitam perfil privado
 
-**Situação:** **aplicada em produção em 24/11/2026**, com autorização de Paulo, e registrada como `20261124175313_fase0_privacidade_rpcs_leitura`. Falta o teste de fumaça no app.
+**Situação:** **aplicada em produção em 24/11/2026**, com autorização de Paulo, e registrada como `20261124175313_fase0_privacidade_rpcs_leitura`. O teste de fumaça desta entrega não foi confirmado por Paulo; nenhum perfil é privado em produção, então nenhuma tela mudou.
 
 **Verificação em produção:** antes e depois da migração, as cinco funções foram chamadas para os 29 perfis como um usuário comum logado, e o conjunto de resultados foi resumido em um hash. O hash é o mesmo nas duas medições (`915f746e12de9949045ec0f76d20a359`), ou seja, nada mudou para perfis públicos. As cinco funções contêm o filtro, seguem executáveis por `authenticated` e `service_role` e seguem bloqueadas para `anon`. O cenário de perfil privado foi validado no teste local abaixo; não há perfil privado em produção para testar lá.
 
