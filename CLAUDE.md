@@ -8,12 +8,19 @@ Este arquivo fornece orientações ao Claude Code (claude.ai/code) ao trabalhar 
 
 O NAMZU é uma plataforma social de leitura em português brasileiro. Os usuários gerenciam bibliotecas pessoais, registram progresso de leitura, salvam citações, participam de clubes de leitura e descobrem outros leitores por meio de matching inteligente. O código é um SPA em React com backend no Supabase (PostgreSQL + Edge Functions), implantado no Vercel.
 
+## Direção do Produto
+
+O NAMZU está sendo reposicionado: de rede social de leitura para **plataforma do organizador de clube de leitura**, com o lado individual (estante, progresso, citações) mantido como app do membro. O plano por fases, os critérios de saída de cada fase e os padrões de versionamento estão em `docs/roadmap.md`. Antes de propor ou implementar funcionalidade nova, verifique em qual fase do roadmap ela se encaixa.
+
+O CI (`.github/workflows/ci.yml`) roda lint, checagem de tipos, testes e build em todo PR. Mudanças relevantes devem ser registradas no `CHANGELOG.md`.
+
 ## Comandos
 
 ```bash
 npm run dev        # Servidor de desenvolvimento Vite na porta 8080
 npm run build      # Build de produção
 npm run lint       # Verificação ESLint
+npm run typecheck  # Checagem de tipos (tsc --noEmit)
 npm run test       # Executa todos os testes uma vez (Vitest)
 npm run test:watch # Modo watch
 ```
