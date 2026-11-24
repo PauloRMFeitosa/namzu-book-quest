@@ -8,6 +8,7 @@
 //   - Auto-concilia se score >= 80 (somente no modo lote)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { autorizarAdminOuCron } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -457,6 +458,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Só o pg_cron (segredo do agendador) ou um admin autenticado podem disparar.
+    const aut = await autorizarAdminOuCron(req);
+    if (!aut.ok) return json({ error: aut.erro }, aut.status);
+
     let body: any = {};
     try { body = await req.json(); } catch { /* GET */ }
 
@@ -471,24 +476,9 @@ Deno.serve(async (req) => {
     );
 
     // ── Modo direcionado: reprocessa uma obra específica ────────────────
-    // Exige admin autenticado (o modo lote permanece aberto para o cron).
+    // Exige admin autenticado: o agendador só roda o modo lote.
     if (obraIdEspecifico) {
-      const authHeader = req.headers.get("Authorization") ?? "";
-      if (!authHeader) return json({ error: "Não autenticado" }, 401);
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } },
-      );
-      const { data: userData, error: userErr } = await userClient.auth.getUser();
-      if (userErr || !userData.user) return json({ error: "Token inválido" }, 401);
-      const { data: roleRow } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!roleRow) return json({ error: "Acesso negado" }, 403);
+      if (aut.origem !== "admin") return json({ error: "Acesso negado" }, 403);
 
       const { data: obraRow, error: errObra } = await supabase
         .from("obras")

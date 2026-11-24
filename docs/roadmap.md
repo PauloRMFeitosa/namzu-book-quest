@@ -62,7 +62,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Revogar `EXECUTE` de `anon` nas funções `SECURITY DEFINER` apontadas pelo advisor. Restam 5 exceções justificadas no runbook. Aplicado em 24/11/2026.
 - [x] Funções internas que recebem `p_user_id` (`conceder_xp`, `desbloquear_conquista`, `registrar_progresso_missao`, `creditar_xp_clube`, `calcular_matches`) sem acesso pela API. `seed_estante_inicial` já validava o chamador. Aplicado em 24/11/2026.
 - [x] RPCs de leitura que recebem `p_user_id` (`get_stats_leitura`, `get_generos_lidos`, `get_livros_por_mes`, `calcular_streak_leitura`, `get_interacoes_diarias`) passam a respeitar perfil privado. Aplicado em 24/11/2026.
-- [ ] Proteger os endpoints de lote chamados pelo cron com segredo guardado no Vault: `reprocessar-generos` está aberta para a internet, `enviar-lembretes-meta` também, e o job de `reprocessar-autores` falha com 401 toda madrugada. Detalhes na auditoria.
+- [ ] Proteger os endpoints de lote chamados pelo cron com segredo guardado no Vault: `reprocessar-generos` está aberta para a internet, `enviar-lembretes-meta` também, e o job de `reprocessar-autores` falha com 401 toda madrugada. Código e migração prontos e testados; falta aplicar em produção (`docs/runbooks/fase0-segredo-agendador.md`).
 - [x] Fixar `search_path` em 32 das 34 funções. As 2 restantes são SQL imutáveis e ficaram de fora de propósito. Aplicado em 24/11/2026.
 - [ ] Ativar proteção contra senha vazada no Auth.
 - [ ] Confirmar que as variáveis `VITE_*` estão cadastradas na Vercel; só então tirar `.env` do git e incluí-lo no `.gitignore`.

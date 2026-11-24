@@ -9,10 +9,11 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (injetados pelo runtime)
 //   RESEND_API_KEY, EMAIL_FROM               (canal e-mail — opcional)
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT  (canal push — opcional)
-//   LEMBRETES_CRON_SECRET                    (protege a invocação — opcional)
+//   (a invocação é protegida pelo segredo do agendador no Vault; ver _shared/auth.ts)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { autorizarAdminOuCron } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,13 +43,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const cronSecret = Deno.env.get("LEMBRETES_CRON_SECRET");
-    if (cronSecret) {
-      const auth = req.headers.get("Authorization") ?? "";
-      if (auth !== `Bearer ${cronSecret}`) {
-        return json({ error: "unauthorized" }, 401);
-      }
-    }
+    // Só o pg_cron (segredo do agendador) ou um admin autenticado podem disparar.
+    // A checagem antiga dependia de LEMBRETES_CRON_SECRET, que nunca foi
+    // definida: a função ficava aberta.
+    const aut = await autorizarAdminOuCron(req);
+    if (!aut.ok) return json({ error: aut.erro }, aut.status);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
