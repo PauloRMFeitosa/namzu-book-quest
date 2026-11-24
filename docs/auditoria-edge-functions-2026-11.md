@@ -19,8 +19,9 @@
 | `reprocessar-autores` | 08/06 (v2) | **Diferente. Repo é mais novo** | Repo mantido; falta publicar |
 | `enviar-lembretes-meta` | 31/08 (v1) | Só existia em produção | Trazida para o repo neste PR |
 | `clever-api` | 19/04 (v3) | Só existe em produção. Sem nenhum chamador | Candidata a remoção |
-| `buscar-livros` | 18/04 (v2) | Só existe em produção. Sem chamador. **Código ilegível** | Candidata a remoção |
-| `search-books`, `admin-create-user`, `admin-manage-user`, `admin-list-users`, `obra-estatisticas`, `clube-ai`, `leitura-copiloto`, `conciliar-autor` | 08/06, em lote | **Não foi possível ler** | Pendente; ver seção 3 |
+| `buscar-livros` | 18/04 (v2) | Só existe em produção. Sem chamador | Candidata a remoção |
+| `admin-create-user`, `admin-manage-user`, `admin-list-users`, `clube-ai`, `conciliar-autor` | 08/06, em lote | **Iguais ao repo** (ver seção 4) | Nenhuma |
+| `search-books`, `obra-estatisticas`, `leitura-copiloto` | 08/06, em lote | Equivalentes: só diferenças de estilo, sem efeito (ver seção 4) | Nenhuma |
 
 A configuração `verify_jwt` de todas as funções bate com `supabase/config.toml`.
 
@@ -46,7 +47,7 @@ Há ainda uma diferença de regra: em produção o autor é aceito automaticamen
 O comando do job `lembretes-meta-diaria-email-push` em `cron.job` traz um token no cabeçalho. Como a função ignora o token (item 1.3), ele hoje não protege nada. Ao corrigir, o segredo deve ir para o Vault do Supabase.
 
 ### 1.6 Funções mortas expostas — BAIXA
-`buscar-livros` e `clever-api` não têm chamador no app, no agendador nem no banco, e não aparecem nos logs recentes. São protótipos de abril, anteriores à `search-books`. A `buscar-livros` roda código que não conseguimos ler, sem exigir login. A `clever-api` repassa buscas ao Google Books e grava a resposta inteira no log.
+`buscar-livros` e `clever-api` não têm chamador no app, no agendador nem no banco, e não aparecem nos logs recentes. São protótipos de abril, anteriores à `search-books`. A `buscar-livros` busca no Google Books e na Open Library e cadastra obra, autor, edição e o livro na estante de quem chama. Usa a chave pública com o token do próprio usuário, então respeita o RLS e exige login para gravar; o risco é baixo. A `clever-api` repassa buscas ao Google Books e grava a resposta inteira no log.
 
 ### 1.7 Observação sobre o `pg_net`
 O `pg_net` desiste da resposta em 5 segundos, mas as funções de lote levam cerca de 65 segundos e continuam rodando. O resultado real só aparece nos logs da função. Em 24/11 às 06:02 a `reprocessar-generos` estourou o limite de execução (status 546).
@@ -68,7 +69,25 @@ Com isso a lista de migrações do repo é idêntica à do banco: 75 de cada lad
 1. **Fechar os endpoints de lote** (itens 1.1 a 1.5). Proposta: um segredo único de agendador, guardado no Vault do Supabase e nas variáveis das funções. O lote passa a aceitar admin autenticado ou o segredo; os jobs do `pg_cron` passam a enviá-lo. Exige publicar quatro funções e alterar quatro jobs.
 2. **`reprocessar-autores`:** publicar a versão do repo (limite 90) junto com o item 1, para o job voltar a funcionar.
 3. **Remover `buscar-livros` e `clever-api`** pelo painel do Supabase. Não há ferramenta para remover função por aqui.
-4. **Ler as 8 funções ilegíveis.** Elas foram publicadas em lote em 08/06 por um caminho que não guardou o código de forma recuperável. Dois caminhos:
-   - baixar com `supabase functions download <nome>`, o que exige um token de acesso da conta;
-   - republicar a partir do repo, o que sobrescreve o que está no ar sem sabermos o que havia lá. Não recomendado às cegas.
-5. **Registro de execução da `reprocessar-generos`:** decidir se a tela de jobs do admin deve voltar a receber esses registros, que a versão publicada deixou de gravar.
+4. **Registro de execução da `reprocessar-generos`:** decidir se a tela de jobs do admin deve voltar a receber esses registros, que a versão publicada deixou de gravar.
+
+## 4. As 8 funções publicadas em lote em 08/06
+
+A ferramenta do Supabase não devolve o código dessas funções, porque foram publicadas em um formato de pacote antigo. Com um token de acesso da conta, fornecido por Paulo em 24/11/2026, o pacote de cada uma foi baixado pela API de gestão e aberto com a biblioteca `eszip`.
+
+O pacote guarda o código já compilado: sem tipos, sem comentários e reformatado. Para comparar, o arquivo do repo passou pela mesma compilação e os dois lados foram comparados token a token, o que ignora formatação.
+
+| Função | Resultado | Diferença |
+|---|---|---|
+| `admin-create-user` | Igual | nenhuma |
+| `admin-manage-user` | Igual | nenhuma |
+| `admin-list-users` | Igual | nenhuma |
+| `clube-ai` | Igual | nenhuma |
+| `conciliar-autor` | Igual | o `_shared/wikidata.ts` do pacote não tem os auxiliares de obra adicionados em julho, que esta função não usa |
+| `search-books` | Equivalente | o `_shared/generos.ts` do pacote é anterior à limpeza de lint de julho: um `let` no lugar de `const` e um escape de regex |
+| `obra-estatisticas` | Equivalente | dois `let` no lugar de `const` |
+| `leitura-copiloto` | Equivalente | um `let` no lugar de `const` |
+
+**Conclusão:** nenhuma das oito tem comportamento diferente do repositório. As diferenças vêm da limpeza de lint de julho, feita no repo depois da publicação. Republicá-las a partir do repo é seguro, mas não é necessário.
+
+Limite do método: a comparação token a token não enxerga diferenças em comentários nem em tipos, porque o pacote publicado não os guarda.
