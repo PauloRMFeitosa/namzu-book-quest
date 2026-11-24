@@ -1,5 +1,7 @@
 -- Fase 0 (docs/roadmap.md) — segredo do agendador para as Edge Functions de lote.
 --
+-- Aplicada no remoto em 24/11/2026 (versão 20261124191704).
+--
 -- Problema (docs/auditoria-edge-functions-2026-11.md): o pg_cron chama quatro
 -- Edge Functions sem credencial. Para o job funcionar, a `reprocessar-generos`
 -- ficou sem nenhuma checagem de quem chama, e qualquer pessoa na internet

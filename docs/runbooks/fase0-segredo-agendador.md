@@ -1,7 +1,29 @@
 # Runbook — Fase 0: segredo do agendador para as Edge Functions de lote
 
 **Escopo:** itens 1.1 a 1.5 de `docs/auditoria-edge-functions-2026-11.md`.
-**Situação:** código e migração prontos e testados fora de produção. **Nada foi aplicado em produção.** A aplicação depende de aprovação de Paulo.
+**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Falta o teste de fumaça no painel admin e a conferência dos primeiros disparos reais do agendador.
+
+## Registro da aplicação
+
+| Passo | Resultado |
+|---|---|
+| Migração | registrada no remoto como `20261124191704_fase0_segredo_agendador` |
+| Segredo no Vault | 1 segredo, 64 caracteres. A RPC aceita o valor certo e recusa um errado |
+| Jobs do `pg_cron` | os 4 enviam `x-cron-secret`; nenhum carrega token em texto puro; mesmos ids e horários |
+| `enviar-lembretes-meta` | versão 2 |
+| `reprocessar-generos` | versão 8 |
+| `reprocessar-obras` | versão 3 |
+| `reprocessar-autores` | versão 3, agora com o limite de 90 do repo |
+| Chamada sem credencial, com a chave pública e com segredo errado | 401 nas quatro funções |
+| Preflight CORS | 200 nas quatro |
+| Chamada disparada do banco com o segredo do Vault, na `enviar-lembretes-meta` | 200, confirmando o caminho do agendador de ponta a ponta |
+| Código publicado x repo | baixado e comparado token a token; só parênteses diferem, efeito do compilador |
+
+**Job de autores:** fica ativo, por decisão de Paulo. O primeiro disparo real com a função nova é às 03:00 UTC de 25/11.
+
+**Como as funções foram publicadas:** direto dos arquivos do repo, pela API de gestão do Supabase com o token de acesso da conta, para que o conteúdo publicado fosse exatamente o do disco.
+
+**Ainda não observado:** os disparos reais do agendador para `reprocessar-generos` (00:00 UTC), `reprocessar-autores` (03:00 UTC) e `reprocessar-obras` (04:00 UTC). O mecanismo é o mesmo já validado na função de lembretes.
 
 ## O problema
 
@@ -22,15 +44,15 @@ Um segredo gerado dentro do banco e guardado no Vault do Supabase.
 - As quatro funções passam a aceitar só duas origens: o agendador, com o segredo conferido pela RPC `verificar_segredo_cron`, ou um admin autenticado, que é o caso do painel.
 - O segredo nunca sai do banco. Não fica em variável de ambiente, no código, nem no texto do comando do job.
 
-Arquivos: `supabase/functions/_shared/auth.ts` (função `autorizarAdminOuCron`), as quatro funções, e `supabase/migrations/20261124200000_fase0_segredo_agendador.sql`.
+Arquivos: `supabase/functions/_shared/auth.ts` (função `autorizarAdminOuCron`), as quatro funções, e `supabase/migrations/20261124191704_fase0_segredo_agendador.sql`.
 
-## Mudanças de comportamento a aprovar
+## Mudanças de comportamento
 
 1. **O job de autores volta a funcionar.** Hoje ele falha toda madrugada. Depois da entrega, processa 10 autores por dia e grava no cadastro do autor os dados do Wikidata quando a pontuação é 90 ou mais. Abaixo disso o autor vai para revisão manual. O limite em produção hoje é 80; o repo, que é o mais novo, usa 90.
 2. **Chamadas anônimas passam a receber 401** nas quatro funções. Nenhuma tela do app faz chamada anônima a elas.
 3. **A variável `LEMBRETES_CRON_SECRET` deixa de existir** no código. Ela nunca chegou a ser definida.
 
-Para não reativar o job de autores agora, basta pausá-lo antes de publicar: `select cron.alter_job(5, active := false);`.
+Para pausar o job de autores: `select cron.alter_job(5, active := false);`.
 
 ## Como foi verificado
 
@@ -40,7 +62,7 @@ Para não reativar o job de autores agora, basta pausá-lo antes de publicar: `s
 - **Assinaturas conferidas em produção por leitura:** `vault.create_secret`, `cron.schedule` com nome, `net.http_post`; `postgres` lê `vault.decrypted_secrets`; `pg_cron` 1.6.4.
 - `npm run lint`, `typecheck`, `test` e `build` passam. O `deno check` das funções tem os mesmos erros de tipo antigos de antes, nenhum novo.
 
-Não testado fora de produção: o Vault real e as funções em execução. O roteiro abaixo cobre isso.
+O Vault real e as funções em execução foram validados na aplicação; ver o registro acima.
 
 ## Ordem de aplicação
 

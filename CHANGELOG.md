@@ -12,7 +12,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - Migração `20261124175313_fase0_privacidade_rpcs_leitura`: cinco RPCs de estatísticas de leitura passam a respeitar perfil privado. Aplicada em produção em 24/11/2026.
 
-- Segredo do agendador: `reprocessar-generos`, `reprocessar-obras`, `reprocessar-autores` e `enviar-lembretes-meta` passam a aceitar só o `pg_cron`, com segredo guardado no Vault, ou um admin autenticado. Pronto, ainda não aplicado em produção.
+- Segredo do agendador: `reprocessar-generos`, `reprocessar-obras`, `reprocessar-autores` e `enviar-lembretes-meta` passam a aceitar só o `pg_cron`, com segredo guardado no Vault, ou um admin autenticado. Aplicado em produção em 24/11/2026.
 
 ### Alterado
 - `rapid-action` no repositório passa a ser o código que roda em produção (o repo tinha uma versão antiga).

@@ -64,6 +64,8 @@ Nada disto altera produção.
 
 Com isso a lista de migrações do repo é idêntica à do banco: 75 de cada lado, conferido por consulta.
 
+> **Atualização de 24/11/2026:** os achados 1.1 a 1.5 foram corrigidos e aplicados em produção. Ver `docs/runbooks/fase0-segredo-agendador.md`.
+
 ## 3. Pendências que dependem de decisão
 
 1. **Fechar os endpoints de lote** (itens 1.1 a 1.5). Proposta: um segredo único de agendador, guardado no Vault do Supabase e nas variáveis das funções. O lote passa a aceitar admin autenticado ou o segredo; os jobs do `pg_cron` passam a enviá-lo. Exige publicar quatro funções e alterar quatro jobs.
