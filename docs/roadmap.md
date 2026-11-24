@@ -72,7 +72,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Trazer para o repo as 5 migrações que só existiam no remoto e remover a `20260810153000`, que só existia no repo. A lista de migrações do repo é idêntica à do banco desde 24/11/2026.
 - [x] `rapid-action`: o repo tinha uma versão de junho, diferente da que roda em produção. O código de produção foi trazido para o repo em 24/11/2026.
 - [x] Conferir as edge functions contra o que está publicado. Resultado em `docs/auditoria-edge-functions-2026-11.md`: `salvar-progresso-leitura` e `reprocessar-generos` sincronizadas a partir de produção.
-- [ ] Ler as 8 funções publicadas em lote em 08/06, que a ferramenta não consegue recuperar (exige token da conta ou republicação).
+- [x] Ler as 8 funções publicadas em lote em 08/06. Baixadas com token da conta e comparadas token a token: nenhuma tem comportamento diferente do repo.
 - [ ] Publicar a `reprocessar-autores` do repo; a versão em produção é anterior.
 - [x] `enviar-lembretes-meta` trazida para o repo.
 - [ ] Remover do remoto `buscar-livros` e `clever-api`, protótipos sem nenhum chamador.
