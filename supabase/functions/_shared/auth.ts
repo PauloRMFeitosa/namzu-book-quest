@@ -55,3 +55,34 @@ export async function usuarioEhAdmin(userId: string): Promise<boolean> {
     .maybeSingle();
   return !!data;
 }
+
+export type ResultadoAutorizacao =
+  | { ok: true; origem: "cron" | "admin"; usuarioId: string | null }
+  | { ok: false; status: 401 | 403; erro: string };
+
+// Autoriza as funções de lote. Passa quem for:
+//   - o pg_cron, que envia o cabeçalho `x-cron-secret`. O valor é conferido no
+//     banco pela RPC `verificar_segredo_cron`, contra o segredo guardado no
+//     Vault. O segredo não existe em variável de ambiente nem no código.
+//   - um admin autenticado (chamadas do painel).
+// Um cabeçalho `x-cron-secret` errado não cai para a checagem de admin: é
+// recusado na hora.
+export async function autorizarAdminOuCron(req: Request): Promise<ResultadoAutorizacao> {
+  const segredo = (req.headers.get("x-cron-secret") ?? "").trim();
+  if (segredo) {
+    const servico = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data, error } = await servico.rpc("verificar_segredo_cron", { p_segredo: segredo });
+    if (!error && data === true) return { ok: true, origem: "cron", usuarioId: null };
+    return { ok: false, status: 401, erro: "Segredo do agendador inválido" };
+  }
+
+  const auth = await autenticarUsuario(req);
+  if (!auth.ok) return auth;
+  if (!(await usuarioEhAdmin(auth.usuario.id))) {
+    return { ok: false, status: 403, erro: "Acesso negado" };
+  }
+  return { ok: true, origem: "admin", usuarioId: auth.usuario.id };
+}

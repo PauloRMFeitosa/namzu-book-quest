@@ -4,6 +4,7 @@
 // execução em integracoes_execucoes / integracoes_execucoes_itens.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { autorizarAdminOuCron } from "../_shared/auth.ts";
 import {
   wbsearchentities,
   wbgetentities,
@@ -213,25 +214,13 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader) return json(401, { error: "Não autenticado" });
-
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return json(401, { error: "Token inválido" });
+    // Só o pg_cron (segredo do agendador) ou um admin autenticado podem disparar.
+    // Antes só admin passava, e o job diário do pg_cron recebia 401.
+    const aut = await autorizarAdminOuCron(req);
+    if (!aut.ok) return json(aut.status, { error: aut.erro });
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: roleRow } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) return json(403, { error: "Acesso negado" });
 
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.max(1, Math.min(500, Number(body?.quantidade ?? 10)));

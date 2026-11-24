@@ -1,7 +1,9 @@
-// Edge function: reprocessar-generos v7
-// Tudo inlined — sem import de _shared para evitar versão antiga em cache.
+// Edge function: reprocessar-generos v8
+// Gêneros inlined — sem import de _shared/generos para evitar versão antiga em cache.
+// v8: exige o segredo do agendador ou admin autenticado (antes era aberta).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { autorizarAdminOuCron } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -245,6 +247,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Grava no acervo com a chave de serviço: só o pg_cron ou um admin podem disparar.
+    const aut = await autorizarAdminOuCron(req);
+    if (!aut.ok) return json({ error: aut.erro }, aut.status);
+
     let body: any = {};
     try { body = await req.json(); } catch { /* GET sem body */ }
 
