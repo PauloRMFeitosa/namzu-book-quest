@@ -2,7 +2,7 @@
 
 **Status:** proposta para aprovação de Paulo · **Criado em:** 24/11/2026 · **Documento vivo:** revisar ao fim de cada fase.
 
-**Base:** `docs/analise-projeto-2026-11.md` (diagnóstico técnico) e `docs/benchmark-concorrentes-2026-11.md` (mercado).
+**Base:** `docs/analise-projeto-2026-11.md` (diagnóstico técnico), `docs/benchmark-concorrentes-2026-11.md` (concorrentes) e `docs/tamanho-mercado-2026-11.md` (tamanho do mercado no Brasil e no Nordeste).
 
 ---
 
@@ -58,16 +58,20 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 **Objetivo:** produção segura e reproduzível antes de convidar clubes de terceiros.
 
 **Segurança**
-- [ ] Exigir usuário autenticado em `rapid-action`; restringir `ensure-profiles` a admin.
-- [ ] Revogar `EXECUTE` de `anon` nas 15 funções `SECURITY DEFINER` apontadas pelo advisor.
-- [ ] Nas funções que recebem `p_user_id` (`conceder_xp`, `desbloquear_conquista`, `seed_estante_inicial`, `registrar_progresso_missao`, `creditar_xp_clube`), revogar de `authenticated` ou trocar o parâmetro por `auth.uid()`.
-- [ ] Fixar `search_path` nas 34 funções.
+- [x] Exigir usuário autenticado em `rapid-action`; `ensure-profiles` cria só o perfil de quem chama, com backfill geral restrito a admin. Publicado em 24/11/2026.
+- [x] Revogar `EXECUTE` de `anon` nas funções `SECURITY DEFINER` apontadas pelo advisor. Restam 5 exceções justificadas no runbook. Aplicado em 24/11/2026.
+- [x] Funções internas que recebem `p_user_id` (`conceder_xp`, `desbloquear_conquista`, `registrar_progresso_missao`, `creditar_xp_clube`, `calcular_matches`) sem acesso pela API. `seed_estante_inicial` já validava o chamador. Aplicado em 24/11/2026.
+- [ ] RPCs de leitura que recebem `p_user_id` (`get_stats_leitura`, `get_generos_lidos`, `get_livros_por_mes`, `get_contagem_social`, `calcular_streak_leitura`, `get_interacoes_diarias`) passam a respeitar perfil privado.
+- [ ] Proteger os endpoints de lote chamados pelo cron (`reprocessar-*`) com segredo no cabeçalho.
+- [x] Fixar `search_path` em 32 das 34 funções. As 2 restantes são SQL imutáveis e ficaram de fora de propósito. Aplicado em 24/11/2026.
 - [ ] Ativar proteção contra senha vazada no Auth.
 - [ ] Confirmar que as variáveis `VITE_*` estão cadastradas na Vercel; só então tirar `.env` do git e incluí-lo no `.gitignore`.
 
 **Reprodutibilidade**
 - [ ] Gerar baseline do schema com `supabase db pull`.
 - [ ] Trazer para o repo as 5 migrações que só existem no remoto e resolver a `20260810153000`, que só existe no repo.
+- [x] `rapid-action`: o repo tinha uma versão de junho, diferente da que roda em produção. O código de produção foi trazido para o repo em 24/11/2026.
+- [ ] Conferir as demais edge functions contra o que está publicado; o mesmo desvio pode existir nelas.
 - [ ] Trazer para o repo as edge functions `buscar-livros`, `clever-api` e `enviar-lembretes-meta`, ou removê-las do remoto se estiverem mortas.
 - [ ] Regenerar `types.ts`.
 
@@ -171,6 +175,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 **Objetivo:** primeira receita.
 
 - [ ] Plano gratuito com limite (referência de mercado: 1 clube, até 30 membros) e plano Organizador pago. Preço definido com os dados do piloto; a referência do concorrente é R$ 19,90/mês.
+- [ ] Testar duas receitas além da assinatura, porque a assinatura sozinha rende pouco (ver `docs/tamanho-mercado-2026-11.md`): taxa sobre a mensalidade dos clubes pagos e plano institucional para escolas e bibliotecas.
 - [ ] Clube pago: organizador cobra mensalidade dos membros com PIX e cartão recorrentes, recebendo direto. Escolher provedor de pagamento na fase; avaliar taxa, PIX recorrente e repasse.
 - [ ] Decidir o destino das tabelas `pagamentos`, `creator_assinaturas` e `creator_assinantes`: adotar com RLS ou substituir.
 - [ ] Termos de uso e política de privacidade revistos para o novo modelo (LGPD: o organizador passa a tratar dados dos membros).

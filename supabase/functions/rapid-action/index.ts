@@ -1,8 +1,9 @@
+// rapid-action — escreve no banco (obras, edições, autores, gêneros)
+// Busca externa delegada para search-books (sem duplicação de lógica)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import slugify from "https://esm.sh/slugify@1.6.6";
-import { persistGenresForObra } from "../_shared/generos.ts";
-
+import { autenticarUsuario } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,33 +23,162 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-// =========================
-// RETRY
-// =========================
-async function fetchWithRetry(url: string, retries = 3) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return await res.json();
-      if (res.status >= 500) {
-        await new Promise((r) => setTimeout(r, 500));
-        continue;
-      }
-      return null;
-    } catch {
-      await new Promise((r) => setTimeout(r, 500));
+// ─────────────────────────────────────────────────────────────────────────────
+// Gêneros — inlined (não depende de _shared/)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TRANSLATIONS: Record<string, string> = {
+  "business & economics": "Negócios", "business": "Negócios",
+  "economics": "Economia", "self-help": "Autoajuda",
+  "philosophy": "Filosofia", "history": "História",
+  "religion": "Religião", "psychology": "Psicologia",
+  "science": "Ciência", "fantasy": "Fantasia",
+  "science fiction": "Ficção Científica", "sci-fi": "Ficção Científica",
+  "fiction": "Ficção", "non-fiction": "Não Ficção", "nonfiction": "Não Ficção",
+  "biography & autobiography": "Biografia", "biography": "Biografia",
+  "autobiography": "Biografia", "comics & graphic novels": "Quadrinhos",
+  "comics": "Quadrinhos", "graphic novels": "Quadrinhos",
+  "literary collections": "Literatura", "literature": "Literatura",
+  "poetry": "Poesia", "political science": "Política", "politics": "Política",
+  "education": "Educação", "health & fitness": "Saúde",
+  "health": "Saúde", "fitness": "Saúde",
+  "computers": "Tecnologia", "technology": "Tecnologia",
+  "art": "Arte", "arts": "Arte", "travel": "Viagem",
+  "young adult fiction": "Jovem Adulto", "young adult": "Jovem Adulto",
+  "juvenile fiction": "Infantojuvenil", "juvenile nonfiction": "Infantojuvenil",
+  "juvenile": "Infantojuvenil", "children": "Infantil",
+  "children's books": "Infantil", "body, mind & spirit": "Espiritualidade",
+  "spirituality": "Espiritualidade", "literary criticism": "Crítica Literária",
+  "social science": "Ciências Sociais", "sociology": "Sociologia",
+  "anthropology": "Antropologia", "cooking": "Culinária",
+  "mathematics": "Matemática", "medical": "Medicina",
+  "music": "Música", "law": "Direito", "drama": "Drama",
+  "humor": "Humor", "romance": "Romance", "thriller": "Suspense",
+  "thrillers": "Suspense", "mystery": "Mistério", "horror": "Terror",
+  "adventure": "Aventura", "essays": "Ensaios", "reference": "Referência",
+  "language arts & disciplines": "Linguagem", "epic": "Épico",
+  "epic literature": "Épico", "short stories": "Contos",
+  "novel": "Romance", "novels": "Romance",
+};
+
+const STOP = new Set(["general", "books", "subjects", "topic", "books and reading", "reading", "miscellaneous"]);
+
+function toTitleCase(s: string) {
+  return s.toLowerCase().split(/\s+/).map((w) => w.length ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
+}
+
+function translateGenre(raw: string): string {
+  const key = raw.trim().toLowerCase();
+  if (TRANSLATIONS[key]) return TRANSLATIONS[key];
+  const noPunct = key.replace(/[.,;:!?"]/g, "").trim();
+  if (TRANSLATIONS[noPunct]) return TRANSLATIONS[noPunct];
+  return toTitleCase(raw.trim());
+}
+
+function normalizeGenres(input: unknown): string[] {
+  if (!input) return [];
+  const arr = Array.isArray(input) ? input : [input];
+  const out = new Set<string>();
+  for (const item of arr) {
+    if (typeof item !== "string") continue;
+    const parts = item.split(/[/>]|--|,/).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
+    for (const p of parts) {
+      if (STOP.has(p.toLowerCase())) continue;
+      const translated = translateGenre(p);
+      if (translated.length >= 2) out.add(translated);
     }
   }
-  return null;
+  return Array.from(out);
+}
+
+function slugifyGenre(nome: string): string {
+  return nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+async function persistGenresForObra(obraId: string, rawGenres: unknown): Promise<{ nomes: string[]; ids: string[] }> {
+  const nomes = normalizeGenres(rawGenres);
+  if (!nomes.length || !obraId) return { nomes: [], ids: [] };
+  const ids: string[] = [];
+  for (const nome of nomes) {
+    const slug = slugifyGenre(nome);
+    if (!slug) continue;
+    const { data: existing } = await supabase.from("generos").select("id").eq("slug", slug).maybeSingle();
+    let generoId: string | null = existing?.id ?? null;
+    if (!generoId) {
+      const { data: inserted, error } = await supabase.from("generos").insert({ nome, slug }).select("id").single();
+      if (error) {
+        const { data: again } = await supabase.from("generos").select("id").eq("slug", slug).maybeSingle();
+        generoId = again?.id ?? null;
+      } else {
+        generoId = inserted.id;
+      }
+    }
+    if (generoId) ids.push(generoId);
+  }
+  if (ids.length) {
+    try {
+      await supabase.from("obra_generos").upsert(
+        ids.map((genero_id) => ({ obra_id: obraId, genero_id })),
+        { onConflict: "obra_id,genero_id", ignoreDuplicates: true },
+      );
+    } catch { /* ignora */ }
+  }
+  return { nomes, ids };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Busca externa — delega para search-books (sem duplicação)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SearchResult {
+  titulo: string;
+  autores: string[];
+  ano: number | null;
+  capa_url: string | null;
+  isbn13: string | null;
+  fonte: string;
+  descricao?: string | null;
+  editora?: string | null;
+  num_paginas?: number | null;
+  idioma?: string | null;
+  generos?: string[];
+}
+
+async function searchViaSearchBooks(params: { titulo?: string; autor?: string; isbn?: string }): Promise<SearchResult | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const res = await fetch(`${supabaseUrl}/functions/v1/search-books`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) return null;
+    const { results } = await res.json();
+    return results?.[0] ?? null;
+  } catch (e) {
+    console.warn("searchViaSearchBooks failed", e);
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers de persistência
+// ─────────────────────────────────────────────────────────────────────────────
+
+function normalizeFormato(formato?: string | null): string {
+  const f = (formato ?? "").toLowerCase().trim();
+  if (f === "fisico_capa_dura") return "fisico_capa_dura";
+  if (f === "ebook") return "ebook";
+  if (f === "audiobook") return "audiobook";
+  return "fisico_brochura";
 }
 
 function normalizeAuthor(name: string) {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "")
-    .trim();
+  return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "").trim();
 }
 
 function makeSlug(title: string, id?: string) {
@@ -59,19 +189,11 @@ function makeSlug(title: string, id?: string) {
 async function upsertAutor(nome: string) {
   const normalizado = normalizeAuthor(nome);
   if (!normalizado) return null;
-  const { data: existente } = await supabase
-    .from("autores")
-    .select("id")
-    .eq("nome_normalizado", normalizado)
-    .maybeSingle();
+  const { data: existente } = await supabase.from("autores").select("id").eq("nome_normalizado", normalizado).maybeSingle();
   if (existente) return { id: existente.id, criado: false };
   const { data, error } = await supabase
     .from("autores")
-    .insert({
-      nome_completo: nome,
-      nome_ordenacao: nome.toLowerCase(),
-      nome_normalizado: normalizado,
-    })
+    .insert({ nome_completo: nome, nome_ordenacao: nome.toLowerCase(), nome_normalizado: normalizado })
     .select("id")
     .single();
   if (error) return null;
@@ -85,9 +207,6 @@ async function vincularAutor(obraId: string, autorId: string, ordem: number) {
   );
 }
 
-// =========================
-// REGISTRAR A PARTIR DE RESULTADO EXTERNO (Obra → Edição)
-// =========================
 async function upsertObraComAutores(input: {
   titulo: string;
   autores: string[];
@@ -99,8 +218,6 @@ async function upsertObraComAutores(input: {
   generos?: unknown;
 }) {
   const slug = makeSlug(input.titulo, input.sourceId ?? undefined);
-
-  // tenta achar obra existente por slug
   const { data: existente } = await supabase
     .from("obras")
     .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao")
@@ -133,10 +250,9 @@ async function upsertObraComAutores(input: {
     if (a) await vincularAutor(obra.id, a.id, ordem++);
   }
 
-  // Persistência aditiva de gêneros (não remove vínculos existentes)
-  let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
+  let generosInfo = { nomes: [] as string[], ids: [] as string[] };
   try {
-    generosInfo = await persistGenresForObra(supabase, obra.id, input.generos);
+    generosInfo = await persistGenresForObra(obra.id, input.generos);
   } catch (e) {
     console.warn("persistGenresForObra falhou", e);
   }
@@ -144,38 +260,24 @@ async function upsertObraComAutores(input: {
   return { ...obra, generos: generosInfo.nomes, generos_ids: generosInfo.ids };
 }
 
-
 async function upsertEdicaoParaObra(
   obraId: string,
-  input: {
-    titulo: string;
-    isbn13?: string | null;
-    editora?: string | null;
-    num_paginas?: number | null;
-    capa_url?: string | null;
-    idioma?: string | null;
-    formato?: string;
-  },
-) {
+  input: { titulo: string; isbn13?: string | null; editora?: string | null; num_paginas?: number | null; capa_url?: string | null; idioma?: string | null; formato?: string | null },
+): Promise<{ id: string; criada: boolean }> {
   if (input.isbn13) {
-    const { data: existente } = await supabase
-      .from("edicoes")
-      .select("id")
-      .eq("isbn_13", input.isbn13)
-      .maybeSingle();
+    const { data: existente } = await supabase.from("edicoes").select("id").eq("isbn_13", input.isbn13).maybeSingle();
     if (existente) return { id: existente.id, criada: false };
   }
-
-  // só cria edição se houver pelo menos ISBN ou editora
-  if (!input.isbn13 && !input.editora) return null;
+  const { data: edicaoExistente } = await supabase.from("edicoes").select("id").eq("obra_id", obraId).order("created_at", { ascending: true }).limit(1).maybeSingle();
+  if (edicaoExistente && !input.isbn13 && !input.editora) return { id: edicaoExistente.id, criada: false };
 
   const { data, error } = await supabase
     .from("edicoes")
     .insert({
       obra_id: obraId,
       titulo_edicao: input.titulo,
-      editora: input.editora || "Desconhecida",
-      formato: input.formato || "ebook",
+      editora: input.editora || "Não informada",
+      formato: normalizeFormato(input.formato),
       idioma: input.idioma || "pt-BR",
       isbn_13: input.isbn13 || null,
       num_paginas: input.num_paginas ?? null,
@@ -184,9 +286,16 @@ async function upsertEdicaoParaObra(
     })
     .select("id")
     .single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (edicaoExistente) return { id: edicaoExistente.id, criada: false };
+    throw new Error(error.message);
+  }
   return { id: data.id, criada: true };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Handlers de modo
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function handleRegistrarResultado(payload: any) {
   const titulo = String(payload.titulo ?? "").trim();
@@ -203,17 +312,18 @@ async function handleRegistrarResultado(payload: any) {
     generos: payload.generos ?? payload.categories ?? payload.subjects ?? null,
   });
 
-  let edicao = null;
+  let edicaoId: string | null = null;
   try {
-    edicao = await upsertEdicaoParaObra(obra.id, {
+    const edicao = await upsertEdicaoParaObra(obra.id, {
       titulo,
       isbn13: payload.isbn13 ?? null,
       editora: payload.editora ?? null,
       num_paginas: payload.num_paginas ?? null,
       capa_url: payload.capa_url ?? null,
       idioma: payload.idioma ?? null,
-      formato: payload.formato,
+      formato: payload.formato ?? null,
     });
+    edicaoId = edicao.id;
   } catch (e) {
     console.warn("edicao step failed", e);
   }
@@ -229,14 +339,11 @@ async function handleRegistrarResultado(payload: any) {
       generos: (obra as any).generos ?? [],
       generos_ids: (obra as any).generos_ids ?? [],
     },
-    edicao,
+    edicao_id: edicaoId,
+    edicao: edicaoId ? { id: edicaoId } : null,
   });
-
 }
 
-// =========================
-// MODOS MANUAIS
-// =========================
 async function handleManualAutor(payload: any) {
   const nome = (payload.nome ?? "").toString().trim();
   if (!nome) return json({ error: "Nome obrigatório" }, 400);
@@ -248,32 +355,20 @@ async function handleManualAutor(payload: any) {
 async function handleManualObra(payload: any) {
   const titulo = (payload.titulo ?? "").toString().trim();
   const autor = (payload.autor ?? "").toString().trim();
-  if (!titulo || !autor) {
-    return json({ error: "Título e autor são obrigatórios" }, 400);
-  }
+  if (!titulo || !autor) return json({ error: "Título e autor são obrigatórios" }, 400);
   const ano = payload.ano ? parseInt(String(payload.ano).slice(0, 4)) : null;
   const idioma = payload.idioma || "pt-BR";
-
   const slug = makeSlug(titulo);
+
   const { data: obra, error: obraErr } = await supabase
     .from("obras")
     .upsert(
-      {
-        titulo_original: titulo,
-        titulo_ordenacao: titulo.toLowerCase(),
-        idioma_original: idioma,
-        ano_primeira_publicacao: ano,
-        sinopse_padrao: payload.sinopse ?? null,
-        capa_padrao_url: payload.capa_url ?? null,
-        slug,
-      },
+      { titulo_original: titulo, titulo_ordenacao: titulo.toLowerCase(), idioma_original: idioma, ano_primeira_publicacao: ano, sinopse_padrao: payload.sinopse ?? null, capa_padrao_url: payload.capa_url ?? null, slug },
       { onConflict: "slug" },
     )
     .select()
     .single();
-  if (obraErr || !obra) {
-    return json({ error: obraErr?.message ?? "Falha ao salvar obra" }, 500);
-  }
+  if (obraErr || !obra) return json({ error: obraErr?.message ?? "Falha ao salvar obra" }, 500);
 
   const todos = [autor, ...((payload.autores_extras ?? []) as string[])].filter(Boolean);
   let ordem = 1;
@@ -282,240 +377,102 @@ async function handleManualObra(payload: any) {
     if (a) await vincularAutor(obra.id, a.id, ordem++);
   }
 
-  return json({
-    success: true,
-    obra: {
-      id: obra.id,
-      titulo_original: obra.titulo_original,
-      capa_padrao_url: obra.capa_padrao_url,
-      ano_primeira_publicacao: obra.ano_primeira_publicacao,
-      autor,
-    },
-  });
+  let edicaoId: string | null = null;
+  try {
+    const edicao = await upsertEdicaoParaObra(obra.id, { titulo, isbn13: payload.isbn_13 ?? null, editora: payload.editora ?? null, num_paginas: payload.num_paginas ?? null, capa_url: payload.capa_url ?? null, idioma, formato: payload.formato ?? null });
+    edicaoId = edicao.id;
+  } catch (e) {
+    console.warn("edicao step failed in manual_obra", e);
+  }
+
+  return json({ success: true, obra: { id: obra.id, titulo_original: obra.titulo_original, capa_padrao_url: obra.capa_padrao_url, ano_primeira_publicacao: obra.ano_primeira_publicacao, autor }, edicao_id: edicaoId, edicao: edicaoId ? { id: edicaoId } : null });
 }
 
 async function handleManualEdicao(payload: any) {
   const obraId = payload.obra_id;
   const tituloEdicao = (payload.titulo_edicao ?? "").toString().trim();
   const editora = (payload.editora ?? "").toString().trim();
-  const formato = payload.formato;
-  if (!obraId || !tituloEdicao || !editora || !formato) {
-    return json({ error: "Campos obrigatórios faltando" }, 400);
-  }
+  if (!obraId || !tituloEdicao || !editora) return json({ error: "Campos obrigatórios faltando" }, 400);
 
   if (payload.isbn_13) {
-    const { data: existente } = await supabase
-      .from("edicoes")
-      .select("id")
-      .eq("isbn_13", payload.isbn_13)
-      .maybeSingle();
-    if (existente) {
-      return json({ success: true, edicao: { id: existente.id }, duplicada: true });
-    }
+    const { data: existente } = await supabase.from("edicoes").select("id").eq("isbn_13", payload.isbn_13).maybeSingle();
+    if (existente) return json({ success: true, edicao: { id: existente.id }, duplicada: true });
   }
 
   const { data, error } = await supabase
     .from("edicoes")
-    .insert({
-      obra_id: obraId,
-      titulo_edicao: tituloEdicao,
-      editora,
-      formato,
-      idioma: payload.idioma || "pt-BR",
-      isbn_13: payload.isbn_13 || null,
-      num_paginas: payload.num_paginas ?? null,
-      capa_url: payload.capa_url ?? null,
-      preco_capa_centavos: payload.preco_capa_centavos ?? null,
-      fonte_dados: "manual",
-    })
+    .insert({ obra_id: obraId, titulo_edicao: tituloEdicao, editora, formato: normalizeFormato(payload.formato), idioma: payload.idioma || "pt-BR", isbn_13: payload.isbn_13 || null, num_paginas: payload.num_paginas ?? null, capa_url: payload.capa_url ?? null, preco_capa_centavos: payload.preco_capa_centavos ?? null, fonte_dados: "manual" })
     .select("id")
     .single();
   if (error) return json({ error: error.message }, 500);
   return json({ success: true, edicao: { id: data.id } });
 }
 
-// =========================
-// BUSCA EXTERNA (modo padrão)
-// =========================
-async function searchGoogle({ isbn13, titulo, autor }: any) {
-  let query = "";
-  if (isbn13) query = `isbn:${isbn13}`;
-  else if (titulo && autor) query = `intitle:${titulo}+inauthor:${autor}`;
-  else if (titulo) query = `intitle:${titulo}`;
-  else if (autor) query = `inauthor:${autor}`;
+// Modo padrão: busca via search-books e persiste o primeiro resultado
+async function handleBuscarERegistrar(payload: any) {
+  const { isbn13, titulo, autor } = payload;
+  if (!isbn13 && !titulo && !autor) return json({ error: "Informe isbn13, titulo ou autor" }, 400);
 
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1`;
-  const data = await fetchWithRetry(url);
-  if (!data?.items?.length) return null;
+  const book = await searchViaSearchBooks({ isbn: isbn13, titulo, autor });
+  if (!book) return json({ error: "Livro não encontrado em nenhuma API" }, 404);
 
-  const info = data.items[0].volumeInfo;
-  return {
-    title: info.title,
-    authors: info.authors || [],
-    description: info.description,
-    publisher: info.publisher,
-    pageCount: info.pageCount,
-    image: info.imageLinks?.thumbnail,
-    language: info.language,
-    publishedDate: info.publishedDate,
-    isbn13: info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")?.identifier,
-    sourceId: data.items[0].id,
-    categories: info.categories ?? [],
-  };
+  const obra = await upsertObraComAutores({
+    titulo: book.titulo,
+    autores: book.autores ?? [],
+    ano: book.ano ?? null,
+    idioma: book.idioma ?? null,
+    sinopse: book.descricao ?? null,
+    capa_url: book.capa_url ?? null,
+    sourceId: book.isbn13 ?? isbn13 ?? titulo,
+    generos: book.generos ?? null,
+  });
 
-}
-
-async function searchOpenLibrary({ isbn13, titulo, autor }: any) {
-  let url = "";
-
-  if (isbn13) {
-    url = `https://openlibrary.org/isbn/${isbn13}.json`;
-    const data = await fetchWithRetry(url);
-    if (!data) return null;
-    return {
-      title: data.title,
-      authors: [],
-      description: data.description?.value || data.description,
-      publisher: null,
-      pageCount: data.number_of_pages,
-      image: `https://covers.openlibrary.org/b/isbn/${isbn13}-M.jpg`,
-      language: null,
-      publishedDate: data.publish_date,
-      isbn13,
-      sourceId: isbn13,
-      categories: data.subjects ?? [],
-    };
-
+  let edicaoId: string | null = null;
+  try {
+    const edicao = await upsertEdicaoParaObra(obra.id, {
+      titulo: book.titulo,
+      isbn13: book.isbn13 ?? null,
+      editora: book.editora ?? null,
+      num_paginas: book.num_paginas ?? null,
+      capa_url: book.capa_url ?? null,
+      idioma: book.idioma ?? null,
+      formato: "fisico_brochura",
+    });
+    edicaoId = edicao.id;
+  } catch (e) {
+    console.warn("edicao step failed", e);
   }
 
-  url = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo || "")}&author=${encodeURIComponent(autor || "")}`;
-  const data = await fetchWithRetry(url);
-  if (!data?.docs?.length) return null;
-
-  const book = data.docs[0];
-  return {
-    title: book.title,
-    authors: book.author_name || [],
-    description: null,
-    publisher: book.publisher?.[0],
-    pageCount: null,
-    image: book.isbn?.[0]
-      ? `https://covers.openlibrary.org/b/isbn/${book.isbn[0]}-M.jpg`
-      : null,
-    language: null,
-    publishedDate: book.first_publish_year,
-    isbn13: book.isbn?.[0],
-    sourceId: book.key,
-    categories: book.subject ?? [],
-  };
+  return json({
+    success: true,
+    obra: { id: obra.id, titulo_original: obra.titulo_original, capa_padrao_url: obra.capa_padrao_url, ano_primeira_publicacao: obra.ano_primeira_publicacao, autor: book.autores?.[0] ?? null, generos: (obra as any).generos ?? [], generos_ids: (obra as any).generos_ids ?? [] },
+    edicao_id: edicaoId,
+    edicao: edicaoId ? { id: edicaoId } : null,
+    fonte: book.fonte ?? "search-books",
+  });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Entry point
+// ─────────────────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    // Esta função grava no acervo com a chave de serviço (sem RLS), então só
+    // atende usuários autenticados. Todas as chamadas do app partem de
+    // páginas protegidas e já enviam o JWT da sessão.
+    const auth = await autenticarUsuario(req);
+    if (!auth.ok) return json({ error: auth.erro }, auth.status);
+
     const payload = await req.json();
     const { mode } = payload;
-
     if (mode === "manual_autor") return await handleManualAutor(payload);
     if (mode === "manual_obra") return await handleManualObra(payload);
     if (mode === "manual_edicao") return await handleManualEdicao(payload);
     if (mode === "registrar_resultado") return await handleRegistrarResultado(payload);
-
-    // ----- Modo padrão: busca em APIs externas -----
-    const { isbn13, titulo, autor } = payload;
-    if (!isbn13 && !titulo && !autor) {
-      return json({ error: "Informe isbn13, titulo ou autor" }, 400);
-    }
-
-    let book = await searchGoogle({ isbn13, titulo, autor });
-    if (!book) book = await searchOpenLibrary({ isbn13, titulo, autor });
-
-    if (!book) {
-      return json({ error: "Livro não encontrado em nenhuma API" }, 404);
-    }
-
-    const slug = makeSlug(book.title, book.sourceId);
-
-    const { data: obra, error: obraErr } = await supabase
-      .from("obras")
-      .upsert(
-        {
-          titulo_original: book.title,
-          titulo_ordenacao: book.title.toLowerCase(),
-          idioma_original: book.language || "pt-BR",
-          ano_primeira_publicacao: book.publishedDate
-            ? parseInt(book.publishedDate.toString().substring(0, 4))
-            : null,
-          sinopse_padrao: book.description,
-          capa_padrao_url: book.image,
-          slug,
-        },
-        { onConflict: "slug" },
-      )
-      .select()
-      .single();
-
-    if (obraErr || !obra) {
-      return json({ error: obraErr?.message || "Falha ao salvar obra" }, 500);
-    }
-
-    const obraId = obra.id;
-
-    for (const nome of book.authors || []) {
-      const a = await upsertAutor(nome);
-      if (a) await vincularAutor(obraId, a.id, 1);
-    }
-
-    // Persistência de gêneros (aditiva, idempotente)
-    let generosInfo: { nomes: string[]; ids: string[] } = { nomes: [], ids: [] };
-    try {
-      generosInfo = await persistGenresForObra(supabase, obraId, (book as any).categories);
-    } catch (e) {
-      console.warn("persistGenresForObra falhou", e);
-    }
-
-    if (book.isbn13) {
-      const { data: exist } = await supabase
-        .from("edicoes")
-        .select("id")
-        .eq("isbn_13", book.isbn13)
-        .maybeSingle();
-
-      if (!exist) {
-        await supabase.from("edicoes").insert({
-          obra_id: obraId,
-          isbn_13: book.isbn13,
-          titulo_edicao: book.title,
-          editora: book.publisher || "Desconhecida",
-          formato: "ebook",
-          idioma: book.language || "pt-BR",
-          num_paginas: book.pageCount,
-          capa_url: book.image,
-          fonte_dados: "api",
-        });
-      }
-    }
-
-    return json({
-      success: true,
-      obra: {
-        id: obraId,
-        titulo_original: book.title,
-        capa_padrao_url: book.image,
-        ano_primeira_publicacao: book.publishedDate
-          ? parseInt(book.publishedDate.toString().substring(0, 4))
-          : null,
-        autor: (book.authors || [])[0] || null,
-        generos: generosInfo.nomes,
-        generos_ids: generosInfo.ids,
-      },
-      fonte: book.isbn13 ? "google/openlibrary" : "fallback",
-    });
-
+    // Modo padrão: busca via search-books e persiste
+    return await handleBuscarERegistrar(payload);
   } catch (err: any) {
     return json({ error: err?.message || "Erro interno" }, 500);
   }
