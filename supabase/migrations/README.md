@@ -4,7 +4,8 @@
 
 Os arquivos versionados (`<timestamp>_<nome>.sql`) são o **histórico real de
 migrações aplicadas ao projeto remoto** (`qiiuvlmauztjitflqcfd`), exportado de
-`supabase_migrations.schema_migrations` em 2026-07-03. A partir de agora, toda
+`supabase_migrations.schema_migrations` em 2026-07-03 e reconferido em
+2026-11-24 (75 versões no repo e no remoto, sem diferença). A partir de agora, toda
 mudança de schema deve gerar um arquivo aqui **e** ser aplicada no remoto com a
 mesma versão (via `supabase db push`, MCP `apply_migration` ou dashboard), para
 que repo e banco não voltem a divergir.

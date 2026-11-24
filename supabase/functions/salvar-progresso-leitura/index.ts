@@ -141,13 +141,16 @@ Deno.serve(async (req) => {
     // Se o usuário informou total_paginas e a edição ainda não tem num_paginas, persistir
     if (totalPaginasInput && totalPaginasInput > 0 && usuarioLivroId) {
       if (!edicaoId) {
-        const { data: ul } = await admin.from("usuario_livros").select("edicao_id").eq("id", usuarioLivroId).maybeSingle();
+        const { data: ul, error: ulErr } = await admin.from("usuario_livros").select("edicao_id").eq("id", usuarioLivroId).maybeSingle();
+        if (ulErr) throw ulErr;
         edicaoId = (ul as any)?.edicao_id ?? null;
       }
       if (edicaoId) {
-        const { data: ed } = await admin.from("edicoes").select("num_paginas").eq("id", edicaoId).maybeSingle();
+        const { data: ed, error: edErr } = await admin.from("edicoes").select("num_paginas").eq("id", edicaoId).maybeSingle();
+        if (edErr) throw edErr;
         if (!ed?.num_paginas) {
-          await admin.from("edicoes").update({ num_paginas: totalPaginasInput }).eq("id", edicaoId);
+          const { error: updEdErr } = await admin.from("edicoes").update({ num_paginas: totalPaginasInput }).eq("id", edicaoId);
+          if (updEdErr) throw updEdErr;
         }
       }
     }
@@ -158,10 +161,12 @@ Deno.serve(async (req) => {
         livroUpdate.status = "lido";
         livroUpdate.data_fim = dataFim;
       } else {
-        const { data: livroAtual } = await admin.from("usuario_livros").select("status").eq("id", usuarioLivroId).maybeSingle();
+        const { data: livroAtual, error: livroAtualErr } = await admin.from("usuario_livros").select("status").eq("id", usuarioLivroId).maybeSingle();
+        if (livroAtualErr) throw livroAtualErr;
         if (livroAtual?.status !== "lido") livroUpdate.status = "lendo";
       }
-      await admin.from("usuario_livros").update(livroUpdate).eq("id", usuarioLivroId).eq("user_id", user.id);
+      const { error: livroUpdErr } = await admin.from("usuario_livros").update(livroUpdate).eq("id", usuarioLivroId).eq("user_id", user.id);
+      if (livroUpdErr) throw livroUpdErr;
     }
 
     if (usuarioLeituraId) {
@@ -181,7 +186,7 @@ Deno.serve(async (req) => {
 
 
     if (usuarioLeituraId && registrarSessao) {
-      const { data: sessao } = await admin
+      const { data: sessao, error: sessaoErr } = await admin
         .from("leituras")
         .select("id, data_fim")
         .eq("usuario_leitura_id", usuarioLeituraId)
@@ -189,6 +194,7 @@ Deno.serve(async (req) => {
         .order("data_inicio", { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (sessaoErr) throw sessaoErr;
       let leituraId = sessao?.data_fim && status !== "concluido" ? null : sessao?.id;
       if (!leituraId) {
         const { data: novaSessao, error } = await admin
@@ -202,15 +208,17 @@ Deno.serve(async (req) => {
       const tempoMin = body.tempo_minutos != null && body.tempo_minutos !== ""
         ? Math.max(0, Math.round(Number(body.tempo_minutos)))
         : null;
-      await admin.from("leitura_progresso").insert({
+      const { error: progErr } = await admin.from("leitura_progresso").insert({
         leitura_id: leituraId,
         user_id: user.id,
         paginas_lidas: Number.isNaN(paginaAtual) ? null : paginaAtual,
         percentual_lido: percentual,
         tempo_leitura_minutos: tempoMin,
       });
+      if (progErr) throw progErr;
       if (status === "concluido") {
-        await admin.from("leituras").update({ data_fim: nowIso, updated_at: nowIso }).eq("usuario_leitura_id", usuarioLeituraId).eq("tipo", "leitura").is("data_fim", null);
+        const { error: fecharErr } = await admin.from("leituras").update({ data_fim: nowIso, updated_at: nowIso }).eq("usuario_leitura_id", usuarioLeituraId).eq("tipo", "leitura").is("data_fim", null);
+        if (fecharErr) throw fecharErr;
       }
     }
 

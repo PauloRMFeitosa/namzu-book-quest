@@ -14,8 +14,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 - `rapid-action` no repositório passa a ser o código que roda em produção (o repo tinha uma versão antiga).
+- `salvar-progresso-leitura` e `reprocessar-generos` no repositório passam a ser o código publicado, que era mais novo.
+- Lista de migrações do repositório igualada à do banco: cinco migrações recuperadas do remoto e uma removida.
 
 ### Adicionado
+- Auditoria das Edge Functions publicadas contra o repositório (`docs/auditoria-edge-functions-2026-11.md`).
+- Edge Function `enviar-lembretes-meta`, que só existia em produção.
 - Helper compartilhado de autenticação para Edge Functions (`supabase/functions/_shared/auth.ts`).
 - Roadmap por fases para reposicionar o produto como plataforma do organizador de clube de leitura (`docs/roadmap.md`).
 - Roteiro de entrevista com organizadores (`docs/descoberta/roteiro-entrevista-organizadores.md`).
