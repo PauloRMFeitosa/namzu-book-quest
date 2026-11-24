@@ -1,5 +1,7 @@
 -- Fase 0 (docs/roadmap.md) — RPCs de leitura respeitam perfil privado.
 --
+-- Aplicada no remoto em 24/11/2026 (versão 20261124175313).
+--
 -- get_stats_leitura, get_generos_lidos, get_livros_por_mes,
 -- calcular_streak_leitura e get_interacoes_diarias são SECURITY DEFINER e
 -- recebem o id de qualquer usuário. Até aqui devolviam os dados sem consultar

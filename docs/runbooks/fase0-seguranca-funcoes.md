@@ -108,7 +108,9 @@ TO anon;
 
 ## Entrega 2 — RPCs de leitura respeitam perfil privado
 
-**Situação:** migração pronta e testada localmente em `supabase/migrations/20261124180000_fase0_privacidade_rpcs_leitura.sql`. **Ainda não aplicada em produção.**
+**Situação:** **aplicada em produção em 24/11/2026**, com autorização de Paulo, e registrada como `20261124175313_fase0_privacidade_rpcs_leitura`. Falta o teste de fumaça no app.
+
+**Verificação em produção:** antes e depois da migração, as cinco funções foram chamadas para os 29 perfis como um usuário comum logado, e o conjunto de resultados foi resumido em um hash. O hash é o mesmo nas duas medições (`915f746e12de9949045ec0f76d20a359`), ou seja, nada mudou para perfis públicos. As cinco funções contêm o filtro, seguem executáveis por `authenticated` e `service_role` e seguem bloqueadas para `anon`. O cenário de perfil privado foi validado no teste local abaixo; não há perfil privado em produção para testar lá.
 
 **O que muda:** `get_stats_leitura`, `get_generos_lidos`, `get_livros_por_mes`, `calcular_streak_leitura` e `get_interacoes_diarias` passam a aplicar a regra de `pode_ver_leituras_de`: o dono, um admin ou qualquer pessoa quando o perfil é público. Quem não pode ver recebe zeros ou lista vazia, sem erro. Chamadas com a chave de serviço seguem liberadas. `get_contagem_social` não muda, porque contagem de seguidores não é dado de leitura.
 
