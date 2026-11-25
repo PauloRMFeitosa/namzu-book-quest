@@ -8,8 +8,8 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
 ---
 
 <Layout
-  title="Blog NAMZU — Leitura, comunidade e literatura"
-  description="Dicas de leitura, resenhas, listas temáticas e novidades da plataforma NAMZU para quem ama livros."
+  title="Blog NAMZU — Para quem organiza clube de leitura"
+  description="Ideias práticas para criar, organizar e manter vivo um clube de leitura: convites, escolha de livros, encontros e discussões. Pelo time do NAMZU."
 >
   <!-- Hero -->
   <section class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 pb-12">
@@ -17,11 +17,27 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
       📚 Blog NAMZU
     </div>
     <h1 class="font-display text-4xl sm:text-5xl font-bold text-foreground leading-tight mb-4">
-      Leitura, comunidade<br />e literatura
+      Para quem organiza<br />clube de leitura
     </h1>
     <p class="text-lg text-muted-foreground max-w-xl">
-      Resenhas, dicas, listas e histórias para quem acredita que ler é ainda melhor quando compartilhado.
+      Ideias práticas para criar o clube, convidar as pessoas, escolher os livros e manter a conversa viva entre um encontro e outro.
     </p>
+
+    <!-- Chamada para o app -->
+    <div class="mt-8 rounded-2xl border border-border bg-secondary/30 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex-1">
+        <p class="font-semibold text-foreground">Seu clube de leitura, organizado em um só lugar</p>
+        <p class="text-sm text-muted-foreground mt-1">
+          Crie o clube no NAMZU, convide por um link e acompanhe a leitura de todos. Grátis.
+        </p>
+      </div>
+      <a
+        href="https://namzu.com.br"
+        class="inline-flex items-center justify-center rounded-2xl bg-primary text-primary-foreground font-semibold px-5 py-3 text-sm whitespace-nowrap hover:opacity-90 transition-opacity"
+      >
+        Criar meu clube
+      </a>
+    </div>
   </section>
 
   <!-- Posts -->

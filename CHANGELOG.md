@@ -38,9 +38,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Convidar membros:** ao criar um clube, o link de convite aparece na hora, com copiar e enviar pelo WhatsApp. O botão "Compartilhar" do clube virou "Convidar".
 - Função `clube_convite` no banco (migração `fase2_clube_convite`), que entrega só o cartão público do clube para a página de convite.
 - Testes do link de convite em `src/lib/convite.test.ts`.
+- **Eventos de produto (Fase 2):** tabela `eventos_produto` (migração `fase2_eventos_produto`) e serviço `registrarEvento`. Sete eventos ligados: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido` e `roteiro_ia_gerado`. Só usuário logado grava, em nome próprio, e só admin lê. Antes disso nada era medido: o funil de onboarding chamava o Google Analytics, que nunca foi instalado.
+- `docs/metricas-produto.md`: eventos, propriedades e consultas de acompanhamento, com a métrica norte. Ponto de partida em 25/11/2026: zero clubes ativos na semana.
 
 ### Alterado
 
+- `README.md` reescrito para o posicionamento atual: plataforma para quem organiza clube de leitura, com guia de desenvolvimento e mapa da documentação.
+- Home do blog voltada ao organizador, com chamada para criar o clube no app.
 - **Carregamento por rota (Fase 2):** cada página virou um arquivo próprio, baixado só quando a rota é aberta. O JavaScript baixado na abertura caiu de 749 kB para 199 kB (gzip). O admin fica em arquivo separado.
 - Logo reduzido de 1296 px para 256 px de largura: de 653 kB para 54 kB. O maior uso na tela é 80 px.
 - Depois de uma publicação nova, a aba que ficou aberta recarrega sozinha ao pedir um arquivo da versão antiga.

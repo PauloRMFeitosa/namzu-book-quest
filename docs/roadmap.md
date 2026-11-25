@@ -119,8 +119,8 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Segurança de clubes: regras de entrada em `clube_membros`, clubes privados visíveis só para quem faz parte e moderador aprovando pedidos (`docs/runbooks/fase2-seguranca-clubes.md`). Não estava no plano original; surgiu da revisão das políticas durante a entrega do convite.
 - [x] Carregamento por rota (`React.lazy`), admin em chunk separado. JavaScript inicial: de 749 kB para 199 kB gzip.
 - [x] Remover código morto: páginas sem rota, `src/features/`. Ficaram de fora, para decisão do Paulo, componentes prontos mas não ligados a nenhuma tela: `RegistrarLeituraDialog`, `PosLeituraBlock`, `LeituraExperienciaCard`, `LeiturasList`, `PercentualProgressoControl`, `SessoesList`, `LeituraCopilotoButton`, `PendenciasAvaliacaoCard`, `NamzuBackground`, `StatsChips`, `admin/FilterBar` e os hooks `useResenhas` e `useAvaliacoesPendentes`.
-- [ ] Instrumentar eventos de produto: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido`, `roteiro_ia_gerado`. Hoje só o funil de onboarding é medido.
-- [ ] Reescrever o `README.md` e a home do blog para o organizador.
+- [x] Instrumentar eventos de produto: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido`, `roteiro_ia_gerado`, gravados na tabela `eventos_produto` (`docs/metricas-produto.md`). Na verdade nada era medido antes: o funil de onboarding chamava o Google Analytics, que nunca foi instalado.
+- [x] Reescrever o `README.md` e a home do blog para o organizador.
 
 **Critério de saída:** novo usuário cria um clube e convida o primeiro membro em menos de 3 minutos, sem passar por telas que não sejam de clube; bundle inicial abaixo de 300 kB gzip.
 

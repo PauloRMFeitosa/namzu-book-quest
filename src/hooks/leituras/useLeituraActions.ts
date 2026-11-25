@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { registrarEvento } from "@/services/analytics";
 
 /**
  * Helpers de criação na nova modelagem.
@@ -66,6 +67,7 @@ export async function registrarProgresso(opts: {
     percentual_lido: opts.percentual ?? null,
   });
   if (error) throw error;
+  registrarEvento("progresso_registrado", { props: { origem: "registro", percentual: opts.percentual ?? null } });
 }
 
 export async function finalizarLeitura(usuario_leitura_id: string, dataFim?: string) {
@@ -79,4 +81,5 @@ export async function finalizarLeitura(usuario_leitura_id: string, dataFim?: str
     },
   });
   if (error) throw error;
+  registrarEvento("progresso_registrado", { props: { origem: "finalizar", percentual: 100 } });
 }

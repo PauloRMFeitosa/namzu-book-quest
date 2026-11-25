@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { cn } from "@/lib/utils";
+import { registrarEvento } from "@/services/analytics";
 
 function formatTimer(totalSec: number) {
   const h = Math.floor(totalSec / 3600);
@@ -131,6 +132,10 @@ export const SessaoLeituraModal = () => {
 
       const { error } = await supabase.functions.invoke("salvar-progresso-leitura", { body });
       if (error) throw error;
+      registrarEvento("progresso_registrado", {
+        clubeId: sessao.clubeId ?? null,
+        props: { origem: "sessao", percentual: percentual ?? 0, tempo_minutos: tempoMinutos },
+      });
 
       // Fecha a sessão com data_fim para registrar a duração nas estatísticas de tempo
       await supabase.from("leituras").update({ data_fim: dataFim }).eq("id", sessao.leituraId);
