@@ -6,6 +6,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+### Segurança
+
+- **Entrada em clube:** pela API, qualquer usuário logado conseguia entrar como ativo em clube privado, sem aprovação, e como moderador. Pedido pendente se aprovava sozinho e banido se reativava. Um gatilho em `clube_membros` passa a aplicar as regras de entrada (migração `fase2_seguranca_clubes`).
+- **Clubes privados:** nome e descrição ficavam listáveis por qualquer pessoa, inclusive sem login. Agora só aparecem para o organizador, membros ativos e admins. Eventos, tags e métricas seguem a visibilidade do clube.
+- **Mensagens dos canais:** quem estava com pedido pendente ou banido conseguia ler. Agora só membro ativo ou organizador.
+- Detalhes, testes e reversão em `docs/runbooks/fase2-seguranca-clubes.md`.
+
+### Corrigido
+
+- **Moderador aprova e recusa pedidos de entrada.** A tela já mostrava os botões, mas o banco ignorava a ação e a tela avisava "Membro aprovado" mesmo assim. Agora a ação funciona.
+- As ações da aba Membros passam a avisar quando o banco não aplicou a alteração, em vez de mostrar sucesso.
+- Alterar papel e remover membro aparecem só para o organizador e o admin, que são quem pode fazer isso.
+
 ### Adicionado
 
 - **Menu de três destinos (Fase 2):** Meu clube, Minha leitura e Perfil. Controlado pela flag `show_navegacao_foco`, ligada por padrão. Desligada, volta o menu antigo com a Home.
@@ -27,6 +40,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Os contadores de seguidores e seguindo no Perfil deixam de ser links quando a página de leitores está desligada.
 - Cadastro e login mostram de onde a pessoa veio (convite de um clube ou criação de clube) e preservam o destino ao alternar entre as duas telas.
 - Ao sair da conta, o usuário volta para a página pública em vez do quiz.
+- Quem abre um clube privado sem fazer parte é levado para a página de convite, em vez de ver o cabeçalho do clube.
+- Ao entrar em um clube, a tela passa a seguir o status que o banco gravou.
 - `src/integrations/supabase/types.ts` regenerado a partir do banco. Estava defasado: faltavam `denuncias_conteudo`, `meta_lembretes_log` e funções recentes.
 - A aba Visibilidade do admin passa a usar os mesmos padrões de flag que o app, em vez de assumir "ligado" para toda flag sem registro.
 

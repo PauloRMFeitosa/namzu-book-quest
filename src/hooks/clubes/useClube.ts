@@ -167,11 +167,15 @@ export const useEntrarClube = (clubeId: string | undefined) => {
   return useMutation({
     mutationFn: async (status: "ativo" | "pendente" = "pendente") => {
       if (!user || !clubeId) throw new Error("Não autenticado");
-      const { error } = await supabase
+      // O banco decide o status final (clube privado sempre entra como
+      // pendente), então devolvemos o que foi gravado, não o que foi pedido.
+      const { data, error } = await supabase
         .from("clube_membros")
-        .insert({ clube_id: clubeId, user_id: user.id, status } as any);
+        .insert({ clube_id: clubeId, user_id: user.id, status } as any)
+        .select("status")
+        .single();
       if (error) throw error;
-      return status;
+      return (data?.status ?? status) as "ativo" | "pendente";
     },
     onSuccess: (status) => {
       if (status === "ativo") {
@@ -193,17 +197,27 @@ export const useEntrarClube = (clubeId: string | undefined) => {
   });
 };
 
+// O banco não devolve erro quando a política de acesso barra uma alteração:
+// ele só não altera nada. Sem esta checagem a tela avisaria "feito" à toa.
+function exigirLinhaAfetada(linhas: unknown[] | null) {
+  if (!linhas || linhas.length === 0) {
+    throw new Error("Você não tem permissão para esta ação.");
+  }
+}
+
 export const useAprovarMembro = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
       if (!clubeId) throw new Error("Clube inválido");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clube_membros")
         .update({ status: "ativo" })
         .eq("clube_id", clubeId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select("user_id");
       if (error) throw error;
+      exigirLinhaAfetada(data);
       // Sincroniza livros somente após aprovação
       try { await sincronizarLivrosClube(userId, clubeId); } catch (e) { console.warn("sync livros falhou", e); }
     },
@@ -222,12 +236,14 @@ export const useRejeitarMembro = (clubeId: string | undefined) => {
   return useMutation({
     mutationFn: async (userId: string) => {
       if (!clubeId) throw new Error("Clube inválido");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clube_membros")
         .delete()
         .eq("clube_id", clubeId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select("user_id");
       if (error) throw error;
+      exigirLinhaAfetada(data);
     },
     onSuccess: () => {
       toast.success("Solicitação rejeitada");
@@ -242,12 +258,14 @@ export const useDefinirPapelMembro = (clubeId: string | undefined) => {
   return useMutation({
     mutationFn: async ({ userId, papel }: { userId: string; papel: "membro" | "moderador" }) => {
       if (!clubeId) throw new Error("Clube inválido");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clube_membros")
         .update({ papel } as any)
         .eq("clube_id", clubeId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select("user_id");
       if (error) throw error;
+      exigirLinhaAfetada(data);
     },
     onSuccess: () => {
       toast.success("Papel atualizado");
@@ -262,12 +280,14 @@ export const useExpulsarMembro = (clubeId: string | undefined) => {
   return useMutation({
     mutationFn: async (userId: string) => {
       if (!clubeId) throw new Error("Clube inválido");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clube_membros")
         .delete()
         .eq("clube_id", clubeId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select("user_id");
       if (error) throw error;
+      exigirLinhaAfetada(data);
     },
     onSuccess: () => {
       toast.success("Membro removido do clube");

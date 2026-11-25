@@ -48,7 +48,10 @@ export const MembrosTab = ({
   const isCurador = !!user && user.id === curadorId;
   const meuPapel = membros?.find((m) => m.user_id === user?.id)?.papel;
   const isModerador = meuPapel === "moderador";
+  // Moderador aprova e recusa pedidos de entrada. Alterar papel e remover
+  // membro ativo ficam com o organizador e o admin (é o que o banco permite).
   const canManage = isCurador || isAdmin || isModerador;
+  const podeGerirMembros = isCurador || isAdmin;
 
   const ativos = useMemo(() => (membros ?? []).filter((m) => m.status === "ativo"), [membros]);
   const pendentes = useMemo(() => (membros ?? []).filter((m) => m.status === "pendente"), [membros]);
@@ -166,7 +169,7 @@ export const MembrosTab = ({
           {filtered.map((m) => {
             const nome = m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro";
             const isMe = user?.id === m.user_id;
-            const canExpel = canManage && !isMe && !m.is_curador;
+            const canExpel = podeGerirMembros && !isMe && !m.is_curador;
 
             return (
               <li key={m.user_id} className="card-soft p-4 flex flex-col gap-3 min-w-0 overflow-hidden">
@@ -226,11 +229,11 @@ export const MembrosTab = ({
                   </span>
                 </div>
 
-                {/* Ações (curador/mod) — linha separada */}
-                {(canExpel || (canManage && !m.is_curador && !isMe) || isMe) && (
+                {/* Ações do organizador — linha separada */}
+                {(canExpel || (podeGerirMembros && !m.is_curador && !isMe) || isMe) && (
                   <div className="flex items-center gap-2 pt-1 border-t border-border/40 flex-wrap">
-                    {/* Alterar papel (curador/mod) */}
-                    {canManage && !m.is_curador && !isMe && (
+                    {/* Alterar papel (organizador) */}
+                    {podeGerirMembros && !m.is_curador && !isMe && (
                       <Select
                         value={m.papel}
                         onValueChange={(v) =>
@@ -247,7 +250,7 @@ export const MembrosTab = ({
                       </Select>
                     )}
 
-                    {/* Expulsar (curador/mod) */}
+                    {/* Remover (organizador) */}
                     {canExpel && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
