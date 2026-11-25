@@ -11,6 +11,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Visão geral do organizador (Fase 3):** primeira aba do clube para quem organiza. Mostra o próximo encontro com as respostas, o livro atual com quantos concluíram, estão lendo ou não começaram, os pedidos de entrada pendentes e, para cada membro, o progresso no livro, a última atividade no clube e se está parado há 7 dias. Controlada pela flag `show_clube_visao_geral`, ligada por padrão.
 - Função `clube_visao_geral` no banco (migração `fase3_clube_visao_geral`), que só responde ao organizador do clube e a admins.
 - Testes da lógica da visão geral em `src/lib/visaoGeral.test.ts`.
+- **QR code do convite (Fase 3):** a janela "Convidar membros" mostra o QR code do link e permite baixar a imagem, para mostrar no encontro ou imprimir. A biblioteca `qrcode` só é carregada quando a janela abre.
+- **Última atividade na aba Membros (Fase 3):** o organizador vê há quantos dias cada membro está ativo no clube e quem está parado há 7 dias. Membros comuns não veem a atividade dos outros.
+- **Exportar lista de membros (Fase 3):** o organizador baixa um CSV com nome, usuário, papel, data de entrada, progresso no livro atual, situação da leitura, última atividade, parado e resposta ao próximo encontro. O arquivo abre direto no Excel em português e neutraliza células que começam com sinal de fórmula. Só membros ativos entram na lista.
+- Evento de produto `membros_exportados` e canal `qrcode` em `convite_gerado`.
+- Testes da geração do CSV em `src/lib/membrosCsv.test.ts`.
 
 ## [0.3.0] - 2026-11-25
 

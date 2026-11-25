@@ -1,4 +1,5 @@
-import { Copy, MessageCircle, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Copy, Download, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,36 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
   const link = linkConvite(clubeId);
   const mensagem = mensagemConvite(nomeClube, link);
   const podeCompartilhar = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  // QR code do link, para projetar no encontro ou imprimir. A biblioteca só é
+  // baixada quando o diálogo abre.
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let cancelado = false;
+    import("qrcode")
+      .then((QRCode) => QRCode.toDataURL(link, { width: 480, margin: 2, errorCorrectionLevel: "M" }))
+      .then((dataUrl) => {
+        if (!cancelado) setQrCode(dataUrl);
+      })
+      .catch(() => {
+        if (!cancelado) setQrCode(null);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [open, link]);
+
+  const baixarQrCode = () => {
+    if (!qrCode) return;
+    const a = document.createElement("a");
+    a.href = qrCode;
+    a.download = `convite-${clubeId.slice(0, 8)}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    registrarEvento("convite_gerado", { clubeId, props: { canal: "qrcode" } });
+  };
 
   const copiar = async () => {
     try {
@@ -85,6 +116,24 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
             <Button variant="outline" onClick={compartilhar} className="h-11 rounded-xl gap-2">
               <Share2 className="w-4 h-4" /> Outras formas de compartilhar
             </Button>
+          )}
+
+          {qrCode && (
+            <div className="flex items-center gap-3 rounded-2xl border border-border/60 p-3">
+              <img
+                src={qrCode}
+                alt={`QR code do convite para ${nomeClube}`}
+                className="w-24 h-24 rounded-lg bg-white shrink-0"
+              />
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Mostre no encontro ou imprima. Quem apontar a câmera cai no convite.
+                </p>
+                <Button variant="outline" size="sm" onClick={baixarQrCode} className="rounded-xl gap-1.5 self-start">
+                  <Download className="w-3.5 h-3.5" /> Baixar QR code
+                </Button>
+              </div>
+            </div>
           )}
 
           {privado && (

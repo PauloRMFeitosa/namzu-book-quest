@@ -12,7 +12,8 @@ export type EventoProduto =
   | "progresso_registrado"
   | "encontro_criado"
   | "rsvp_respondido"
-  | "roteiro_ia_gerado";
+  | "roteiro_ia_gerado"
+  | "membros_exportados";
 
 type ValorProp = string | number | boolean | null;
 
