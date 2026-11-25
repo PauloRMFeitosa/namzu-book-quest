@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
 import { usePaginasDasObras } from "@/hooks/clubes/useCronograma";
 import { diaComSemana, mensagemDaMeta, prazoDaMeta, textoDoAlvo } from "@/lib/cronograma";
+import { mensagemDoEncontro } from "@/lib/encontros";
 import { linkDoClube } from "@/lib/convite";
 import { registrarEvento } from "@/services/analytics";
 import { CronogramaDialog } from "./CronogramaDialog";
@@ -94,6 +95,24 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
     });
   }
 
+  const copiarLembrete = async () => {
+    if (!encontro) return;
+    const texto = mensagemDoEncontro({
+      nomeClube,
+      titulo: encontro.titulo,
+      inicio: encontro.inicio_em,
+      urlEvento: encontro.url_evento,
+      link: linkDoClube(clubeId, "eventos"),
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Lembrete copiado. Cole no grupo do clube.");
+      registrarEvento("lembrete_encontro_copiado", { clubeId, props: { origem: "visao_geral" } });
+    } catch {
+      toast.error("Não foi possível copiar. Tente de novo.");
+    }
+  };
+
   const copiarMensagem = async () => {
     if (!meta || !livro) return;
     const texto = mensagemDaMeta({
@@ -146,6 +165,9 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
                 {format(new Date(encontro.inicio_em), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
               </p>
               <p className="text-sm">{resumoRespostas(encontro)}</p>
+              <Button variant="outline" size="sm" className="rounded-xl gap-1.5 self-start" onClick={copiarLembrete}>
+                <Copy className="w-3.5 h-3.5" /> Copiar lembrete para o grupo
+              </Button>
             </>
           ) : (
             <>

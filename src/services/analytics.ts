@@ -15,7 +15,10 @@ export type EventoProduto =
   | "roteiro_ia_gerado"
   | "membros_exportados"
   | "cronograma_definido"
-  | "mensagem_meta_copiada";
+  | "mensagem_meta_copiada"
+  | "lembrete_encontro_copiado"
+  | "presenca_registrada"
+  | "ata_salva";
 
 type ValorProp = string | number | boolean | null;
 

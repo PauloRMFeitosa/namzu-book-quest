@@ -1162,6 +1162,35 @@ export type Database = {
           },
         ]
       }
+      evento_atas: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          evento_id: string
+          texto: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          evento_id: string
+          texto: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          evento_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_atas_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: true
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evento_participantes: {
         Row: {
           evento_id: string
@@ -1191,6 +1220,35 @@ export type Database = {
           },
         ]
       }
+      evento_presencas: {
+        Row: {
+          created_at: string
+          evento_id: string
+          marcado_por: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evento_id: string
+          marcado_por?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          evento_id?: string
+          marcado_por?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_presencas_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos: {
         Row: {
           clube_id: string | null
@@ -1201,6 +1259,8 @@ export type Database = {
           gravado: boolean | null
           id: string
           inicio_em: string
+          lembrete_1h_em: string | null
+          lembrete_24h_em: string | null
           limite_participantes: number | null
           tipo: string | null
           titulo: string
@@ -1215,6 +1275,8 @@ export type Database = {
           gravado?: boolean | null
           id?: string
           inicio_em: string
+          lembrete_1h_em?: string | null
+          lembrete_24h_em?: string | null
           limite_participantes?: number | null
           tipo?: string | null
           titulo: string
@@ -1229,6 +1291,8 @@ export type Database = {
           gravado?: boolean | null
           id?: string
           inicio_em?: string
+          lembrete_1h_em?: string | null
+          lembrete_24h_em?: string | null
           limite_participantes?: number | null
           tipo?: string | null
           titulo?: string
@@ -3487,6 +3551,14 @@ export type Database = {
         Args: { p_definitivo?: boolean; p_usuario_livro_id: string }
         Returns: undefined
       }
+      evento_salvar_ata: {
+        Args: { p_evento_id: string; p_texto: string }
+        Returns: boolean
+      }
+      evento_salvar_presenca: {
+        Args: { p_evento_id: string; p_presentes: string[] }
+        Returns: number
+      }
       fechar_liga_semanal: { Args: never; Returns: undefined }
       feed_atividade: {
         Args: { p_limite?: number }
@@ -3637,8 +3709,14 @@ export type Database = {
         }[]
       }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
+      participa_do_clube_do_evento: {
+        Args: { p_evento_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      pode_gerir_evento: { Args: { p_evento_id: string }; Returns: boolean }
       pode_ver_leituras_de: { Args: { p_dono: string }; Returns: boolean }
       processar_avisos_meta_clube: { Args: never; Returns: number }
+      processar_lembretes_encontro: { Args: never; Returns: number }
       processar_lembretes_meta_diaria_inapp: { Args: never; Returns: number }
       recalcular_meus_matches: { Args: never; Returns: undefined }
       refresh_ranking: { Args: never; Returns: undefined }

@@ -24,10 +24,20 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Tabela `clube_metas_leitura`, funções `clube_salvar_cronograma` e `processar_avisos_meta_clube` e agendamento `avisos-meta-clube` (migração `fase3_cronograma_leitura`).
 - Eventos de produto `cronograma_definido` e `mensagem_meta_copiada`.
 - Testes da lógica do cronograma em `src/lib/cronograma.test.ts`.
+- **Lembrete de encontro (Fase 3):** os membros que não recusaram recebem uma notificação no app 24 h e 1 h antes de cada encontro. O organizador tem o botão "Copiar lembrete para o grupo" no cartão do encontro e na Visão geral, com o texto pronto para o WhatsApp.
+- **Lista de presença (Fase 3):** depois que o encontro começa, o organizador marca quem esteve. Quem confirmou já vem marcado. Os membros veem quantas pessoas foram.
+- **Ata do encontro (Fase 3):** o organizador registra o que foi conversado e combinado. Só quem faz parte do clube lê.
+- Tabelas `evento_presencas` e `evento_atas`, funções `evento_salvar_presenca`, `evento_salvar_ata` e `processar_lembretes_encontro` e agendamento `lembretes-encontro` (migração `fase3_encontros`).
+- Eventos de produto `lembrete_encontro_copiado`, `presenca_registrada` e `ata_salva`.
+- Testes da lógica dos encontros em `src/lib/encontros.test.ts`.
 
 ### Corrigido
 
 - **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.
+- **Criar encontro falhava.** O tipo padrão do formulário, "Encontro", era recusado pelo banco. Só os outros tipos funcionavam.
+- **Respostas "Talvez" e "Não" falhavam.** O banco só aceitava "Vou".
+- **Aviso de encontro novo em dobro.** Dois gatilhos avisavam o mesmo encontro e cada membro recebia duas notificações. Fica um só.
+- No cartão do encontro, "1 confirmados" passa a "1 confirmado".
 - **Notificação de conteúdo novo.** O banco recusava os tipos de notificação `clube_novo_conteudo` e `meta_diaria_lembrete`, usados pelo gatilho de conteúdos do clube e pelo lembrete da meta diária. A lista de tipos aceitos foi corrigida na migração `fase3_cronograma_leitura`.
 
 ## [0.3.0] - 2026-11-25

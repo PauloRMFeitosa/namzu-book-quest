@@ -18,6 +18,9 @@ export interface EventoClube {
   limite_participantes: number | null;
   participantes_count: number;
   meu_status: string | null;
+  /** Quantas pessoas o organizador marcou como presentes. */
+  presentes_count: number;
+  tem_ata: boolean;
 }
 
 export const useEventosClube = (clubeId: string | undefined) => {
@@ -35,7 +38,7 @@ export const useEventosClube = (clubeId: string | undefined) => {
       const ids = (eventos ?? []).map((e: any) => e.id);
       if (!ids.length) return [];
 
-      const [partsRes, mineRes] = await Promise.all([
+      const [partsRes, mineRes, presencasRes, atasRes] = await Promise.all([
         supabase.from("evento_participantes").select("evento_id, status").in("evento_id", ids),
         user
           ? supabase
@@ -44,7 +47,16 @@ export const useEventosClube = (clubeId: string | undefined) => {
               .in("evento_id", ids)
               .eq("user_id", user.id)
           : Promise.resolve({ data: [] as any[] }),
+        // Presença e ata só existem para quem faz parte do clube; se a leitura
+        // falhar, o encontro aparece sem elas.
+        supabase.from("evento_presencas").select("evento_id").in("evento_id", ids),
+        supabase.from("evento_atas").select("evento_id").in("evento_id", ids),
       ]);
+      const presentes = new Map<string, number>();
+      ((presencasRes as any).data ?? []).forEach((p: any) => {
+        presentes.set(p.evento_id, (presentes.get(p.evento_id) ?? 0) + 1);
+      });
+      const comAta = new Set<string>(((atasRes as any).data ?? []).map((a: any) => a.evento_id));
       const counts = new Map<string, number>();
       (partsRes.data ?? []).forEach((p: any) => {
         if (p.status === "confirmado") counts.set(p.evento_id, (counts.get(p.evento_id) ?? 0) + 1);
@@ -56,6 +68,8 @@ export const useEventosClube = (clubeId: string | undefined) => {
         ...e,
         participantes_count: counts.get(e.id) ?? 0,
         meu_status: mine.get(e.id) ?? null,
+        presentes_count: presentes.get(e.id) ?? 0,
+        tem_ata: comAta.has(e.id),
       }));
     },
   });
