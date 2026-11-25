@@ -746,6 +746,109 @@ export type Database = {
           },
         ]
       }
+      clube_votacao_opcoes: {
+        Row: {
+          id: string
+          inicio_em: string
+          votacao_id: string
+        }
+        Insert: {
+          id?: string
+          inicio_em: string
+          votacao_id: string
+        }
+        Update: {
+          id?: string
+          inicio_em?: string
+          votacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_votacao_opcoes_votacao_id_fkey"
+            columns: ["votacao_id"]
+            isOneToOne: false
+            referencedRelation: "clube_votacoes_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_votacao_votos: {
+        Row: {
+          created_at: string
+          opcao_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          opcao_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          opcao_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_votacao_votos_opcao_id_fkey"
+            columns: ["opcao_id"]
+            isOneToOne: false
+            referencedRelation: "clube_votacao_opcoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clube_votacoes_data: {
+        Row: {
+          clube_id: string
+          created_at: string
+          criado_por: string | null
+          encerrada_em: string | null
+          evento_id: string | null
+          id: string
+          status: string
+          titulo: string
+          url_evento: string | null
+        }
+        Insert: {
+          clube_id: string
+          created_at?: string
+          criado_por?: string | null
+          encerrada_em?: string | null
+          evento_id?: string | null
+          id?: string
+          status?: string
+          titulo: string
+          url_evento?: string | null
+        }
+        Update: {
+          clube_id?: string
+          created_at?: string
+          criado_por?: string | null
+          encerrada_em?: string | null
+          evento_id?: string | null
+          id?: string
+          status?: string
+          titulo?: string
+          url_evento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_votacoes_data_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_votacoes_data_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubes: {
         Row: {
           categoria: string | null
@@ -3488,6 +3591,19 @@ export type Database = {
           maximo: number
         }[]
       }
+      clube_abrir_votacao_data: {
+        Args: {
+          p_clube_id: string
+          p_opcoes: string[]
+          p_titulo: string
+          p_url_evento?: string
+        }
+        Returns: string
+      }
+      clube_cancelar_votacao_data: {
+        Args: { p_votacao_id: string }
+        Returns: boolean
+      }
       clube_convite: {
         Args: { p_clube_id: string }
         Returns: {
@@ -3503,7 +3619,13 @@ export type Database = {
           visibilidade: string
         }[]
       }
+      clube_da_opcao_de_data: { Args: { p_opcao_id: string }; Returns: string }
+      clube_da_votacao_data: { Args: { p_votacao_id: string }; Returns: string }
       clube_e_privado: { Args: { _clube: string }; Returns: boolean }
+      clube_encerrar_votacao_data: {
+        Args: { p_opcao_id: string; p_votacao_id: string }
+        Returns: string
+      }
       clube_salvar_cronograma: {
         Args: {
           p_data_fim: string
@@ -3514,6 +3636,10 @@ export type Database = {
         Returns: number
       }
       clube_visao_geral: { Args: { p_clube_id: string }; Returns: Json }
+      clube_votar_data: {
+        Args: { p_opcoes: string[]; p_votacao_id: string }
+        Returns: number
+      }
       conceder_xp: {
         Args: {
           p_acao: string
@@ -3709,6 +3835,10 @@ export type Database = {
         }[]
       }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
+      participa_do_clube: {
+        Args: { p_clube_id: string; p_user_id: string }
+        Returns: boolean
+      }
       participa_do_clube_do_evento: {
         Args: { p_evento_id: string; p_user_id: string }
         Returns: boolean

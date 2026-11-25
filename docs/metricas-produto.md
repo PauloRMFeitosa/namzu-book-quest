@@ -29,9 +29,12 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `membros_exportados` | Organizador baixou a lista de membros em CSV | `total` |
 | `cronograma_definido` | Organizador salvou o cronograma de um livro | `metas`: quantidade. `origem`: `semanas` ou `manual` |
 | `mensagem_meta_copiada` | Organizador copiou a mensagem da meta para o grupo | |
-| `lembrete_encontro_copiado` | Organizador copiou o lembrete do encontro para o grupo | `origem`: `encontros` ou `visao_geral` |
+| `lembrete_encontro_copiado` | Organizador copiou o lembrete do encontro ou a mensagem da votação para o grupo | `origem`: `encontros`, `visao_geral` ou `votacao` |
 | `presenca_registrada` | Organizador salvou a lista de presença de um encontro | `presentes`, `membros` |
 | `ata_salva` | Organizador salvou ou apagou a ata de um encontro | `apagada`: `true` ou `false` |
+| `votacao_data_aberta` | Organizador abriu a votação de data | `opcoes`: quantidade de datas |
+| `voto_data_registrado` | Membro marcou ou desmarcou datas na votação | `opcoes`: quantas datas ficaram marcadas |
+| `votacao_data_encerrada` | Organizador escolheu a data e o encontro foi criado | `votantes`, `opcoes` |
 
 Regras para evento novo:
 

@@ -150,6 +150,7 @@ onOpenChange(false);
 | `FeedbackDialog.tsx` | `draft-feedback-geral` |
 | `CronogramaDialog.tsx` | `draft-cronograma-{trilhaId}` (só enquanto há alteração não salva) |
 | `AtaDialog.tsx` | `draft-ata-{eventoId}` (só enquanto há alteração não salva) |
+| `AbrirVotacaoDialog.tsx` | `draft-votacao-data-{clubeId}` |
 
 ## Convenções Principais
 

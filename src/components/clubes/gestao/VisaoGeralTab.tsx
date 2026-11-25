@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
 import { usePaginasDasObras } from "@/hooks/clubes/useCronograma";
+import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
+import { textoDeVotantes, totalDeVotantes } from "@/lib/votacaoData";
 import { diaComSemana, mensagemDaMeta, prazoDaMeta, textoDoAlvo } from "@/lib/cronograma";
 import { mensagemDoEncontro } from "@/lib/encontros";
 import { linkDoClube } from "@/lib/convite";
@@ -46,6 +48,7 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
   const { data, isLoading, isError, refetch } = useVisaoGeralClube(clubeId);
   const [filtro, setFiltro] = useState<FiltroMembros>("todos");
   const [cronogramaAberto, setCronogramaAberto] = useState(false);
+  const { data: votacao } = useVotacaoAberta(clubeId);
   const meta = data?.meta_atual ?? null;
   const obraDaMeta = meta && data?.livro_atual ? [data.livro_atual.obra_id] : [];
   const { data: paginas } = usePaginasDasObras(obraDaMeta);
@@ -172,9 +175,20 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
           ) : (
             <>
               <p className="text-sm text-muted-foreground">Nenhum encontro marcado.</p>
-              <Button variant="outline" size="sm" className="rounded-xl self-start" onClick={() => onIrPara("eventos")}>
-                Marcar encontro
-              </Button>
+              {votacao ? (
+                <>
+                  <p className="text-sm">
+                    Votação de data aberta: {votacao.titulo}. {textoDeVotantes(totalDeVotantes(votacao))}.
+                  </p>
+                  <Button variant="outline" size="sm" className="rounded-xl self-start" onClick={() => onIrPara("eventos")}>
+                    Ver votação
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" className="rounded-xl self-start" onClick={() => onIrPara("eventos")}>
+                  Marcar encontro
+                </Button>
+              )}
             </>
           )}
         </section>
