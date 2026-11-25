@@ -27,6 +27,8 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `rsvp_respondido` | Resposta a um evento | `status`: `confirmado`, `talvez`, `recusado`, `removido` |
 | `roteiro_ia_gerado` | Resposta de IA gerada com sucesso | `acao`: `resumo_discussao`, `perguntas_profundas`, `matchmaking`, `recomendacoes`, `copiloto_*` |
 | `membros_exportados` | Organizador baixou a lista de membros em CSV | `total` |
+| `cronograma_definido` | Organizador salvou o cronograma de um livro | `metas`: quantidade. `origem`: `semanas` ou `manual` |
+| `mensagem_meta_copiada` | Organizador copiou a mensagem da meta para o grupo | |
 
 Regras para evento novo:
 

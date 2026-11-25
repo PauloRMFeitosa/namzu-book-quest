@@ -365,6 +365,54 @@ export type Database = {
           },
         ]
       }
+      clube_metas_leitura: {
+        Row: {
+          aviso_enviado_em: string | null
+          clube_id: string
+          created_at: string
+          data_limite: string
+          id: string
+          percentual_alvo: number | null
+          titulo: string
+          trilha_id: string
+        }
+        Insert: {
+          aviso_enviado_em?: string | null
+          clube_id: string
+          created_at?: string
+          data_limite: string
+          id?: string
+          percentual_alvo?: number | null
+          titulo: string
+          trilha_id: string
+        }
+        Update: {
+          aviso_enviado_em?: string | null
+          clube_id?: string
+          created_at?: string
+          data_limite?: string
+          id?: string
+          percentual_alvo?: number | null
+          titulo?: string
+          trilha_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_metas_leitura_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clube_metas_leitura_trilha_id_fkey"
+            columns: ["trilha_id"]
+            isOneToOne: false
+            referencedRelation: "clube_trilhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_metricas: {
         Row: {
           ativos_30d: number | null
@@ -3392,6 +3440,15 @@ export type Database = {
         }[]
       }
       clube_e_privado: { Args: { _clube: string }; Returns: boolean }
+      clube_salvar_cronograma: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_metas: Json
+          p_trilha_id: string
+        }
+        Returns: number
+      }
       clube_visao_geral: { Args: { p_clube_id: string }; Returns: Json }
       conceder_xp: {
         Args: {
@@ -3581,6 +3638,7 @@ export type Database = {
       }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
       pode_ver_leituras_de: { Args: { p_dono: string }; Returns: boolean }
+      processar_avisos_meta_clube: { Args: never; Returns: number }
       processar_lembretes_meta_diaria_inapp: { Args: never; Returns: number }
       recalcular_meus_matches: { Args: never; Returns: undefined }
       refresh_ranking: { Args: never; Returns: undefined }

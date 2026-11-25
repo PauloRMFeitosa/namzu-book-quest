@@ -7,6 +7,8 @@ export const queryKeys = {
     meus: ["meus-clubes"] as const,
     convite: (id: string) => ["clube-convite", id] as const,
     visaoGeral: (id: string) => ["clube-visao-geral", id] as const,
+    metas: (id: string) => ["clube-metas-leitura", id] as const,
+    paginasDasObras: (obraIds: string[]) => ["obras-paginas", ...obraIds] as const,
   },
   perfil: {
     atividadeAnual: (userId: string) => ["atividade-anual", userId] as const,

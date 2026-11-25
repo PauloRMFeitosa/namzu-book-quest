@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Calendar, CheckCircle2, Users, Sparkles } from "lucide-react";
+import { BookOpen, Calendar, CheckCircle2, ChevronDown, Target, Users, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,6 +21,18 @@ import {
   useClubeLeituras,
   useSalvarProgresso,
 } from "@/hooks/clubes/useClubeLeituras";
+import { useMetasClube, usePaginasDasObras } from "@/hooks/clubes/useCronograma";
+import {
+  diaComSemana,
+  hojeComoDia,
+  metaAtual,
+  periodoDoLivro,
+  prazoDaMeta,
+  situacaoNaMeta,
+  textoDoAlvo,
+  type MetaLeitura,
+} from "@/lib/cronograma";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +46,12 @@ interface Props {
 
 export const LeiturasTab = ({ clubeId, isMembro }: Props) => {
   const { data: trilhas, isLoading } = useClubeLeituras(clubeId);
+  // Metas do cronograma: só quem é membro ativo (ou organiza) consegue ler.
+  const { data: metas } = useMetasClube(clubeId, isMembro);
+  const obrasComMeta = (trilhas ?? [])
+    .filter((t) => (metas ?? []).some((m) => m.trilha_id === t.id))
+    .map((t) => t.obra_id);
+  const { data: paginas } = usePaginasDasObras(obrasComMeta);
 
   if (isLoading) {
     return (
@@ -72,7 +90,15 @@ export const LeiturasTab = ({ clubeId, isMembro }: Props) => {
 
       <ol className="relative flex flex-col gap-5 pl-6 before:absolute before:left-2 before:top-3 before:bottom-3 before:w-px before:bg-border">
         {trilhas.map((t, idx) => (
-          <TrilhaCard key={t.id} trilha={t} index={idx} clubeId={clubeId} canEdit={isMembro} />
+          <TrilhaCard
+            key={t.id}
+            trilha={t}
+            index={idx}
+            clubeId={clubeId}
+            canEdit={isMembro}
+            metas={(metas ?? []).filter((m) => m.trilha_id === t.id)}
+            totalPaginasMeta={paginas?.[t.obra_id] ?? null}
+          />
         ))}
       </ol>
     </div>
@@ -84,11 +110,15 @@ const TrilhaCard = ({
   index,
   clubeId,
   canEdit,
+  metas,
+  totalPaginasMeta,
 }: {
   trilha: TrilhaItem;
   index: number;
   clubeId: string;
   canEdit: boolean;
+  metas: MetaLeitura[];
+  totalPaginasMeta: number | null;
 }) => {
   const meu = trilha.meu_progresso;
   const concluido = meu?.status === "concluido";
@@ -308,7 +338,7 @@ const TrilhaCard = ({
           type="button"
           onClick={abrirLivro}
           disabled={navLoading || !canEdit}
-          className="flex-shrink-0 rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70"
+          className="flex-shrink-0 self-start rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70"
           aria-label={`Abrir ${trilha.obra?.titulo_original ?? "obra"}`}
         >
           {trilha.obra?.capa_padrao_url ? (
@@ -343,8 +373,17 @@ const TrilhaCard = ({
           {(trilha.data_inicio_sugerida || trilha.data_fim_sugerida) && (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {formatRange(trilha.data_inicio_sugerida, trilha.data_fim_sugerida)}
+              {periodoDoLivro(trilha.data_inicio_sugerida, trilha.data_fim_sugerida)}
             </p>
+          )}
+
+          {metas.length > 0 && (
+            <MetasDoLivro
+              metas={metas}
+              totalPaginas={totalPaginasMeta}
+              percentual={canEdit ? meu?.percentual ?? 0 : null}
+              concluiu={concluido}
+            />
           )}
 
           <div className="flex flex-col gap-1">
@@ -491,11 +530,83 @@ const ProgressoDialog = ({
   );
 };
 
-const formatRange = (ini: string | null, fim: string | null) => {
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  if (ini && fim) return `${fmt(ini)} – ${fmt(fim)}`;
-  if (ini) return `A partir de ${fmt(ini)}`;
-  if (fim) return `Até ${fmt(fim)}`;
-  return "";
+// Meta atual do cronograma e, a pedido, a lista completa (Fase 3).
+const MetasDoLivro = ({
+  metas,
+  totalPaginas,
+  percentual,
+  concluiu,
+}: {
+  metas: MetaLeitura[];
+  totalPaginas: number | null;
+  /** Progresso de quem está vendo. Nulo para quem não é membro. */
+  percentual: number | null;
+  concluiu: boolean;
+}) => {
+  const [aberto, setAberto] = useState(false);
+  const hoje = hojeComoDia();
+  const atual = metaAtual(metas, hoje);
+  const alvo = atual ? textoDoAlvo(atual.percentual_alvo, totalPaginas) : "";
+  const situacao = atual && percentual !== null ? situacaoNaMeta(percentual, concluiu, atual) : null;
+
+  return (
+    <div className="rounded-xl bg-secondary/50 border border-secondary px-3 py-2 flex flex-col gap-1">
+      {atual ? (
+        <>
+          <p className="text-xs font-semibold flex items-center gap-1.5">
+            <Target className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="min-w-0">Meta atual: {atual.titulo}</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {alvo ? `Ler ${alvo}. ` : ""}
+            Prazo: {diaComSemana(atual.data_limite)} ({prazoDaMeta(atual.data_limite, hoje)}).
+          </p>
+          {situacao === "alcancou" && (
+            <p className="text-xs font-medium text-success flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Você já alcançou esta meta.
+            </p>
+          )}
+          {situacao === "abaixo" && (
+            <p className="text-xs font-medium text-primary">
+              Você está em {percentual}%. A meta é {atual.percentual_alvo}%.
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Target className="w-3.5 h-3.5 shrink-0" /> Todas as metas deste livro já venceram.
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        className="self-start text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 mt-0.5"
+      >
+        <ChevronDown className={cn("w-3 h-3 transition-transform", aberto && "rotate-180")} />
+        {aberto ? "Esconder cronograma" : `Ver cronograma (${metas.length === 1 ? "1 meta" : `${metas.length} metas`})`}
+      </button>
+      {aberto && (
+        <ul className="flex flex-col gap-1.5 pt-1">
+          {metas.map((m) => (
+            <li
+              key={m.id}
+              className={cn(
+                "text-[11px] leading-snug flex flex-col",
+                m.data_limite < hoje ? "text-muted-foreground/70" : "text-foreground",
+                atual?.id === m.id && "font-semibold",
+              )}
+            >
+              <span>{m.titulo}</span>
+              <span className="tabular-nums text-muted-foreground font-normal">
+                {diaComSemana(m.data_limite)}
+                {m.percentual_alvo ? ` · até ${m.percentual_alvo}% do livro` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 };

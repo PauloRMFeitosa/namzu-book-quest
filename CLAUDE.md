@@ -148,6 +148,7 @@ onOpenChange(false);
 | `AplicacaoDialog.tsx` | `draft-aplicacao-{livroId}` |
 | `ReportarConteudoDialog.tsx` | `draft-denuncia-{conteudoId}` |
 | `FeedbackDialog.tsx` | `draft-feedback-geral` |
+| `CronogramaDialog.tsx` | `draft-cronograma-{trilhaId}` (só enquanto há alteração não salva) |
 
 ## Convenções Principais
 

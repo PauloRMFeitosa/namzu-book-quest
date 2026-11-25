@@ -16,6 +16,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Exportar lista de membros (Fase 3):** o organizador baixa um CSV com nome, usuário, papel, data de entrada, progresso no livro atual, situação da leitura, última atividade, parado e resposta ao próximo encontro. O arquivo abre direto no Excel em português e neutraliza células que começam com sinal de fórmula. Só membros ativos entram na lista.
 - Evento de produto `membros_exportados` e canal `qrcode` em `convite_gerado`.
 - Testes da geração do CSV em `src/lib/membrosCsv.test.ts`.
+- **Cronograma de leitura (Fase 3):** o organizador divide o livro do ciclo em metas com data, uma a uma ou com o atalho "Dividir em semanas". Cada meta pode ter um alvo em % do livro, que o app traduz em página aproximada. A tela fica na Gestão, em cada livro da trilha, e também abre pela Visão geral.
+- **Meta atual para o membro (Fase 3):** o cartão do livro na aba Leituras mostra a meta atual, o prazo, onde a pessoa está em relação à meta e o cronograma completo.
+- **Meta atual na Visão geral (Fase 3):** quantos membros alcançaram a meta, marca e filtro "Abaixo da meta" e botão "Copiar mensagem para o grupo", com o texto pronto para o WhatsApp.
+- **Aviso automático de meta (Fase 3):** todo dia às 9h de Brasília, quem está abaixo da meta recebe uma notificação no app quando faltam 2 dias ou menos para o prazo. Uma vez por meta.
+- A trilha da Gestão marca o "Livro do ciclo".
+- Tabela `clube_metas_leitura`, funções `clube_salvar_cronograma` e `processar_avisos_meta_clube` e agendamento `avisos-meta-clube` (migração `fase3_cronograma_leitura`).
+- Eventos de produto `cronograma_definido` e `mensagem_meta_copiada`.
+- Testes da lógica do cronograma em `src/lib/cronograma.test.ts`.
+
+### Corrigido
+
+- **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.
+- **Notificação de conteúdo novo.** O banco recusava os tipos de notificação `clube_novo_conteudo` e `meta_diaria_lembrete`, usados pelo gatilho de conteúdos do clube e pelo lembrete da meta diária. A lista de tipos aceitos foi corrigida na migração `fase3_cronograma_leitura`.
 
 ## [0.3.0] - 2026-11-25
 

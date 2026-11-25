@@ -159,6 +159,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 
 - [x] Entrega 1 — Visão geral do organizador (aba "Visão geral", função `clube_visao_geral`).
 - [x] Entrega 2 — Membros: QR code do convite, última atividade na aba Membros e exportação da lista em CSV.
+- [x] Entrega 3 — Livro e cronograma: metas com data por livro da trilha (`clube_metas_leitura`), atalho de divisão em semanas, meta atual para o membro e na Visão geral, aviso automático no app e mensagem pronta para o grupo.
 
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.
