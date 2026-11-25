@@ -34,8 +34,7 @@ export const ErrosAppTab = () => {
     refetchOnMount: true,
     queryFn: async (): Promise<ErroRegistrado[]> => {
       const desde = new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
-      // Cast temporário: sai quando os tipos forem regenerados após a migração.
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("erros_app")
         .select("id, criado_em, user_id, origem, assinatura, mensagem, pilha, rota, versao, ambiente, navegador")
         .gte("criado_em", desde)

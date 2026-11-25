@@ -35,8 +35,7 @@ export function registrarErro(origem: OrigemDoErro, valor: unknown, pilhaExtra?:
       try {
         const { data } = await supabase.auth.getSession();
         if (!data.session) return;
-        // Cast temporário: sai quando os tipos forem regenerados após a migração.
-        await (supabase as any).from("erros_app").insert({
+        await supabase.from("erros_app").insert({
           origem,
           assinatura,
           mensagem: erro.mensagem,
