@@ -49,6 +49,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - **`src/services/`** — Wrappers finos sobre queries do Supabase para reutilização entre componentes.
 - **`src/constants/queryKeys.ts`** — Fábrica centralizada de chaves do React Query. Adicione novas chaves aqui em vez de strings inline.
 - **`src/services/analytics.ts`** — Eventos de produto. Use `registrarEvento("nome_do_evento", { clubeId, props })` depois que a ação deu certo. A lista de eventos e as regras estão em `docs/metricas-produto.md`.
+- **`src/services/monitoramento.ts`** — Erros do app. O registro é automático (erro não tratado, promessa rejeitada, `ErrorBoundary` e consulta que falha) e aparece em Admin > Erros do app. As regras estão em `docs/monitoramento.md`.
 
 ### Configuração do React Query
 

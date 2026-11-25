@@ -84,7 +84,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] `CHANGELOG.md` e política de versão (seção 10).
 - [ ] Proteger a branch `main`: merge só com CI verde. Configuração do GitHub, a cargo de Paulo.
 - [x] Renomear o pacote para `namzu`, manter um único lockfile (`package-lock.json`), remover `lovable-tagger`.
-- [ ] Monitoramento de erros em produção (Sentry ou equivalente).
+- [x] Monitoramento de erros em produção: tabela `erros_app` e tela em Admin > Erros do app, sem serviço externo (ver `docs/monitoramento.md`).
 - [ ] Confirmar política de backup do banco no plano atual do Supabase.
 
 **Critério de saída:** advisor de segurança sem função de escrita exposta a `anon`; lista de migrações do repo idêntica à do remoto; `main` protegida com CI obrigatório; tag `v0.2.0`.

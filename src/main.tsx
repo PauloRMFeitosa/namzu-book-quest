@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { iniciarMonitoramento } from "./services/monitoramento.ts";
 import "./index.css";
+
+iniciarMonitoramento();
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>

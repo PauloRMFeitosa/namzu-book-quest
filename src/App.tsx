@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryCache } from "@tanstack/react-query";
+import { registrarErro } from "@/services/monitoramento";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -50,6 +51,8 @@ const Comecar = lazy(() => import("./pages/Comecar"));
 const Convite = lazy(() => import("./pages/Convite"));
 
 const queryClient = new QueryClient({
+  // Consulta que falha depois das tentativas vai para o monitoramento de erros.
+  queryCache: new QueryCache({ onError: (erro) => registrarErro("consulta", erro) }),
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,

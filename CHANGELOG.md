@@ -46,6 +46,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Trilha na própria página:** depois de adicionar um livro, o organizador continua na página, com o formulário limpo, e vê a trilha atual logo abaixo, onde também reordena, remove e monta o cronograma. Assim dá para montar a trilha inteira de uma vez.
 - **Criar clube, encontro e conteúdo em página:** as três janelas de criação viraram páginas (`/clubes/novo`, `/clubes/:id/eventos/novo` e `/clubes/:id/conteudos/novo`), com seções numeradas, prévia de como vai aparecer e erro em texto. O encontro passa a recusar data no passado, término antes do início e link sem `https://`; o conteúdo também valida o link. Os rascunhos continuam nas mesmas chaves.
 - Peças compartilhadas das páginas de criação em `src/components/criacao/`, hooks `useRascunho` e `useAcessoGestao` e validações em `src/lib/criacao.ts`, com testes.
+- **Monitoramento de erros (Fase 0):** o app registra erro não tratado, promessa rejeitada, tela que quebrou e consulta que falhou, de quem está logado. Os registros aparecem agrupados em Admin > Erros do app, com vezes, pessoas, telas, versão e pilha. Falta de rede e outros ruídos são descartados. Sem serviço externo. Detalhes em `docs/monitoramento.md`.
+- Tabela `erros_app`, limite de 30 registros por pessoa por hora, função `limpar_erros_app` e agendamento `limpar-erros-app`, que apaga registros com mais de 30 dias (migração `fase0_erros_app`).
+- Testes da lógica do monitoramento em `src/lib/monitoramento.test.ts`.
 - Regra de projeto no `CLAUDE.md`: fluxo novo de criação é página com rota própria, não janela com formulário.
 - Testes da lógica de inclusão em `src/lib/trilha.test.ts`.
 
