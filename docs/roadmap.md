@@ -158,6 +158,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 **Andamento**
 
 - [x] Entrega 1 — Visão geral do organizador (aba "Visão geral", função `clube_visao_geral`).
+- [x] Entrega 2 — Membros: QR code do convite, última atividade na aba Membros e exportação da lista em CSV.
 
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.

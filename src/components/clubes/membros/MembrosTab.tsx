@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   Search, Crown, Flame, Sparkles, Users, LogOut,
-  Loader2, Shield, Check, X, UserX,
+  Loader2, Shield, Check, X, UserX, Download,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,15 +25,33 @@ import {
 } from "@/hooks/clubes/useClube";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
+import { rotuloUltimaAtividade } from "@/lib/visaoGeral";
+import { gerarCsvMembros, nomeArquivoCsv } from "@/lib/membrosCsv";
+import { registrarEvento } from "@/services/analytics";
+import { toast } from "sonner";
+
+const ROTULO_LEITURA: Record<string, string> = {
+  nao_iniciou: "Não começou",
+  lendo: "Lendo",
+  concluido: "Concluiu",
+};
+const ROTULO_RSVP: Record<string, string> = {
+  confirmado: "Confirmou",
+  talvez: "Talvez",
+  recusado: "Não vai",
+};
 
 export const MembrosTab = ({
   clubeId,
   curadorId,
   isMembro,
+  nomeClube = "",
 }: {
   clubeId: string;
   curadorId: string;
   isMembro: boolean;
+  nomeClube?: string;
 }) => {
   const { data: membros, isLoading } = useMembrosClube(clubeId, curadorId);
   const sair = useSairClube(clubeId);
@@ -52,6 +70,43 @@ export const MembrosTab = ({
   // membro ativo ficam com o organizador e o admin (é o que o banco permite).
   const canManage = isCurador || isAdmin || isModerador;
   const podeGerirMembros = isCurador || isAdmin;
+
+  // Atividade e progresso de cada membro: só o organizador e o admin recebem.
+  const { data: visao } = useVisaoGeralClube(clubeId, podeGerirMembros);
+  const atividadePorMembro = useMemo(
+    () => new Map((visao?.membros ?? []).map((m) => [m.user_id, m])),
+    [visao?.membros]
+  );
+
+  const exportarCsv = () => {
+    const linhas = (membros ?? [])
+      .filter((m) => m.status === "ativo")
+      .map((m) => {
+        const extra = atividadePorMembro.get(m.user_id);
+        return {
+          nome: m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro",
+          usuario: m.perfil?.username ?? null,
+          papel: m.is_curador ? "Organizador" : m.papel === "moderador" ? "Moderador" : "Membro",
+          entrouEm: m.data_entrada,
+          percentual: extra?.percentual ?? null,
+          situacaoLeitura: extra?.status_leitura ? ROTULO_LEITURA[extra.status_leitura] : null,
+          ultimaAtividade: extra?.ultima_atividade ?? null,
+          parado: extra ? extra.parado : null,
+          respostaEncontro: extra?.rsvp ? ROTULO_RSVP[extra.rsvp] : null,
+        };
+      });
+    const blob = new Blob([gerarCsvMembros(linhas)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nomeArquivoCsv(nomeClube);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    registrarEvento("membros_exportados", { clubeId, props: { total: linhas.length } });
+    toast.success("Lista de membros baixada");
+  };
 
   const ativos = useMemo(() => (membros ?? []).filter((m) => m.status === "ativo"), [membros]);
   const pendentes = useMemo(() => (membros ?? []).filter((m) => m.status === "pendente"), [membros]);
@@ -80,14 +135,21 @@ export const MembrosTab = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h2 className="font-display text-lg font-semibold">
-          Membros{" "}
-          <span className="text-muted-foreground font-normal text-base">· {ativos.length}</span>
-        </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Quem dá vida a esta tribo intelectual.
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold">
+            Membros{" "}
+            <span className="text-muted-foreground font-normal text-base">· {ativos.length}</span>
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Quem dá vida a esta tribo intelectual.
+          </p>
+        </div>
+        {podeGerirMembros && ativos.length > 0 && (
+          <Button variant="outline" size="sm" onClick={exportarCsv} className="rounded-xl gap-1.5 shrink-0">
+            <Download className="w-3.5 h-3.5" /> Exportar lista
+          </Button>
+        )}
       </header>
 
       {/* Pendentes */}
@@ -228,6 +290,16 @@ export const MembrosTab = ({
                     desde {format(new Date(m.data_entrada), "MMM yy", { locale: ptBR })}
                   </span>
                 </div>
+
+                {/* Última atividade no clube: só quem organiza vê */}
+                {podeGerirMembros && atividadePorMembro.has(m.user_id) && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {rotuloUltimaAtividade(atividadePorMembro.get(m.user_id)!.ultima_atividade)}
+                    {atividadePorMembro.get(m.user_id)!.parado && (
+                      <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-accent/15 text-accent font-medium">Parado</span>
+                    )}
+                  </p>
+                )}
 
                 {/* Ações do organizador — linha separada */}
                 {(canExpel || (podeGerirMembros && !m.is_curador && !isMe) || isMe) && (

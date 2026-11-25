@@ -20,12 +20,13 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | Evento | Quando dispara | Propriedades |
 |---|---|---|
 | `clube_criado` | Clube criado com sucesso | `visibilidade` |
-| `convite_gerado` | Link de convite copiado, enviado pelo WhatsApp ou compartilhado | `canal`: `copiar`, `whatsapp`, `compartilhar` |
+| `convite_gerado` | Link de convite copiado, enviado pelo WhatsApp, compartilhado ou QR code baixado | `canal`: `copiar`, `whatsapp`, `compartilhar`, `qrcode` |
 | `membro_entrou` | Pessoa entrou ou pediu para entrar em um clube | `status`: `ativo` ou `pendente` |
 | `progresso_registrado` | Progresso de leitura salvo | `origem`: `sessao`, `modal`, `clube`, `concluir`, `registro`, `finalizar`. `percentual`. `tempo_minutos` na sessão |
 | `encontro_criado` | Evento do clube criado | `tipo` |
 | `rsvp_respondido` | Resposta a um evento | `status`: `confirmado`, `talvez`, `recusado`, `removido` |
 | `roteiro_ia_gerado` | Resposta de IA gerada com sucesso | `acao`: `resumo_discussao`, `perguntas_profundas`, `matchmaking`, `recomendacoes`, `copiloto_*` |
+| `membros_exportados` | Organizador baixou a lista de membros em CSV | `total` |
 
 Regras para evento novo:
 
