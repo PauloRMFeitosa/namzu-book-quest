@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — encontros, parte 2: votação de data.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125174544).
+--
 -- O organizador propõe de 2 a 6 datas, os membros marcam em quais podem ir e o
 -- organizador encerra escolhendo uma. O encerramento cria o encontro e já
 -- confirma a presença de quem votou na data escolhida.

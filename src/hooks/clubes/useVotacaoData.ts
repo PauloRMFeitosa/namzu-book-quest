@@ -9,11 +9,6 @@ import { totalDeVotantes, type VotacaoDeData } from "@/lib/votacaoData";
 // o organizador e admins abrem, encerram e cancelam. Toda escrita passa por
 // funções do banco.
 
-// TEMPORÁRIO: as tabelas e funções da votação ainda não estão em `types.ts`.
-// Trocar por `supabase` depois de aplicar a migração `fase3_votacao_data` e
-// regenerar os tipos.
-const semTipos = supabase as any;
-
 /** A votação aberta do clube, com as datas e os votos. Nulo quando não há. */
 export const useVotacaoAberta = (clubeId: string | undefined, habilitado = true) =>
   useQuery({
@@ -22,7 +17,7 @@ export const useVotacaoAberta = (clubeId: string | undefined, habilitado = true)
     staleTime: 30 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<VotacaoDeData | null> => {
-      const { data: votacao, error } = await semTipos
+      const { data: votacao, error } = await supabase
         .from("clube_votacoes_data")
         .select("id, clube_id, titulo, url_evento, status, created_at")
         .eq("clube_id", clubeId!)
@@ -31,7 +26,7 @@ export const useVotacaoAberta = (clubeId: string | undefined, habilitado = true)
       if (error) throw error;
       if (!votacao) return null;
 
-      const { data: opcoes, error: erroOpcoes } = await semTipos
+      const { data: opcoes, error: erroOpcoes } = await supabase
         .from("clube_votacao_opcoes")
         .select("id, inicio_em")
         .eq("votacao_id", votacao.id)
@@ -41,7 +36,7 @@ export const useVotacaoAberta = (clubeId: string | undefined, habilitado = true)
       const ids = (opcoes ?? []).map((o: { id: string }) => o.id);
       const votosPorOpcao = new Map<string, string[]>();
       if (ids.length) {
-        const { data: votos, error: erroVotos } = await semTipos
+        const { data: votos, error: erroVotos } = await supabase
           .from("clube_votacao_votos")
           .select("opcao_id, user_id")
           .in("opcao_id", ids);
@@ -71,7 +66,7 @@ export const useAbrirVotacao = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { titulo: string; opcoes: string[]; urlEvento: string }) => {
-      const { error } = await semTipos.rpc("clube_abrir_votacao_data", {
+      const { error } = await supabase.rpc("clube_abrir_votacao_data", {
         p_clube_id: clubeId,
         p_titulo: input.titulo.trim(),
         p_opcoes: input.opcoes,
@@ -92,7 +87,7 @@ export const useVotarData = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { votacaoId: string; opcoes: string[] }) => {
-      const { error } = await semTipos.rpc("clube_votar_data", {
+      const { error } = await supabase.rpc("clube_votar_data", {
         p_votacao_id: input.votacaoId,
         p_opcoes: input.opcoes,
       });
@@ -111,7 +106,7 @@ export const useEncerrarVotacao = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { votacao: VotacaoDeData; opcaoId: string }) => {
-      const { error } = await semTipos.rpc("clube_encerrar_votacao_data", {
+      const { error } = await supabase.rpc("clube_encerrar_votacao_data", {
         p_votacao_id: input.votacao.id,
         p_opcao_id: input.opcaoId,
       });
@@ -136,7 +131,7 @@ export const useCancelarVotacao = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (votacaoId: string) => {
-      const { error } = await semTipos.rpc("clube_cancelar_votacao_data", { p_votacao_id: votacaoId });
+      const { error } = await supabase.rpc("clube_cancelar_votacao_data", { p_votacao_id: votacaoId });
       if (error) throw error;
     },
     onSuccess: () => {
