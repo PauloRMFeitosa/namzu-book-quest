@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { registrarEvento } from "@/services/analytics";
-import { semTiposDeEncontro } from "@/hooks/clubes/useEncontros";
 
 export interface EventoClube {
   id: string;
@@ -50,8 +49,8 @@ export const useEventosClube = (clubeId: string | undefined) => {
           : Promise.resolve({ data: [] as any[] }),
         // Presença e ata só existem para quem faz parte do clube; se a leitura
         // falhar, o encontro aparece sem elas.
-        semTiposDeEncontro.from("evento_presencas").select("evento_id").in("evento_id", ids),
-        semTiposDeEncontro.from("evento_atas").select("evento_id").in("evento_id", ids),
+        supabase.from("evento_presencas").select("evento_id").in("evento_id", ids),
+        supabase.from("evento_atas").select("evento_id").in("evento_id", ids),
       ]);
       const presentes = new Map<string, number>();
       ((presencasRes as any).data ?? []).forEach((p: any) => {

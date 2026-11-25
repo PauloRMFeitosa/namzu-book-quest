@@ -8,11 +8,6 @@ import type { RespostaAoEncontro } from "@/lib/encontros";
 // Lista de presença e ata dos encontros (Fase 3). Quem faz parte do clube lê;
 // só o organizador e admins gravam.
 
-// TEMPORÁRIO: `evento_presencas`, `evento_atas` e as funções de salvar ainda não
-// estão em `types.ts`. Trocar por `supabase` depois de aplicar a migração
-// `fase3_encontros` e regenerar os tipos.
-export const semTiposDeEncontro = supabase as any;
-
 export interface AtaDoEncontro {
   evento_id: string;
   texto: string;
@@ -27,7 +22,7 @@ export const usePresencasEvento = (eventoId: string | undefined, habilitado = tr
     staleTime: 0,
     refetchOnMount: true,
     queryFn: async (): Promise<string[]> => {
-      const { data, error } = await semTiposDeEncontro
+      const { data, error } = await supabase
         .from("evento_presencas")
         .select("user_id")
         .eq("evento_id", eventoId!);
@@ -63,7 +58,7 @@ export const useSalvarPresenca = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { eventoId: string; presentes: string[]; membros: number }) => {
-      const { error } = await semTiposDeEncontro.rpc("evento_salvar_presenca", {
+      const { error } = await supabase.rpc("evento_salvar_presenca", {
         p_evento_id: input.eventoId,
         p_presentes: input.presentes,
       });
@@ -89,7 +84,7 @@ export const useAtaEvento = (eventoId: string | undefined, habilitado = true) =>
     staleTime: 0,
     refetchOnMount: true,
     queryFn: async (): Promise<AtaDoEncontro | null> => {
-      const { data, error } = await semTiposDeEncontro
+      const { data, error } = await supabase
         .from("evento_atas")
         .select("evento_id, texto, atualizado_em")
         .eq("evento_id", eventoId!)
@@ -103,7 +98,7 @@ export const useSalvarAta = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { eventoId: string; texto: string }) => {
-      const { data, error } = await semTiposDeEncontro.rpc("evento_salvar_ata", {
+      const { data, error } = await supabase.rpc("evento_salvar_ata", {
         p_evento_id: input.eventoId,
         p_texto: input.texto,
       });

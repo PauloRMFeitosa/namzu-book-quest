@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — encontros: correções, lembretes, presença e ata.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125152913).
+--
 -- O que muda:
 --   1. Correções do que já existia e não funcionava:
 --      - `eventos_tipo_check` recusava o tipo `encontro`, que é o padrão do
