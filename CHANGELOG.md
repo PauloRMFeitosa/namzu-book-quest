@@ -6,6 +6,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [0.3.0] - 2026-11-25
+
+Fase 2 do roadmap: foco. O app passa a se apresentar como plataforma para quem organiza clube de leitura. Entrada pelo clube, menu de três destinos, convite por link, segurança dos clubes, carregamento por rota e medição do uso.
+
 ### Segurança
 
 - **Entrada em clube:** pela API, qualquer usuário logado conseguia entrar como ativo em clube privado, sem aprovação, e como moderador. Pedido pendente se aprovava sozinho e banido se reativava. Um gatilho em `clube_membros` passa a aplicar as regras de entrada (migração `fase2_seguranca_clubes`).
