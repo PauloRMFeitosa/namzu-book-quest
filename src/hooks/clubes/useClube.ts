@@ -167,11 +167,15 @@ export const useEntrarClube = (clubeId: string | undefined) => {
   return useMutation({
     mutationFn: async (status: "ativo" | "pendente" = "pendente") => {
       if (!user || !clubeId) throw new Error("Não autenticado");
-      const { error } = await supabase
+      // O banco decide o status final (clube privado sempre entra como
+      // pendente), então devolvemos o que foi gravado, não o que foi pedido.
+      const { data, error } = await supabase
         .from("clube_membros")
-        .insert({ clube_id: clubeId, user_id: user.id, status } as any);
+        .insert({ clube_id: clubeId, user_id: user.id, status } as any)
+        .select("status")
+        .single();
       if (error) throw error;
-      return status;
+      return (data?.status ?? status) as "ativo" | "pendente";
     },
     onSuccess: (status) => {
       if (status === "ativo") {

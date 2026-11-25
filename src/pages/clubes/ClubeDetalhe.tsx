@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,8 +51,8 @@ const ClubeDetalhe = () => {
     }
   };
 
-  const { data: clube, isLoading } = useClube(id);
-  const { data: membership } = useClubeMembership(id);
+  const { data: clube, isLoading, isFetching, refetch } = useClube(id);
+  const { data: membership, isLoading: carregandoParticipacao } = useClubeMembership(id);
   const entrar = useEntrarClube(id);
   const sair = useSairClube(id);
   const { canManage } = useIsCurador(id, clube?.curador_id);
@@ -64,7 +64,26 @@ const ClubeDetalhe = () => {
   const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
   const activeTab = isTabVisible(tab) ? tab : (TABS[0]?.value ?? "feed");
 
+  // Clube privado só aparece para quem faz parte. Se a consulta não devolve o
+  // clube, quem ainda não entrou (ou está pendente) vai para o convite.
+  // Membro ativo com resultado vazio pode estar vendo cache de antes da
+  // aprovação: recarrega uma vez antes de desistir.
+  const clubeAusente = !isLoading && !isFetching && !clube;
+  const souMembroAtivo = membership?.status === "ativo";
+  const tentouRecarregar = useRef(false);
+  useEffect(() => {
+    if (clubeAusente && souMembroAtivo && !tentouRecarregar.current) {
+      tentouRecarregar.current = true;
+      refetch();
+    }
+  }, [clubeAusente, souMembroAtivo, refetch]);
+
   if (!id) return <Navigate to="/clubes" replace />;
+
+  if (clubeAusente && !carregandoParticipacao) {
+    if (!souMembroAtivo) return <Navigate to={`/convite/${id}`} replace />;
+    if (tentouRecarregar.current) return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="flex flex-col gap-6 pb-8">
