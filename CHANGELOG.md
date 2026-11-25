@@ -6,6 +6,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [0.2.0] - 2026-11-24
+
+Fase 0 do roadmap: fundação. Segurança das funções de borda e do banco, repositório igual à produção, e base de processo.
+
+### Removido
+- Dependência `lovable-tagger` e os lockfiles do Bun (`bun.lock`, `bun.lockb`). O projeto passa a ter um único lockfile, o `package-lock.json`, que já era o usado no desenvolvimento e no CI.
+
+### Renomeado
+- Pacote de `vite_react_shadcn_ts` para `namzu`.
+
 ### Segurança
 - `rapid-action` passa a exigir usuário autenticado; `ensure-profiles` cria apenas o perfil de quem chama (backfill geral restrito a admin).
 - Migração `20261124173944_fase0_seguranca_funcoes`: revoga o acesso pela API a funções internas de gamificação, cron e triggers, restringe três RPCs a usuários autenticados e fixa `search_path` em 32 funções. Aplicada em produção em 24/11/2026; registro em `docs/runbooks/fase0-seguranca-funcoes.md`.

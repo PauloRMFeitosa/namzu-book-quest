@@ -1,7 +1,7 @@
 # Runbook — Fase 0: segredo do agendador para as Edge Functions de lote
 
 **Escopo:** itens 1.1 a 1.5 de `docs/auditoria-edge-functions-2026-11.md`.
-**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Falta o teste de fumaça no painel admin e a conferência dos primeiros disparos reais do agendador.
+**Situação:** **aplicado em produção em 24/11/2026**, com autorização de Paulo. Teste de fumaça no painel admin feito por Paulo no mesmo dia, sem problemas. Falta conferir os primeiros disparos reais do agendador.
 
 ## Registro da aplicação
 
