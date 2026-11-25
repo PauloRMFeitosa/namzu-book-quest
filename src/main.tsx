@@ -9,6 +9,19 @@ createRoot(document.getElementById("root")!).render(
   </ErrorBoundary>
 );
 
+// Carregamento por rota: depois de uma publicação nova, quem ficou com a aba
+// aberta pede arquivos da versão antiga, que não existem mais. O Vite avisa
+// com este evento. Recarregar a página traz a versão atual. O intervalo
+// mínimo evita ficar recarregando em laço se o problema for outro (sem rede).
+window.addEventListener("vite:preloadError", (evento) => {
+  const CHAVE = "namzu-recarga-por-versao";
+  const ultima = Number(sessionStorage.getItem(CHAVE) ?? 0);
+  if (Date.now() - ultima < 30_000) return;
+  sessionStorage.setItem(CHAVE, String(Date.now()));
+  evento.preventDefault();
+  window.location.reload();
+});
+
 // Service Worker: nunca registrar em dev/preview/iframe.
 // Em produção, registrar o kill-switch sw.js que apenas desregistra SWs antigos
 // (evita recarregamentos forçados ao voltar para a aba).

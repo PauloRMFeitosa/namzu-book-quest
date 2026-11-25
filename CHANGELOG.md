@@ -19,6 +19,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - As ações da aba Membros passam a avisar quando o banco não aplicou a alteração, em vez de mostrar sucesso.
 - Alterar papel e remover membro aparecem só para o organizador e o admin, que são quem pode fazer isso.
 
+### Removido
+
+- Código sem uso: páginas sem rota (`Clubes`, `Index`, `Onboarding`), pasta `src/features/`, `services/clubes.ts`, os índices `components/common` e `components/layout`, `NavLink`, `App.css` e as três imagens antigas de onboarding (4 MB).
+
 ### Adicionado
 
 - **Menu de três destinos (Fase 2):** Meu clube, Minha leitura e Perfil. Controlado pela flag `show_navegacao_foco`, ligada por padrão. Desligada, volta o menu antigo com a Home.
@@ -37,6 +41,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 
+- **Carregamento por rota (Fase 2):** cada página virou um arquivo próprio, baixado só quando a rota é aberta. O JavaScript baixado na abertura caiu de 749 kB para 199 kB (gzip). O admin fica em arquivo separado.
+- Logo reduzido de 1296 px para 256 px de largura: de 653 kB para 54 kB. O maior uso na tela é 80 px.
+- Depois de uma publicação nova, a aba que ficou aberta recarrega sozinha ao pedir um arquivo da versão antiga.
 - Os contadores de seguidores e seguindo no Perfil deixam de ser links quando a página de leitores está desligada.
 - Cadastro e login mostram de onde a pessoa veio (convite de um clube ou criação de clube) e preservam o destino ao alternar entre as duas telas.
 - Ao sair da conta, o usuário volta para a página pública em vez do quiz.

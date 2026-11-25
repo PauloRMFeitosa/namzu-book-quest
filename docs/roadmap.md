@@ -117,8 +117,8 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Criar as flags que faltam: `/leitores`, `/citacoes`, `/busca` e `/livros` agora têm `FeatureRoute` (`show_leitores` nasce desligada).
 - [x] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil (flag `show_navegacao_foco`; o menu "Mais" virou a seção Conta do Perfil).
 - [x] Segurança de clubes: regras de entrada em `clube_membros`, clubes privados visíveis só para quem faz parte e moderador aprovando pedidos (`docs/runbooks/fase2-seguranca-clubes.md`). Não estava no plano original; surgiu da revisão das políticas durante a entrega do convite.
-- [ ] Carregamento por rota (`React.lazy`), admin em chunk separado.
-- [ ] Remover código morto: páginas sem rota, `src/features/`.
+- [x] Carregamento por rota (`React.lazy`), admin em chunk separado. JavaScript inicial: de 749 kB para 199 kB gzip.
+- [x] Remover código morto: páginas sem rota, `src/features/`. Ficaram de fora, para decisão do Paulo, componentes prontos mas não ligados a nenhuma tela: `RegistrarLeituraDialog`, `PosLeituraBlock`, `LeituraExperienciaCard`, `LeiturasList`, `PercentualProgressoControl`, `SessoesList`, `LeituraCopilotoButton`, `PendenciasAvaliacaoCard`, `NamzuBackground`, `StatsChips`, `admin/FilterBar` e os hooks `useResenhas` e `useAvaliacoesPendentes`.
 - [ ] Instrumentar eventos de produto: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido`, `roteiro_ia_gerado`. Hoje só o funil de onboarding é medido.
 - [ ] Reescrever o `README.md` e a home do blog para o organizador.
 
