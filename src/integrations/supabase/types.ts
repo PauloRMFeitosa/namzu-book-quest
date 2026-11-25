@@ -3392,6 +3392,7 @@ export type Database = {
         }[]
       }
       clube_e_privado: { Args: { _clube: string }; Returns: boolean }
+      clube_visao_geral: { Args: { p_clube_id: string }; Returns: Json }
       conceder_xp: {
         Args: {
           p_acao: string

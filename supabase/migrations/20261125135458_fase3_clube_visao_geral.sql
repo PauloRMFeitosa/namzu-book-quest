@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — visão geral do organizador.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125135458).
+--
 -- Uma chamada devolve o que o organizador precisa ver ao abrir o clube:
 -- o livro atual, o próximo encontro com as respostas, os pedidos pendentes e,
 -- para cada membro ativo, o progresso no livro atual, a última atividade no

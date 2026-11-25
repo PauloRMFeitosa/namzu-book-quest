@@ -13,9 +13,8 @@ export const useVisaoGeralClube = (clubeId: string | undefined, habilitado = tru
     staleTime: 60 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<VisaoGeralClube> => {
-      // `as any` até o types.ts ser regenerado com a função nova
-      const { data, error } = await (supabase as any).rpc("clube_visao_geral", { p_clube_id: clubeId });
+      const { data, error } = await supabase.rpc("clube_visao_geral", { p_clube_id: clubeId! });
       if (error) throw error;
-      return data as VisaoGeralClube;
+      return data as unknown as VisaoGeralClube;
     },
   });
