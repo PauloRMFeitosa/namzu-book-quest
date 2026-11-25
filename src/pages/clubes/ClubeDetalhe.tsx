@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,7 @@ import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
 import { EventosTab } from "@/components/clubes/eventos/EventosTab";
+import { AvisosClube } from "@/components/clubes/avisos/AvisosClube";
 import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
@@ -51,6 +52,20 @@ const ClubeDetalhe = () => {
       setSearch(proximo, { replace: true });
     }
   };
+
+  // ?avisos=1 vem da notificação de aviso: abre a lista de avisos de primeira.
+  const [abrirAvisos, setAbrirAvisos] = useState(() => search.get("avisos") === "1");
+  const avisosAbertos = useCallback(() => {
+    setAbrirAvisos(false);
+    setSearch(
+      (atual) => {
+        const proximo = new URLSearchParams(atual);
+        proximo.delete("avisos");
+        return proximo;
+      },
+      { replace: true },
+    );
+  }, [setSearch]);
 
   const { data: clube, isLoading, isFetching, refetch } = useClube(id);
   const { data: membership, isLoading: carregandoParticipacao } = useClubeMembership(id);
@@ -119,6 +134,16 @@ const ClubeDetalhe = () => {
               onConvidar={() => setConvidarAberto(true)}
               loading={entrar.isPending || sair.isPending}
             />
+
+            {acessoTotal && (
+              <AvisosClube
+                clubeId={clube.id}
+                nomeClube={clube.nome}
+                podeGerir={canManage}
+                abrirLista={abrirAvisos}
+                onListaAberta={avisosAbertos}
+              />
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
               <Tabs

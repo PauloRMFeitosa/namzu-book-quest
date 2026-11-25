@@ -21,7 +21,9 @@ export type EventoProduto =
   | "ata_salva"
   | "votacao_data_aberta"
   | "voto_data_registrado"
-  | "votacao_data_encerrada";
+  | "votacao_data_encerrada"
+  | "aviso_enviado"
+  | "aviso_copiado";
 
 type ValorProp = string | number | boolean | null;
 
