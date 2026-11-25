@@ -161,7 +161,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 - [x] Entrega 2 — Membros: QR code do convite, última atividade na aba Membros e exportação da lista em CSV.
 - [x] Entrega 3 — Livro e cronograma: metas com data por livro da trilha (`clube_metas_leitura`), atalho de divisão em semanas, meta atual para o membro e na Visão geral, aviso automático no app e mensagem pronta para o grupo.
 - [x] Entrega 4, parte 1 — Encontros: criar encontro e responder "Talvez" ou "Não" voltam a funcionar, lembrete automático no app 24 h e 1 h antes, mensagem pronta para o grupo, lista de presença (`evento_presencas`) e ata (`evento_atas`).
-- [ ] Entrega 4, parte 2 — Encontros: votação de data.
+- [x] Entrega 4, parte 2 — Encontros: votação de data (`clube_votacoes_data`): o organizador propõe datas, os membros marcam quando podem e a escolha cria o encontro.
 
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.

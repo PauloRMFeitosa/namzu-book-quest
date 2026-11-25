@@ -30,6 +30,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Tabelas `evento_presencas` e `evento_atas`, funções `evento_salvar_presenca`, `evento_salvar_ata` e `processar_lembretes_encontro` e agendamento `lembretes-encontro` (migração `fase3_encontros`).
 - Eventos de produto `lembrete_encontro_copiado`, `presenca_registrada` e `ata_salva`.
 - Testes da lógica dos encontros em `src/lib/encontros.test.ts`.
+- **Votação de data (Fase 3):** o organizador propõe de 2 a 6 datas para o próximo encontro, os membros marcam quando podem e o organizador escolhe uma. Ao escolher, o encontro é criado, os membros são avisados e quem votou naquela data já entra como confirmado. A votação aparece na aba Eventos e na Visão geral, com mensagem pronta para o grupo.
+- Tabelas `clube_votacoes_data`, `clube_votacao_opcoes` e `clube_votacao_votos` e funções `clube_abrir_votacao_data`, `clube_votar_data`, `clube_encerrar_votacao_data` e `clube_cancelar_votacao_data` (migração `fase3_votacao_data`).
+- Eventos de produto `votacao_data_aberta`, `voto_data_registrado` e `votacao_data_encerrada`.
+- Testes da lógica da votação em `src/lib/votacaoData.test.ts`.
 
 ### Corrigido
 

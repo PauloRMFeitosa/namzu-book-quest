@@ -18,7 +18,10 @@ export type EventoProduto =
   | "mensagem_meta_copiada"
   | "lembrete_encontro_copiado"
   | "presenca_registrada"
-  | "ata_salva";
+  | "ata_salva"
+  | "votacao_data_aberta"
+  | "voto_data_registrado"
+  | "votacao_data_encerrada";
 
 type ValorProp = string | number | boolean | null;
 
