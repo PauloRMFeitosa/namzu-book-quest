@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PapelDeMembro } from "@/lib/papeis";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -106,7 +107,7 @@ export const useClubeMembership = (clubeId: string | undefined) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("clube_membros")
-        .select("clube_id, status, data_entrada")
+        .select("clube_id, status, data_entrada, papel")
         .eq("clube_id", clubeId!)
         .eq("user_id", user!.id)
         .maybeSingle();
@@ -258,7 +259,7 @@ export const useRejeitarMembro = (clubeId: string | undefined) => {
 export const useDefinirPapelMembro = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, papel }: { userId: string; papel: "membro" | "moderador" }) => {
+    mutationFn: async ({ userId, papel }: { userId: string; papel: PapelDeMembro }) => {
       if (!clubeId) throw new Error("Clube inválido");
       const { data, error } = await supabase
         .from("clube_membros")
@@ -272,6 +273,7 @@ export const useDefinirPapelMembro = (clubeId: string | undefined) => {
     onSuccess: () => {
       toast.success("Papel atualizado");
       qc.invalidateQueries({ queryKey: ["clube-membros-list", clubeId] });
+      qc.invalidateQueries({ queryKey: ["clube-membership", clubeId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao alterar papel"),
   });

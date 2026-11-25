@@ -38,6 +38,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Tabela `clube_avisos` e função `clube_enviar_aviso` (migração `fase3_avisos`).
 - Eventos de produto `aviso_enviado` e `aviso_copiado`.
 - Testes da lógica dos avisos em `src/lib/avisos.test.ts`.
+- **Co-curador (Fase 3):** o organizador nomeia até 3 membros ativos como co-curadores, na aba Membros. O co-curador faz o dia a dia do clube: visão geral, aprovar e remover membros, livro e cronograma, encontros, presença, ata, votação de data, avisos, canais e conteúdos. Continuam só com o organizador: apagar o clube, mudar nome e visibilidade, nomear ou tirar co-curadores e mexer na própria participação dele.
+- Funções `is_clube_dono` e `is_clube_curador` (que passa a incluir o co-curador) e gatilho de exclusão em `clube_membros` (migração `fase3_co_curador`).
+- Testes das permissões em `src/lib/papeis.test.ts`.
 
 ### Corrigido
 

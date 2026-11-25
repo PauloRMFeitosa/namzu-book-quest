@@ -31,6 +31,7 @@ import {
   useGestaoStats,
   useTopContribuidores,
   useIsCurador,
+  usePermissoesClube,
   useRemoverMembro,
 } from "@/hooks/clubes/useClubeGestao";
 import { useMembrosClube } from "@/hooks/clubes/useMembrosClube";
@@ -40,6 +41,8 @@ import { TrilhaGestao } from "./TrilhaGestao";
 
 export const GestaoTab = ({ clubeId, curadorId }: { clubeId: string; curadorId: string }) => {
   const { canManage } = useIsCurador(clubeId, curadorId);
+  // Editar o clube e mexer em co-curadores: só o organizador e o admin.
+  const { podeNomear } = usePermissoesClube(clubeId, curadorId);
   const { data: clube } = useClube(clubeId);
   const { data: stats, isLoading: loadingStats } = useGestaoStats(clubeId);
   const { data: top, isLoading: loadingTop } = useTopContribuidores(clubeId);
@@ -68,7 +71,10 @@ export const GestaoTab = ({ clubeId, curadorId }: { clubeId: string; curadorId: 
     { label: "Conteúdos", value: stats?.conteudos, icon: BookOpen, accent: "text-foreground" },
   ];
 
-  const naoCuradores = (membros ?? []).filter((m) => !m.is_curador);
+  // O co-curador não vê outros co-curadores nesta lista: não pode removê-los.
+  const naoCuradores = (membros ?? []).filter(
+    (m) => !m.is_curador && (podeNomear || m.papel !== "co_curador"),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,7 +87,7 @@ export const GestaoTab = ({ clubeId, curadorId }: { clubeId: string; curadorId: 
             Acompanhe a saúde da tribo e ajuste o clube.
           </p>
         </div>
-        {clube && (
+        {clube && podeNomear && (
           <Button
             size="sm"
             variant="outline"

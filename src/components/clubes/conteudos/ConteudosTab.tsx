@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/useAuth";
+import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useConteudos, useRegistrarAcesso, ClubeConteudo } from "@/hooks/clubes/useConteudos";
 import { CriarConteudoDialog } from "./CriarConteudoDialog";
 import { VideoPlayerDialog } from "./VideoPlayerDialog";
@@ -40,10 +40,10 @@ export const ConteudosTab = ({
   curadorId: string;
   isMembro: boolean;
 }) => {
-  const { user } = useAuth();
   const { data: conteudos, isLoading } = useConteudos(clubeId);
   const { data: membership } = useClubeMembership(clubeId);
-  const isCurador = user?.id === curadorId;
+  // Publicar e gerenciar conteúdos: organizador, co-curador e admin.
+  const { podeGerir: isCurador } = usePermissoesClube(clubeId, curadorId);
   const [criarOpen, setCriarOpen] = useState(false);
 
   if (!isMembro && !isCurador) {

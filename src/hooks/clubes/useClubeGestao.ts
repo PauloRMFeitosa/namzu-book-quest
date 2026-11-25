@@ -3,12 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
+import { useClubeMembership } from "@/hooks/clubes/useClube";
+import { permissoesNoClube } from "@/lib/papeis";
 
-export const useIsCurador = (clubeId: string | undefined, curadorId: string | undefined) => {
+/**
+ * O que quem está logado pode fazer neste clube: organizador, co-curador,
+ * admin ou nada disso. As mesmas regras valem no banco.
+ */
+export const usePermissoesClube = (clubeId: string | undefined, curadorId: string | undefined) => {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
-  const isCurador = !!user && !!curadorId && user.id === curadorId;
-  return { isCurador, canManage: isCurador || isAdmin };
+  const { data: participacao } = useClubeMembership(clubeId);
+  return permissoesNoClube({
+    userId: user?.id,
+    curadorId,
+    papel: (participacao as { papel?: string | null } | null | undefined)?.papel,
+    status: participacao?.status,
+    isAdmin,
+  });
+};
+
+export const useIsCurador = (clubeId: string | undefined, curadorId: string | undefined) => {
+  const permissoes = usePermissoesClube(clubeId, curadorId);
+  return { isCurador: permissoes.ehDono, canManage: permissoes.podeGerir };
 };
 
 export const useGestaoStats = (clubeId: string | undefined) => {

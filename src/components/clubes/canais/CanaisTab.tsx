@@ -1,5 +1,5 @@
 import { Hash } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useCanais } from "@/hooks/clubes/useCanais";
 import { useCanalUIStore } from "@/stores/canalUIStore";
 import { CanalList } from "./CanalList";
@@ -12,8 +12,8 @@ interface Props {
 }
 
 export const CanaisTab = ({ clubeId, curadorId, isMembro }: Props) => {
-  const { user } = useAuth();
-  const isCurador = !!user && user.id === curadorId;
+  // Criar canal: organizador, co-curador e admin.
+  const { podeGerir: isCurador } = usePermissoesClube(clubeId, curadorId);
   const { data: canais } = useCanais(clubeId);
   const selecionado = useCanalUIStore((s) => s.canalSelecionado[clubeId] ?? null);
   const setSelecionado = useCanalUIStore((s) => s.setCanalSelecionado);
