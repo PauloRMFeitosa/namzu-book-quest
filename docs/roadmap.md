@@ -113,7 +113,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 **Objetivo:** quem abre o NAMZU entende em 10 segundos que é uma ferramenta de clube.
 
 - [x] Nova entrada: visitante vê a proposta para organizadores e o botão "Criar meu clube". Quem chega por link de convite cai direto no clube, com cadastro curto (flag `show_entrada_organizador`, página `/convite/:id`, função `clube_convite`).
-- [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Feito no código: `/leitores` nasce desligada e a entrada do organizador tira o quiz e o Código ME do caminho. **Situação em produção em 25/11/2026:** o preset "Padrão completo" foi aplicado no painel admin às 11:37 UTC, então a produção está no modo antigo (menu de cinco abas, quiz e Código ME). Para a Fase 2 valer em produção, aplicar o preset "Foco no organizador". Aguarda decisão do Paulo.
+- [x] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Feito no código: `/leitores` nasce desligada e a entrada do organizador tira o quiz e o Código ME do caminho. Em produção desde 25/11/2026, com o preset "Foco no organizador" aplicado a pedido do Paulo: menu de três destinos e entrada do organizador ligados; Leitores, Metas, Histórico e gamificação da home desligados. O preset "Padrão completo" do painel admin desfaz tudo.
 - [x] Criar as flags que faltam: `/leitores`, `/citacoes`, `/busca` e `/livros` agora têm `FeatureRoute` (`show_leitores` nasce desligada).
 - [x] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil (flag `show_navegacao_foco`; o menu "Mais" virou a seção Conta do Perfil).
 - [x] Segurança de clubes: regras de entrada em `clube_membros`, clubes privados visíveis só para quem faz parte e moderador aprovando pedidos (`docs/runbooks/fase2-seguranca-clubes.md`). Não estava no plano original; surgiu da revisão das políticas durante a entrega do convite.
@@ -123,6 +123,8 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Reescrever o `README.md` e a home do blog para o organizador.
 
 **Critério de saída:** novo usuário cria um clube e convida o primeiro membro em menos de 3 minutos, sem passar por telas que não sejam de clube; bundle inicial abaixo de 300 kB gzip.
+
+**Situação em 25/11/2026:** todos os itens estão entregues e a versão `0.3.0` está registrada no `package.json` e no `CHANGELOG.md`. O carregamento inicial ficou em 199 kB gzip. O caminho de criar o clube e convidar não passa por telas que não sejam de clube: página pública, cadastro, formulário do clube e link de convite. O tempo de menos de 3 minutos ainda não foi medido com um organizador de verdade; fica para as entrevistas da Fase 1 e para o piloto. Falta a tag `v0.3.0`.
 
 ---
 
