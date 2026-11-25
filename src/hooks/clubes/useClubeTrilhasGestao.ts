@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { queryKeys } from "@/constants/queryKeys";
+import { registrarEvento } from "@/services/analytics";
+import type { MetaRascunho } from "@/lib/cronograma";
 
 export interface TrilhaGestaoItem {
   id: string;
@@ -49,14 +52,54 @@ const invalidate = (qc: ReturnType<typeof useQueryClient>, clubeId?: string) => 
   qc.invalidateQueries({ queryKey: ["clube-leituras", clubeId], refetchType: "all" });
 };
 
+/** Dados do livro escolhido, para o organizador conferir antes de incluir na trilha. */
+export interface ObraParaTrilha {
+  id: string;
+  titulo_original: string;
+  capa_padrao_url: string | null;
+  ano_primeira_publicacao: number | null;
+  sinopse_padrao: string | null;
+  autores: string[];
+}
+
+export const useObraParaTrilha = (obraId: string | null) =>
+  useQuery({
+    queryKey: queryKeys.clubes.obraParaTrilha(obraId ?? ""),
+    enabled: !!obraId,
+    queryFn: async (): Promise<ObraParaTrilha | null> => {
+      const [obra, autores] = await Promise.all([
+        supabase
+          .from("obras")
+          .select("id, titulo_original, capa_padrao_url, ano_primeira_publicacao, sinopse_padrao")
+          .eq("id", obraId!)
+          .maybeSingle(),
+        supabase
+          .from("obra_autores")
+          .select("ordem, autores(nome)")
+          .eq("obra_id", obraId!)
+          .order("ordem", { ascending: true }),
+      ]);
+      if (obra.error) throw obra.error;
+      if (!obra.data) return null;
+      const nomes = (autores.data ?? [])
+        .map((a) => (a.autores as { nome?: string } | null)?.nome)
+        .filter((n): n is string => !!n);
+      return { ...obra.data, autores: nomes };
+    },
+  });
+
+export interface AdicionarTrilhaInput {
+  obra_id: string;
+  data_inicio_sugerida?: string | null;
+  data_fim_sugerida?: string | null;
+  /** Metas para criar junto com a obra. Vazio ou ausente: só a obra entra. */
+  metas?: MetaRascunho[];
+}
+
 export const useAdicionarTrilha = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      obra_id: string;
-      data_inicio_sugerida?: string | null;
-      data_fim_sugerida?: string | null;
-    }) => {
+    mutationFn: async (input: AdicionarTrilhaInput): Promise<{ trilhaId: string; metasFalharam: boolean }> => {
       if (!clubeId) throw new Error("Clube inválido");
       const { data: existentes } = await supabase
         .from("clube_trilhas")
@@ -66,18 +109,50 @@ export const useAdicionarTrilha = (clubeId: string | undefined) => {
         .limit(1);
       const proxima = ((existentes?.[0]?.ordem as number) ?? 0) + 1;
 
-      const { error } = await supabase.from("clube_trilhas").insert({
-        clube_id: clubeId,
-        obra_id: input.obra_id,
-        ordem: proxima,
-        data_inicio_sugerida: input.data_inicio_sugerida ?? null,
-        data_fim_sugerida: input.data_fim_sugerida ?? null,
-      });
+      const { data: nova, error } = await supabase
+        .from("clube_trilhas")
+        .insert({
+          clube_id: clubeId,
+          obra_id: input.obra_id,
+          ordem: proxima,
+          data_inicio_sugerida: input.data_inicio_sugerida ?? null,
+          data_fim_sugerida: input.data_fim_sugerida ?? null,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+
+      const metas = input.metas ?? [];
+      if (!metas.length) return { trilhaId: nova.id, metasFalharam: false };
+
+      // A obra já entrou. Se as metas falharem, o organizador monta o
+      // cronograma depois pela Gestão, em vez de perder a inclusão.
+      const { error: erroMetas } = await supabase.rpc("clube_salvar_cronograma", {
+        p_trilha_id: nova.id,
+        p_data_inicio: input.data_inicio_sugerida ?? null,
+        p_data_fim: input.data_fim_sugerida ?? null,
+        p_metas: metas.map((m) => ({
+          titulo: m.titulo.trim(),
+          percentual_alvo: m.percentual_alvo,
+          data_limite: m.data_limite,
+        })),
+      });
+      if (!erroMetas) {
+        registrarEvento("cronograma_definido", { clubeId, props: { metas: metas.length, origem: "semanas" } });
+      }
+      return { trilhaId: nova.id, metasFalharam: !!erroMetas };
     },
-    onSuccess: () => {
-      toast.success("Obra adicionada à trilha");
+    onSuccess: (resultado) => {
+      if (resultado.metasFalharam) {
+        toast.warning("Obra adicionada, mas as metas não foram criadas. Monte o cronograma pela Gestão.");
+      } else {
+        toast.success("Obra adicionada à trilha");
+      }
       invalidate(qc, clubeId);
+      if (clubeId) {
+        qc.invalidateQueries({ queryKey: queryKeys.clubes.metas(clubeId), refetchType: "all" });
+        qc.invalidateQueries({ queryKey: queryKeys.clubes.visaoGeral(clubeId), refetchType: "all" });
+      }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar"),
   });
