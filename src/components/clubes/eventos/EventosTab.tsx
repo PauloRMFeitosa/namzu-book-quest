@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useEventosClube } from "@/hooks/clubes/useEventos";
 import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
 import { EventoCard } from "./EventoCard";
@@ -20,10 +20,10 @@ interface Props {
 
 export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) => {
   const { user } = useAuth();
-  const { isAdmin } = useIsAdmin();
-  const isCurador = user?.id === curadorId;
-  // Lembrete, presença e ata: quem organiza o clube e admins, como no banco.
-  const podeGerir = isCurador || isAdmin;
+  // Criar encontro, lembrete, presença, ata e votação: organizador,
+  // co-curador e admin, como no banco.
+  const { podeGerir } = usePermissoesClube(clubeId, curadorId);
+  const isCurador = podeGerir;
   const { data: eventos = [], isLoading } = useEventosClube(clubeId);
   const [filtro, setFiltro] = useState<"futuros" | "passados">("futuros");
   // Votação de data: só quem faz parte do clube consegue ler.

@@ -313,6 +313,9 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
                     {m.organizador && (
                       <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">Organizador</span>
                     )}
+                    {!m.organizador && m.papel === "co_curador" && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">Co-curador</span>
+                    )}
                     {!m.organizador && m.papel === "moderador" && (
                       <span className="px-1.5 py-0.5 rounded-full bg-secondary text-[10px] font-medium">Moderador</span>
                     )}

@@ -163,6 +163,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 - [x] Entrega 4, parte 1 — Encontros: criar encontro e responder "Talvez" ou "Não" voltam a funcionar, lembrete automático no app 24 h e 1 h antes, mensagem pronta para o grupo, lista de presença (`evento_presencas`) e ata (`evento_atas`).
 - [x] Entrega 4, parte 2 — Encontros: votação de data (`clube_votacoes_data`): o organizador propõe datas, os membros marcam quando podem e a escolha cria o encontro.
 - [x] Entrega 5 — Avisos: recado do organizador para todos os membros (`clube_avisos`), com notificação no app, faixa no topo do clube e texto pronto para o grupo. E-mail e notificação no celular ficam para depois.
+- [x] Entrega 6 — Co-curador: até 3 por clube, nomeados pelo organizador, com as permissões do dia a dia (`is_clube_curador`) e sem as do dono (`is_clube_dono`).
 
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.

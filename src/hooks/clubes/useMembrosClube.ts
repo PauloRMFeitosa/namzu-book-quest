@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { PapelDeMembro } from "@/lib/papeis";
 
 export interface MembroClube {
   user_id: string;
   data_entrada: string;
   status: string;
-  papel: "membro" | "moderador";
+  papel: PapelDeMembro;
   is_curador: boolean;
   perfil: {
     user_id: string;
@@ -52,7 +53,7 @@ export const useMembrosClube = (clubeId: string | undefined, curadorId?: string)
           user_id: m.user_id,
           data_entrada: m.data_entrada,
           status: m.status,
-          papel: (m.papel ?? "membro") as "membro" | "moderador",
+          papel: (m.papel ?? "membro") as PapelDeMembro,
           is_curador: curadorId === m.user_id,
           perfil: pMap.get(m.user_id) ?? null,
           xp: g.xp_total ?? 0,

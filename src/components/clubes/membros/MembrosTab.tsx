@@ -30,6 +30,13 @@ import { rotuloUltimaAtividade } from "@/lib/visaoGeral";
 import { gerarCsvMembros, nomeArquivoCsv } from "@/lib/membrosCsv";
 import { registrarEvento } from "@/services/analytics";
 import { toast } from "sonner";
+import {
+  papeisDisponiveis,
+  permissoesNoClube,
+  podeAlterarMembro,
+  rotuloDoPapel,
+  type PapelDeMembro,
+} from "@/lib/papeis";
 
 const ROTULO_LEITURA: Record<string, string> = {
   nao_iniciou: "Não começou",
@@ -63,13 +70,21 @@ export const MembrosTab = ({
   const { isAdmin } = useIsAdmin();
   const [q, setQ] = useState("");
 
-  const isCurador = !!user && user.id === curadorId;
-  const meuPapel = membros?.find((m) => m.user_id === user?.id)?.papel;
-  const isModerador = meuPapel === "moderador";
+  const eu = membros?.find((m) => m.user_id === user?.id);
+  const permissoes = permissoesNoClube({
+    userId: user?.id,
+    curadorId,
+    papel: eu?.papel,
+    status: eu?.status,
+    isAdmin,
+  });
+  const isModerador = eu?.papel === "moderador";
   // Moderador aprova e recusa pedidos de entrada. Alterar papel e remover
-  // membro ativo ficam com o organizador e o admin (é o que o banco permite).
-  const canManage = isCurador || isAdmin || isModerador;
-  const podeGerirMembros = isCurador || isAdmin;
+  // membro ativo ficam com o organizador, o co-curador e o admin (é o que o
+  // banco permite). Só o organizador e o admin nomeiam co-curadores.
+  const canManage = permissoes.podeGerir || isModerador;
+  const podeGerirMembros = permissoes.podeGerir;
+  const coCuradores = (membros ?? []).filter((m) => m.papel === "co_curador" && m.status === "ativo").length;
 
   // Atividade e progresso de cada membro: só o organizador e o admin recebem.
   const { data: visao } = useVisaoGeralClube(clubeId, podeGerirMembros);
@@ -86,7 +101,7 @@ export const MembrosTab = ({
         return {
           nome: m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro",
           usuario: m.perfil?.username ?? null,
-          papel: m.is_curador ? "Organizador" : m.papel === "moderador" ? "Moderador" : "Membro",
+          papel: rotuloDoPapel(m.papel, m.is_curador),
           entrouEm: m.data_entrada,
           percentual: extra?.percentual ?? null,
           situacaoLeitura: extra?.status_leitura ? ROTULO_LEITURA[extra.status_leitura] : null,
@@ -231,7 +246,10 @@ export const MembrosTab = ({
           {filtered.map((m) => {
             const nome = m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro";
             const isMe = user?.id === m.user_id;
-            const canExpel = podeGerirMembros && !isMe && !m.is_curador;
+            // Mudar papel e remover: o co-curador não mexe no organizador nem
+            // em outro co-curador.
+            const podeAlterar = podeAlterarMembro(permissoes, { ehDono: m.is_curador, papel: m.papel, souEu: isMe });
+            const canExpel = podeAlterar;
 
             return (
               <li key={m.user_id} className="card-soft p-4 flex flex-col gap-3 min-w-0 overflow-hidden">
@@ -257,6 +275,11 @@ export const MembrosTab = ({
                       {m.is_curador && (
                         <Badge className="h-4 px-1.5 gap-0.5 bg-accent/15 text-accent border-0 text-[10px]">
                           <Crown className="w-2.5 h-2.5" /> Curador
+                        </Badge>
+                      )}
+                      {!m.is_curador && m.papel === "co_curador" && (
+                        <Badge className="h-4 px-1.5 gap-0.5 bg-accent/15 text-accent border-0 text-[10px]">
+                          <Crown className="w-2.5 h-2.5" /> Co-curador
                         </Badge>
                       )}
                       {!m.is_curador && m.papel === "moderador" && (
@@ -302,22 +325,23 @@ export const MembrosTab = ({
                 )}
 
                 {/* Ações do organizador — linha separada */}
-                {(canExpel || (podeGerirMembros && !m.is_curador && !isMe) || isMe) && (
+                {(canExpel || podeAlterar || isMe) && (
                   <div className="flex items-center gap-2 pt-1 border-t border-border/40 flex-wrap">
                     {/* Alterar papel (organizador) */}
-                    {podeGerirMembros && !m.is_curador && !isMe && (
+                    {podeAlterar && (
                       <Select
                         value={m.papel}
-                        onValueChange={(v) =>
-                          definirPapel.mutate({ userId: m.user_id, papel: v as "membro" | "moderador" })
-                        }
+                        onValueChange={(v) => definirPapel.mutate({ userId: m.user_id, papel: v as PapelDeMembro })}
                       >
                         <SelectTrigger className="h-7 text-[11px] rounded-lg flex-1 min-w-[90px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="membro">Membro</SelectItem>
-                          <SelectItem value="moderador">Moderador</SelectItem>
+                          {papeisDisponiveis(permissoes, { papelAtual: m.papel, coCuradores }).map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {rotuloDoPapel(p, false)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}

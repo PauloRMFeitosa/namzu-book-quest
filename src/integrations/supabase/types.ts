@@ -3839,6 +3839,10 @@ export type Database = {
         Args: { _clube: string; _user: string }
         Returns: boolean
       }
+      is_clube_dono: {
+        Args: { _clube: string; _user: string }
+        Returns: boolean
+      }
       is_clube_membro: {
         Args: { _clube: string; _user: string }
         Returns: boolean
