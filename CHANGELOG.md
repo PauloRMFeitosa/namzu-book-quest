@@ -41,6 +41,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Co-curador (Fase 3):** o organizador nomeia até 3 membros ativos como co-curadores, na aba Membros. O co-curador faz o dia a dia do clube: visão geral, aprovar e remover membros, livro e cronograma, encontros, presença, ata, votação de data, avisos, canais e conteúdos. Continuam só com o organizador: apagar o clube, mudar nome e visibilidade, nomear ou tirar co-curadores e mexer na própria participação dele.
 - Funções `is_clube_dono` e `is_clube_curador` (que passa a incluir o co-curador) e gatilho de exclusão em `clube_membros` (migração `fase3_co_curador`).
 - Testes das permissões em `src/lib/papeis.test.ts`.
+- **Página "Adicionar obra à trilha":** a inclusão de livro na trilha saiu da janela e virou página própria (`/clubes/:id/trilha/nova`). Mostra a prévia do livro escolhido (capa, autoria, ano, páginas e sinopse), avisa quando o livro já está na trilha e permite já criar as metas semanais do período. O rascunho continua guardado.
+- Regra de projeto no `CLAUDE.md`: fluxo novo de criação é página com rota própria, não janela com formulário.
+- Testes da lógica de inclusão em `src/lib/trilha.test.ts`.
 
 ### Corrigido
 

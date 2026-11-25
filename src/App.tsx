@@ -27,6 +27,7 @@ const Livros = lazy(() => import("./pages/Livros"));
 const Leituras = lazy(() => import("./pages/Leituras"));
 const ClubesMarketplace = lazy(() => import("./pages/clubes/Marketplace"));
 const ClubeDetalhe = lazy(() => import("./pages/clubes/ClubeDetalhe"));
+const AdicionarObraTrilha = lazy(() => import("./pages/clubes/AdicionarObraTrilha"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Metas = lazy(() => import("./pages/Metas"));
 const Historico = lazy(() => import("./pages/Historico"));
@@ -94,6 +95,7 @@ const App = () => (
         <Route path="/leituras/:id" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/trilha/nova" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><AdicionarObraTrilha /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/perfis/:id" element={<ProtectedRoute><PerfilPublico /></ProtectedRoute>} />
             <Route path="/perfis/:id/livros/:usuarioLivroId" element={<ProtectedRoute><PerfilLeituraDetalhe /></ProtectedRoute>} />

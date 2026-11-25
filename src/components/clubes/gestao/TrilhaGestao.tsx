@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { BookOpen, Plus, ArrowUp, ArrowDown, Trash2, Loader2, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,14 +21,12 @@ import {
 } from "@/hooks/clubes/useClubeTrilhasGestao";
 import { useMetasClube } from "@/hooks/clubes/useCronograma";
 import { livroDoCiclo, metaAtual, periodoDoLivro, diaCurto } from "@/lib/cronograma";
-import { AdicionarObraTrilhaDialog } from "./AdicionarObraTrilhaDialog";
 import { CronogramaDialog, type LivroDoCronograma } from "./CronogramaDialog";
 
 export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
   const { data: trilhas, isLoading } = useTrilhasGestao(clubeId);
   const remover = useRemoverTrilha(clubeId);
   const reordenar = useReordenarTrilha(clubeId);
-  const [open, setOpen] = useState(false);
   const { data: metas } = useMetasClube(clubeId);
   const [cronograma, setCronograma] = useState<LivroDoCronograma | null>(null);
   const atual = livroDoCiclo(trilhas ?? []);
@@ -36,8 +35,10 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-display text-base font-semibold">Trilha de leituras</h3>
-        <Button size="sm" onClick={() => setOpen(true)} className="rounded-xl gap-1.5">
-          <Plus className="w-4 h-4" /> Adicionar obra
+        <Button size="sm" asChild className="rounded-xl gap-1.5">
+          <Link to={`/clubes/${clubeId}/trilha/nova`}>
+            <Plus className="w-4 h-4" /> Adicionar obra
+          </Link>
         </Button>
       </div>
 
@@ -178,7 +179,6 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
         </ul>
       )}
 
-      <AdicionarObraTrilhaDialog clubeId={clubeId} open={open} onOpenChange={setOpen} />
       {cronograma && (
         <CronogramaDialog
           clubeId={clubeId}

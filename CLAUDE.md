@@ -88,6 +88,20 @@ Exceções permitidas (inglês obrigatório):
 - Nomes de bibliotecas e APIs externas (`supabase`, `useQuery`, `toast`, etc.)
 - Identificadores técnicos de infraestrutura (`edge function`, `bucket`, `RLS`, etc.)
 
+## Criação em Página, Não em Janela (Obrigatório)
+
+**Todo fluxo novo de criação DEVE ser uma página com rota própria, não um `Dialog` com formulário.** Criar algo (obra na trilha, encontro, conteúdo, clube) merece espaço para explicar, mostrar prévia e validar, e a página sobrevive melhor ao uso no celular.
+
+- **Rota:** aninhada no contexto, terminando em `/nova` ou `/novo` (ex.: `/clubes/:id/trilha/nova`), com `lazy()` em `App.tsx` e as mesmas proteções da rota-mãe (`ProtectedRoute`, `FeatureRoute`).
+- **Permissão:** a página confere quem pode criar e redireciona para a tela-mãe quando não pode. O botão escondido não basta, porque a URL é acessível direto.
+- **Estrutura:** botão de voltar e título no topo, seções numeradas, prévia do que será criado, erro em texto junto do formulário e os botões "Cancelar" e de confirmar no fim.
+- **Lógica:** validação e montagem dos dados ficam em `src/lib/`, com testes; a página só liga as peças.
+- **Rascunho:** a regra de rascunho abaixo continua valendo. Na página, "aberto" é a página montada: restaure no estado inicial, salve a cada alteração e limpe só no sucesso.
+- **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). "Cancelar" volta sem apagar o rascunho.
+- **Modelo:** `src/pages/clubes/AdicionarObraTrilha.tsx`.
+
+`Dialog` continua valendo para confirmação, ação rápida de um campo e edição pontual. As janelas de criação que já existem (tabela abaixo) são convertidas aos poucos; não crie novas nesse formato.
+
 ## Persistência de Rascunho em Formulários (Obrigatório)
 
 **Todo modal ou formulário de criação DEVE persistir o rascunho no `localStorage`** para que o usuário não perca dados ao sair do app e voltar (comportamento comum em mobile).
@@ -138,7 +152,7 @@ onOpenChange(false);
 |---|---|
 | `CriarConteudoDialog.tsx` | `draft-conteudo-{clubeId}` |
 | `CriarEventoDialog.tsx` | `draft-evento-{clubeId}` |
-| `AdicionarObraTrilhaDialog.tsx` | `draft-trilha-{clubeId}` |
+| `pages/clubes/AdicionarObraTrilha.tsx` (página) | `draft-trilha-{clubeId}` |
 | `CriarClubeDialog.tsx` | `draft-criar-clube` |
 | `CriarMicrogrupoDialog.tsx` | `draft-microgrupo-{clubeId}` |
 | `CriarCanalDialog.tsx` | `draft-canal-{clubeId}` |
