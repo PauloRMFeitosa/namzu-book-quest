@@ -1196,6 +1196,41 @@ export type Database = {
           },
         ]
       }
+      eventos_produto: {
+        Row: {
+          clube_id: string | null
+          criado_em: string
+          evento: string
+          id: number
+          props: Json
+          user_id: string
+        }
+        Insert: {
+          clube_id?: string | null
+          criado_em?: string
+          evento: string
+          id?: never
+          props?: Json
+          user_id?: string
+        }
+        Update: {
+          clube_id?: string | null
+          criado_em?: string
+          evento?: string
+          id?: never
+          props?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_produto_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fontes_externas: {
         Row: {
           created_at: string

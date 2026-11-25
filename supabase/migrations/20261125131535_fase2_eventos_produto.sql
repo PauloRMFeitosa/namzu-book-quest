@@ -1,5 +1,7 @@
 -- Fase 2 (docs/roadmap.md) — registro de eventos de produto.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125131535).
+--
 -- Hoje nada mede o uso do app: o funil de onboarding chamava o Google
 -- Analytics, que nunca foi instalado. Esta tabela guarda os eventos que o
 -- roadmap pede para acompanhar o piloto (clube criado, convite gerado, membro

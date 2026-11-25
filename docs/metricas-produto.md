@@ -9,7 +9,7 @@ Há duas fontes. Para cada pergunta, use a que é mais confiável.
 | Fonte | O que é | Quando usar |
 |---|---|---|
 | Tabelas do domínio | `clubes`, `clube_membros`, `leitura_progresso`, `eventos`, `evento_participantes`, `clube_posts`, `citacoes` | Contagens e a métrica norte. São o registro oficial e têm histórico desde o início |
-| `eventos_produto` | Eventos gravados pelo app a partir de 25/11/2026 | O que as tabelas não guardam (convite gerado, uso da IA) e o caminho que a pessoa fez (origem, canal) |
+| `eventos_produto` | Eventos gravados pelo app a partir de 25/11/2026 (migração `20261125131535`) | O que as tabelas não guardam (convite gerado, uso da IA) e o caminho que a pessoa fez (origem, canal) |
 
 Antes da Fase 2 nada era medido. O funil de onboarding chamava o Google Analytics, que nunca foi instalado.
 
