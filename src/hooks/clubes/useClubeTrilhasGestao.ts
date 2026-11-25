@@ -75,14 +75,14 @@ export const useObraParaTrilha = (obraId: string | null) =>
           .maybeSingle(),
         supabase
           .from("obra_autores")
-          .select("ordem, autores(nome)")
+          .select("ordem, autores(nome_completo)")
           .eq("obra_id", obraId!)
           .order("ordem", { ascending: true }),
       ]);
       if (obra.error) throw obra.error;
       if (!obra.data) return null;
       const nomes = (autores.data ?? [])
-        .map((a) => (a.autores as { nome?: string } | null)?.nome)
+        .map((a) => (a.autores as { nome_completo?: string } | null)?.nome_completo)
         .filter((n): n is string => !!n);
       return { ...obra.data, autores: nomes };
     },

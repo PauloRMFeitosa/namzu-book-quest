@@ -37,3 +37,22 @@ export function resumoDasMetas(total: number): string {
   if (total === 0) return "";
   return total === 1 ? "1 meta para o período" : `${total} metas, uma por semana`;
 }
+
+const semAcento = (texto: string) =>
+  texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+/** Filtra o acervo por título ou autoria, sem ligar para acento e maiúscula, em ordem de título. */
+export function filtrarAcervo<T extends { titulo: string; titulo_ordenacao: string; autor: string | null }>(
+  acervo: T[],
+  busca: string,
+): T[] {
+  const termo = semAcento(busca);
+  const achados = termo
+    ? acervo.filter((l) => semAcento(l.titulo).includes(termo) || (!!l.autor && semAcento(l.autor).includes(termo)))
+    : acervo;
+  return [...achados].sort((a, b) => a.titulo_ordenacao.localeCompare(b.titulo_ordenacao, "pt-BR"));
+}

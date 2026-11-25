@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, CalendarRange, Loader2 } from "lucide-react";
+import { Link, Navigate, useParams } from "react-router-dom";
+import { ArrowLeft, BookOpen, CalendarRange, Check, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ObraAutocomplete } from "@/components/cadastro-manual/ObraAutocomplete";
+import { TrilhaGestao } from "@/components/clubes/gestao/TrilhaGestao";
+import { useAcervoObras } from "@/hooks/useAcervoObras";
+import { cn } from "@/lib/utils";
 import { useClube, useClubeMembership } from "@/hooks/clubes/useClube";
 import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useAdicionarTrilha, useObraParaTrilha, useTrilhasGestao } from "@/hooks/clubes/useClubeTrilhasGestao";
 import { usePaginasDasObras } from "@/hooks/clubes/useCronograma";
 import { diaComSemana, textoDoAlvo } from "@/lib/cronograma";
-import { metasSemanaisDaObra, resumoDasMetas, validarNovaObra } from "@/lib/trilha";
+import { filtrarAcervo, metasSemanaisDaObra, resumoDasMetas, validarNovaObra } from "@/lib/trilha";
 
 // Inclusão de obra na trilha do clube. É uma página, não uma janela: criação
 // no NAMZU acontece em página própria (ver CLAUDE.md).
@@ -20,20 +22,23 @@ import { metasSemanaisDaObra, resumoDasMetas, validarNovaObra } from "@/lib/tril
 const draftKey = (clubeId: string) => `draft-trilha-${clubeId}`;
 
 interface Rascunho {
-  titulo: string;
+  /** O que foi digitado para filtrar o acervo. */
+  busca: string;
   obraId: string | null;
   inicio: string;
   fim: string;
   criarMetasSemanais: boolean;
 }
 
-const VAZIO: Rascunho = { titulo: "", obraId: null, inicio: "", fim: "", criarMetasSemanais: false };
+const LIVROS_POR_VEZ = 30;
+
+const VAZIO: Rascunho = { busca: "", obraId: null, inicio: "", fim: "", criarMetasSemanais: false };
 
 const lerRascunho = (clubeId: string): Rascunho => {
   try {
     const d = JSON.parse(localStorage.getItem(draftKey(clubeId)) ?? "{}");
     return {
-      titulo: typeof d.titulo === "string" ? d.titulo : "",
+      busca: typeof d.busca === "string" ? d.busca : "",
       obraId: typeof d.obraId === "string" ? d.obraId : null,
       inicio: typeof d.inicio === "string" ? d.inicio : "",
       fim: typeof d.fim === "string" ? d.fim : "",
@@ -46,7 +51,6 @@ const lerRascunho = (clubeId: string): Rascunho => {
 
 const AdicionarObraTrilha = () => {
   const { id: clubeId = "" } = useParams();
-  const navigate = useNavigate();
   const voltarPara = `/clubes/${clubeId}?tab=gestao`;
 
   const { data: clube, isLoading: carregandoClube } = useClube(clubeId);
@@ -57,12 +61,16 @@ const AdicionarObraTrilha = () => {
 
   const [dados, setDados] = useState<Rascunho>(() => lerRascunho(clubeId));
   const [tentouSalvar, setTentouSalvar] = useState(false);
+  const [visiveis, setVisiveis] = useState(LIVROS_POR_VEZ);
+  const { data: acervo, isLoading: carregandoAcervo } = useAcervoObras();
   const mudar = (parte: Partial<Rascunho>) => setDados((atual) => ({ ...atual, ...parte }));
 
-  // O rascunho fica guardado enquanto a página está aberta; só some ao salvar.
+  // O rascunho fica guardado enquanto há algo preenchido; some ao salvar.
   useEffect(() => {
     if (!clubeId) return;
-    localStorage.setItem(draftKey(clubeId), JSON.stringify(dados));
+    const emBranco = !dados.busca && !dados.obraId && !dados.inicio && !dados.fim && !dados.criarMetasSemanais;
+    if (emBranco) localStorage.removeItem(draftKey(clubeId));
+    else localStorage.setItem(draftKey(clubeId), JSON.stringify(dados));
   }, [clubeId, dados]);
 
   const { data: obra, isLoading: carregandoObra } = useObraParaTrilha(dados.obraId);
@@ -74,6 +82,7 @@ const AdicionarObraTrilha = () => {
   const jaNaTrilha = !!dados.obraId && obrasNaTrilha.includes(dados.obraId);
   const metas = metasSemanaisDaObra(dados);
   const temPeriodo = !!dados.inicio && !!dados.fim;
+  const livros = filtrarAcervo(acervo ?? [], dados.busca);
 
   if (carregandoClube || carregandoParticipacao) {
     return (
@@ -99,8 +108,10 @@ const AdicionarObraTrilha = () => {
     } catch {
       return; // o hook já mostrou o erro; o rascunho continua guardado
     }
-    localStorage.removeItem(draftKey(clubeId));
-    navigate(voltarPara);
+    // Fica na página, pronta para o próximo livro; a trilha logo abaixo já mostra o que entrou.
+    setDados(VAZIO);
+    setTentouSalvar(false);
+    setVisiveis(LIVROS_POR_VEZ);
   };
 
   return (
@@ -120,22 +131,29 @@ const AdicionarObraTrilha = () => {
       <section className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3">
         <div>
           <h2 className="font-display text-base font-semibold">1. Livro</h2>
-          <p className="text-sm text-muted-foreground">Busque pelo título no acervo do NAMZU.</p>
+          <p className="text-sm text-muted-foreground">Toque na capa para escolher. A busca filtra por título ou autoria.</p>
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="trilha-obra" className="sr-only">
-            Título do livro
+        <div className="relative">
+          <Label htmlFor="trilha-busca" className="sr-only">
+            Buscar no acervo
           </Label>
-          <ObraAutocomplete
-            value={dados.titulo}
-            obraId={dados.obraId}
-            onChange={(titulo, obraId) => mudar({ titulo, obraId })}
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Input
+            id="trilha-busca"
+            type="search"
+            value={dados.busca}
+            onChange={(e) => {
+              mudar({ busca: e.target.value });
+              setVisiveis(LIVROS_POR_VEZ);
+            }}
+            placeholder="Buscar por título ou autoria"
+            className="h-11 rounded-xl pl-9"
           />
         </div>
 
         {dados.obraId && carregandoObra && <Skeleton className="h-28 rounded-xl" />}
         {dados.obraId && obra && (
-          <div className="flex gap-3 rounded-xl bg-muted/50 p-3">
+          <div className="flex gap-3 rounded-xl bg-muted/50 p-3" aria-label="Livro escolhido">
             {obra.capa_padrao_url ? (
               <img src={obra.capa_padrao_url} alt="" className="w-16 h-24 rounded-md object-cover shrink-0 self-start" />
             ) : (
@@ -157,6 +175,71 @@ const AdicionarObraTrilha = () => {
           <p role="alert" className="text-sm text-destructive">
             Este livro já está na trilha do clube.
           </p>
+        )}
+        {carregandoAcervo ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="w-full aspect-[2/3] rounded-xl" />
+            ))}
+          </div>
+        ) : livros.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum livro encontrado no acervo.</p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">{livros.length === 1 ? "1 livro" : `${livros.length} livros`}</p>
+            <ul className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {livros.slice(0, visiveis).map((l) => {
+                const escolhido = l.obra_id === dados.obraId;
+                const naTrilha = obrasNaTrilha.includes(l.obra_id);
+                return (
+                  <li key={l.obra_id}>
+                    <button
+                      type="button"
+                      disabled={naTrilha}
+                      aria-pressed={escolhido}
+                      onClick={() => mudar({ obraId: escolhido ? null : l.obra_id })}
+                      className="w-full text-left group disabled:cursor-not-allowed"
+                    >
+                      <div
+                        className={cn(
+                          "relative rounded-xl overflow-hidden ring-offset-2 ring-offset-card transition-shadow",
+                          escolhido && "ring-2 ring-primary",
+                          naTrilha && "opacity-50",
+                        )}
+                      >
+                        {l.capa_url ? (
+                          <img src={l.capa_url} alt="" loading="lazy" className="w-full aspect-[2/3] object-cover" />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-secondary flex items-center justify-center">
+                            <BookOpen className="w-8 h-8 text-primary" />
+                          </div>
+                        )}
+                        {escolhido && (
+                          <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                        {naTrilha && (
+                          <span className="absolute inset-x-0 bottom-0 bg-foreground/80 text-background text-[10px] font-medium text-center py-0.5">
+                            Já na trilha
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-medium line-clamp-2 break-words mt-1.5">{l.titulo}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                        {[l.autor, l.ano].filter(Boolean).join(" · ")}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {visiveis < livros.length && (
+              <Button variant="outline" className="rounded-xl" onClick={() => setVisiveis((v) => v + LIVROS_POR_VEZ)}>
+                Carregar mais
+              </Button>
+            )}
+          </>
         )}
         <p className="text-xs text-muted-foreground">
           Não achou o livro?{" "}
@@ -240,14 +323,20 @@ const AdicionarObraTrilha = () => {
         </p>
       )}
 
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-        <Button variant="ghost" asChild className="rounded-xl">
-          <Link to={voltarPara}>Cancelar</Link>
-        </Button>
-        <Button onClick={salvar} disabled={adicionar.isPending || jaNaTrilha} className="rounded-xl">
-          {adicionar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Adicionar à trilha"}
-        </Button>
+      <Button onClick={salvar} disabled={adicionar.isPending || jaNaTrilha} className="rounded-xl h-11">
+        {adicionar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Adicionar à trilha"}
+      </Button>
+
+      <div className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3">
+        <TrilhaGestao clubeId={clubeId} titulo="Trilha do clube agora" semAdicionar />
+        <p className="text-xs text-muted-foreground">
+          Cada livro que você adiciona aparece aqui. Dá para reordenar, remover e montar o cronograma sem sair da página.
+        </p>
       </div>
+
+      <Button variant="outline" asChild className="rounded-xl">
+        <Link to={voltarPara}>Concluir e voltar para a gestão</Link>
+      </Button>
     </div>
   );
 };

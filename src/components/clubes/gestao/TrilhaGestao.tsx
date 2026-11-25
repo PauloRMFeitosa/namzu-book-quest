@@ -23,7 +23,16 @@ import { useMetasClube } from "@/hooks/clubes/useCronograma";
 import { livroDoCiclo, metaAtual, periodoDoLivro, diaCurto } from "@/lib/cronograma";
 import { CronogramaDialog, type LivroDoCronograma } from "./CronogramaDialog";
 
-export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
+export const TrilhaGestao = ({
+  clubeId,
+  titulo = "Trilha de leituras",
+  semAdicionar = false,
+}: {
+  clubeId: string;
+  titulo?: string;
+  /** A página de inclusão mostra a trilha sem o botão que leva a ela mesma. */
+  semAdicionar?: boolean;
+}) => {
   const { data: trilhas, isLoading } = useTrilhasGestao(clubeId);
   const remover = useRemoverTrilha(clubeId);
   const reordenar = useReordenarTrilha(clubeId);
@@ -34,12 +43,14 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-display text-base font-semibold">Trilha de leituras</h3>
-        <Button size="sm" asChild className="rounded-xl gap-1.5">
-          <Link to={`/clubes/${clubeId}/trilha/nova`}>
-            <Plus className="w-4 h-4" /> Adicionar obra
-          </Link>
-        </Button>
+        <h3 className="font-display text-base font-semibold">{titulo}</h3>
+        {!semAdicionar && (
+          <Button size="sm" asChild className="rounded-xl gap-1.5">
+            <Link to={`/clubes/${clubeId}/trilha/nova`}>
+              <Plus className="w-4 h-4" /> Adicionar obra
+            </Link>
+          </Button>
+        )}
       </div>
 
       {isLoading ? (

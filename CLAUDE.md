@@ -97,7 +97,7 @@ Exceções permitidas (inglês obrigatório):
 - **Estrutura:** botão de voltar e título no topo, seções numeradas, prévia do que será criado, erro em texto junto do formulário e os botões "Cancelar" e de confirmar no fim.
 - **Lógica:** validação e montagem dos dados ficam em `src/lib/`, com testes; a página só liga as peças.
 - **Rascunho:** a regra de rascunho abaixo continua valendo. Na página, "aberto" é a página montada: restaure no estado inicial, salve a cada alteração e limpe só no sucesso.
-- **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). "Cancelar" volta sem apagar o rascunho.
+- **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). Quando é comum criar vários itens em sequência (como os livros da trilha), fique na página com o formulário limpo, mostre abaixo o que já foi criado e ofereça "Concluir". Sair sem salvar não apaga o rascunho.
 - **Modelo:** `src/pages/clubes/AdicionarObraTrilha.tsx`.
 
 `Dialog` continua valendo para confirmação, ação rápida de um campo e edição pontual. As janelas de criação que já existem (tabela abaixo) são convertidas aos poucos; não crie novas nesse formato.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { metasSemanaisDaObra, resumoDasMetas, validarNovaObra } from "./trilha";
+import { filtrarAcervo, metasSemanaisDaObra, resumoDasMetas, validarNovaObra } from "./trilha";
 
 const base = { obraId: "o1", inicio: "", fim: "", criarMetasSemanais: false };
 
@@ -40,5 +40,24 @@ describe("resumoDasMetas", () => {
     expect(resumoDasMetas(0)).toBe("");
     expect(resumoDasMetas(1)).toBe("1 meta para o período");
     expect(resumoDasMetas(4)).toBe("4 metas, uma por semana");
+  });
+});
+
+describe("filtrarAcervo", () => {
+  const acervo = [
+    { titulo: "Tudo é Rio", titulo_ordenacao: "tudo e rio", autor: "Carla Madeira" },
+    { titulo: "Água Viva", titulo_ordenacao: "agua viva", autor: "Clarice Lispector" },
+    { titulo: "Sem Autoria", titulo_ordenacao: "sem autoria", autor: null },
+  ];
+
+  it("sem busca, devolve tudo em ordem de título", () => {
+    expect(filtrarAcervo(acervo, "  ").map((l) => l.titulo)).toEqual(["Água Viva", "Sem Autoria", "Tudo é Rio"]);
+  });
+
+  it("acha por título ou autoria, sem ligar para acento e maiúscula", () => {
+    expect(filtrarAcervo(acervo, "agua").map((l) => l.titulo)).toEqual(["Água Viva"]);
+    expect(filtrarAcervo(acervo, "É RIO").map((l) => l.titulo)).toEqual(["Tudo é Rio"]);
+    expect(filtrarAcervo(acervo, "clarice").map((l) => l.titulo)).toEqual(["Água Viva"]);
+    expect(filtrarAcervo(acervo, "xyz")).toEqual([]);
   });
 });
