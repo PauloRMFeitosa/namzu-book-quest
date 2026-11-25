@@ -32,9 +32,15 @@ export type FeatureFlagKey =
   | "show_menu_inferior_perfil"
   // fluxos de entrada
   | "show_onboarding"
-  | "show_codigo_me";
+  | "show_codigo_me"
+  // Fase 2 (Foco): navegação do organizador e páginas que não tinham flag
+  | "show_navegacao_foco"
+  | "show_leitores"
+  | "show_citacoes"
+  | "show_busca"
+  | "show_livros";
 
-const DEFAULTS: Record<FeatureFlagKey, boolean> = {
+export const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_clubes: true,
   show_metas: true,
   show_historico: true,
@@ -64,6 +70,13 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_menu_inferior_perfil: true,
   show_onboarding: true,
   show_codigo_me: true,
+  // menu de três destinos: Meu clube, Minha leitura, Perfil
+  show_navegacao_foco: true,
+  // descoberta de leitores e matching ficam fora do foco no organizador
+  show_leitores: false,
+  show_citacoes: true,
+  show_busca: true,
+  show_livros: true,
 };
 
 export const useFeatureFlags = () => {
