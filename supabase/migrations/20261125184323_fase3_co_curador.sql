@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — co-curador.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125184323).
+--
 -- O organizador nomeia até 3 membros ativos como co-curadores. O co-curador
 -- faz o dia a dia do clube: visão geral, membros, livro e cronograma,
 -- encontros, presença, ata, votação de data, avisos, canais e conteúdos.
