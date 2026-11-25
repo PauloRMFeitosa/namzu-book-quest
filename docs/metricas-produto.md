@@ -29,6 +29,9 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `membros_exportados` | Organizador baixou a lista de membros em CSV | `total` |
 | `cronograma_definido` | Organizador salvou o cronograma de um livro | `metas`: quantidade. `origem`: `semanas` ou `manual` |
 | `mensagem_meta_copiada` | Organizador copiou a mensagem da meta para o grupo | |
+| `lembrete_encontro_copiado` | Organizador copiou o lembrete do encontro para o grupo | `origem`: `encontros` ou `visao_geral` |
+| `presenca_registrada` | Organizador salvou a lista de presença de um encontro | `presentes`, `membros` |
+| `ata_salva` | Organizador salvou ou apagou a ata de um encontro | `apagada`: `true` ou `false` |
 
 Regras para evento novo:
 

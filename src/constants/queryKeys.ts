@@ -10,6 +10,11 @@ export const queryKeys = {
     metas: (id: string) => ["clube-metas-leitura", id] as const,
     paginasDasObras: (obraIds: string[]) => ["obras-paginas", ...obraIds] as const,
   },
+  eventos: {
+    presencas: (eventoId: string) => ["evento-presencas", eventoId] as const,
+    respostas: (eventoId: string) => ["evento-respostas", eventoId] as const,
+    ata: (eventoId: string) => ["evento-ata", eventoId] as const,
+  },
   perfil: {
     atividadeAnual: (userId: string) => ["atividade-anual", userId] as const,
     privacidade: (userId: string) => ["perfil-privacidade", userId] as const,

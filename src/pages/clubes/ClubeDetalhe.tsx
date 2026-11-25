@@ -178,6 +178,7 @@ const ClubeDetalhe = () => {
                       clubeId={clube.id}
                       curadorId={clube.curador_id}
                       isMembro={acessoTotal}
+                      nomeClube={clube.nome}
                     />
                   </TabsContent>
                 )}

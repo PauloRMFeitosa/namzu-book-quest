@@ -1,10 +1,17 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, Users, ExternalLink, Check, X, HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Clock, Users, ExternalLink, Check, X, HelpCircle, Copy, ClipboardCheck, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EventoClube, useRsvp } from "@/hooks/clubes/useEventos";
+import { mensagemDoEncontro } from "@/lib/encontros";
+import { linkDoClube } from "@/lib/convite";
+import { registrarEvento } from "@/services/analytics";
 import { cn } from "@/lib/utils";
+import { PresencaDialog } from "./PresencaDialog";
+import { AtaDialog } from "./AtaDialog";
 
 const TIPO_LABEL: Record<string, string> = {
   encontro: "Encontro",
@@ -17,12 +24,21 @@ export const EventoCard = ({
   evento,
   isMembro,
   clubeId,
+  curadorId,
+  nomeClube,
+  podeGerir,
 }: {
   evento: EventoClube;
   isMembro: boolean;
   clubeId: string;
+  curadorId: string;
+  nomeClube: string;
+  /** Organizador do clube ou admin. */
+  podeGerir: boolean;
 }) => {
   const rsvp = useRsvp(clubeId);
+  const [presencaAberta, setPresencaAberta] = useState(false);
+  const [ataAberta, setAtaAberta] = useState(false);
   const inicio = new Date(evento.inicio_em);
   const passado = inicio < new Date();
   const lotado =
@@ -34,14 +50,31 @@ export const EventoCard = ({
     rsvp.mutate({ eventoId: evento.id, status: next });
   };
 
+  const copiarLembrete = async () => {
+    const texto = mensagemDoEncontro({
+      nomeClube,
+      titulo: evento.titulo,
+      inicio: evento.inicio_em,
+      urlEvento: evento.url_evento,
+      link: linkDoClube(clubeId, "eventos"),
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Lembrete copiado. Cole no grupo do clube.");
+      registrarEvento("lembrete_encontro_copiado", { clubeId, props: { origem: "encontros" } });
+    } catch {
+      toast.error("Não foi possível copiar. Tente de novo.");
+    }
+  };
+
+  // Depois que o encontro começa: presença e ata para quem organiza; ata para
+  // os membros quando ela existe.
+  const mostraPresenca = passado && podeGerir;
+  const mostraAta = passado && (podeGerir || (isMembro && evento.tem_ata));
+
   return (
-    <article
-      className={cn(
-        "card-soft p-4 flex flex-col gap-3 border border-border/60 transition-all",
-        passado && "opacity-60"
-      )}
-    >
-      <div className="flex items-start gap-4">
+    <article className="card-soft p-4 flex flex-col gap-3 border border-border/60 transition-all">
+      <div className={cn("flex items-start gap-4", passado && "opacity-60")}>
         {/* Date block */}
         <div className="flex flex-col items-center justify-center min-w-[64px] py-2 px-3 rounded-xl bg-gradient-paper border border-border/60">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
@@ -95,7 +128,8 @@ export const EventoCard = ({
             <span className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               {evento.participantes_count}
-              {evento.limite_participantes ? ` / ${evento.limite_participantes}` : ""} confirmados
+              {evento.limite_participantes ? ` / ${evento.limite_participantes}` : ""}{" "}
+              {evento.participantes_count === 1 && !evento.limite_participantes ? "confirmado" : "confirmados"}
             </span>
           </div>
         </div>
@@ -147,6 +181,51 @@ export const EventoCard = ({
             </a>
           )}
         </div>
+      )}
+
+      {podeGerir && !passado && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="ghost" className="rounded-xl h-8" onClick={copiarLembrete}>
+            <Copy className="w-3.5 h-3.5 mr-1" /> Copiar lembrete para o grupo
+          </Button>
+        </div>
+      )}
+
+      {(mostraPresenca || mostraAta) && (
+        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/40">
+          {mostraPresenca && (
+            <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={() => setPresencaAberta(true)}>
+              <ClipboardCheck className="w-3.5 h-3.5 mr-1" />
+              {evento.presentes_count > 0
+                ? `Presença: ${evento.presentes_count === 1 ? "1 pessoa" : `${evento.presentes_count} pessoas`}`
+                : "Lista de presença"}
+            </Button>
+          )}
+          {mostraAta && (
+            <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={() => setAtaAberta(true)}>
+              <FileText className="w-3.5 h-3.5 mr-1" />
+              {!podeGerir ? "Ver ata" : evento.tem_ata ? "Editar ata" : "Escrever ata"}
+            </Button>
+          )}
+          {!podeGerir && evento.presentes_count > 0 && (
+            <span className="text-[11px] text-muted-foreground">
+              {evento.presentes_count === 1 ? "1 pessoa presente" : `${evento.presentes_count} pessoas presentes`}
+            </span>
+          )}
+        </div>
+      )}
+
+      {presencaAberta && (
+        <PresencaDialog
+          clubeId={clubeId}
+          curadorId={curadorId}
+          evento={evento}
+          open
+          onOpenChange={setPresencaAberta}
+        />
+      )}
+      {ataAberta && (
+        <AtaDialog clubeId={clubeId} evento={evento} podeEditar={podeGerir} open onOpenChange={setAtaAberta} />
       )}
     </article>
   );

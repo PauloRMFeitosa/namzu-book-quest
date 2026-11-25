@@ -19,6 +19,7 @@ const TIPO_CONFIG: Record<string, { icon: React.ElementType; cor: string; label:
   clube_novo_post:      { icon: Rss,           cor: "text-emerald-500", label: "Novo post"    },
   clube_novo_conteudo:  { icon: PlayCircle,    cor: "text-teal-500",    label: "Conteúdo"     },
   clube_meta_leitura:   { icon: Target,        cor: "text-primary",     label: "Meta do clube" },
+  clube_lembrete_evento:{ icon: BellRing,      cor: "text-violet-500",  label: "Lembrete"     },
   conquista:            { icon: Trophy,        cor: "text-yellow-500",  label: "Conquista"    },
 };
 const TIPO_DEFAULT = { icon: Bell, cor: "text-primary", label: "Aviso" };

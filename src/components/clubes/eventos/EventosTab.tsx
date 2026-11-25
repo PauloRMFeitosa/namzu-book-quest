@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEventosClube } from "@/hooks/clubes/useEventos";
 import { EventoCard } from "./EventoCard";
 import { CriarEventoDialog } from "./CriarEventoDialog";
@@ -10,11 +11,15 @@ interface Props {
   clubeId: string;
   curadorId: string;
   isMembro: boolean;
+  nomeClube: string;
 }
 
-export const EventosTab = ({ clubeId, curadorId, isMembro }: Props) => {
+export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const isCurador = user?.id === curadorId;
+  // Lembrete, presença e ata: quem organiza o clube e admins, como no banco.
+  const podeGerir = isCurador || isAdmin;
   const { data: eventos = [], isLoading } = useEventosClube(clubeId);
   const [filtro, setFiltro] = useState<"futuros" | "passados">("futuros");
 
@@ -72,7 +77,15 @@ export const EventosTab = ({ clubeId, curadorId, isMembro }: Props) => {
       ) : (
         <div className="flex flex-col gap-3">
           {lista.map((e) => (
-            <EventoCard key={e.id} evento={e} isMembro={isMembro} clubeId={clubeId} />
+            <EventoCard
+              key={e.id}
+              evento={e}
+              isMembro={isMembro}
+              clubeId={clubeId}
+              curadorId={curadorId}
+              nomeClube={nomeClube}
+              podeGerir={podeGerir}
+            />
           ))}
         </div>
       )}
