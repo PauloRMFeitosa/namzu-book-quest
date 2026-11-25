@@ -23,9 +23,20 @@ export const caminhoConvite = (clubeId: string) => `/convite/${clubeId}`;
  * para o link não sair com o endereço de um preview ou do app instalado.
  */
 export function linkConvite(clubeId: string, origem?: string): string {
+  return `${baseDoApp(origem)}${caminhoConvite(clubeId)}`;
+}
+
+/**
+ * Endereço completo do clube, opcionalmente já em uma aba. Quem abrir sem
+ * estar logado cai na página de convite do mesmo clube.
+ */
+export function linkDoClube(clubeId: string, aba?: string, origem?: string): string {
+  return `${baseDoApp(origem)}/clubes/${clubeId}${aba ? `?tab=${aba}` : ""}`;
+}
+
+function baseDoApp(origem?: string): string {
   const atual = origem ?? (typeof window !== "undefined" ? window.location.origin : "");
-  const base = /(^|\.)namzu\.com\.br$/i.test(hostDe(atual)) ? "https://www.namzu.com.br" : atual;
-  return `${base}${caminhoConvite(clubeId)}`;
+  return /(^|\.)namzu\.com\.br$/i.test(hostDe(atual)) ? "https://www.namzu.com.br" : atual;
 }
 
 function hostDe(origem: string): string {

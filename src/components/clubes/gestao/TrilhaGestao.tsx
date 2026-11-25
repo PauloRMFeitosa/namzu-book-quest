@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Plus, ArrowUp, ArrowDown, Trash2, Loader2 } from "lucide-react";
+import { BookOpen, Plus, ArrowUp, ArrowDown, Trash2, Loader2, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,13 +18,19 @@ import {
   useRemoverTrilha,
   useReordenarTrilha,
 } from "@/hooks/clubes/useClubeTrilhasGestao";
+import { useMetasClube } from "@/hooks/clubes/useCronograma";
+import { livroDoCiclo, metaAtual, periodoDoLivro, diaCurto } from "@/lib/cronograma";
 import { AdicionarObraTrilhaDialog } from "./AdicionarObraTrilhaDialog";
+import { CronogramaDialog, type LivroDoCronograma } from "./CronogramaDialog";
 
 export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
   const { data: trilhas, isLoading } = useTrilhasGestao(clubeId);
   const remover = useRemoverTrilha(clubeId);
   const reordenar = useReordenarTrilha(clubeId);
   const [open, setOpen] = useState(false);
+  const { data: metas } = useMetasClube(clubeId);
+  const [cronograma, setCronograma] = useState<LivroDoCronograma | null>(null);
+  const atual = livroDoCiclo(trilhas ?? []);
 
   return (
     <section className="flex flex-col gap-3">
@@ -50,8 +56,19 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
           {trilhas.map((t, idx) => {
             const prev = trilhas[idx - 1];
             const next = trilhas[idx + 1];
+            const metasDoLivro = (metas ?? []).filter((m) => m.trilha_id === t.id);
+            const proxima = metaAtual(metasDoLivro);
+            const abrirCronograma = () =>
+              setCronograma({
+                trilhaId: t.id,
+                obraId: t.obra_id,
+                titulo: t.obra?.titulo_original ?? "Livro",
+                dataInicio: t.data_inicio_sugerida,
+                dataFim: t.data_fim_sugerida,
+              });
             return (
-              <li key={t.id} className="card-soft p-3 flex items-center gap-3">
+              <li key={t.id} className="card-soft p-3 flex flex-col gap-2">
+                <div className="flex items-center gap-3">
                 <span className="font-display text-xs font-semibold text-muted-foreground w-6 text-center">
                   {t.ordem}
                 </span>
@@ -70,9 +87,14 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
                   <p className="text-sm font-medium truncate">
                     {t.obra?.titulo_original ?? "Obra"}
                   </p>
+                  {atual?.id === t.id && (
+                    <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                      Livro do ciclo
+                    </span>
+                  )}
                   {(t.data_inicio_sugerida || t.data_fim_sugerida) && (
                     <p className="text-[11px] text-muted-foreground">
-                      {formatRange(t.data_inicio_sugerida, t.data_fim_sugerida)}
+                      {periodoDoLivro(t.data_inicio_sugerida, t.data_fim_sugerida)}
                     </p>
                   )}
                 </div>
@@ -131,6 +153,25 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 pl-9">
+                  <p className="text-[11px] text-muted-foreground">
+                    {metasDoLivro.length === 0
+                      ? "Sem cronograma"
+                      : `${metasDoLivro.length === 1 ? "1 meta" : `${metasDoLivro.length} metas`}${
+                          proxima ? ` · próxima: ${proxima.titulo}, ${diaCurto(proxima.data_limite)}` : " · todas já venceram"
+                        }`}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1.5 h-8 text-xs shrink-0"
+                    onClick={abrirCronograma}
+                  >
+                    <CalendarRange className="w-3.5 h-3.5" />
+                    {metasDoLivro.length ? "Editar cronograma" : "Definir cronograma"}
+                  </Button>
+                </div>
               </li>
             );
           })}
@@ -138,15 +179,16 @@ export const TrilhaGestao = ({ clubeId }: { clubeId: string }) => {
       )}
 
       <AdicionarObraTrilhaDialog clubeId={clubeId} open={open} onOpenChange={setOpen} />
+      {cronograma && (
+        <CronogramaDialog
+          clubeId={clubeId}
+          livro={cronograma}
+          open
+          onOpenChange={(aberto) => {
+            if (!aberto) setCronograma(null);
+          }}
+        />
+      )}
     </section>
   );
-};
-
-const formatRange = (ini: string | null, fim: string | null) => {
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  if (ini && fim) return `${fmt(ini)} – ${fmt(fim)}`;
-  if (ini) return `A partir de ${fmt(ini)}`;
-  if (fim) return `Até ${fmt(fim)}`;
-  return "";
 };

@@ -20,11 +20,15 @@ export interface MembroVisaoGeral {
 export interface VisaoGeralClube {
   livro_atual: {
     obra_id: string;
+    /** Item da trilha, para abrir o cronograma. Ausente em resposta antiga em cache. */
+    trilha_id?: string;
     titulo: string;
     capa_url: string | null;
     data_inicio: string | null;
     data_fim: string | null;
   } | null;
+  /** Primeira meta do cronograma do livro atual que ainda não venceu. */
+  meta_atual?: MetaDaVisaoGeral | null;
   proximo_encontro: {
     id: string;
     titulo: string;
@@ -41,7 +45,14 @@ export interface VisaoGeralClube {
   membros: MembroVisaoGeral[];
 }
 
-export type FiltroMembros = "todos" | "parados" | "nao_iniciou";
+export interface MetaDaVisaoGeral {
+  id: string;
+  titulo: string;
+  percentual_alvo: number | null;
+  data_limite: string;
+}
+
+export type FiltroMembros = "todos" | "parados" | "nao_iniciou" | "abaixo_meta";
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
@@ -76,7 +87,27 @@ export function textoResumoLeitura(resumo: Record<StatusLeitura, number>): strin
   return `${concluiu} · ${resumo.lendo} lendo · ${naoComecou}`;
 }
 
-export function filtrarMembros(membros: MembroVisaoGeral[], filtro: FiltroMembros): MembroVisaoGeral[] {
+/** Abaixo do alvo da meta e sem ter concluído o livro. Meta sem alvo não classifica ninguém. */
+export function abaixoDaMeta(m: MembroVisaoGeral, meta: MetaDaVisaoGeral | null | undefined): boolean {
+  if (!meta?.percentual_alvo) return false;
+  if (m.status_leitura === "concluido") return false;
+  return (m.percentual ?? 0) < meta.percentual_alvo;
+}
+
+/** "4 de 6 alcançaram". Vazio quando a meta não tem alvo ou o clube não tem membros. */
+export function resumoDaMeta(membros: MembroVisaoGeral[], meta: MetaDaVisaoGeral | null | undefined): string {
+  if (!meta?.percentual_alvo || membros.length === 0) return "";
+  const alcancaram = membros.filter((m) => !abaixoDaMeta(m, meta)).length;
+  if (alcancaram === membros.length) return membros.length === 1 ? "A única pessoa do clube alcançou" : `Todos os ${membros.length} alcançaram`;
+  return alcancaram === 1 ? `1 de ${membros.length} alcançou` : `${alcancaram} de ${membros.length} alcançaram`;
+}
+
+export function filtrarMembros(
+  membros: MembroVisaoGeral[],
+  filtro: FiltroMembros,
+  meta?: MetaDaVisaoGeral | null,
+): MembroVisaoGeral[] {
+  if (filtro === "abaixo_meta") return membros.filter((m) => abaixoDaMeta(m, meta));
   if (filtro === "parados") return membros.filter((m) => m.parado);
   if (filtro === "nao_iniciou") return membros.filter((m) => m.status_leitura === "nao_iniciou" && !m.organizador);
   return membros;

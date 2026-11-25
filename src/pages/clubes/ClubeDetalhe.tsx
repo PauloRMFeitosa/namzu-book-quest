@@ -145,7 +145,7 @@ const ClubeDetalhe = () => {
 
                 {isTabVisible("visao") && (
                   <TabsContent value="visao" className="mt-5">
-                    <VisaoGeralTab clubeId={clube.id} onIrPara={irParaAba} />
+                    <VisaoGeralTab clubeId={clube.id} nomeClube={clube.nome} onIrPara={irParaAba} />
                   </TabsContent>
                 )}
                 {isTabVisible("feed") && (

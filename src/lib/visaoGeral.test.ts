@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  abaixoDaMeta,
   filtrarMembros,
+  resumoDaMeta,
   resumoLeitura,
   resumoRespostas,
   rotuloUltimaAtividade,
@@ -76,6 +78,35 @@ describe("filtrarMembros", () => {
 
   it("em 'não começaram' deixa o organizador de fora", () => {
     expect(filtrarMembros(lista, "nao_iniciou").map((m) => m.user_id)).toEqual(["a"]);
+  });
+});
+
+describe("meta do cronograma na visão geral", () => {
+  const meta = { id: "m", titulo: "Semana 2", percentual_alvo: 50, data_limite: "2026-11-29" };
+  const lista = [
+    membro({ user_id: "a", percentual: 20, status_leitura: "lendo" }),
+    membro({ user_id: "b", percentual: 50, status_leitura: "lendo" }),
+    membro({ user_id: "c", percentual: 100, status_leitura: "concluido" }),
+    membro({ user_id: "d", percentual: null, status_leitura: "nao_iniciou" }),
+  ];
+
+  it("está abaixo quem não chegou ao alvo e não concluiu", () => {
+    expect(lista.filter((m) => abaixoDaMeta(m, meta)).map((m) => m.user_id)).toEqual(["a", "d"]);
+    expect(filtrarMembros(lista, "abaixo_meta", meta).map((m) => m.user_id)).toEqual(["a", "d"]);
+  });
+
+  it("meta sem alvo, ou sem meta, não classifica ninguém", () => {
+    expect(filtrarMembros(lista, "abaixo_meta", { ...meta, percentual_alvo: null })).toEqual([]);
+    expect(filtrarMembros(lista, "abaixo_meta", null)).toEqual([]);
+    expect(filtrarMembros(lista, "abaixo_meta")).toEqual([]);
+  });
+
+  it("resume quantos alcançaram", () => {
+    expect(resumoDaMeta(lista, meta)).toBe("2 de 4 alcançaram");
+    expect(resumoDaMeta(lista.slice(0, 2), meta)).toBe("1 de 2 alcançou");
+    expect(resumoDaMeta(lista.slice(1, 3), meta)).toBe("Todos os 2 alcançaram");
+    expect(resumoDaMeta(lista, { ...meta, percentual_alvo: null })).toBe("");
+    expect(resumoDaMeta([], meta)).toBe("");
   });
 });
 

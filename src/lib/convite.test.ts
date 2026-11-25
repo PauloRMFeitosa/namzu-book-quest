@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extrairClubeDoConvite, linkConvite, mensagemConvite } from "@/lib/convite";
+import { extrairClubeDoConvite, linkConvite, linkDoClube, mensagemConvite } from "@/lib/convite";
 
 const ID = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 
@@ -41,6 +41,13 @@ describe("linkConvite", () => {
 
   it("não confunde domínio parecido com o oficial", () => {
     expect(linkConvite(ID, "https://falsonamzu.com.br")).toBe(`https://falsonamzu.com.br/convite/${ID}`);
+  });
+});
+
+describe("linkDoClube", () => {
+  it("usa o domínio oficial em produção e aceita a aba", () => {
+    expect(linkDoClube(ID, "leituras", "https://namzu.com.br")).toBe(`https://www.namzu.com.br/clubes/${ID}?tab=leituras`);
+    expect(linkDoClube(ID, undefined, "http://localhost:8080")).toBe(`http://localhost:8080/clubes/${ID}`);
   });
 });
 

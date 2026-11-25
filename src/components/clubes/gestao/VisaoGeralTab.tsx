@@ -1,14 +1,22 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, BookOpen, CalendarDays, ChevronRight, UserCheck, Users } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarDays, ChevronRight, Copy, Target, UserCheck, Users } from "lucide-react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
+import { usePaginasDasObras } from "@/hooks/clubes/useCronograma";
+import { diaComSemana, mensagemDaMeta, prazoDaMeta, textoDoAlvo } from "@/lib/cronograma";
+import { linkDoClube } from "@/lib/convite";
+import { registrarEvento } from "@/services/analytics";
+import { CronogramaDialog } from "./CronogramaDialog";
 import {
+  abaixoDaMeta,
   filtrarMembros,
+  resumoDaMeta,
   resumoLeitura,
   resumoRespostas,
   rotuloUltimaAtividade,
@@ -20,6 +28,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   clubeId: string;
+  nomeClube: string;
   /** Leva o organizador para outra aba do clube. */
   onIrPara: (aba: string) => void;
 }
@@ -32,12 +41,19 @@ const ROTULO_RSVP: Record<NonNullable<MembroVisaoGeral["rsvp"]>, string> = {
 
 // Primeira tela do organizador dentro do clube (Fase 3): o que substitui a
 // planilha e as perguntas no grupo.
-export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
+export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
   const { data, isLoading, isError, refetch } = useVisaoGeralClube(clubeId);
   const [filtro, setFiltro] = useState<FiltroMembros>("todos");
+  const [cronogramaAberto, setCronogramaAberto] = useState(false);
+  const meta = data?.meta_atual ?? null;
+  const obraDaMeta = meta && data?.livro_atual ? [data.livro_atual.obra_id] : [];
+  const { data: paginas } = usePaginasDasObras(obraDaMeta);
 
   const leitura = useMemo(() => resumoLeitura(data?.membros ?? []), [data?.membros]);
-  const membros = useMemo(() => filtrarMembros(data?.membros ?? [], filtro), [data?.membros, filtro]);
+  const membros = useMemo(
+    () => filtrarMembros(data?.membros ?? [], filtro, meta),
+    [data?.membros, filtro, meta],
+  );
 
   if (isLoading) {
     return (
@@ -63,12 +79,38 @@ export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
   const encontro = data.proximo_encontro;
   const livro = data.livro_atual;
   const naoComecaram = filtrarMembros(data.membros, "nao_iniciou").length;
+  const totalPaginas = livro ? paginas?.[livro.obra_id] ?? null : null;
 
   const filtros: { valor: FiltroMembros; rotulo: string; total: number }[] = [
     { valor: "todos", rotulo: "Todos", total: data.membros_ativos },
     { valor: "parados", rotulo: "Parados", total: data.parados },
     { valor: "nao_iniciou", rotulo: "Não começaram", total: naoComecaram },
   ];
+  if (meta?.percentual_alvo) {
+    filtros.push({
+      valor: "abaixo_meta",
+      rotulo: "Abaixo da meta",
+      total: filtrarMembros(data.membros, "abaixo_meta", meta).length,
+    });
+  }
+
+  const copiarMensagem = async () => {
+    if (!meta || !livro) return;
+    const texto = mensagemDaMeta({
+      nomeClube,
+      livro: livro.titulo,
+      meta,
+      totalPaginas,
+      link: linkDoClube(clubeId, "leituras"),
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Mensagem copiada. Cole no grupo do clube.");
+      registrarEvento("mensagem_meta_copiada", { clubeId });
+    } catch {
+      toast.error("Não foi possível copiar. Tente de novo.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -134,7 +176,39 @@ export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
                 <p className="text-sm text-muted-foreground mt-1">{textoResumoLeitura(leitura)}</p>
               </div>
             </div>
-          ) : (
+          ) : null}
+          {livro && meta && (
+            <div className="rounded-xl bg-secondary/50 border border-secondary px-3 py-2 flex flex-col gap-1">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-primary shrink-0" /> Meta atual: {meta.titulo}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {meta.percentual_alvo ? `Ler ${textoDoAlvo(meta.percentual_alvo, totalPaginas)}. ` : ""}
+                Prazo: {diaComSemana(meta.data_limite)} ({prazoDaMeta(meta.data_limite)}).
+              </p>
+              {resumoDaMeta(data.membros, meta) && (
+                <p className="text-xs font-medium">{resumoDaMeta(data.membros, meta)}</p>
+              )}
+            </div>
+          )}
+          {livro && livro.trilha_id && (
+            <div className="flex flex-wrap gap-2">
+              {meta && (
+                <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={copiarMensagem}>
+                  <Copy className="w-3.5 h-3.5" /> Copiar mensagem para o grupo
+                </Button>
+              )}
+              <Button
+                variant={meta ? "ghost" : "outline"}
+                size="sm"
+                className="rounded-xl"
+                onClick={() => setCronogramaAberto(true)}
+              >
+                {meta ? "Editar cronograma" : "Definir cronograma"}
+              </Button>
+            </div>
+          )}
+          {livro ? null : (
             <>
               <p className="text-sm text-muted-foreground">O clube ainda não tem um livro definido.</p>
               <Button variant="outline" size="sm" className="rounded-xl self-start" onClick={() => onIrPara("gestao")}>
@@ -181,7 +255,11 @@ export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
           </div>
         ) : membros.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {filtro === "parados" ? "Ninguém parado. Todos tiveram atividade nos últimos 7 dias." : "Todos já começaram o livro."}
+            {filtro === "parados"
+              ? "Ninguém parado. Todos tiveram atividade nos últimos 7 dias."
+              : filtro === "abaixo_meta"
+                ? "Ninguém abaixo da meta."
+                : "Todos já começaram o livro."}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
@@ -205,6 +283,11 @@ export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
                     {m.parado && (
                       <span className="px-1.5 py-0.5 rounded-full bg-accent/15 text-accent text-[10px] font-medium">Parado</span>
                     )}
+                    {abaixoDaMeta(m, meta) && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-medium">
+                        Abaixo da meta
+                      </span>
+                    )}
                   </div>
                   {m.percentual !== null && (
                     <div className="flex items-center gap-2">
@@ -222,6 +305,21 @@ export const VisaoGeralTab = ({ clubeId, onIrPara }: Props) => {
           </ul>
         )}
       </section>
+
+      {livro?.trilha_id && cronogramaAberto && (
+        <CronogramaDialog
+          clubeId={clubeId}
+          livro={{
+            trilhaId: livro.trilha_id,
+            obraId: livro.obra_id,
+            titulo: livro.titulo,
+            dataInicio: livro.data_inicio,
+            dataFim: livro.data_fim,
+          }}
+          open
+          onOpenChange={setCronogramaAberto}
+        />
+      )}
     </div>
   );
 };
