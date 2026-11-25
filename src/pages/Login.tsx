@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { GoogleButton } from "@/components/GoogleButton";
 import logoNamzu from "@/assets/logo-namzu.png";
+import { fraseDeEntrada, type EstadoEntrada } from "@/lib/entrada";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +17,8 @@ const Login = () => {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const returnTo: string = (location.state as any)?.returnTo ?? "/";
+  const estado = (location.state ?? {}) as EstadoEntrada;
+  const returnTo: string = estado.returnTo ?? "/";
   const { user, loading } = useAuth();
   if (!loading && user) return <Navigate to={returnTo} replace />;
 
@@ -41,7 +43,7 @@ const Login = () => {
           <span className="font-extrabold text-primary tracking-tight text-4xl">NAMZU</span>
         </div>
         <h1 className="text-3xl font-bold mb-2">Entrar</h1>
-        <p className="text-muted-foreground mb-8">Continue sua jornada de leitura</p>
+        <p className="text-muted-foreground mb-8">{fraseDeEntrada(estado.contexto, "Continue sua jornada de leitura")}</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <Label htmlFor="email">Email</Label>
@@ -65,7 +67,7 @@ const Login = () => {
         </div>
         <GoogleButton label="Entrar com Google" returnTo={returnTo} />
         <p className="text-sm text-center mt-6 text-muted-foreground">
-          Não tem conta? <Link to="/signup" className="text-primary font-semibold">Criar conta</Link>
+          Não tem conta? <Link to="/signup" state={location.state} replace className="text-primary font-semibold">Criar conta</Link>
         </p>
       </div>
     </div>

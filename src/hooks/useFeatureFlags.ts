@@ -33,6 +33,7 @@ export type FeatureFlagKey =
   // fluxos de entrada
   | "show_onboarding"
   | "show_codigo_me"
+  | "show_entrada_organizador"
   // Fase 2 (Foco): navegação do organizador e páginas que não tinham flag
   | "show_navegacao_foco"
   | "show_leitores"
@@ -70,6 +71,9 @@ export const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_menu_inferior_perfil: true,
   show_onboarding: true,
   show_codigo_me: true,
+  // página pública para o organizador, cadastro curto e convite por link;
+  // ligada, substitui o quiz de onboarding e o redirecionamento do Código ME
+  show_entrada_organizador: true,
   // menu de três destinos: Meu clube, Minha leitura, Perfil
   show_navegacao_foco: true,
   // descoberta de leitores e matching ficam fora do foco no organizador

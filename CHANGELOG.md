@@ -16,10 +16,18 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Flags novas:** `show_leitores` (desligada por padrão), `show_busca`, `show_livros` e `show_citacoes`. As quatro rotas passaram a usar `FeatureRoute`.
 - **Preset "Foco no organizador"** no painel admin. O preset "Padrão completo" desfaz a mudança.
 - Testes da lógica de navegação em `src/lib/navegacao.test.ts`.
+- **Entrada do organizador (Fase 2):** quem abre o NAMZU sem conta vê uma página pública voltada a quem organiza clube, com "Criar meu clube", "Recebi um convite" e "Entrar". Controlada pela flag `show_entrada_organizador`, ligada por padrão. Ligada, o quiz de onboarding e o Código ME deixam de ser paradas obrigatórias.
+- **Página de convite** em `/convite/:id`, pública: mostra nome, capa, organizador, número de membros e leitura do clube. Quem não tem conta faz o cadastro curto e cai dentro do clube. O link antigo `/clubes/:id` leva o visitante para o convite.
+- **Convidar membros:** ao criar um clube, o link de convite aparece na hora, com copiar e enviar pelo WhatsApp. O botão "Compartilhar" do clube virou "Convidar".
+- Função `clube_convite` no banco (migração `fase2_clube_convite`), que entrega só o cartão público do clube para a página de convite.
+- Testes do link de convite em `src/lib/convite.test.ts`.
 
 ### Alterado
 
 - Os contadores de seguidores e seguindo no Perfil deixam de ser links quando a página de leitores está desligada.
+- Cadastro e login mostram de onde a pessoa veio (convite de um clube ou criação de clube) e preservam o destino ao alternar entre as duas telas.
+- Ao sair da conta, o usuário volta para a página pública em vez do quiz.
+- `src/integrations/supabase/types.ts` regenerado a partir do banco. Estava defasado: faltavam `denuncias_conteudo`, `meta_lembretes_log` e funções recentes.
 - A aba Visibilidade do admin passa a usar os mesmos padrões de flag que o app, em vez de assumir "ligado" para toda flag sem registro.
 
 ## [0.2.0] - 2026-11-24

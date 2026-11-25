@@ -963,6 +963,48 @@ export type Database = {
         }
         Relationships: []
       }
+      denuncias_conteudo: {
+        Row: {
+          conteudo_id: string | null
+          contexto_url: string | null
+          created_at: string
+          denunciado_user_id: string | null
+          denunciante_id: string
+          id: string
+          motivo: string
+          observacao_admin: string | null
+          resolvido_em: string | null
+          status: string
+          tipo_conteudo: string
+        }
+        Insert: {
+          conteudo_id?: string | null
+          contexto_url?: string | null
+          created_at?: string
+          denunciado_user_id?: string | null
+          denunciante_id: string
+          id?: string
+          motivo: string
+          observacao_admin?: string | null
+          resolvido_em?: string | null
+          status?: string
+          tipo_conteudo: string
+        }
+        Update: {
+          conteudo_id?: string | null
+          contexto_url?: string | null
+          created_at?: string
+          denunciado_user_id?: string | null
+          denunciante_id?: string
+          id?: string
+          motivo?: string
+          observacao_admin?: string | null
+          resolvido_em?: string | null
+          status?: string
+          tipo_conteudo?: string
+        }
+        Relationships: []
+      }
       edicoes: {
         Row: {
           atualizado_em: string | null
@@ -1924,6 +1966,78 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_lembretes_log: {
+        Row: {
+          canal: string
+          dia: string
+          enviado_em: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          canal: string
+          dia: string
+          enviado_em?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          canal?: string
+          dia?: string
+          enviado_em?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      metas_diarias_leitura: {
+        Row: {
+          canal_email: boolean
+          canal_inapp: boolean
+          canal_push: boolean
+          created_at: string
+          lembrete_ativo: boolean
+          lembrete_horario: string | null
+          lembrete_tipo: string
+          lembrete_turno: string | null
+          timezone: string
+          tipo_meta: string
+          updated_at: string
+          user_id: string
+          valor_meta: number
+        }
+        Insert: {
+          canal_email?: boolean
+          canal_inapp?: boolean
+          canal_push?: boolean
+          created_at?: string
+          lembrete_ativo?: boolean
+          lembrete_horario?: string | null
+          lembrete_tipo?: string
+          lembrete_turno?: string | null
+          timezone?: string
+          tipo_meta?: string
+          updated_at?: string
+          user_id: string
+          valor_meta?: number
+        }
+        Update: {
+          canal_email?: boolean
+          canal_inapp?: boolean
+          canal_push?: boolean
+          created_at?: string
+          lembrete_ativo?: boolean
+          lembrete_horario?: string | null
+          lembrete_tipo?: string
+          lembrete_turno?: string | null
+          timezone?: string
+          tipo_meta?: string
+          updated_at?: string
+          user_id?: string
+          valor_meta?: number
+        }
+        Relationships: []
+      }
       microgrupo_membros: {
         Row: {
           joined_at: string | null
@@ -2600,6 +2714,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       reacoes: {
         Row: {
           created_at: string | null
@@ -3197,6 +3341,21 @@ export type Database = {
           maximo: number
         }[]
       }
+      clube_convite: {
+        Args: { p_clube_id: string }
+        Returns: {
+          curador_avatar_url: string
+          curador_nome: string
+          descricao: string
+          id: string
+          imagem_capa_url: string
+          leitura_capa_url: string
+          leitura_titulo: string
+          membros_count: number
+          nome: string
+          visibilidade: string
+        }[]
+      }
       conceder_xp: {
         Args: {
           p_acao: string
@@ -3220,6 +3379,10 @@ export type Database = {
           p_tipo_origem: string
         }
         Returns: string
+      }
+      definir_perfil_publico: {
+        Args: { p_publico: boolean }
+        Returns: undefined
       }
       desbloquear_conquista: {
         Args: { p_codigo: string; p_user_id: string }
@@ -3273,6 +3436,14 @@ export type Database = {
           total: number
         }[]
       }
+      get_interacoes_diarias: {
+        Args: { p_dias?: number; p_user_id?: string }
+        Returns: {
+          categorias: string
+          dia: string
+          percentual: number
+        }[]
+      }
       get_livros_por_mes: {
         Args: { p_user_id?: string }
         Returns: {
@@ -3280,6 +3451,7 @@ export type Database = {
           total: number
         }[]
       }
+      get_meta_diaria_status: { Args: { _user_id?: string }; Returns: Json }
       get_meus_matches: {
         Args: { p_limite?: number }
         Returns: {
@@ -3341,6 +3513,21 @@ export type Database = {
         Returns: boolean
       }
       is_seguindo: { Args: { p_seguido_id: string }; Returns: boolean }
+      lembretes_meta_diaria_pendentes: {
+        Args: never
+        Returns: {
+          canal: string
+          faltante: number
+          realizado: number
+          tipo_meta: string
+          user_id: string
+          valor_meta: number
+        }[]
+      }
+      marcar_lembrete_meta_enviado: {
+        Args: { _canal: string; _user_id: string }
+        Returns: undefined
+      }
       match_clubes_por_gosto: {
         Args: { p_generos: string[]; p_objetivo: string }
         Returns: {
@@ -3352,8 +3539,14 @@ export type Database = {
         }[]
       }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
+      pode_ver_leituras_de: { Args: { p_dono: string }; Returns: boolean }
+      processar_lembretes_meta_diaria_inapp: { Args: never; Returns: number }
       recalcular_meus_matches: { Args: never; Returns: undefined }
       refresh_ranking: { Args: never; Returns: undefined }
+      registrar_leitura_rapida: {
+        Args: { _minutos?: number; _paginas?: number }
+        Returns: Json
+      }
       registrar_progresso: {
         Args: { p_leitura_id: string; p_paginas: number; p_percentual: number }
         Returns: undefined
@@ -3370,6 +3563,7 @@ export type Database = {
         Args: { texto_a: string; texto_b: string }
         Returns: number
       }
+      verificar_segredo_cron: { Args: { p_segredo: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -3399,12 +3593,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3428,11 +3622,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3453,11 +3647,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3478,11 +3672,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3495,11 +3689,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
