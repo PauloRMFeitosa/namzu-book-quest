@@ -148,6 +148,17 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 
 **Dependência a resolver antes desta fase:** `clube-ai` e `leitura-copiloto` chamam o gateway de IA do Lovable (`ai.gateway.lovable.dev`, com a variável `LOVABLE_API_KEY`) para usar modelos Gemini. A mediação com IA é o diferencial do produto e hoje depende de uma conta de outra plataforma. Decidir o provedor próprio e migrar antes de construir sobre isso.
 
+**Decisões do Paulo em 25/11/2026**
+
+- **Ordem das entregas:** (1) visão geral, (2) membros, (3) livro e cronograma, (4) encontros, (5) avisos, (6) co-curador, (7) próximo livro, (8) mediação com IA.
+- **Lembretes e avisos:** começar com aviso dentro do app e um botão "copiar mensagem para o grupo", com o texto pronto para o WhatsApp. E-mail e notificação no celular não estão configurados em produção e ficam para depois.
+- **Provedor de IA:** API do Google direto, com os mesmos modelos Gemini usados hoje pelo gateway do Lovable. A troca acontece antes da entrega 8.
+- **Entrevistas:** as entregas 1 a 6 seguem agora. As entregas 7 e 8 esperam as entrevistas da Fase 1.
+
+**Andamento**
+
+- [x] Entrega 1 — Visão geral do organizador (aba "Visão geral", função `clube_visao_geral`).
+
 **Regras de engenharia para a fase**
 - Toda mudança de schema em migração versionada, aplicada no remoto com a mesma versão.
 - Todo formulário de criação com rascunho em `localStorage`, conforme `CLAUDE.md`.

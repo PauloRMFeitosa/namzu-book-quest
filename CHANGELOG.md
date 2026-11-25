@@ -6,6 +6,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Visão geral do organizador (Fase 3):** primeira aba do clube para quem organiza. Mostra o próximo encontro com as respostas, o livro atual com quantos concluíram, estão lendo ou não começaram, os pedidos de entrada pendentes e, para cada membro, o progresso no livro, a última atividade no clube e se está parado há 7 dias. Controlada pela flag `show_clube_visao_geral`, ligada por padrão.
+- Função `clube_visao_geral` no banco (migração `fase3_clube_visao_geral`), que só responde ao organizador do clube e a admins.
+- Testes da lógica da visão geral em `src/lib/visaoGeral.test.ts`.
+
 ## [0.3.0] - 2026-11-25
 
 Fase 2 do roadmap: foco. O app passa a se apresentar como plataforma para quem organiza clube de leitura. Entrada pelo clube, menu de três destinos, convite por link, segurança dos clubes, carregamento por rota e medição do uso.
