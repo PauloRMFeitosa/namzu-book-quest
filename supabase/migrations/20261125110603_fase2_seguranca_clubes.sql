@@ -1,5 +1,7 @@
 -- Fase 2 (docs/roadmap.md) — segurança de clubes: entrada de membros e clubes privados.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125110603).
+--
 -- Problemas encontrados ao revisar as políticas (25/11/2026):
 --
 --   1. Entrada sem controle. A política de INSERT em `clube_membros` só conferia

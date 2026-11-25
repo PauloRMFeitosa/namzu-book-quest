@@ -3356,6 +3356,7 @@ export type Database = {
           visibilidade: string
         }[]
       }
+      clube_e_privado: { Args: { _clube: string }; Returns: boolean }
       conceder_xp: {
         Args: {
           p_acao: string
@@ -3509,6 +3510,10 @@ export type Database = {
         Returns: boolean
       }
       is_clube_membro: {
+        Args: { _clube: string; _user: string }
+        Returns: boolean
+      }
+      is_clube_moderador: {
         Args: { _clube: string; _user: string }
         Returns: boolean
       }
