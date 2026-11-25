@@ -1,5 +1,7 @@
 -- Fase 2 (docs/roadmap.md) — dados públicos do clube para a página de convite.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125104027).
+--
 -- A página /convite/:id é aberta por quem ainda não tem conta. Ela precisa
 -- mostrar o clube (nome, capa, organizador, quantos membros, leitura atual)
 -- antes do cadastro. As tabelas `clube_membros` e `clube_trilhas` só podem ser

@@ -21,9 +21,8 @@ export const useClubeConvite = (clubeId: string | null | undefined) =>
     queryKey: queryKeys.clubes.convite(clubeId ?? ""),
     enabled: !!clubeId,
     queryFn: async (): Promise<ClubeConvite | null> => {
-      const { data, error } = await (supabase as any).rpc("clube_convite", { p_clube_id: clubeId });
+      const { data, error } = await supabase.rpc("clube_convite", { p_clube_id: clubeId! });
       if (error) throw error;
-      const linha = Array.isArray(data) ? data[0] : data;
-      return (linha as ClubeConvite) ?? null;
+      return (data?.[0] as ClubeConvite | undefined) ?? null;
     },
   });
