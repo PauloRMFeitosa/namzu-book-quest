@@ -8,11 +8,6 @@ import type { AvisoDoClube } from "@/lib/avisos";
 // Avisos do organizador para o clube (Fase 3). Quem faz parte do clube lê; só
 // o organizador e admins enviam e apagam.
 
-// TEMPORÁRIO: `clube_avisos` e `clube_enviar_aviso` ainda não estão em
-// `types.ts`. Trocar por `supabase` depois de aplicar a migração
-// `fase3_avisos` e regenerar os tipos.
-const semTipos = supabase as any;
-
 /** Os avisos mais recentes do clube, do mais novo para o mais antigo. */
 export const useAvisosClube = (clubeId: string | undefined, habilitado = true) =>
   useQuery({
@@ -21,7 +16,7 @@ export const useAvisosClube = (clubeId: string | undefined, habilitado = true) =
     staleTime: 60 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<AvisoDoClube[]> => {
-      const { data, error } = await semTipos
+      const { data, error } = await supabase
         .from("clube_avisos")
         .select("id, clube_id, titulo, mensagem, created_at")
         .eq("clube_id", clubeId!)
@@ -36,7 +31,7 @@ export const useEnviarAviso = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { titulo: string; mensagem: string }) => {
-      const { error } = await semTipos.rpc("clube_enviar_aviso", {
+      const { error } = await supabase.rpc("clube_enviar_aviso", {
         p_clube_id: clubeId,
         p_titulo: input.titulo.trim(),
         p_mensagem: input.mensagem.trim(),
@@ -56,7 +51,7 @@ export const useApagarAviso = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (avisoId: string) => {
-      const { data, error } = await semTipos.from("clube_avisos").delete().eq("id", avisoId).select("id");
+      const { data, error } = await supabase.from("clube_avisos").delete().eq("id", avisoId).select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("Você não tem permissão para esta ação.");
     },

@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — comunicação: aviso do organizador para o clube.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125175838).
+--
 -- O organizador escreve um aviso com título e mensagem. Todos os membros
 -- ativos recebem uma notificação no app, e o aviso fica guardado no clube
 -- para quem chegar depois.
