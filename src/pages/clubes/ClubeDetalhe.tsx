@@ -13,6 +13,7 @@ import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
 import { GestaoTab } from "@/components/clubes/gestao/GestaoTab";
+import { VisaoGeralTab } from "@/components/clubes/gestao/VisaoGeralTab";
 import { ConvidarMembrosDialog } from "@/components/clubes/convite/ConvidarMembrosDialog";
 import {
   useClube,
@@ -37,7 +38,7 @@ const BASE_TABS: { value: string; label: string; flag: FeatureFlagKey }[] = [
 const ClubeDetalhe = () => {
   const { id } = useParams();
   const [search, setSearch] = useSearchParams();
-  const tab = search.get("tab") ?? "feed";
+  const tabPedida = search.get("tab");
 
   // ?convidar=1 vem da criação do clube: abre o link de convite de primeira.
   const [recemCriado] = useState(() => search.get("convidar") === "1");
@@ -60,9 +61,23 @@ const ClubeDetalhe = () => {
   const { isAdmin } = useIsAdmin();
   const acessoTotal = membership?.status === "ativo" || canManage;
   const visibleBase = BASE_TABS.filter((t) => isAdmin || flags[t.flag]);
-  const TABS = canManage ? [...visibleBase, { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey }] : visibleBase;
+  // O organizador ganha duas abas: a Visão geral, que abre primeiro, e a Gestão.
+  const mostraVisaoGeral = canManage && (isAdmin || flags.show_clube_visao_geral);
+  const TABS = canManage
+    ? [
+        ...(mostraVisaoGeral ? [{ value: "visao", label: "Visão geral", flag: "show_clube_visao_geral" as FeatureFlagKey }] : []),
+        ...visibleBase,
+        { value: "gestao", label: "Gestão", flag: "show_clubes" as FeatureFlagKey },
+      ]
+    : visibleBase;
   const isTabVisible = (v: string) => TABS.some((t) => t.value === v);
+  const tab = tabPedida ?? (mostraVisaoGeral ? "visao" : "feed");
   const activeTab = isTabVisible(tab) ? tab : (TABS[0]?.value ?? "feed");
+  const irParaAba = (aba: string) => {
+    const proximo = new URLSearchParams(search);
+    proximo.set("tab", aba);
+    setSearch(proximo, { replace: true });
+  };
 
   // Clube privado só aparece para quem faz parte. Se a consulta não devolve o
   // clube, quem ainda não entrou (ou está pendente) vai para o convite.
@@ -128,6 +143,11 @@ const ClubeDetalhe = () => {
                   </TabsList>
                 </div>
 
+                {isTabVisible("visao") && (
+                  <TabsContent value="visao" className="mt-5">
+                    <VisaoGeralTab clubeId={clube.id} onIrPara={irParaAba} />
+                  </TabsContent>
+                )}
                 {isTabVisible("feed") && (
                   <TabsContent value="feed" className="mt-5">
                     <FeedClube
