@@ -38,6 +38,7 @@ import NotFound from "./pages/NotFound";
 import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
 import { OnboardingAutoMerge } from "@/components/OnboardingAutoMerge";
 import Comecar from "./pages/Comecar";
+import Convite from "./pages/Convite";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/comecar" element={<Comecar />} />
             <Route path="/onboarding" element={<Navigate to="/comecar" replace />} />
             <Route path="/onboarding-interesses" element={<OnboardingInteresses />} />
+            <Route path="/convite/:id" element={<Convite />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />

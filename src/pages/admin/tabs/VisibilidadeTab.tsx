@@ -34,6 +34,11 @@ const NAVEGACAO_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = 
 ];
 
 const FLUXOS_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
+  {
+    key: "show_entrada_organizador",
+    label: "Entrada do organizador",
+    desc: "Página pública para quem organiza clube, cadastro curto e convite por link. Ligada, substitui o Onboarding e o Código ME abaixo, que deixam de ser paradas obrigatórias.",
+  },
   { key: "show_onboarding", label: "Onboarding", desc: "Exibir o fluxo de boas-vindas para novos usuários. Quando desativado, novos usuários vão direto para o app." },
   { key: "show_codigo_me", label: "Questionário Código ME", desc: "Exibir o convite e redirecionar para o questionário de interesses. Quando desativado, o card e o redirect são suprimidos." },
 ];
@@ -77,10 +82,11 @@ type Preset = {
 const PRESETS: Preset[] = [
   {
     label: "Foco no organizador",
-    description: "Fase 2 do roadmap. Menu de três destinos, sem Leitores, Metas, Histórico e gamificação na Home. Onboarding e Código ME não mudam.",
+    description: "Fase 2 do roadmap. Entrada do organizador, menu de três destinos, sem Leitores, Metas, Histórico e gamificação na Home.",
     badge: "Fase 2",
     settings: {
       show_navegacao_foco: true,
+      show_entrada_organizador: true,
       show_clubes: true,
       show_leituras: true,
       show_busca: true,
@@ -124,6 +130,7 @@ const PRESETS: Preset[] = [
       show_notificacoes: true,
       show_gamificacao_home: true,
       show_navegacao_foco: false,
+      show_entrada_organizador: false,
       show_busca: true,
       show_livros: true,
       show_citacoes: true,

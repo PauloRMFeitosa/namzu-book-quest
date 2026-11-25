@@ -11,6 +11,7 @@ import { GoogleButton } from "@/components/GoogleButton";
 import logoNamzu from "@/assets/logo-namzu.png";
 import { executarMergeOnboarding } from "@/services/onboardingMerge";
 import { temDadosDeOnboarding } from "@/stores/onboardingStore";
+import { fraseDeEntrada, type EstadoEntrada } from "@/lib/entrada";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -20,7 +21,8 @@ const Signup = () => {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const returnTo: string = (location.state as any)?.returnTo ?? "/";
+  const estado = (location.state ?? {}) as EstadoEntrada;
+  const returnTo: string = estado.returnTo ?? "/";
   const { user, loading } = useAuth();
   if (!loading && user) return <Navigate to={returnTo} replace />;
 
@@ -61,7 +63,7 @@ const Signup = () => {
           <span className="font-extrabold text-primary tracking-tight text-4xl">NAMZU</span>
         </div>
         <h1 className="text-3xl font-bold mb-2">Criar conta</h1>
-        <p className="text-muted-foreground mb-8">Comece sua jornada de leitura</p>
+        <p className="text-muted-foreground mb-8">{fraseDeEntrada(estado.contexto, "Comece sua jornada de leitura")}</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <Label htmlFor="name">Nome</Label>
@@ -100,7 +102,7 @@ const Signup = () => {
         </div>
         <GoogleButton label="Cadastrar com Google" returnTo={returnTo} />
         <p className="text-sm text-center mt-6 text-muted-foreground">
-          Já tem conta? <Link to="/login" className="text-primary font-semibold">Entrar</Link>
+          Já tem conta? <Link to="/login" state={location.state} replace className="text-primary font-semibold">Entrar</Link>
         </p>
       </div>
     </div>

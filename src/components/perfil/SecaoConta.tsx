@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useVerComoMembro } from "@/stores/verComoMembroStore";
+import { destinoAoSair } from "@/lib/navegacao";
 
 // Seção "Conta" do Perfil (Fase 2): substitui o menu "Mais" quando a
 // navegação de três destinos está ligada.
@@ -27,7 +28,7 @@ export const SecaoConta = () => {
   ].filter((i) => i.visivel);
 
   const sair = async () => {
-    const destino = flags.show_onboarding ? "/comecar" : "/login";
+    const destino = destinoAoSair(flags);
     await signOut();
     navigate(destino);
   };

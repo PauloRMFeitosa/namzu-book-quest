@@ -8,6 +8,8 @@ import { AceitarTermosModal } from "./AceitarTermosModal";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useLandingPage } from "@/hooks/useLandingPage";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { rotaVisitante } from "@/lib/navegacao";
+import EntradaOrganizador from "@/pages/EntradaOrganizador";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
@@ -40,11 +42,14 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
   if (!user) {
-    const destino = flags.show_onboarding ? "/comecar" : "/login";
+    // Fase 2: a raiz mostra a página pública do organizador e o link antigo
+    // de um clube vira o convite dele (ver rotaVisitante).
+    const rota = rotaVisitante(location.pathname, flags);
+    if (rota.tipo === "pagina-publica") return <EntradaOrganizador />;
     return (
       <Navigate
-        to={destino}
-        state={{ returnTo: location.pathname + location.search }}
+        to={rota.para}
+        state={rota.guardarRetorno ? { returnTo: location.pathname + location.search } : undefined}
         replace
       />
     );
@@ -56,13 +61,17 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const dbFlag = perfil?.onboarding_completo ?? false;
   const onboardingDone = localFlag || dbFlag;
 
+  // Com a entrada do organizador ligada, o quiz e o Código ME deixam de ser
+  // paradas obrigatórias: quem cria conta vai direto para o clube.
+  const fluxosAntigos = !flags.show_entrada_organizador;
+
   // Onboarding incompleto com fluxo novo ativo → retomar em /comecar
-  if (!onboardingDone && flags.show_onboarding) {
+  if (fluxosAntigos && !onboardingDone && flags.show_onboarding) {
     return <Navigate to="/comecar" replace />;
   }
 
   // Se o Código ME está desabilitado no admin, bypass do redirect para interesses
-  if (!dbFlag && flags.show_codigo_me && location.pathname !== "/onboarding-interesses") {
+  if (fluxosAntigos && !dbFlag && flags.show_codigo_me && location.pathname !== "/onboarding-interesses") {
     return <Navigate to="/onboarding-interesses" replace />;
   }
 

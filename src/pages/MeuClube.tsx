@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { Compass, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubes } from "@/hooks/clubes/useClubes";
@@ -31,6 +31,17 @@ const MeuClube = () => {
 
   const podeExplorar = isAdmin || flags.show_clubes;
 
+  // Quem chega de "Criar meu clube" (?criar=1) cai com o formulário aberto.
+  // O valor é guardado na montagem e o parâmetro sai da URL para não reabrir.
+  const [search, setSearch] = useSearchParams();
+  const [querCriar] = useState(() => search.get("criar") === "1");
+  useEffect(() => {
+    if (search.get("criar") !== "1") return;
+    const proximo = new URLSearchParams(search);
+    proximo.delete("criar");
+    setSearch(proximo, { replace: true });
+  }, [search, setSearch]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -40,7 +51,7 @@ const MeuClube = () => {
     );
   }
 
-  if (meusClubes.length === 1) {
+  if (meusClubes.length === 1 && !querCriar) {
     return <Navigate to={`/clubes/${meusClubes[0].id}`} replace />;
   }
 
@@ -71,7 +82,7 @@ const MeuClube = () => {
               Leva poucos minutos: dê um nome, escolha o livro e compartilhe o link.
             </p>
           </div>
-          <CriarClubeDialog />
+          <CriarClubeDialog abrirAoMontar={querCriar} />
           {linkExplorar}
         </div>
       </div>
@@ -92,7 +103,7 @@ const MeuClube = () => {
         ))}
       </div>
       <div className="flex flex-col items-center gap-4">
-        <CriarClubeDialog />
+        <CriarClubeDialog abrirAoMontar={querCriar} />
         {linkExplorar}
       </div>
     </div>

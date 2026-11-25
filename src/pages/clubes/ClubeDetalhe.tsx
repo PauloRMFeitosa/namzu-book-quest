@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,7 @@ import { MicrogruposTab } from "@/components/clubes/microgrupos/MicrogruposTab";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ConteudosTab } from "@/components/clubes/conteudos/ConteudosTab";
 import { GestaoTab } from "@/components/clubes/gestao/GestaoTab";
+import { ConvidarMembrosDialog } from "@/components/clubes/convite/ConvidarMembrosDialog";
 import {
   useClube,
   useClubeMembership,
@@ -36,6 +38,18 @@ const ClubeDetalhe = () => {
   const { id } = useParams();
   const [search, setSearch] = useSearchParams();
   const tab = search.get("tab") ?? "feed";
+
+  // ?convidar=1 vem da criação do clube: abre o link de convite de primeira.
+  const [recemCriado] = useState(() => search.get("convidar") === "1");
+  const [convidarAberto, setConvidarAberto] = useState(recemCriado);
+  const fecharConvite = (aberto: boolean) => {
+    setConvidarAberto(aberto);
+    if (!aberto && search.get("convidar")) {
+      const proximo = new URLSearchParams(search);
+      proximo.delete("convidar");
+      setSearch(proximo, { replace: true });
+    }
+  };
 
   const { data: clube, isLoading } = useClube(id);
   const { data: membership } = useClubeMembership(id);
@@ -68,6 +82,7 @@ const ClubeDetalhe = () => {
               isPendente={membership?.status === "pendente"}
               onEntrar={() => entrar.mutate(clube.visibilidade === "privado" ? "pendente" : "ativo")}
               onSair={() => sair.mutate()}
+              onConvidar={() => setConvidarAberto(true)}
               loading={entrar.isPending || sair.isPending}
             />
 
@@ -164,6 +179,15 @@ const ClubeDetalhe = () => {
                 ativos30d={clube.ativos_30d}
               />
             </div>
+
+            <ConvidarMembrosDialog
+              open={convidarAberto}
+              onOpenChange={fecharConvite}
+              clubeId={clube.id}
+              nomeClube={clube.nome}
+              privado={clube.visibilidade === "privado"}
+              recemCriado={recemCriado && canManage}
+            />
           </>
         )}
     </div>

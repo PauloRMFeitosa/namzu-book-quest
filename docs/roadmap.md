@@ -112,8 +112,8 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 
 **Objetivo:** quem abre o NAMZU entende em 10 segundos que é uma ferramenta de clube.
 
-- [ ] Nova entrada: visitante vê a proposta para organizadores e o botão "Criar meu clube". Quem chega por link de convite cai direto no clube, com cadastro curto.
-- [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Parcial: `/leitores` já nasce desligada e o preset "Foco no organizador" do painel admin desliga metas, histórico e gamificação da home; onboarding e Código ME saem junto com a nova entrada.
+- [x] Nova entrada: visitante vê a proposta para organizadores e o botão "Criar meu clube". Quem chega por link de convite cai direto no clube, com cadastro curto (flag `show_entrada_organizador`, página `/convite/:id`, função `clube_convite`).
+- [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Feito no código: `/leitores` nasce desligada e a entrada do organizador tira o quiz e o Código ME do caminho. Falta aplicar o preset "Foco no organizador" no painel admin para desligar metas, histórico e gamificação da home em produção.
 - [x] Criar as flags que faltam: `/leitores`, `/citacoes`, `/busca` e `/livros` agora têm `FeatureRoute` (`show_leitores` nasce desligada).
 - [x] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil (flag `show_navegacao_foco`; o menu "Mais" virou a seção Conta do Perfil).
 - [ ] Carregamento por rota (`React.lazy`), admin em chunk separado.

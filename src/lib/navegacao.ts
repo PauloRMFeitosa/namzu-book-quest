@@ -56,3 +56,38 @@ export function itensVisiveisFoco(
     return true;
   });
 }
+
+// ─── Visitante (sem sessão) ────────────────────────────────────────────────
+
+export type RotaVisitante =
+  | { tipo: "pagina-publica" }
+  | { tipo: "redirecionar"; para: string; guardarRetorno: boolean };
+
+interface FlagsEntrada {
+  show_entrada_organizador: boolean;
+  show_onboarding: boolean;
+}
+
+const RE_CLUBE = /^\/clubes\/([^/]+)\/?$/;
+
+/**
+ * Para onde vai quem abre uma rota protegida sem estar logado.
+ * Com a entrada do organizador ligada: a raiz mostra a página pública, o link
+ * antigo de um clube vira o convite dele e o resto pede login direto.
+ * Com ela desligada, vale o comportamento antigo (quiz ou login).
+ */
+export function rotaVisitante(pathname: string, flags: FlagsEntrada): RotaVisitante {
+  if (flags.show_entrada_organizador) {
+    if (pathname === "/") return { tipo: "pagina-publica" };
+    const clube = pathname.match(RE_CLUBE);
+    if (clube) return { tipo: "redirecionar", para: `/convite/${clube[1]}`, guardarRetorno: false };
+    return { tipo: "redirecionar", para: "/login", guardarRetorno: true };
+  }
+  return { tipo: "redirecionar", para: flags.show_onboarding ? "/comecar" : "/login", guardarRetorno: true };
+}
+
+/** Para onde vai quem acabou de sair da conta. */
+export function destinoAoSair(flags: FlagsEntrada): string {
+  if (flags.show_entrada_organizador) return "/";
+  return flags.show_onboarding ? "/comecar" : "/login";
+}

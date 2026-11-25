@@ -14,7 +14,7 @@ import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
 import { useConquistaRealtime } from "@/hooks/useConquistaRealtime";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { AbasMinhaLeitura } from "@/components/leituras/AbasMinhaLeitura";
-import { destinoAtivo, itensVisiveisFoco, mostraAbasMinhaLeitura, type DestinoFoco } from "@/lib/navegacao";
+import { destinoAoSair, destinoAtivo, itensVisiveisFoco, mostraAbasMinhaLeitura, type DestinoFoco } from "@/lib/navegacao";
 
 
 const navItems = [
@@ -84,7 +84,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   });
 
   const handleSignOut = async () => {
-    const destination = flags.show_onboarding ? "/comecar" : "/login";
+    const destination = destinoAoSair(flags);
     await signOut();
     navigate(destination);
   };

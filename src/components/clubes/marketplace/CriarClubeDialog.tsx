@@ -28,11 +28,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const CriarClubeDialog = () => {
+interface Props {
+  /** Abre o formulário assim que o componente aparece (ex.: logo após o cadastro). */
+  abrirAoMontar?: boolean;
+}
+
+export const CriarClubeDialog = ({ abrirAoMontar = false }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(abrirAoMontar);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     nome: "",
@@ -96,7 +101,8 @@ export const CriarClubeDialog = () => {
       localStorage.removeItem(DRAFT_KEY);
       qc.invalidateQueries({ queryKey: ["clubes-marketplace"] });
       setOpen(false);
-      navigate(`/clubes/${data.id}`);
+      // Abre o clube já com o link de convite na tela
+      navigate(`/clubes/${data.id}?convidar=1`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao criar clube");
     } finally {

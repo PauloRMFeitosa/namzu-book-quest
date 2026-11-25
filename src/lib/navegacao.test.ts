@@ -4,6 +4,8 @@ import {
   itensVisiveisFoco,
   mostraAbasMinhaLeitura,
   ITENS_NAVEGACAO_FOCO,
+  rotaVisitante,
+  destinoAoSair,
 } from "@/lib/navegacao";
 
 describe("destinoAtivo", () => {
@@ -65,5 +67,43 @@ describe("itensVisiveisFoco", () => {
 
   it("admin vê todos os destinos mesmo com flags desligadas", () => {
     expect(itensVisiveisFoco({ show_clubes: false, show_leituras: false, pages_global_visible: false }, true)).toEqual(ITENS_NAVEGACAO_FOCO);
+  });
+});
+
+describe("rotaVisitante", () => {
+  const entrada = { show_entrada_organizador: true, show_onboarding: true };
+
+  it("mostra a página pública na raiz", () => {
+    expect(rotaVisitante("/", entrada)).toEqual({ tipo: "pagina-publica" });
+  });
+
+  it("transforma o link antigo do clube em convite", () => {
+    expect(rotaVisitante("/clubes/abc-123", entrada)).toEqual({
+      tipo: "redirecionar", para: "/convite/abc-123", guardarRetorno: false,
+    });
+  });
+
+  it("pede login direto nas outras rotas, guardando o retorno", () => {
+    for (const rota of ["/clubes", "/leituras", "/perfil", "/clubes/abc/algo"]) {
+      expect(rotaVisitante(rota, entrada)).toEqual({ tipo: "redirecionar", para: "/login", guardarRetorno: true });
+    }
+  });
+
+  it("com a entrada desligada volta ao quiz ou ao login", () => {
+    expect(rotaVisitante("/", { show_entrada_organizador: false, show_onboarding: true }))
+      .toEqual({ tipo: "redirecionar", para: "/comecar", guardarRetorno: true });
+    expect(rotaVisitante("/clubes/abc", { show_entrada_organizador: false, show_onboarding: false }))
+      .toEqual({ tipo: "redirecionar", para: "/login", guardarRetorno: true });
+  });
+});
+
+describe("destinoAoSair", () => {
+  it("volta para a página pública quando a entrada do organizador está ligada", () => {
+    expect(destinoAoSair({ show_entrada_organizador: true, show_onboarding: true })).toBe("/");
+  });
+
+  it("mantém o destino antigo quando está desligada", () => {
+    expect(destinoAoSair({ show_entrada_organizador: false, show_onboarding: true })).toBe("/comecar");
+    expect(destinoAoSair({ show_entrada_organizador: false, show_onboarding: false })).toBe("/login");
   });
 });

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
+import { linkConvite } from "@/lib/convite";
 
 interface Props {
   clube: ClubeDetalhe;
@@ -12,16 +13,18 @@ interface Props {
   isPendente?: boolean;
   onEntrar: () => void;
   onSair: () => void;
+  /** Abre o diálogo de convite. Sem ele, o botão compartilha o link direto. */
+  onConvidar?: () => void;
   loading?: boolean;
 }
 
-export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loading }: Props) => {
+export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, onConvidar, loading }: Props) => {
   const navigate = useNavigate();
   const isPrivado = clube.visibilidade === "privado";
 
   const compartilhar = async () => {
-    const path = window.location.pathname + window.location.search + window.location.hash;
-    const url = `https://www.namzu.com.br${path}`;
+    if (onConvidar) return onConvidar();
+    const url = linkConvite(clube.id);
     if (navigator.share) {
       try {
         await navigator.share({ title: clube.nome, url });
@@ -73,7 +76,7 @@ export const ClubeHeader = ({ clube, isMembro, isPendente, onEntrar, onSair, loa
             className="rounded-full bg-card/90 backdrop-blur border border-border/40 hover:bg-card gap-1.5 px-3 shadow-sm"
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium">Compartilhar</span>
+            <span className="text-xs font-medium">Convidar</span>
           </Button>
         </div>
       </div>
