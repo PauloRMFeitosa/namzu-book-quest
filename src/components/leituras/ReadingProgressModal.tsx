@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
 import { ConcluirLeituraDialog } from "@/components/leituras/ConcluirLeituraDialog";
 import { useConcluirLeitura } from "@/hooks/leituras/useConcluirLeitura";
+import { registrarEvento } from "@/services/analytics";
 
 export interface ReadingProgressModalProps {
   open: boolean;
@@ -98,6 +99,10 @@ export const ReadingProgressModal = ({
 
       const { error } = await supabase.functions.invoke("salvar-progresso-leitura", { body });
       if (error) throw error;
+      registrarEvento("progresso_registrado", {
+        clubeId: clubeId ?? null,
+        props: { origem: "modal", percentual: percentual ?? 0 },
+      });
 
       toast.success(avancou > 0 ? `+${avancou} páginas registradas` : "Progresso atualizado");
       // refetchType: 'all' garante atualização mesmo em abas que não estão montadas no momento,

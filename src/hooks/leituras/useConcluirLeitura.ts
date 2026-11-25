@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { invalidateLeituras } from "@/lib/queryInvalidation";
+import { registrarEvento } from "@/services/analytics";
 
 export interface ConcluirLeituraInput {
   usuarioLeituraId?: string | null;
@@ -40,6 +41,10 @@ export function useConcluirLeitura() {
 
     const { error } = await supabase.functions.invoke("salvar-progresso-leitura", { body });
     if (error) throw error;
+    registrarEvento("progresso_registrado", {
+      clubeId: clubeId ?? null,
+      props: { origem: "concluir", percentual: 100 },
+    });
 
     toast.success("Leitura concluída!");
     if (usuarioLeituraId) {

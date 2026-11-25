@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { registrarEvento } from "@/services/analytics";
 
 export interface EventoClube {
   id: string;
@@ -81,7 +82,8 @@ export const useCriarEvento = (clubeId: string | undefined) => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_resultado, payload) => {
+      registrarEvento("encontro_criado", { clubeId, props: { tipo: payload.tipo ?? null } });
       toast.success("Evento criado!");
       qc.invalidateQueries({ queryKey: ["clube-eventos", clubeId] });
       qc.invalidateQueries({ queryKey: ["clube-proximos-eventos", clubeId] });
@@ -119,7 +121,8 @@ export const useRsvp = (clubeId: string | undefined) => {
         );
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_resultado, { status }) => {
+      registrarEvento("rsvp_respondido", { clubeId, props: { status: status ?? "removido" } });
       qc.invalidateQueries({ queryKey: ["clube-eventos", clubeId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro no RSVP"),

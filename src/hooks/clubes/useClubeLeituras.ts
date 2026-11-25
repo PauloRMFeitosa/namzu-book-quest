@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { registrarEvento } from "@/services/analytics";
 
 export interface TrilhaItem {
   id: string;
@@ -231,6 +232,10 @@ export const useSalvarProgresso = (clubeId: string | undefined) => {
         },
       });
       if (error) throw error;
+      registrarEvento("progresso_registrado", {
+        clubeId,
+        props: { origem: "clube", percentual: input.percentual },
+      });
     },
     onSuccess: () => {
       toast.success("Progresso atualizado");

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { temDicaPendente, dispensarDica } from "@/hooks/useDicaPrimeiraVez";
 import { pedirPermissaoNotificacao } from "@/hooks/usePermissaoNotificacao";
+import { registrarEvento } from "@/services/analytics";
 
 export interface ClubeDetalhe {
   id: string;
@@ -178,6 +179,7 @@ export const useEntrarClube = (clubeId: string | undefined) => {
       return (data?.status ?? status) as "ativo" | "pendente";
     },
     onSuccess: (status) => {
+      registrarEvento("membro_entrou", { clubeId, props: { status } });
       if (status === "ativo") {
         toast.success("Bem-vindo ao clube!");
         if (temDicaPendente("primeiro_clube")) {

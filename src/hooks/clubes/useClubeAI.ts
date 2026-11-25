@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { registrarEvento } from "@/services/analytics";
 
 export interface RecomendacaoIA { clube_id: string; motivo: string }
 export interface MatchIA { user_id: string; nome: string; motivo: string }
@@ -14,6 +15,7 @@ async function callClubeAI<T = any>(body: Record<string, any>): Promise<T> {
     throw new Error(msg ?? error.message);
   }
   if ((data as any)?.error) throw new Error((data as any).message ?? (data as any).error);
+  registrarEvento("roteiro_ia_gerado", { clubeId: body.clube_id ?? null, props: { acao: body.acao ?? null } });
   return data as T;
 }
 
@@ -58,6 +60,7 @@ export const useLeituraCopiloto = () =>
       const { data, error } = await supabase.functions.invoke("leitura-copiloto", { body: input });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).message);
+      registrarEvento("roteiro_ia_gerado", { props: { acao: "copiloto_" + input.modo } });
       return data as { texto: string };
     },
     onError: (e: any) => toast.error(e.message ?? "Erro no copiloto"),

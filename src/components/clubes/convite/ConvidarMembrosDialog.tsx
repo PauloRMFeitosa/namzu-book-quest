@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { linkConvite, mensagemConvite } from "@/lib/convite";
+import { registrarEvento } from "@/services/analytics";
 
 interface Props {
   open: boolean;
@@ -30,6 +31,7 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
     try {
       await navigator.clipboard.writeText(link);
       toast.success("Link copiado!");
+      registrarEvento("convite_gerado", { clubeId, props: { canal: "copiar" } });
     } catch {
       toast.error("Não foi possível copiar. Selecione o link e copie manualmente.");
     }
@@ -38,6 +40,7 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
   const compartilhar = async () => {
     try {
       await navigator.share({ title: nomeClube, text: mensagem, url: link });
+      registrarEvento("convite_gerado", { clubeId, props: { canal: "compartilhar" } });
     } catch {
       /* usuário fechou a folha de compartilhamento */
     }
@@ -68,7 +71,12 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
           </div>
 
           <Button asChild variant="outline" className="h-11 rounded-xl gap-2">
-            <a href={`https://wa.me/?text=${encodeURIComponent(mensagem)}`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(mensagem)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => registrarEvento("convite_gerado", { clubeId, props: { canal: "whatsapp" } })}
+            >
               <MessageCircle className="w-4 h-4" /> Enviar pelo WhatsApp
             </a>
           </Button>

@@ -27,6 +27,7 @@ import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { registrarEvento } from "@/services/analytics";
 
 interface Props {
   /** Abre o formulário assim que o componente aparece (ex.: logo após o cadastro). */
@@ -98,6 +99,7 @@ export const CriarClubeDialog = ({ abrirAoMontar = false }: Props) => {
         } as any);
 
       toast.success("Clube criado!");
+      registrarEvento("clube_criado", { clubeId: data.id, props: { visibilidade: form.visibilidade } });
       localStorage.removeItem(DRAFT_KEY);
       qc.invalidateQueries({ queryKey: ["clubes-marketplace"] });
       setOpen(false);
