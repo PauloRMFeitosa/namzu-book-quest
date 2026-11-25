@@ -13,6 +13,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Mensagens dos canais:** quem estava com pedido pendente ou banido conseguia ler. Agora só membro ativo ou organizador.
 - Detalhes, testes e reversão em `docs/runbooks/fase2-seguranca-clubes.md`.
 
+### Corrigido
+
+- **Moderador aprova e recusa pedidos de entrada.** A tela já mostrava os botões, mas o banco ignorava a ação e a tela avisava "Membro aprovado" mesmo assim. Agora a ação funciona.
+- As ações da aba Membros passam a avisar quando o banco não aplicou a alteração, em vez de mostrar sucesso.
+- Alterar papel e remover membro aparecem só para o organizador e o admin, que são quem pode fazer isso.
+
 ### Adicionado
 
 - **Menu de três destinos (Fase 2):** Meu clube, Minha leitura e Perfil. Controlado pela flag `show_navegacao_foco`, ligada por padrão. Desligada, volta o menu antigo com a Home.

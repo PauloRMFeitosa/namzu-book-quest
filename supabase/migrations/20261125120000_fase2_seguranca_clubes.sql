@@ -23,6 +23,8 @@
 --   - Eventos, tags e métricas seguem a visibilidade do clube.
 --   - Mensagens dos canais só para membro ativo ou organizador, como já era
 --     nos canais e nas threads.
+--   - Moderador passa a aprovar e recusar pedidos de entrada. A tela já
+--     mostrava os botões, mas o banco ignorava a ação em silêncio.
 --
 -- Nenhum dado é alterado.
 
@@ -46,6 +48,24 @@ $$;
 
 REVOKE ALL ON FUNCTION public.clube_e_privado(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.clube_e_privado(uuid) TO authenticated, service_role;
+
+-- Moderador: membro ativo do clube com papel de moderador.
+CREATE OR REPLACE FUNCTION public.is_clube_moderador(_user uuid, _clube uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.clube_membros
+    WHERE user_id = _user AND clube_id = _clube
+      AND status = 'ativo' AND papel = 'moderador'
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_clube_moderador(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_clube_moderador(uuid, uuid) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.trg_clube_membros_regras()
 RETURNS trigger
@@ -79,10 +99,23 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- UPDATE da própria linha: não muda o papel nem a data de entrada.
+  -- Daqui em diante é UPDATE feito por quem não é organizador nem admin.
+  -- O papel e a data de entrada nunca mudam por esse caminho.
   NEW.papel := OLD.papel;
   NEW.data_entrada := OLD.data_entrada;
 
+  -- Linha de outra pessoa: só o moderador chega aqui (pela política abaixo),
+  -- e só para aprovar um pedido de entrada.
+  IF OLD.user_id <> v_uid THEN
+    IF public.is_clube_moderador(v_uid, NEW.clube_id)
+       AND OLD.status = 'pendente' AND NEW.status = 'ativo' THEN
+      RETURN NEW;
+    END IF;
+    RAISE EXCEPTION 'Moderador só pode aprovar ou recusar pedidos de entrada.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- Própria linha.
   IF NEW.status IS DISTINCT FROM OLD.status THEN
     IF OLD.status = 'banido' THEN
       RAISE EXCEPTION 'Você foi removido deste clube pelo organizador.'
@@ -110,6 +143,7 @@ CREATE TRIGGER trg_clube_membros_regras
   FOR EACH ROW EXECUTE FUNCTION public.trg_clube_membros_regras();
 
 -- Banido não apaga a própria linha (apagaria o banimento e poderia entrar de novo).
+-- Moderador recusa pedido pendente.
 DROP POLICY IF EXISTS "sair do clube" ON public.clube_membros;
 CREATE POLICY "sair do clube" ON public.clube_membros
   FOR DELETE TO authenticated
@@ -117,7 +151,15 @@ CREATE POLICY "sair do clube" ON public.clube_membros
     (auth.uid() = user_id AND status <> 'banido')
     OR public.is_clube_curador(auth.uid(), clube_id)
     OR public.has_role(auth.uid(), 'admin'::public.app_role)
+    OR (status = 'pendente' AND public.is_clube_moderador(auth.uid(), clube_id))
   );
+
+-- Moderador aprova pedido pendente: só de pendente para ativo, como membro comum.
+DROP POLICY IF EXISTS "moderador aprova pedidos" ON public.clube_membros;
+CREATE POLICY "moderador aprova pedidos" ON public.clube_membros
+  FOR UPDATE TO authenticated
+  USING (status = 'pendente' AND public.is_clube_moderador(auth.uid(), clube_id))
+  WITH CHECK (status = 'ativo' AND papel = 'membro' AND public.is_clube_moderador(auth.uid(), clube_id));
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- 2. Clube privado só para quem faz parte

@@ -24,7 +24,9 @@ Os itens 1 e 5 combinados eram o pior caso: bastava pedir entrada em um clube pr
   - Banido não muda o próprio status.
   - Sair (`removido`) e voltar continuam permitidos, com a mesma regra de quem entra.
   - Organizador do clube e admin gerenciam membros como antes.
-- **Política de DELETE** em `clube_membros`: banido não apaga a própria linha.
+  - Moderador aprova pedido pendente. Não altera papel, não bane e não remove membro ativo.
+- **Política nova "moderador aprova pedidos"** em `clube_membros`, e função auxiliar `is_clube_moderador(uuid, uuid)`. Pedido do Paulo em 25/11/2026. A tela já mostrava os botões de aprovar e recusar para o moderador, mas o banco ignorava a ação em silêncio.
+- **Política de DELETE** em `clube_membros`: banido não apaga a própria linha. Moderador recusa pedido pendente.
 - **Política de SELECT em `clubes`:** clube privado só para o organizador, membros ativos e admins.
 - **`eventos`, `clube_tags`, `clube_metricas`:** seguem a visibilidade do clube.
 - **`clube_mensagens`:** só membro ativo ou organizador.
@@ -64,7 +66,7 @@ where schemaname = 'public'
   and policyname in ('Ver clubes ativos', 'sair do clube', 'ler eventos', 'ler clube_tags', 'ler metricas', 'mensagens clube membros');
 ```
 
-No app, com uma conta comum: abrir um clube do qual faz parte, postar no feed, ver canais e eventos. Com a conta do organizador: aprovar um pedido e alterar o papel de um membro.
+No app, com uma conta comum: abrir um clube do qual faz parte, postar no feed, ver canais e eventos. Com a conta do organizador: aprovar um pedido e alterar o papel de um membro. Com a conta de um moderador: aprovar e recusar um pedido.
 
 ## 6. Como foi testada
 
@@ -82,6 +84,10 @@ Banco Postgres local descartável com as políticas atuais copiadas de produçã
 | Mover a participação para outro clube | sem efeito | erro explícito |
 | Membro ativo vê clube, mensagens e eventos | vê | vê |
 | Organizadora aprova, promove, cria clube privado e remove banido | funciona | funciona |
+| Moderadora aprova e recusa pedido pendente do próprio clube | sem efeito | funciona |
+| Moderadora tenta promover, banir ou remover membro ativo | sem efeito | sem efeito |
+| Moderadora tenta agir em clube onde não é moderadora | sem efeito | sem efeito |
+| Membro comum tenta aprovar ou recusar pedido | sem efeito | sem efeito |
 | Escrita interna (dono do banco) | funciona | funciona |
 
 A migração também foi aplicada duas vezes seguidas sem erro.
@@ -92,6 +98,7 @@ Devolve as regras anteriores. Só usar se algo essencial parar de funcionar.
 
 ```sql
 DROP TRIGGER IF EXISTS trg_clube_membros_regras ON public.clube_membros;
+DROP POLICY IF EXISTS "moderador aprova pedidos" ON public.clube_membros;
 
 DROP POLICY IF EXISTS "sair do clube" ON public.clube_membros;
 CREATE POLICY "sair do clube" ON public.clube_membros FOR DELETE TO public
@@ -122,5 +129,5 @@ CREATE POLICY "mensagens clube membros" ON public.clube_mensagens FOR SELECT TO 
 
 ## 8. O que fica de fora
 
-- **Moderador não aprova pedidos.** No banco, só o organizador e o admin alteram a linha de outro membro. Isso já era assim. Dar poderes ao moderador entra com o co-curador, na Fase 3.
+- **Moderador não altera papel nem remove membro ativo.** Só aprova e recusa pedidos. O resto entra com o co-curador, na Fase 3.
 - **Id de clube privado em leituras públicas.** Uma leitura feita dentro de um clube guarda o id do clube. Em perfil público, esse id pode aparecer. Com ele dá para abrir o cartão do convite e pedir entrada, o que equivale a receber o link. Não dá acesso ao conteúdo.
