@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Plus,
   PlayCircle,
@@ -17,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useConteudos, useRegistrarAcesso, ClubeConteudo } from "@/hooks/clubes/useConteudos";
-import { CriarConteudoDialog } from "./CriarConteudoDialog";
 import { VideoPlayerDialog } from "./VideoPlayerDialog";
 import { useClubeMembership } from "@/hooks/clubes/useClube";
 import { differenceInCalendarDays } from "date-fns";
@@ -44,7 +44,6 @@ export const ConteudosTab = ({
   const { data: membership } = useClubeMembership(clubeId);
   // Publicar e gerenciar conteúdos: organizador, co-curador e admin.
   const { podeGerir: isCurador } = usePermissoesClube(clubeId, curadorId);
-  const [criarOpen, setCriarOpen] = useState(false);
 
   if (!isMembro && !isCurador) {
     return (
@@ -58,7 +57,6 @@ export const ConteudosTab = ({
     );
   }
 
-  const proximaOrdem = (conteudos?.length ?? 0) + 1;
   const diasNoClube = membership?.data_entrada
     ? differenceInCalendarDays(new Date(), new Date(membership.data_entrada))
     : 9999;
@@ -75,12 +73,10 @@ export const ConteudosTab = ({
           </p>
         </div>
         {isCurador && (
-          <Button
-            onClick={() => setCriarOpen(true)}
-            size="sm"
-            className="rounded-xl bg-primary hover:bg-primary-hover shrink-0"
-          >
-            <Plus className="w-4 h-4" /> Publicar
+          <Button asChild size="sm" className="rounded-xl bg-primary hover:bg-primary-hover shrink-0">
+            <Link to={`/clubes/${clubeId}/conteudos/novo`}>
+              <Plus className="w-4 h-4" /> Publicar
+            </Link>
           </Button>
         )}
       </header>
@@ -111,15 +107,6 @@ export const ConteudosTab = ({
             />
           ))}
         </ul>
-      )}
-
-      {isCurador && (
-        <CriarConteudoDialog
-          open={criarOpen}
-          onOpenChange={setCriarOpen}
-          clubeId={clubeId}
-          proximaOrdem={proximaOrdem}
-        />
       )}
     </div>
   );

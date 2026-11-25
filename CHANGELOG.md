@@ -44,6 +44,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Página "Adicionar obra à trilha":** a inclusão de livro na trilha saiu da janela e virou página própria (`/clubes/:id/trilha/nova`). Mostra a prévia do livro escolhido (capa, autoria, ano, páginas e sinopse), avisa quando o livro já está na trilha e permite já criar as metas semanais do período. O rascunho continua guardado.
 - **Capas na inclusão de obra:** a página "Adicionar obra à trilha" mostra o acervo em grade de capas, com título, autoria e ano, como na Busca. O campo de busca filtra por título ou autoria, e os livros que já estão na trilha aparecem marcados.
 - **Trilha na própria página:** depois de adicionar um livro, o organizador continua na página, com o formulário limpo, e vê a trilha atual logo abaixo, onde também reordena, remove e monta o cronograma. Assim dá para montar a trilha inteira de uma vez.
+- **Criar clube, encontro e conteúdo em página:** as três janelas de criação viraram páginas (`/clubes/novo`, `/clubes/:id/eventos/novo` e `/clubes/:id/conteudos/novo`), com seções numeradas, prévia de como vai aparecer e erro em texto. O encontro passa a recusar data no passado, término antes do início e link sem `https://`; o conteúdo também valida o link. Os rascunhos continuam nas mesmas chaves.
+- Peças compartilhadas das páginas de criação em `src/components/criacao/`, hooks `useRascunho` e `useAcessoGestao` e validações em `src/lib/criacao.ts`, com testes.
 - Regra de projeto no `CLAUDE.md`: fluxo novo de criação é página com rota própria, não janela com formulário.
 - Testes da lógica de inclusão em `src/lib/trilha.test.ts`.
 

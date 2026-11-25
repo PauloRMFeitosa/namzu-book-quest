@@ -4,12 +4,12 @@ import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useEventosClube } from "@/hooks/clubes/useEventos";
 import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
 import { EventoCard } from "./EventoCard";
-import { CriarEventoDialog } from "./CriarEventoDialog";
 import { AbrirVotacaoDialog } from "./AbrirVotacaoDialog";
 import { VotacaoDataCard } from "./VotacaoDataCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar as CalIcon, Vote } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Calendar as CalIcon, Plus, Vote } from "lucide-react";
 
 interface Props {
   clubeId: string;
@@ -67,7 +67,14 @@ export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) =
                 <Vote className="w-4 h-4 mr-1" /> Votar data
               </Button>
             )}
-            {isCurador && <CriarEventoDialog clubeId={clubeId} />}
+            {isCurador && (
+              <Button size="sm" asChild className="rounded-xl">
+                <Link to={`/clubes/${clubeId}/eventos/novo`}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Novo evento
+                </Link>
+              </Button>
+            )}
           </div>
         )}
       </header>

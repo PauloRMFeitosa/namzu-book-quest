@@ -7,7 +7,7 @@ import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Users, Flame, BookOpen, Activity, UsersRound, Clock } from "lucide-react";
 import { RecomendacoesIA } from "@/components/clubes/ai/RecomendacoesIA";
-import { CriarClubeDialog } from "@/components/clubes/marketplace/CriarClubeDialog";
+import { BotaoCriarClube } from "@/components/clubes/marketplace/BotaoCriarClube";
 
 const Marketplace = () => {
   const [busca, setBusca] = useState("");
@@ -61,7 +61,7 @@ const Marketplace = () => {
           onCategoria={setCategoria}
         />
         <div className="flex justify-center">
-          <CriarClubeDialog />
+          <BotaoCriarClube />
         </div>
 
         <RecomendacoesIA />
