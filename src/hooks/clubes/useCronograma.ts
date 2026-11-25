@@ -8,11 +8,6 @@ import type { MetaLeitura, MetaRascunho } from "@/lib/cronograma";
 // Cronograma de leitura do clube (Fase 3): metas com data para cada livro da
 // trilha. Membro ativo lê; só o organizador e admins gravam.
 
-// TEMPORÁRIO: a tabela `clube_metas_leitura` e a função `clube_salvar_cronograma`
-// ainda não estão em `types.ts`. Trocar por `supabase` depois de aplicar a
-// migração `fase3_cronograma_leitura` e regenerar os tipos.
-const semTipos = supabase as any;
-
 /** Todas as metas do clube, da mais próxima para a mais distante. */
 export const useMetasClube = (clubeId: string | undefined, habilitado = true) =>
   useQuery({
@@ -22,7 +17,7 @@ export const useMetasClube = (clubeId: string | undefined, habilitado = true) =>
     staleTime: 60 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<MetaLeitura[]> => {
-      const { data, error } = await semTipos
+      const { data, error } = await supabase
         .from("clube_metas_leitura")
         .select("id, trilha_id, clube_id, titulo, percentual_alvo, data_limite")
         .eq("clube_id", clubeId!)
@@ -74,7 +69,7 @@ export const useSalvarCronograma = (clubeId: string | undefined) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: SalvarCronogramaInput) => {
-      const { error } = await semTipos.rpc("clube_salvar_cronograma", {
+      const { error } = await supabase.rpc("clube_salvar_cronograma", {
         p_trilha_id: input.trilhaId,
         p_data_inicio: input.inicio || null,
         p_data_fim: input.fim || null,

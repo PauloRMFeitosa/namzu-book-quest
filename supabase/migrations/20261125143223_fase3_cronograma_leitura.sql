@@ -1,5 +1,7 @@
 -- Fase 3 (docs/roadmap.md) — livro e cronograma.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125143223).
+--
 -- O organizador divide o livro do ciclo em metas com data ("Semana 1",
 -- "Capítulos 1 a 3"). O membro vê a meta atual na aba de leituras e recebe um
 -- aviso no app quando o prazo está chegando e ele ainda não alcançou a meta.
