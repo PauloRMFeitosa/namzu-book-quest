@@ -59,8 +59,7 @@ export function registrarEvento(evento: EventoProduto, dados: DadosEvento = {}):
     try {
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
-      // `as any` até o types.ts ser regenerado com a tabela nova
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("eventos_produto")
         .insert({ evento, clube_id: dados.clubeId ?? null, props });
       if (error && import.meta.env.DEV) console.warn("[analytics] não gravou:", error.message);
