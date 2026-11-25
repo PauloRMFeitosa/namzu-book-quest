@@ -18,6 +18,7 @@ import {
   Globe,
   ClipboardList,
   Flag,
+  Bug,
 } from "lucide-react";
 import { GamificacaoTab } from "./tabs/GamificacaoTab";
 import { UsuariosTab } from "./tabs/UsuariosTab";
@@ -34,6 +35,7 @@ import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
 import { WikidataAutoresTab } from "./tabs/WikidataAutoresTab";
 import { JobsTab } from "./tabs/JobsTab";
 import { DenunciasTab } from "./tabs/DenunciasTab";
+import { ErrosAppTab } from "./tabs/ErrosAppTab";
 
 type TabKey =
   | "visibilidade"
@@ -50,7 +52,8 @@ type TabKey =
   | "wikidata-obras"
   | "wikidata-autores"
   | "jobs"
-  | "denuncias";
+  | "denuncias"
+  | "erros-app";
 
 interface NavItem {
   key: TabKey;
@@ -74,6 +77,7 @@ const PLATFORM_NAV: NavItem[] = [
 ];
 
 const TOOLS_NAV: NavItem[] = [
+  { key: "erros-app", label: "Erros do app", icon: Bug },
   { key: "jobs", label: "Jobs & Logs", icon: ClipboardList },
   { key: "saude", label: "Saúde do Catálogo", icon: HeartPulse },
   { key: "reprocessamento", label: "Reprocessamento", icon: RefreshCw },
@@ -282,6 +286,7 @@ const Admin = () => {
           {tab === "wikidata-autores" && <WikidataAutoresTab />}
           {tab === "jobs" && <JobsTab />}
           {tab === "denuncias" && <DenunciasTab />}
+          {tab === "erros-app" && <ErrosAppTab />}
         </div>
       </div>
     </div>

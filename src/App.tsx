@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryCache } from "@tanstack/react-query";
+import { registrarErro } from "@/services/monitoramento";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -27,6 +28,9 @@ const Livros = lazy(() => import("./pages/Livros"));
 const Leituras = lazy(() => import("./pages/Leituras"));
 const ClubesMarketplace = lazy(() => import("./pages/clubes/Marketplace"));
 const ClubeDetalhe = lazy(() => import("./pages/clubes/ClubeDetalhe"));
+const CriarClube = lazy(() => import("./pages/clubes/CriarClube"));
+const CriarEvento = lazy(() => import("./pages/clubes/CriarEvento"));
+const CriarConteudo = lazy(() => import("./pages/clubes/CriarConteudo"));
 const AdicionarObraTrilha = lazy(() => import("./pages/clubes/AdicionarObraTrilha"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Metas = lazy(() => import("./pages/Metas"));
@@ -47,6 +51,8 @@ const Comecar = lazy(() => import("./pages/Comecar"));
 const Convite = lazy(() => import("./pages/Convite"));
 
 const queryClient = new QueryClient({
+  // Consulta que falha depois das tentativas vai para o monitoramento de erros.
+  queryCache: new QueryCache({ onError: (erro) => registrarErro("consulta", erro) }),
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
@@ -94,7 +100,10 @@ const App = () => (
         <Route path="/leituras" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
         <Route path="/leituras/:id" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/novo" element={<ProtectedRoute><CriarClube /></ProtectedRoute>} />
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/eventos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarEvento /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/conteudos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarConteudo /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/trilha/nova" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><AdicionarObraTrilha /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/perfis/:id" element={<ProtectedRoute><PerfilPublico /></ProtectedRoute>} />

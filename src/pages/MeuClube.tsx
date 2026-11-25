@@ -8,7 +8,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { PageHero } from "@/components/PageHero";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClubeCard } from "@/components/clubes/marketplace/ClubeCard";
-import { CriarClubeDialog } from "@/components/clubes/marketplace/CriarClubeDialog";
+import { BotaoCriarClube } from "@/components/clubes/marketplace/BotaoCriarClube";
 
 // Destino "Meu clube" (Fase 2):
 // - um clube: abre direto nele;
@@ -31,16 +31,9 @@ const MeuClube = () => {
 
   const podeExplorar = isAdmin || flags.show_clubes;
 
-  // Quem chega de "Criar meu clube" (?criar=1) cai com o formulário aberto.
-  // O valor é guardado na montagem e o parâmetro sai da URL para não reabrir.
-  const [search, setSearch] = useSearchParams();
-  const [querCriar] = useState(() => search.get("criar") === "1");
-  useEffect(() => {
-    if (search.get("criar") !== "1") return;
-    const proximo = new URLSearchParams(search);
-    proximo.delete("criar");
-    setSearch(proximo, { replace: true });
-  }, [search, setSearch]);
+  // Quem chega de "Criar meu clube" (?criar=1) vai direto para a página de criação.
+  const [search] = useSearchParams();
+  if (search.get("criar") === "1") return <Navigate to="/clubes/novo" replace />;
 
   if (isLoading) {
     return (
@@ -51,7 +44,7 @@ const MeuClube = () => {
     );
   }
 
-  if (meusClubes.length === 1 && !querCriar) {
+  if (meusClubes.length === 1) {
     return <Navigate to={`/clubes/${meusClubes[0].id}`} replace />;
   }
 
@@ -82,7 +75,7 @@ const MeuClube = () => {
               Leva poucos minutos: dê um nome, escolha o livro e compartilhe o link.
             </p>
           </div>
-          <CriarClubeDialog abrirAoMontar={querCriar} />
+          <BotaoCriarClube />
           {linkExplorar}
         </div>
       </div>
@@ -103,7 +96,7 @@ const MeuClube = () => {
         ))}
       </div>
       <div className="flex flex-col items-center gap-4">
-        <CriarClubeDialog abrirAoMontar={querCriar} />
+        <BotaoCriarClube />
         {linkExplorar}
       </div>
     </div>

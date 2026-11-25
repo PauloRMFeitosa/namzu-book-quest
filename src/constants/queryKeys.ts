@@ -13,6 +13,9 @@ export const queryKeys = {
     obraParaTrilha: (obraId: string) => ["obra-para-trilha", obraId] as const,
     paginasDasObras: (obraIds: string[]) => ["obras-paginas", ...obraIds] as const,
   },
+  admin: {
+    errosApp: (dias: number) => ["admin-erros-app", dias] as const,
+  },
   acervo: {
     obras: ["acervo-obras"] as const,
   },

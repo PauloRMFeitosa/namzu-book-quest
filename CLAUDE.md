@@ -49,6 +49,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - **`src/services/`** — Wrappers finos sobre queries do Supabase para reutilização entre componentes.
 - **`src/constants/queryKeys.ts`** — Fábrica centralizada de chaves do React Query. Adicione novas chaves aqui em vez de strings inline.
 - **`src/services/analytics.ts`** — Eventos de produto. Use `registrarEvento("nome_do_evento", { clubeId, props })` depois que a ação deu certo. A lista de eventos e as regras estão em `docs/metricas-produto.md`.
+- **`src/services/monitoramento.ts`** — Erros do app. O registro é automático (erro não tratado, promessa rejeitada, `ErrorBoundary` e consulta que falha) e aparece em Admin > Erros do app. As regras estão em `docs/monitoramento.md`.
 
 ### Configuração do React Query
 
@@ -98,7 +99,8 @@ Exceções permitidas (inglês obrigatório):
 - **Lógica:** validação e montagem dos dados ficam em `src/lib/`, com testes; a página só liga as peças.
 - **Rascunho:** a regra de rascunho abaixo continua valendo. Na página, "aberto" é a página montada: restaure no estado inicial, salve a cada alteração e limpe só no sucesso.
 - **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). Quando é comum criar vários itens em sequência (como os livros da trilha), fique na página com o formulário limpo, mostre abaixo o que já foi criado e ofereça "Concluir". Sair sem salvar não apaga o rascunho.
-- **Modelo:** `src/pages/clubes/AdicionarObraTrilha.tsx`.
+- **Peças prontas:** `PaginaCriacao`, `SecaoCriacao`, `ErroCriacao` e `AcoesCriacao` em `src/components/criacao/`, `useRascunho` para o rascunho e `useAcessoGestao` para a permissão dentro do clube.
+- **Modelos:** `src/pages/clubes/CriarEvento.tsx` (formulário simples) e `src/pages/clubes/AdicionarObraTrilha.tsx` (criação em sequência).
 
 `Dialog` continua valendo para confirmação, ação rápida de um campo e edição pontual. As janelas de criação que já existem (tabela abaixo) são convertidas aos poucos; não crie novas nesse formato.
 
@@ -144,16 +146,17 @@ onOpenChange(false);
 - **Nunca salvar quando fechado:** sempre guarde com `if (!open) return` no effect de save.
 - **Limpar apenas no sucesso:** cancelar mantém o rascunho para quando o usuário reabrir.
 - **Formulários de edição (não criação):** não aplicar — esses já carregam dados existentes do banco.
-- **Formulários com react-hook-form:** usar `watch()` para observar mudanças em vez de `useEffect` nos campos individuais (ver `CriarConteudoDialog.tsx`).
+- **Formulários com react-hook-form:** usar `watch()` para observar mudanças em vez de `useEffect` nos campos individuais.
+- **Páginas de criação:** usar o hook `useRascunho(chave, vazio)` de `src/hooks/useRascunho.ts`, que já restaura, salva e limpa.
 
 ### Formulários já implementados
 
 | Arquivo | Chave |
 |---|---|
-| `CriarConteudoDialog.tsx` | `draft-conteudo-{clubeId}` |
-| `CriarEventoDialog.tsx` | `draft-evento-{clubeId}` |
+| `pages/clubes/CriarConteudo.tsx` (página) | `draft-conteudo-{clubeId}` |
+| `pages/clubes/CriarEvento.tsx` (página) | `draft-evento-{clubeId}` |
 | `pages/clubes/AdicionarObraTrilha.tsx` (página) | `draft-trilha-{clubeId}` |
-| `CriarClubeDialog.tsx` | `draft-criar-clube` |
+| `pages/clubes/CriarClube.tsx` (página) | `draft-criar-clube` |
 | `CriarMicrogrupoDialog.tsx` | `draft-microgrupo-{clubeId}` |
 | `CriarCanalDialog.tsx` | `draft-canal-{clubeId}` |
 | `RegistrarLeituraDialog.tsx` | `draft-registrar-leitura-{usuarioLeituraId}` |
