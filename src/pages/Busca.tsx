@@ -26,7 +26,8 @@ import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAcervoObras, type AcervoItem } from "@/hooks/useAcervoObras";
 import {
   Select,
   SelectContent,
@@ -47,17 +48,6 @@ type AddStatus = "quero_ler" | "lido";
 
 type Ordenacao = "titulo_asc" | "titulo_desc" | "autor_asc" | "autor_desc";
 type ViewMode = "grade" | "lista";
-
-interface AcervoItem {
-  obra_id: string;
-  edicao_id: string | null;
-  titulo: string;
-  titulo_ordenacao: string;
-  ano: number | null;
-  capa_url: string | null;
-  autor: string | null;
-  autor_ordenacao: string;
-}
 
 interface LocalResult {
   origem: "local";
@@ -139,49 +129,7 @@ const Busca = () => {
   const mostrandoAcervo = !submitted;
 
   // Acervo (apenas quando não há termo de busca)
-  const { data: acervo = [], isLoading: loadingAcervo } = useQuery({
-    queryKey: ["acervo-obras"],
-    enabled: mostrandoAcervo,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("obras")
-        .select(
-          `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
-           obra_autores!left(ordem, autores(nome_completo, nome_ordenacao)),
-           edicoes!left(id)`,
-        )
-        .limit(500);
-
-      if (error) {
-        console.error("acervo query", error);
-        return [] as AcervoItem[];
-      }
-
-      const items: AcervoItem[] = [];
-      const seen = new Set<string>();
-
-      for (const o of data ?? []) {
-        if (!o || seen.has(o.id)) continue;
-        seen.add(o.id);
-        const oas: any[] = (o as any).obra_autores ?? [];
-        const principal = oas.slice().sort((a: any, b: any) => (a.ordem ?? 99) - (b.ordem ?? 99))[0];
-        const autorNome = principal?.autores?.nome_completo ?? null;
-        const autorOrd = principal?.autores?.nome_ordenacao ?? "zzz";
-        const edicoes: any[] = (o as any).edicoes ?? [];
-        items.push({
-          obra_id: (o as any).id,
-          edicao_id: edicoes[0]?.id ?? null,
-          titulo: (o as any).titulo_original,
-          titulo_ordenacao: (o as any).titulo_ordenacao ?? (o as any).titulo_original?.toLowerCase() ?? "",
-          ano: (o as any).ano_primeira_publicacao,
-          capa_url: (o as any).capa_padrao_url,
-          autor: autorNome,
-          autor_ordenacao: autorOrd,
-        });
-      }
-      return items;
-    },
-  });
+  const { data: acervo = [], isLoading: loadingAcervo } = useAcervoObras(mostrandoAcervo);
 
   // Ordenação client-side
   const acervoOrdenado = useMemo(() => {
