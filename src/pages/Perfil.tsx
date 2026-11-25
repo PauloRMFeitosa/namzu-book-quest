@@ -22,6 +22,8 @@ import { useContagemSocial } from "@/hooks/social/useSeguir";
 import { EstatisticasLeitura } from "@/components/EstatisticasLeitura";
 import { useStatsLeitura } from "@/hooks/useEstatisticas";
 import { MapaAtividades } from "@/components/perfil/MapaAtividades";
+import { SecaoConta } from "@/components/perfil/SecaoConta";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const CATEGORIAS = [
   { key: "leitura", label: "Leitura", emoji: "📚" },
@@ -49,6 +51,9 @@ const Perfil = () => {
   const { data: gam } = useGamificacao();
   const { data: meusInteresses = [] } = useInteressesUsuario();
   const { flags } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  // Com a página de leitores desligada, os contadores sociais deixam de ser links
+  const podeVerLeitores = isAdmin || flags.show_leitores;
 
   const { data: perfil } = useQuery({
     queryKey: ["perfil", user?.id],
@@ -214,7 +219,8 @@ const Perfil = () => {
           <div className="mt-4 flex gap-6 text-xs border-t border-border/60 pt-3">
             <button
               onClick={() => navigate("/leitores?tab=seguidores")}
-              className="inline-flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
+              disabled={!podeVerLeitores}
+              className="inline-flex items-center gap-1.5 text-foreground enabled:hover:text-primary transition-colors"
             >
               <Users className="w-3.5 h-3.5" />
               <span className="font-semibold tabular-nums">{social?.seguidores ?? "—"}</span>
@@ -222,7 +228,8 @@ const Perfil = () => {
             </button>
             <button
               onClick={() => navigate("/leitores?tab=seguindo")}
-              className="inline-flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
+              disabled={!podeVerLeitores}
+              className="inline-flex items-center gap-1.5 text-foreground enabled:hover:text-primary transition-colors"
             >
               <Users className="w-3.5 h-3.5" />
               <span className="font-semibold tabular-nums">{social?.seguindo ?? "—"}</span>
@@ -502,6 +509,8 @@ const Perfil = () => {
           />
         </TabsContent>
       </Tabs>
+
+      {flags.show_navegacao_foco && <SecaoConta />}
     </div>
   );
 };

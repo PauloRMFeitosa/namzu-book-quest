@@ -12,7 +12,7 @@ import OnboardingInteresses from "./pages/OnboardingInteresses";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RecuperarSenha from "./pages/RecuperarSenha";
-import Home from "./pages/Home";
+import Inicio from "./pages/Inicio";
 import Busca from "./pages/Busca";
 import Livros from "./pages/Livros";
 import Leituras from "./pages/Leituras";
@@ -79,9 +79,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/busca" element={<ProtectedRoute><Busca /></ProtectedRoute>} />
-        <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><Inicio /></ProtectedRoute>} />
+            <Route path="/busca" element={<ProtectedRoute><FeatureRoute flag="show_busca"><Busca /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/livros" element={<ProtectedRoute><FeatureRoute flag="show_livros"><Livros /></FeatureRoute></ProtectedRoute>} />
         <Route path="/leituras" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
         <Route path="/leituras/:id" element={<ProtectedRoute><FeatureRoute flag="show_leituras"><Leituras /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
@@ -89,8 +89,8 @@ const App = () => (
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/perfis/:id" element={<ProtectedRoute><PerfilPublico /></ProtectedRoute>} />
             <Route path="/perfis/:id/livros/:usuarioLivroId" element={<ProtectedRoute><PerfilLeituraDetalhe /></ProtectedRoute>} />
-            <Route path="/leitores" element={<ProtectedRoute><Leitores /></ProtectedRoute>} />
-            <Route path="/citacoes" element={<ProtectedRoute><Citacoes /></ProtectedRoute>} />
+            <Route path="/leitores" element={<ProtectedRoute><FeatureRoute flag="show_leitores"><Leitores /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/citacoes" element={<ProtectedRoute><FeatureRoute flag="show_citacoes"><Citacoes /></FeatureRoute></ProtectedRoute>} />
             <Route path="/metas" element={<ProtectedRoute><FeatureRoute flag="show_metas"><Metas /></FeatureRoute></ProtectedRoute>} />
             <Route path="/historico" element={<ProtectedRoute><FeatureRoute flag="show_historico"><Historico /></FeatureRoute></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><FeatureRoute flag="show_notificacoes"><Notificacoes /></FeatureRoute></ProtectedRoute>} />

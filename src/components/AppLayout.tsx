@@ -13,6 +13,8 @@ import { InstallPWAButton } from "@/components/InstallPWAButton";
 import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
 import { useConquistaRealtime } from "@/hooks/useConquistaRealtime";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { AbasMinhaLeitura } from "@/components/leituras/AbasMinhaLeitura";
+import { destinoAtivo, itensVisiveisFoco, mostraAbasMinhaLeitura, type DestinoFoco } from "@/lib/navegacao";
 
 
 const navItems = [
@@ -22,6 +24,13 @@ const navItems = [
   { to: "/livros", icon: BookOpen, label: "Livros" },
   { to: "/leituras", icon: BookMarked, label: "Leituras" },
 ];
+
+// Ícones do menu de três destinos (Fase 2)
+const ICONES_FOCO: Record<DestinoFoco, typeof Home> = {
+  clube: Users,
+  leitura: BookMarked,
+  perfil: User,
+};
 
 const drawerItems = [
   { to: "/perfil", icon: User, label: "Perfil" },
@@ -41,6 +50,12 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const totalNotificacoes = useNotificacoesTotal();
   useConquistaRealtime(); // Realtime: toast ao desbloquear conquista
+
+  // Fase 2: com a flag ligada, o menu tem três destinos e o "Mais" some
+  // (o que estava nele passa para a seção Conta do Perfil).
+  const modoFoco = flags.show_navegacao_foco;
+  const itensFoco = itensVisiveisFoco(flags, isAdmin);
+  const destinoAtual = destinoAtivo(location.pathname);
 
   const visibleNav = navItems.filter((i) => {
     if (isAdmin) return true;
@@ -147,10 +162,42 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       </header>
 
       <main className={`relative z-10 flex-1 max-w-3xl w-full mx-auto px-4 pt-20 animate-fade-in ${showMenuInferior ? "pb-24" : "pb-4"}`}>
+        {modoFoco && mostraAbasMinhaLeitura(location.pathname) && <AbasMinhaLeitura />}
         {children}
       </main>
 
-      {showMenuInferior && <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
+      {showMenuInferior && modoFoco && (
+        <nav
+          aria-label="Navegação principal"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated"
+        >
+          <div
+            className="max-w-3xl mx-auto grid px-2 py-2"
+            style={{ gridTemplateColumns: `repeat(${itensFoco.length}, minmax(0, 1fr))` }}
+          >
+            {itensFoco.map((item) => {
+              const Icone = ICONES_FOCO[item.destino];
+              const ativo = destinoAtual === item.destino;
+              return (
+                <Link
+                  key={item.destino}
+                  to={item.to}
+                  aria-current={ativo ? "page" : undefined}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all",
+                    ativo ? "text-primary" : "text-accent hover:text-primary"
+                  )}
+                >
+                  <Icone className="w-5 h-5" />
+                  <span className="text-[11px] font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
+
+      {showMenuInferior && !modoFoco && <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-paper border-t border-border/60 shadow-elevated">
         <div
           className="max-w-3xl mx-auto grid px-2 py-2"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}

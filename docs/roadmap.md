@@ -113,9 +113,9 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 **Objetivo:** quem abre o NAMZU entende em 10 segundos que é uma ferramenta de clube.
 
 - [ ] Nova entrada: visitante vê a proposta para organizadores e o botão "Criar meu clube". Quem chega por link de convite cai direto no clube, com cadastro curto.
-- [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu.
-- [ ] Criar as flags que faltam: hoje `/leitores`, `/citacoes`, `/busca` e `/livros` não têm `FeatureRoute`.
-- [ ] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil.
+- [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Parcial: `/leitores` já nasce desligada e o preset "Foco no organizador" do painel admin desliga metas, histórico e gamificação da home; onboarding e Código ME saem junto com a nova entrada.
+- [x] Criar as flags que faltam: `/leitores`, `/citacoes`, `/busca` e `/livros` agora têm `FeatureRoute` (`show_leitores` nasce desligada).
+- [x] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil (flag `show_navegacao_foco`; o menu "Mais" virou a seção Conta do Perfil).
 - [ ] Carregamento por rota (`React.lazy`), admin em chunk separado.
 - [ ] Remover código morto: páginas sem rota, `src/features/`.
 - [ ] Instrumentar eventos de produto: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido`, `roteiro_ia_gerado`. Hoje só o funil de onboarding é medido.

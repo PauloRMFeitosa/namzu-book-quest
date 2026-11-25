@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useVerComoMembro } from "@/stores/verComoMembroStore";
 
 export const useIsAdmin = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const verComoMembro = useVerComoMembro((s) => s.ativo);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,5 +62,6 @@ export const useIsAdmin = () => {
     };
   }, [user, authLoading]);
 
-  return { isAdmin, loading: loading || authLoading };
+  // `adminReal` é o papel de verdade; `isAdmin` respeita o modo "Ver como membro".
+  return { isAdmin: isAdmin && !verComoMembro, adminReal: isAdmin, loading: loading || authLoading };
 };

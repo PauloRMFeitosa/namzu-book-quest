@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import type { FeatureFlagKey } from "@/hooks/useFeatureFlags";
+import { DEFAULTS, type FeatureFlagKey } from "@/hooks/useFeatureFlags";
 import { LANDING_PAGE_OPTIONS, useSaveLandingPage, type LandingPageRoute } from "@/hooks/useLandingPage";
 
 // ─── Grupos de flags ─────────────────────────────────────────────────────────
@@ -19,6 +19,18 @@ const FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_historico", label: "Página Histórico", desc: "Exibir Histórico no menu Mais." },
   { key: "show_notificacoes", label: "Página Notificações", desc: "Exibir Notificações no menu Mais." },
   { key: "show_gamificacao_home", label: "Gamificação na Home", desc: "Exibir XP, nível e streak no topo da Home." },
+  { key: "show_busca", label: "Página Busca", desc: "Permitir buscar e adicionar livros." },
+  { key: "show_livros", label: "Página Livros (Estante)", desc: "Exibir a estante em Minha leitura." },
+  { key: "show_citacoes", label: "Página Citações", desc: "Exibir as citações em Minha leitura." },
+  { key: "show_leitores", label: "Página Leitores", desc: "Exibir a descoberta de leitores e o matching." },
+];
+
+const NAVEGACAO_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
+  {
+    key: "show_navegacao_foco",
+    label: "Menu de três destinos",
+    desc: "Menu com Meu clube, Minha leitura e Perfil. A entrada passa a ser o clube e o menu Mais vai para o Perfil. Desligado, volta o menu antigo com a Home.",
+  },
 ];
 
 const FLUXOS_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
@@ -64,6 +76,26 @@ type Preset = {
 
 const PRESETS: Preset[] = [
   {
+    label: "Foco no organizador",
+    description: "Fase 2 do roadmap. Menu de três destinos, sem Leitores, Metas, Histórico e gamificação na Home. Onboarding e Código ME não mudam.",
+    badge: "Fase 2",
+    settings: {
+      show_navegacao_foco: true,
+      show_clubes: true,
+      show_leituras: true,
+      show_busca: true,
+      show_livros: true,
+      show_citacoes: true,
+      show_notificacoes: true,
+      show_leitores: false,
+      show_metas: false,
+      show_historico: false,
+      show_gamificacao_home: false,
+      pages_global_visible: true,
+      landing_page: "/",
+    },
+  },
+  {
     label: "Modo Clubes",
     description: "Apenas Clubes ativo. Onboarding e Código ME desativados. Usuários entram direto nos clubes.",
     badge: "Foco",
@@ -82,7 +114,7 @@ const PRESETS: Preset[] = [
   },
   {
     label: "Padrão completo",
-    description: "Restaura todas as páginas, onboarding e Código ME. Landing page volta para Home.",
+    description: "Restaura todas as páginas, o menu antigo, onboarding e Código ME. Landing page volta para Home.",
     badge: "Reset",
     settings: {
       show_clubes: true,
@@ -91,6 +123,11 @@ const PRESETS: Preset[] = [
       show_historico: true,
       show_notificacoes: true,
       show_gamificacao_home: true,
+      show_navegacao_foco: false,
+      show_busca: true,
+      show_livros: true,
+      show_citacoes: true,
+      show_leitores: true,
       pages_global_visible: true,
       show_onboarding: true,
       show_codigo_me: true,
@@ -145,9 +182,9 @@ export const VisibilidadeTab = () => {
         const v = row.value;
         map[row.key] = typeof v === "boolean" ? v : v === "true" || v === true;
       }
-      // defaults booleanos
-      [...FLAGS, ...CLUBE_FLAGS, ...MENU_INFERIOR_FLAGS, ...FLUXOS_FLAGS].forEach((f) => {
-        if (!(f.key in map)) map[f.key] = true;
+      // sem linha no banco, vale o mesmo padrão que o app usa
+      [...FLAGS, ...NAVEGACAO_FLAGS, ...CLUBE_FLAGS, ...MENU_INFERIOR_FLAGS, ...FLUXOS_FLAGS].forEach((f) => {
+        if (!(f.key in map)) map[f.key] = DEFAULTS[f.key];
       });
       if (!("pages_global_visible" in map)) map["pages_global_visible"] = true;
 
@@ -237,7 +274,7 @@ export const VisibilidadeTab = () => {
         <h2 className="text-lg font-semibold">Presets</h2>
         <p className="text-sm text-muted-foreground">Configurações prontas para aplicar de uma vez.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {PRESETS.map((preset) => (
           <div key={preset.label} className="card-soft p-4 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -268,6 +305,15 @@ export const VisibilidadeTab = () => {
           checked={!!values["pages_global_visible"]}
           onCheckedChange={(v) => toggle("pages_global_visible", v)}
         />
+      </div>
+
+      {/* ── Navegação ── */}
+      <div>
+        <h2 className="text-lg font-semibold">Navegação</h2>
+        <p className="text-sm text-muted-foreground">Formato do menu principal. Vale para todos, inclusive admins.</p>
+      </div>
+      <div className="card-soft p-4 space-y-4">
+        {NAVEGACAO_FLAGS.map((f) => <FlagRow key={f.key} f={f} values={values} toggle={toggle} />)}
       </div>
 
       {/* ── Fluxos de entrada ── */}

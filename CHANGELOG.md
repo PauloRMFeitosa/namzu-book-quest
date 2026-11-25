@@ -6,6 +6,22 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Menu de três destinos (Fase 2):** Meu clube, Minha leitura e Perfil. Controlado pela flag `show_navegacao_foco`, ligada por padrão. Desligada, volta o menu antigo com a Home.
+- **Página "Meu clube"** na rota `/`: com um clube abre direto nele, com vários mostra a lista, sem nenhum convida a criar o primeiro.
+- **Abas de "Minha leitura"** (Lendo, Estante, Citações) e botão "Adicionar livro" no topo dessas três páginas.
+- **Seção "Conta" no Perfil**, que substitui o menu "Mais": Configurações, Explorar clubes, Metas, Histórico, Termos, Admin e Sair.
+- **"Ver como membro"** para admins, na seção Conta: mostra o app respeitando as flags, como um usuário comum vê. Só muda a interface.
+- **Flags novas:** `show_leitores` (desligada por padrão), `show_busca`, `show_livros` e `show_citacoes`. As quatro rotas passaram a usar `FeatureRoute`.
+- **Preset "Foco no organizador"** no painel admin. O preset "Padrão completo" desfaz a mudança.
+- Testes da lógica de navegação em `src/lib/navegacao.test.ts`.
+
+### Alterado
+
+- Os contadores de seguidores e seguindo no Perfil deixam de ser links quando a página de leitores está desligada.
+- A aba Visibilidade do admin passa a usar os mesmos padrões de flag que o app, em vez de assumir "ligado" para toda flag sem registro.
+
 ## [0.2.0] - 2026-11-24
 
 Fase 0 do roadmap: fundação. Segurança das funções de borda e do banco, repositório igual à produção, e base de processo.
