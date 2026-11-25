@@ -2,7 +2,27 @@
 
 Entrega de segurança aberta em 25/11/2026, depois de uma revisão das políticas de acesso feita durante a Fase 2. Migração: `supabase/migrations/*_fase2_seguranca_clubes.sql`.
 
-**Situação:** migração escrita e testada em banco local. **Ainda não aplicada em produção.** Aplicar só com o OK do Paulo.
+**Situação:** aplicada em produção em 25/11/2026, versão `20261125110603`, com o OK do Paulo. O PR do app (112) foi mesclado antes.
+
+### Conferido em produção depois de aplicar
+
+| Verificação | Antes | Depois |
+|---|---|---|
+| Clubes que um visitante lista | 7, sendo 4 privados | 3, nenhum privado |
+| Eventos que um visitante lista | 2, ambos de clube privado | 0 |
+| Visitante tenta inserir em `clube_membros` | — | recusado (401) |
+
+Teste com usuários reais dentro de uma transação desfeita ao final (nada foi gravado):
+
+- Usuário de fora não vê clubes privados nem eventos deles.
+- Ao entrar em clube privado pedindo `ativo` e `moderador`, fica `pendente/membro`. Não lê mensagens nem vê o clube.
+- Tentativa de se aprovar: "Só o organizador do clube pode aprovar a entrada." Tentativa de virar moderador: sem efeito.
+- Em clube público pedindo `moderador`, fica `ativo/membro`.
+- Membro comum não aprova o pedido. O organizador aprova e promove.
+- Depois de aprovado, o usuário vê o clube privado.
+- Moderador não promove nem remove membro ativo.
+
+Os dados de `clube_membros` ficaram iguais aos de antes: 28 membros ativos e 6 moderadores ativos.
 
 ## 1. O que estava errado
 

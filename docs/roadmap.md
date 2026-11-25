@@ -116,6 +116,7 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [ ] Desligar por feature flag, sem apagar código: `/leitores` e matching, onboarding por quiz (`show_onboarding`), Código ME (`show_codigo_me`), gamificação individual na home (`show_gamificacao_home`), metas e histórico como itens de menu. Feito no código: `/leitores` nasce desligada e a entrada do organizador tira o quiz e o Código ME do caminho. Falta aplicar o preset "Foco no organizador" no painel admin para desligar metas, histórico e gamificação da home em produção.
 - [x] Criar as flags que faltam: `/leitores`, `/citacoes`, `/busca` e `/livros` agora têm `FeatureRoute` (`show_leitores` nasce desligada).
 - [x] Navegação do membro reduzida a três destinos: Meu clube, Minha leitura, Perfil (flag `show_navegacao_foco`; o menu "Mais" virou a seção Conta do Perfil).
+- [x] Segurança de clubes: regras de entrada em `clube_membros`, clubes privados visíveis só para quem faz parte e moderador aprovando pedidos (`docs/runbooks/fase2-seguranca-clubes.md`). Não estava no plano original; surgiu da revisão das políticas durante a entrega do convite.
 - [ ] Carregamento por rota (`React.lazy`), admin em chunk separado.
 - [ ] Remover código morto: páginas sem rota, `src/features/`.
 - [ ] Instrumentar eventos de produto: `clube_criado`, `convite_gerado`, `membro_entrou`, `progresso_registrado`, `encontro_criado`, `rsvp_respondido`, `roteiro_ia_gerado`. Hoje só o funil de onboarding é medido.
