@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -8,37 +9,41 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { FontSizeProvider } from "@/hooks/useFontSize";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import OnboardingInteresses from "./pages/OnboardingInteresses";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import RecuperarSenha from "./pages/RecuperarSenha";
-import Inicio from "./pages/Inicio";
-import Busca from "./pages/Busca";
-import Livros from "./pages/Livros";
-import Leituras from "./pages/Leituras";
-import ClubesMarketplace from "./pages/clubes/Marketplace";
-import ClubeDetalhe from "./pages/clubes/ClubeDetalhe";
-import Perfil from "./pages/Perfil";
-import Metas from "./pages/Metas";
-import Historico from "./pages/Historico";
-import Notificacoes from "./pages/Notificacoes";
-import Configuracoes from "./pages/Configuracoes";
-import TermosDeUso from "./pages/TermosDeUso";
-import CadastroManual from "./pages/CadastroManual";
-import ObraDetalhe from "./pages/ObraDetalhe";
-import AutorDetalhe from "./pages/AutorDetalhe";
-import Admin from "./pages/admin/Admin";
-import Leitores from "./pages/Leitores";
-import Citacoes from "./pages/Citacoes";
-import PerfilPublico from "./pages/PerfilPublico";
-import PerfilLeituraDetalhe from "./pages/PerfilLeituraDetalhe";
 import { AdminRoute } from "./components/AdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
-import NotFound from "./pages/NotFound";
 import { SessaoLeituraModal } from "@/components/leituras/SessaoLeituraModal";
 import { OnboardingAutoMerge } from "@/components/OnboardingAutoMerge";
-import Comecar from "./pages/Comecar";
-import Convite from "./pages/Convite";
+import { PaginaCarregando } from "@/components/PaginaCarregando";
+
+// Cada página vira um arquivo próprio, baixado só quando a rota é aberta.
+// O que fica no carregamento inicial é a casca do app e a página pública.
+const OnboardingInteresses = lazy(() => import("./pages/OnboardingInteresses"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
+const Inicio = lazy(() => import("./pages/Inicio"));
+const Busca = lazy(() => import("./pages/Busca"));
+const Livros = lazy(() => import("./pages/Livros"));
+const Leituras = lazy(() => import("./pages/Leituras"));
+const ClubesMarketplace = lazy(() => import("./pages/clubes/Marketplace"));
+const ClubeDetalhe = lazy(() => import("./pages/clubes/ClubeDetalhe"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Metas = lazy(() => import("./pages/Metas"));
+const Historico = lazy(() => import("./pages/Historico"));
+const Notificacoes = lazy(() => import("./pages/Notificacoes"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
+const CadastroManual = lazy(() => import("./pages/CadastroManual"));
+const ObraDetalhe = lazy(() => import("./pages/ObraDetalhe"));
+const AutorDetalhe = lazy(() => import("./pages/AutorDetalhe"));
+const Admin = lazy(() => import("./pages/admin/Admin"));
+const Leitores = lazy(() => import("./pages/Leitores"));
+const Citacoes = lazy(() => import("./pages/Citacoes"));
+const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
+const PerfilLeituraDetalhe = lazy(() => import("./pages/PerfilLeituraDetalhe"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Comecar = lazy(() => import("./pages/Comecar"));
+const Convite = lazy(() => import("./pages/Convite"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +78,7 @@ const App = () => (
         <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <Suspense fallback={<PaginaCarregando />}>
           <Routes>
             <Route path="/comecar" element={<Comecar />} />
             <Route path="/onboarding" element={<Navigate to="/comecar" replace />} />
@@ -104,6 +110,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           <SessaoLeituraModal />
           <OnboardingAutoMerge />
         </AuthProvider>
