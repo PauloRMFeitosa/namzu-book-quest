@@ -34,6 +34,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Tabelas `clube_votacoes_data`, `clube_votacao_opcoes` e `clube_votacao_votos` e funções `clube_abrir_votacao_data`, `clube_votar_data`, `clube_encerrar_votacao_data` e `clube_cancelar_votacao_data` (migração `fase3_votacao_data`).
 - Eventos de produto `votacao_data_aberta`, `voto_data_registrado` e `votacao_data_encerrada`.
 - Testes da lógica da votação em `src/lib/votacaoData.test.ts`.
+- **Avisos do organizador (Fase 3):** o organizador escreve um aviso com título e mensagem e todos os membros ativos recebem uma notificação no app. O aviso mais recente aparece em uma faixa no topo do clube, com a lista completa a um toque. O organizador pode copiar o aviso para o grupo e apagar. Limite de 5 avisos por clube a cada 24 horas.
+- Tabela `clube_avisos` e função `clube_enviar_aviso` (migração `fase3_avisos`).
+- Eventos de produto `aviso_enviado` e `aviso_copiado`.
+- Testes da lógica dos avisos em `src/lib/avisos.test.ts`.
 
 ### Corrigido
 

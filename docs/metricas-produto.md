@@ -35,6 +35,8 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `votacao_data_aberta` | Organizador abriu a votação de data | `opcoes`: quantidade de datas |
 | `voto_data_registrado` | Membro marcou ou desmarcou datas na votação | `opcoes`: quantas datas ficaram marcadas |
 | `votacao_data_encerrada` | Organizador escolheu a data e o encontro foi criado | `votantes`, `opcoes` |
+| `aviso_enviado` | Organizador enviou um aviso aos membros | |
+| `aviso_copiado` | Organizador copiou um aviso para o grupo | |
 
 Regras para evento novo:
 

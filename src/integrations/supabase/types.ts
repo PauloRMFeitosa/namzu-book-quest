@@ -142,6 +142,41 @@ export type Database = {
           },
         ]
       }
+      clube_avisos: {
+        Row: {
+          autor_id: string | null
+          clube_id: string
+          created_at: string
+          id: string
+          mensagem: string
+          titulo: string
+        }
+        Insert: {
+          autor_id?: string | null
+          clube_id: string
+          created_at?: string
+          id?: string
+          mensagem: string
+          titulo: string
+        }
+        Update: {
+          autor_id?: string | null
+          clube_id?: string
+          created_at?: string
+          id?: string
+          mensagem?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_avisos_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: false
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_canais: {
         Row: {
           clube_id: string | null
@@ -3624,6 +3659,10 @@ export type Database = {
       clube_e_privado: { Args: { _clube: string }; Returns: boolean }
       clube_encerrar_votacao_data: {
         Args: { p_opcao_id: string; p_votacao_id: string }
+        Returns: string
+      }
+      clube_enviar_aviso: {
+        Args: { p_clube_id: string; p_mensagem: string; p_titulo: string }
         Returns: string
       }
       clube_salvar_cronograma: {
