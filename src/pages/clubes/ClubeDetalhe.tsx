@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, Navigate } from "react-router-dom";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { BarraDeAbasClube } from "@/components/clubes/header/BarraDeAbasClube";
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
@@ -152,19 +153,7 @@ const ClubeDetalhe = () => {
                   setSearch(next, { replace: true });
                 }}
               >
-                <div className="overflow-x-auto no-scrollbar -mx-4 px-4">
-                  <TabsList className="w-max h-10 bg-muted/60 p-1 rounded-2xl">
-                    {TABS.map((t) => (
-                      <TabsTrigger
-                        key={t.value}
-                        value={t.value}
-                        className="rounded-xl text-xs font-medium px-3"
-                      >
-                        {t.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
+                <BarraDeAbasClube abas={TABS} ativa={activeTab} onEscolher={irParaAba} />
 
                 {isTabVisible("visao") && (
                   <TabsContent value="visao" className="mt-5">
