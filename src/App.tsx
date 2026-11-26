@@ -31,6 +31,10 @@ const ClubeDetalhe = lazy(() => import("./pages/clubes/ClubeDetalhe"));
 const CriarClube = lazy(() => import("./pages/clubes/CriarClube"));
 const CriarEvento = lazy(() => import("./pages/clubes/CriarEvento"));
 const CriarConteudo = lazy(() => import("./pages/clubes/CriarConteudo"));
+const CriarAviso = lazy(() => import("./pages/clubes/CriarAviso"));
+const AbrirVotacaoData = lazy(() => import("./pages/clubes/AbrirVotacaoData"));
+const CriarCanal = lazy(() => import("./pages/clubes/CriarCanal"));
+const CriarMicrogrupo = lazy(() => import("./pages/clubes/CriarMicrogrupo"));
 const AdicionarObraTrilha = lazy(() => import("./pages/clubes/AdicionarObraTrilha"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Metas = lazy(() => import("./pages/Metas"));
@@ -104,6 +108,10 @@ const App = () => (
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/eventos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarEvento /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/conteudos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarConteudo /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/avisos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarAviso /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/votacao/nova" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><AbrirVotacaoData /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/canais/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarCanal /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/microgrupos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarMicrogrupo /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/trilha/nova" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><AdicionarObraTrilha /></FeatureRoute></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/perfis/:id" element={<ProtectedRoute><PerfilPublico /></ProtectedRoute>} />

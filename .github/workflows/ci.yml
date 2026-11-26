@@ -28,6 +28,11 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      # O .env não fica no repositório. Testes e build usam os valores de
+      # exemplo, que têm o formato certo e não apontam para o banco real.
+      - name: Variáveis de ambiente de exemplo
+        run: cp .env.example .env
+
       - name: Lint
         run: npm run lint
 

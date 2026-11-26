@@ -1,6 +1,7 @@
-import { Hash, Lock, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Hash, Lock, ChevronRight, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CriarCanalDialog } from "./CriarCanalDialog";
 import { useCanais } from "@/hooks/clubes/useCanais";
 
 interface Props {
@@ -17,7 +18,13 @@ export const CanalList = ({ clubeId, isCurador, selecionado: _selecionado, onSel
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/60 shrink-0">
         <h3 className="font-display font-semibold text-base">Canais</h3>
-        {isCurador && <CriarCanalDialog clubeId={clubeId} />}
+        {isCurador && (
+          <Button size="sm" variant="outline" asChild className="rounded-xl h-8 gap-1">
+            <Link to={`/clubes/${clubeId}/canais/novo`}>
+              <Plus className="w-4 h-4" /> Novo canal
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
