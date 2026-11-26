@@ -65,10 +65,10 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [x] Proteger os endpoints de lote chamados pelo cron com segredo guardado no Vault. As quatro funções aceitam só o agendador ou um admin. Aplicado em 24/11/2026 (`docs/runbooks/fase0-segredo-agendador.md`).
 - [x] Fixar `search_path` em 32 das 34 funções. As 2 restantes são SQL imutáveis e ficaram de fora de propósito. Aplicado em 24/11/2026.
 - [ ] Ativar proteção contra senha vazada no Auth.
-- [ ] Confirmar que as variáveis `VITE_*` estão cadastradas na Vercel; só então tirar `.env` do git e incluí-lo no `.gitignore`. Depende de Paulo: o conector da Vercel não tem acesso ao time do projeto. O arquivo só guarda a URL e a chave pública, então o risco de mantê-lo é baixo.
+- [x] Variáveis `VITE_*` cadastradas no projeto do Vercel e `.env` fora do repositório, no `.gitignore`. Feito em 26/11/2026. O CI usa os valores de `.env.example`.
 
 **Reprodutibilidade**
-- [ ] Gerar baseline do schema com `supabase db pull`.
+- [ ] Gerar baseline do schema com `supabase db pull`. Pede a senha do banco e a CLI do Supabase; ver `docs/backup.md`.
 - [x] Trazer para o repo as 5 migrações que só existiam no remoto e remover a `20260810153000`, que só existia no repo. A lista de migrações do repo é idêntica à do banco desde 24/11/2026.
 - [x] `rapid-action`: o repo tinha uma versão de junho, diferente da que roda em produção. O código de produção foi trazido para o repo em 24/11/2026.
 - [x] Conferir as edge functions contra o que está publicado. Resultado em `docs/auditoria-edge-functions-2026-11.md`: `salvar-progresso-leitura` e `reprocessar-generos` sincronizadas a partir de produção.
@@ -85,7 +85,8 @@ Cada fase tem um **critério de saída**. Não se inicia a fase seguinte sem cum
 - [ ] Proteger a branch `main`: merge só com CI verde. Configuração do GitHub, a cargo de Paulo.
 - [x] Renomear o pacote para `namzu`, manter um único lockfile (`package-lock.json`), remover `lovable-tagger`.
 - [x] Monitoramento de erros em produção: tabela `erros_app` e tela em Admin > Erros do app, sem serviço externo (ver `docs/monitoramento.md`).
-- [ ] Confirmar política de backup do banco no plano atual do Supabase.
+- [x] Política de backup conferida em 26/11/2026: o plano gratuito do Supabase **não faz backup automático**. Opções e recomendação em `docs/backup.md`.
+- [ ] Ter backup automático dos dados antes do piloto (plano Pro ou cópia semanal). Decisão de Paulo.
 
 **Critério de saída:** advisor de segurança sem função de escrita exposta a `anon`; lista de migrações do repo idêntica à do remoto; `main` protegida com CI obrigatório; tag `v0.2.0`.
 

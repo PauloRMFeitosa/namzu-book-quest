@@ -38,7 +38,7 @@ Para executar um arquivo de teste específico:
 npx vitest run src/path/to/file.test.ts
 ```
 
-Variáveis de ambiente necessárias (copiar de `.env.example`):
+Variáveis de ambiente necessárias (copiar de `.env.example` para `.env`, que fica fora do repositório; em produção elas ficam no projeto do Vercel):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=

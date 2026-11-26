@@ -69,6 +69,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Aviso, votação de data, canal e microgrupo em página:** as quatro janelas de criação que restavam no clube viraram páginas (`/clubes/:id/avisos/novo`, `/votacao/nova`, `/canais/novo` e `/microgrupos/novo`), com prévia e erro em texto. O canal recusa nome repetido e o microgrupo valida o limite de membros. Com isso, todas as criações do clube seguem a regra de criação em página.
 - **Faixa de avisos menor:** o cartão "Avisos para os membros" virou uma faixa de uma linha, para o menu e o conteúdo do clube aparecerem mais cedo na tela.
 - **Provedor de IA:** `clube-ai` e `leitura-copiloto` passam a chamar a API do Google direto quando o segredo `GEMINI_API_KEY` existe, e continuam no gateway do Lovable enquanto ele não existir. Os modelos podem ser trocados por segredo, sem publicar código. As mensagens de erro deixam de citar o Lovable e de repassar o detalhe técnico para a pessoa. Passo a passo em `docs/ia.md`.
+- **`.env` fora do repositório:** as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` passam a vir do projeto do Vercel, onde não estavam cadastradas; a produção dependia do arquivo no repositório. O `.env` entrou no `.gitignore` e o CI usa os valores de `.env.example`.
+- `docs/backup.md`: o plano gratuito do Supabase não faz backup automático dos dados. O documento traz as opções e a recomendação para antes do piloto.
 - **Deploys só de produção:** o Vercel deixa de gerar preview para branches e PRs e publica apenas a `main`, para não estourar o limite diário do plano gratuito. O teste manual passa a ser feito em produção.
 
 ## [0.3.0] - 2026-11-25
