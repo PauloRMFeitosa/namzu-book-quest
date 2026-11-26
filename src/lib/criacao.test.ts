@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  CANAL_VAZIO,
+  MICROGRUPO_VAZIO,
+  escreverDatasDaVotacao,
+  lerDatasDaVotacao,
+  montarCanal,
+  montarMicrogrupo,
+  normalizarNomeCanal,
+  validarNovoCanal,
+  validarNovoMicrogrupo,
   CLUBE_VAZIO,
   CONTEUDO_VAZIO,
   ENCONTRO_VAZIO,
@@ -112,5 +121,55 @@ describe("validarNovoConteudo", () => {
       ordem_liberacao: 4,
       liberado_apos_dias: 0,
     });
+  });
+});
+
+describe("canal", () => {
+  it("normaliza o nome enquanto a pessoa digita", () => {
+    expect(normalizarNomeCanal("Discussão Geral")).toBe("discussao-geral");
+    expect(normalizarNomeCanal("Capítulo 3: o fim!")).toBe("capitulo-3-o-fim");
+    expect(normalizarNomeCanal("a  --  b")).toBe("a-b");
+    expect(normalizarNomeCanal("x".repeat(60))).toHaveLength(40);
+  });
+
+  it("valida nome, repetição e descrição", () => {
+    expect(validarNovoCanal(CANAL_VAZIO)).toMatch(/Dê um nome/);
+    expect(validarNovoCanal({ ...CANAL_VAZIO, nome: "-" })).toMatch(/Dê um nome/);
+    expect(validarNovoCanal({ ...CANAL_VAZIO, nome: "a" })).toMatch(/pelo menos 2/);
+    expect(validarNovoCanal({ ...CANAL_VAZIO, nome: "geral" }, ["geral"])).toMatch(/Já existe/);
+    expect(validarNovoCanal({ nome: "geral", descricao: "x".repeat(201) })).toMatch(/200 letras/);
+    expect(validarNovoCanal({ ...CANAL_VAZIO, nome: "geral" }, ["avisos"])).toBeNull();
+    expect(montarCanal({ nome: "-geral-", descricao: "  Conversa livre " })).toEqual({ nome: "geral", descricao: "Conversa livre" });
+  });
+});
+
+describe("microgrupo", () => {
+  const certo = { ...MICROGRUPO_VAZIO, nome: "Filosofia matinal" };
+
+  it("valida nome e limite", () => {
+    expect(validarNovoMicrogrupo(MICROGRUPO_VAZIO)).toMatch(/Dê um nome/);
+    expect(validarNovoMicrogrupo(certo)).toBeNull();
+    expect(validarNovoMicrogrupo({ ...certo, limite: "1" })).toMatch(/entre 2 e 50/);
+    expect(validarNovoMicrogrupo({ ...certo, limite: "51" })).toMatch(/entre 2 e 50/);
+    expect(validarNovoMicrogrupo({ ...certo, limite: "" })).toMatch(/entre 2 e 50/);
+    expect(validarNovoMicrogrupo({ ...certo, nome: "x".repeat(61) })).toMatch(/60 letras/);
+  });
+
+  it("monta os dados no formato do banco", () => {
+    expect(montarMicrogrupo({ ...certo, limite: "8", privado: false })).toEqual({
+      nome: "Filosofia matinal",
+      descricao: undefined,
+      tipo: "fixo",
+      limite_membros: 8,
+      privado: false,
+    });
+  });
+});
+
+describe("datas da votação no rascunho", () => {
+  it("vai e volta sem perder campos vazios", () => {
+    expect(lerDatasDaVotacao("|")).toEqual(["", ""]);
+    const datas = ["2026-12-05T19:30", "", "2026-12-12T19:30"];
+    expect(lerDatasDaVotacao(escreverDatasDaVotacao(datas))).toEqual(datas);
   });
 });

@@ -4,7 +4,6 @@ import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useEventosClube } from "@/hooks/clubes/useEventos";
 import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
 import { EventoCard } from "./EventoCard";
-import { AbrirVotacaoDialog } from "./AbrirVotacaoDialog";
 import { VotacaoDataCard } from "./VotacaoDataCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +27,6 @@ export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) =
   const [filtro, setFiltro] = useState<"futuros" | "passados">("futuros");
   // Votação de data: só quem faz parte do clube consegue ler.
   const { data: votacao } = useVotacaoAberta(clubeId, isMembro || podeGerir);
-  const [abrirVotacao, setAbrirVotacao] = useState(false);
 
   const { futuros, passados } = useMemo(() => {
     const agora = new Date();
@@ -63,8 +61,10 @@ export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) =
         {(isCurador || podeGerir) && (
           <div className="flex items-center gap-2 flex-wrap">
             {podeGerir && !votacao && (
-              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setAbrirVotacao(true)}>
-                <Vote className="w-4 h-4 mr-1" /> Votar data
+              <Button size="sm" variant="outline" asChild className="rounded-xl">
+                <Link to={`/clubes/${clubeId}/votacao/nova`}>
+                  <Vote className="w-4 h-4 mr-1" /> Votar data
+                </Link>
               </Button>
             )}
             {isCurador && (
@@ -89,7 +89,6 @@ export const EventosTab = ({ clubeId, curadorId, isMembro, nomeClube }: Props) =
           podeGerir={podeGerir}
         />
       )}
-      {podeGerir && <AbrirVotacaoDialog clubeId={clubeId} open={abrirVotacao} onOpenChange={setAbrirVotacao} />}
 
       {isLoading ? (
         <div className="flex flex-col gap-3">

@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Plus, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMicrogrupos } from "@/hooks/clubes/useMicrogrupos";
 import { MicrogrupoCard } from "./MicrogrupoCard";
-import { CriarMicrogrupoDialog } from "./CriarMicrogrupoDialog";
 import { MatchmakingIA } from "@/components/clubes/ai/MatchmakingIA";
 
 export const MicrogruposTab = ({
@@ -15,7 +14,6 @@ export const MicrogruposTab = ({
   isMembro: boolean;
 }) => {
   const { data: grupos, isLoading } = useMicrogrupos(clubeId);
-  const [criarOpen, setCriarOpen] = useState(false);
 
   if (!isMembro) {
     return (
@@ -41,12 +39,10 @@ export const MicrogruposTab = ({
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <MatchmakingIA clubeId={clubeId} />
-          <Button
-            onClick={() => setCriarOpen(true)}
-            size="sm"
-            className="rounded-xl bg-primary hover:bg-primary-hover"
-          >
-            <Plus className="w-4 h-4" /> Criar
+          <Button asChild size="sm" className="rounded-xl bg-primary hover:bg-primary-hover">
+            <Link to={`/clubes/${clubeId}/microgrupos/novo`}>
+              <Plus className="w-4 h-4" /> Criar
+            </Link>
           </Button>
         </div>
       </header>
@@ -75,12 +71,6 @@ export const MicrogruposTab = ({
           ))}
         </div>
       )}
-
-      <CriarMicrogrupoDialog
-        open={criarOpen}
-        onOpenChange={setCriarOpen}
-        clubeId={clubeId}
-      />
     </div>
   );
 };

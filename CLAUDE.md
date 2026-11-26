@@ -108,10 +108,10 @@ Exceções permitidas (inglês obrigatório):
 - **Lógica:** validação e montagem dos dados ficam em `src/lib/`, com testes; a página só liga as peças.
 - **Rascunho:** a regra de rascunho abaixo continua valendo. Na página, "aberto" é a página montada: restaure no estado inicial, salve a cada alteração e limpe só no sucesso.
 - **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). Quando é comum criar vários itens em sequência (como os livros da trilha), fique na página com o formulário limpo, mostre abaixo o que já foi criado e ofereça "Concluir". Sair sem salvar não apaga o rascunho.
-- **Peças prontas:** `PaginaCriacao`, `SecaoCriacao`, `ErroCriacao` e `AcoesCriacao` em `src/components/criacao/`, `useRascunho` para o rascunho e `useAcessoGestao` para a permissão dentro do clube.
+- **Peças prontas:** `PaginaCriacao`, `SecaoCriacao`, `ErroCriacao` e `AcoesCriacao` em `src/components/criacao/`, `useRascunho` para o rascunho e `useAcessoGestao` para a permissão dentro do clube (`liberado` para quem gere, `liberadoParaMembro` para o que todo membro pode criar).
 - **Modelos:** `src/pages/clubes/CriarEvento.tsx` (formulário simples) e `src/pages/clubes/AdicionarObraTrilha.tsx` (criação em sequência).
 
-`Dialog` continua valendo para confirmação, ação rápida de um campo e edição pontual. As janelas de criação que já existem (tabela abaixo) são convertidas aos poucos; não crie novas nesse formato.
+`Dialog` continua valendo para confirmação, ação rápida de um campo e edição pontual. Todas as criações do clube já são páginas. As janelas que restam na tabela abaixo são do lado do leitor (citação, insight, registro de leitura) e de edição; não crie novas janelas de criação.
 
 ## Persistência de Rascunho em Formulários (Obrigatório)
 
@@ -166,8 +166,8 @@ onOpenChange(false);
 | `pages/clubes/CriarEvento.tsx` (página) | `draft-evento-{clubeId}` |
 | `pages/clubes/AdicionarObraTrilha.tsx` (página) | `draft-trilha-{clubeId}` |
 | `pages/clubes/CriarClube.tsx` (página) | `draft-criar-clube` |
-| `CriarMicrogrupoDialog.tsx` | `draft-microgrupo-{clubeId}` |
-| `CriarCanalDialog.tsx` | `draft-canal-{clubeId}` |
+| `pages/clubes/CriarMicrogrupo.tsx` (página) | `draft-microgrupo-{clubeId}` |
+| `pages/clubes/CriarCanal.tsx` (página) | `draft-canal-{clubeId}` |
 | `RegistrarLeituraDialog.tsx` | `draft-registrar-leitura-{usuarioLeituraId}` |
 | `CitacaoDialog.tsx` | `draft-citacao-{livroId}` |
 | `InsightDialog.tsx` | `draft-insight-{livroId}` |
@@ -176,8 +176,8 @@ onOpenChange(false);
 | `FeedbackDialog.tsx` | `draft-feedback-geral` |
 | `CronogramaDialog.tsx` | `draft-cronograma-{trilhaId}` (só enquanto há alteração não salva) |
 | `AtaDialog.tsx` | `draft-ata-{eventoId}` (só enquanto há alteração não salva) |
-| `AbrirVotacaoDialog.tsx` | `draft-votacao-data-{clubeId}` |
-| `EnviarAvisoDialog.tsx` | `draft-aviso-{clubeId}` |
+| `pages/clubes/AbrirVotacaoData.tsx` (página) | `draft-votacao-data-{clubeId}` |
+| `pages/clubes/CriarAviso.tsx` (página) | `draft-aviso-{clubeId}` |
 
 ## Convenções Principais
 

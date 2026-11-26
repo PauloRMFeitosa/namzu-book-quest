@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Copy, Megaphone, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ import { useApagarAviso, useAvisosClube } from "@/hooks/clubes/useAvisos";
 import { mensagemDoAviso, quandoDoAviso, resumoDoAviso, textoDeAvisos, type AvisoDoClube } from "@/lib/avisos";
 import { linkDoClube } from "@/lib/convite";
 import { registrarEvento } from "@/services/analytics";
-import { EnviarAvisoDialog } from "./EnviarAvisoDialog";
 
 interface Props {
   clubeId: string;
@@ -35,7 +35,6 @@ export const AvisosClube = ({ clubeId, nomeClube, podeGerir, abrirLista, onLista
   const { data: avisos = [] } = useAvisosClube(clubeId);
   const apagar = useApagarAviso(clubeId);
   const [lista, setLista] = useState(false);
-  const [novo, setNovo] = useState(false);
   const [paraApagar, setParaApagar] = useState<AvisoDoClube | null>(null);
 
   useEffect(() => {
@@ -64,35 +63,33 @@ export const AvisosClube = ({ clubeId, nomeClube, podeGerir, abrirLista, onLista
   if (!recente && !podeGerir) return null;
 
   return (
-    <section aria-label="Avisos do clube" className="card-soft p-4 flex flex-col gap-2 border border-accent/30">
-      <div className="flex items-start gap-3">
-        <Megaphone className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          {recente ? (
-            <>
-              <p className="text-xs text-muted-foreground">Aviso do organizador · {quandoDoAviso(recente.created_at)}</p>
-              <p className="font-semibold text-sm leading-snug">{recente.titulo}</p>
-              <p className="text-sm text-muted-foreground">{resumoDoAviso(recente.mensagem)}</p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold text-sm">Avisos para os membros</p>
-              <p className="text-sm text-muted-foreground">
-                Mande um recado para todo o clube. Cada membro recebe uma notificação no app.
-              </p>
-            </>
-          )}
-        </div>
+    <section
+      aria-label="Avisos do clube"
+      className="card-soft px-3 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 border border-accent/30"
+    >
+      <Megaphone className="w-5 h-5 text-accent shrink-0" />
+      <div className="flex-1 min-w-[10rem]">
+        {recente ? (
+          <>
+            <p className="text-xs text-muted-foreground">Aviso do organizador · {quandoDoAviso(recente.created_at)}</p>
+            <p className="font-semibold text-sm leading-snug line-clamp-1">{recente.titulo}</p>
+            <p className="text-sm text-muted-foreground line-clamp-1">{resumoDoAviso(recente.mensagem)}</p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nenhum aviso enviado aos membros.</p>
+        )}
       </div>
-      <div className="flex items-center gap-2 flex-wrap pl-8">
+      <div className="flex items-center gap-2 flex-wrap">
         {recente && (
           <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={() => setLista(true)}>
             {avisos.length === 1 ? "Ler aviso" : `Ver ${textoDeAvisos(avisos.length)}`}
           </Button>
         )}
         {podeGerir && (
-          <Button size="sm" variant={recente ? "ghost" : "outline"} className="rounded-xl h-8" onClick={() => setNovo(true)}>
-            <Plus className="w-3.5 h-3.5 mr-1" /> Novo aviso
+          <Button size="sm" variant={recente ? "ghost" : "outline"} asChild className="rounded-xl h-8">
+            <Link to={`/clubes/${clubeId}/avisos/novo`}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Novo aviso
+            </Link>
           </Button>
         )}
       </div>
@@ -133,8 +130,6 @@ export const AvisosClube = ({ clubeId, nomeClube, podeGerir, abrirLista, onLista
           )}
         </DialogContent>
       </Dialog>
-
-      {podeGerir && <EnviarAvisoDialog clubeId={clubeId} open={novo} onOpenChange={setNovo} />}
 
       <AlertDialog open={!!paraApagar} onOpenChange={(aberto) => !aberto && setParaApagar(null)}>
         <AlertDialogContent>

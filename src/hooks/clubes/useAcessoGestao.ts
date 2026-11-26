@@ -8,8 +8,15 @@ import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
  */
 export const useAcessoGestao = (clubeId: string) => {
   const { data: clube, isLoading: carregandoClube } = useClube(clubeId);
-  const { isLoading: carregandoParticipacao } = useClubeMembership(clubeId);
+  const { data: participacao, isLoading: carregandoParticipacao } = useClubeMembership(clubeId);
   const { podeGerir } = usePermissoesClube(clubeId, clube?.curador_id);
   const carregando = carregandoClube || carregandoParticipacao;
-  return { clube, carregando, liberado: !!clube && podeGerir };
+  return {
+    clube,
+    carregando,
+    /** Organizador, co-curador ou admin. */
+    liberado: !!clube && podeGerir,
+    /** Qualquer membro ativo, além de quem gere. Para o que todo membro pode criar. */
+    liberadoParaMembro: !!clube && (podeGerir || participacao?.status === "ativo"),
+  };
 };

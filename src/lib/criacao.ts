@@ -188,3 +188,97 @@ export function montarConteudo(conteudo: NovoConteudo, proximaOrdem: number) {
     liberado_apos_dias: Number(conteudo.liberado_apos_dias || "0"),
   };
 }
+
+// ---------- Canal ----------
+
+export interface NovoCanal {
+  nome: string;
+  descricao: string;
+}
+
+export const CANAL_VAZIO: NovoCanal = { nome: "", descricao: "" };
+export const MAXIMO_NOME_CANAL = 40;
+
+/** Nome de canal no formato "discussao-geral": minúsculas, sem acento, hífen no lugar de espaço. */
+export function normalizarNomeCanal(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-{2,}/g, "-")
+    .slice(0, MAXIMO_NOME_CANAL);
+}
+
+export function validarNovoCanal(canal: NovoCanal, nomesExistentes: string[] = []): string | null {
+  const nome = canal.nome.replace(/^-+|-+$/g, "");
+  if (!nome) return "Dê um nome ao canal.";
+  if (nome.length < 2) return "O nome do canal precisa de pelo menos 2 letras.";
+  if (nomesExistentes.includes(nome)) return "Já existe um canal com esse nome neste clube.";
+  if (canal.descricao.trim().length > 200) return "A descrição passou de 200 letras.";
+  return null;
+}
+
+export function montarCanal(canal: NovoCanal) {
+  return { nome: canal.nome.replace(/^-+|-+$/g, ""), descricao: canal.descricao.trim() };
+}
+
+// ---------- Microgrupo ----------
+
+export interface NovoMicrogrupo {
+  nome: string;
+  descricao: string;
+  tipo: string;
+  limite: string;
+  privado: boolean;
+}
+
+export const MICROGRUPO_VAZIO: NovoMicrogrupo = { nome: "", descricao: "", tipo: "fixo", limite: "10", privado: true };
+
+export const TIPOS_DE_MICROGRUPO: { value: string; label: string; explicacao: string }[] = [
+  { value: "fixo", label: "Fixo", explicacao: "As mesmas pessoas, sem prazo para acabar." },
+  { value: "rotativo", label: "Rotativo", explicacao: "Os participantes mudam de tempos em tempos." },
+  { value: "evento", label: "Por evento", explicacao: "Criado para um encontro ou uma leitura específica." },
+];
+
+export function validarNovoMicrogrupo(grupo: NovoMicrogrupo): string | null {
+  const nome = grupo.nome.trim();
+  if (!nome) return "Dê um nome ao microgrupo.";
+  if (nome.length > 60) return "O nome passou de 60 letras.";
+  if (grupo.descricao.trim().length > 280) return "A descrição passou de 280 letras.";
+  const limite = Number(grupo.limite);
+  if (!Number.isInteger(limite) || limite < 2 || limite > 50) return "O limite de membros precisa ficar entre 2 e 50.";
+  return null;
+}
+
+export function montarMicrogrupo(grupo: NovoMicrogrupo) {
+  return {
+    nome: grupo.nome.trim(),
+    descricao: grupo.descricao.trim() || undefined,
+    tipo: grupo.tipo,
+    limite_membros: Number(grupo.limite),
+    privado: grupo.privado,
+  };
+}
+
+// ---------- Aviso e votação de data (validação em avisos.ts e votacaoData.ts) ----------
+
+export interface NovoAviso {
+  titulo: string;
+  mensagem: string;
+}
+
+export const AVISO_VAZIO: NovoAviso = { titulo: "", mensagem: "" };
+
+export interface NovaVotacao {
+  titulo: string;
+  url: string;
+  /** Datas no formato de campo datetime-local, separadas por "|", para caber no rascunho. */
+  datas: string;
+}
+
+export const VOTACAO_VAZIA: NovaVotacao = { titulo: "", url: "", datas: "|" };
+
+export const lerDatasDaVotacao = (datas: string): string[] => datas.split("|");
+export const escreverDatasDaVotacao = (datas: string[]): string => datas.join("|");
