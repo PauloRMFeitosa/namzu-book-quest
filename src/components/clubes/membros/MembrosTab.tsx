@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { PulsoColetivo } from "@/components/clubes/painel/PulsoColetivo";
+import { QuemMaisParticipa } from "@/components/clubes/painel/QuemMaisParticipa";
 import {
   Search, Crown, Flame, Sparkles, Users, LogOut,
   Loader2, Shield, Check, X, UserX, Download,
@@ -54,11 +56,14 @@ export const MembrosTab = ({
   curadorId,
   isMembro,
   nomeClube = "",
+  pulso,
 }: {
   clubeId: string;
   curadorId: string;
   isMembro: boolean;
   nomeClube?: string;
+  /** Números do clube para o bloco "Pulso coletivo". */
+  pulso?: { membros: number; ativos7d: number; ativos30d: number };
 }) => {
   const { data: membros, isLoading } = useMembrosClube(clubeId, curadorId);
   const sair = useSairClube(clubeId);
@@ -167,6 +172,8 @@ export const MembrosTab = ({
         )}
       </header>
 
+      {pulso && <PulsoColetivo {...pulso} />}
+
       {/* Pendentes */}
       {canManage && pendentes.length > 0 && (
         <section className="card-soft p-4 border border-accent/30 bg-accent/5 flex flex-col gap-3">
@@ -242,7 +249,7 @@ export const MembrosTab = ({
           <p className="text-sm text-muted-foreground">Nenhum membro encontrado.</p>
         </div>
       ) : (
-        <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <ul className="grid sm:grid-cols-2 gap-3">
           {filtered.map((m) => {
             const nome = m.perfil?.nome_exibicao ?? m.perfil?.username ?? "Membro";
             const isMe = user?.id === m.user_id;
@@ -416,6 +423,8 @@ export const MembrosTab = ({
           })}
         </ul>
       )}
+
+      <QuemMaisParticipa clubeId={clubeId} />
     </div>
   );
 };

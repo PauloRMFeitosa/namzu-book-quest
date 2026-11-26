@@ -8,7 +8,7 @@ interface Props {
 
 /**
  * Liga semanal + nível do clube (Fase 4 da gamificação).
- * Renderizada no ClubeSidebar sob a flag show_gamificacao_clube.
+ * Renderizada na aba Membros (QuemMaisParticipa) sob a flag show_gamificacao_clube.
  */
 export const LigaSemanalClubeCard = ({ clubeId }: Props) => {
   const { data } = useGamificacaoClube(clubeId);

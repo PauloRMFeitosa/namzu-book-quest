@@ -4,7 +4,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { ClubeHeader } from "@/components/clubes/header/ClubeHeader";
-import { ClubeSidebar } from "@/components/clubes/header/ClubeSidebar";
 import { FeedClube } from "@/components/clubes/feed/FeedClube";
 import { LeiturasTab } from "@/components/clubes/leituras/LeiturasTab";
 import { CanaisTab } from "@/components/clubes/canais/CanaisTab";
@@ -145,7 +144,6 @@ const ClubeDetalhe = () => {
               />
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
               <Tabs
                 value={activeTab}
                 onValueChange={(v) => {
@@ -214,6 +212,7 @@ const ClubeDetalhe = () => {
                       curadorId={clube.curador_id}
                       isMembro={acessoTotal}
                       nomeClube={clube.nome}
+                      pulso={{ membros: clube.membros_count, ativos7d: clube.ativos_7d, ativos30d: clube.ativos_30d }}
                     />
                   </TabsContent>
                 )}
@@ -237,14 +236,6 @@ const ClubeDetalhe = () => {
                   </TabsContent>
                 )}
               </Tabs>
-
-              <ClubeSidebar
-                clubeId={clube.id}
-                membrosCount={clube.membros_count}
-                ativos7d={clube.ativos_7d}
-                ativos30d={clube.ativos_30d}
-              />
-            </div>
 
             <ConvidarMembrosDialog
               open={convidarAberto}
