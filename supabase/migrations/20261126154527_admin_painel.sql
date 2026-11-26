@@ -1,5 +1,7 @@
 -- Painel do Admin (revisão do Admin, novembro de 2026).
 --
+-- Aplicada no remoto em 26/11/2026 (versão 20261126154527).
+--
 -- Uma função só de leitura que entrega, em uma chamada, os números que o
 -- admin precisa para acompanhar o produto: totais, eventos de produto por dia
 -- e por tipo e a situação de cada clube. O app usa em Admin > Painel,

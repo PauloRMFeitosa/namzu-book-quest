@@ -11,9 +11,8 @@ export const useAdminPainel = (dias: number) =>
     staleTime: 60 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<PainelDoAdmin> => {
-      // Cast temporário: sai quando os tipos forem regenerados após a migração.
-      const { data, error } = await (supabase as any).rpc("admin_painel", { p_dias: dias });
+      const { data, error } = await supabase.rpc("admin_painel", { p_dias: dias });
       if (error) throw error;
-      return data as PainelDoAdmin;
+      return data as unknown as PainelDoAdmin;
     },
   });
