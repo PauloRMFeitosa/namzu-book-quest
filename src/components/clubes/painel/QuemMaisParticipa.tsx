@@ -22,7 +22,7 @@ export const QuemMaisParticipa = ({ clubeId }: { clubeId: string }) => {
       <h3 className="font-display font-semibold text-sm">Quem mais participa</h3>
       <div className="grid sm:grid-cols-2 gap-3 items-start">
         {ranking.length > 0 && (
-          <div className="card-soft p-4 flex flex-col gap-3">
+          <div className="card-soft p-4 flex flex-col gap-3 min-w-0">
             <h4 className="font-display font-semibold text-sm flex items-center gap-2">
               <Trophy className="w-4 h-4 text-accent" /> Ranking
             </h4>
@@ -34,10 +34,10 @@ export const QuemMaisParticipa = ({ clubeId }: { clubeId: string }) => {
                     <AvatarImage src={r.perfil?.avatar_url} />
                     <AvatarFallback className="text-[10px]">{(r.perfil?.nome_exibicao ?? "U").slice(0, 1)}</AvatarFallback>
                   </Avatar>
-                  <span className="flex-1 text-xs truncate">
+                  <span className="flex-1 min-w-0 text-xs truncate">
                     {r.perfil?.nome_exibicao || r.perfil?.username || "Membro"}
                   </span>
-                  <span className="text-[10px] flex items-center gap-0.5 text-accent font-semibold">
+                  <span className="text-[10px] flex items-center gap-0.5 text-accent font-semibold shrink-0">
                     <Flame className="w-3 h-3" /> {r.xp}
                   </span>
                 </li>
@@ -45,7 +45,11 @@ export const QuemMaisParticipa = ({ clubeId }: { clubeId: string }) => {
             </ol>
           </div>
         )}
-        {mostraLiga && <LigaSemanalClubeCard clubeId={clubeId} />}
+        {mostraLiga && (
+          <div className="min-w-0">
+            <LigaSemanalClubeCard clubeId={clubeId} />
+          </div>
+        )}
       </div>
     </section>
   );

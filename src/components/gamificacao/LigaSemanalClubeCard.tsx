@@ -27,11 +27,11 @@ export const LigaSemanalClubeCard = ({ clubeId }: Props) => {
 
       {/* Nível do clube */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <Shield className="w-5 h-5 text-primary" />
         </div>
-        <div className="flex-1 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs">
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2 text-xs">
             <span className="font-semibold">Nível do clube {data.nivel}</span>
             <span className="text-muted-foreground tabular-nums">
               {data.xp_total}/{data.xp_proximo_nivel} XP

@@ -32,14 +32,14 @@ export const MicrogruposTab = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex items-center justify-between gap-3">
-        <div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="font-display text-lg font-semibold">Microgrupos</h2>
           <p className="text-xs text-muted-foreground">
             Tribos pequenas e íntimas para conversas mais profundas.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <MatchmakingIA clubeId={clubeId} />
           <Button
             onClick={() => setCriarOpen(true)}
