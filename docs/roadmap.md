@@ -152,7 +152,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 
 - **Ordem das entregas:** (1) visão geral, (2) membros, (3) livro e cronograma, (4) encontros, (5) avisos, (6) co-curador, (7) próximo livro, (8) mediação com IA.
 - **Lembretes e avisos:** começar com aviso dentro do app e um botão "copiar mensagem para o grupo", com o texto pronto para o WhatsApp. E-mail e notificação no celular não estão configurados em produção e ficam para depois.
-- **Provedor de IA:** API do Google direto, com os mesmos modelos Gemini usados hoje pelo gateway do Lovable. A troca acontece antes da entrega 8.
+- **Provedor de IA:** API do Google direto, com os mesmos modelos Gemini usados hoje pelo gateway do Lovable. O código da troca está pronto (`supabase/functions/_shared/ia.ts`, ver `docs/ia.md`): as funções passam a usar o Google quando o segredo `GEMINI_API_KEY` existir e seguem no gateway antigo até lá.
 - **Entrevistas:** as entregas 1 a 6 seguem agora. As entregas 7 e 8 esperam as entrevistas da Fase 1.
 
 **Andamento**

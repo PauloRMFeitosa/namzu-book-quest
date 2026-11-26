@@ -72,6 +72,7 @@ As flags são armazenadas na tabela `app_settings` do Supabase e lidas via `useF
 ### Backend (Supabase)
 
 - **Edge Functions** ficam em `supabase/functions/`. Cada função é um módulo Deno independente. O diretório `_shared/` contém utilitários compartilhados entre funções (normalização de gênero, etc.).
+- **IA:** `clube-ai` e `leitura-copiloto` chamam o modelo por `supabase/functions/_shared/ia.ts` (API do Google, com o gateway antigo de reserva). Segredos, troca de modelo e mensagens de erro estão em `docs/ia.md`. Função nova que use IA deve chamar `chamarIA` desse módulo.
 - **Migrações** em `supabase/migrations/` — arquivos versionados (`<timestamp>_<nome>.sql`) espelham o histórico real aplicado ao projeto remoto (ver `supabase/migrations/README.md`). Toda mudança de schema deve gerar um arquivo aqui e ser aplicada no remoto com a mesma versão. Arquivos antigos sem versionamento ficam em `legado/` (ex.: `fase4_citacoes_e_matches.sql`, que define citações, a RPC `calcular_matches` e a fórmula de pontuação `(interesses_comuns × 3) + (generos_comuns × 2) + (livros_comuns × 5)`, normalizada de 0 a 100).
 - **`supabase/config.toml`** — Registro de Edge Functions. Novas funções devem ser adicionadas aqui para serem implantadas.
 
