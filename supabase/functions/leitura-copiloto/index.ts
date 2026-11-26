@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { chamarIA, ErroIA, lerConfiguracaoIA } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,8 +9,6 @@ const corsHeaders = {
 };
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -53,23 +52,9 @@ Deno.serve(async (req) => {
       userMsg = `Pergunta do leitor: ${pergunta}\n\nContexto:\n${ctx}`;
     }
 
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: userMsg },
-        ],
-      }),
-    });
-    if (r.status === 429) return json({ error: "rate_limit", message: "Limite da IA atingido." }, 429);
-    if (r.status === 402) return json({ error: "payment_required", message: "Créditos esgotados." }, 402);
-    if (!r.ok) return json({ error: "ai_error", message: await r.text() }, 500);
-
-    const data = await r.json();
-    const texto = data.choices?.[0]?.message?.content ?? "";
+    // O provedor e os modelos ficam em _shared/ia.ts.
+    const resultado = await chamarIA(lerConfiguracaoIA(), { nivel: "rapido", system, user: userMsg });
+    const texto = String(resultado.texto ?? "");
 
     await supabase.from("ia_interacoes").insert({
       user_id: u.user.id,
@@ -81,6 +66,7 @@ Deno.serve(async (req) => {
 
     return json({ texto });
   } catch (e: any) {
+    if (e instanceof ErroIA) return json({ error: e.codigo, message: e.message }, e.status);
     console.error(e);
     return json({ error: "internal", message: e?.message ?? String(e) }, 500);
   }

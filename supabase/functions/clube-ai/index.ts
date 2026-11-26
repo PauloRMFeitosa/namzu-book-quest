@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { chamarIA, ErroIA, lerConfiguracaoIA, type NivelDoModelo } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,48 +15,21 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 
-async function callAI(opts: {
-  model: string;
-  system: string;
-  user: string;
-  json_schema?: any;
-}) {
-  const body: any = {
-    model: opts.model,
-    messages: [
-      { role: "system", content: opts.system },
-      { role: "user", content: opts.user },
-    ],
-  };
-  if (opts.json_schema) {
-    body.response_format = {
-      type: "json_schema",
-      json_schema: { name: "result", strict: true, schema: opts.json_schema },
-    };
-  }
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+// O provedor e os modelos ficam em _shared/ia.ts.
+const MODELOS: Record<string, NivelDoModelo> = {
+  "google/gemini-2.5-flash": "rapido",
+  "google/gemini-2.5-pro": "avancado",
+};
+
+function callAI(opts: { model: string; system: string; user: string; json_schema?: any }) {
+  return chamarIA(lerConfiguracaoIA(), {
+    nivel: MODELOS[opts.model] ?? "rapido",
+    system: opts.system,
+    user: opts.user,
+    json_schema: opts.json_schema,
   });
-  if (r.status === 429) throw new Response(JSON.stringify({ error: "rate_limit", message: "Limite de uso da IA atingido. Tente novamente em alguns instantes." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  if (r.status === 402) throw new Response(JSON.stringify({ error: "payment_required", message: "Créditos da IA esgotados. Adicione créditos no workspace Lovable." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  if (!r.ok) {
-    const t = await r.text();
-    throw new Response(JSON.stringify({ error: "ai_error", message: t }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
-  const data = await r.json();
-  const content = data.choices?.[0]?.message?.content ?? "";
-  if (opts.json_schema) {
-    try { return JSON.parse(content); } catch { return { raw: content }; }
-  }
-  return { texto: content };
 }
 
 Deno.serve(async (req) => {
@@ -200,6 +174,7 @@ Deno.serve(async (req) => {
     return json({ error: "acao desconhecida" }, 400);
   } catch (e: any) {
     if (e instanceof Response) return e;
+    if (e instanceof ErroIA) return json({ error: e.codigo, message: e.message }, e.status);
     console.error(e);
     return json({ error: "internal", message: e?.message ?? String(e) }, 500);
   }
