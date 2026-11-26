@@ -14,24 +14,35 @@ export interface AcervoItem {
   autor_ordenacao: string;
 }
 
+const POR_PAGINA = 500;
+/** Teto de segurança. Passando disso, a busca precisa ir para o servidor. */
+const LIMITE_DO_ACERVO = 5000;
+
 /** O acervo de obras, usado na Busca e na inclusão de obra na trilha do clube. */
 export const useAcervoObras = (habilitado = true) =>
   useQuery({
     queryKey: queryKeys.acervo.obras,
     enabled: habilitado,
     queryFn: async (): Promise<AcervoItem[]> => {
-      const { data, error } = await supabase
-        .from("obras")
-        .select(
-          `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
-           obra_autores!left(ordem, autores(nome_completo, nome_ordenacao)),
-           edicoes!left(id)`,
-        )
-        .limit(500);
-
-      if (error) {
-        console.error("acervo query", error);
-        return [];
+      // O banco entrega no máximo 1000 linhas por pedido: busca em páginas
+      // até acabar, para o acervo inteiro aparecer na Busca e na trilha.
+      const data: any[] = [];
+      for (let inicio = 0; inicio < LIMITE_DO_ACERVO; inicio += POR_PAGINA) {
+        const { data: pagina, error } = await supabase
+          .from("obras")
+          .select(
+            `id, titulo_original, titulo_ordenacao, ano_primeira_publicacao, capa_padrao_url,
+             obra_autores!left(ordem, autores(nome_completo, nome_ordenacao)),
+             edicoes!left(id)`,
+          )
+          .order("id", { ascending: true })
+          .range(inicio, inicio + POR_PAGINA - 1);
+        if (error) {
+          console.error("acervo query", error);
+          break;
+        }
+        data.push(...(pagina ?? []));
+        if (!pagina || pagina.length < POR_PAGINA) break;
       }
 
       const items: AcervoItem[] = [];

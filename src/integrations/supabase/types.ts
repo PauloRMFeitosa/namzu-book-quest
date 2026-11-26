@@ -3646,6 +3646,7 @@ export type Database = {
     }
     Functions: {
       aceitar_termos: { Args: never; Returns: undefined }
+      admin_painel: { Args: { p_dias?: number }; Returns: Json }
       calcular_matches: { Args: { p_user_id?: string }; Returns: undefined }
       calcular_similaridade_obras: {
         Args: { p_obra_a: string; p_obra_b: string }

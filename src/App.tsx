@@ -126,7 +126,7 @@ const App = () => (
             <Route path="/cadastro-manual" element={<ProtectedRoute><CadastroManual /></ProtectedRoute>} />
             <Route path="/obras/:id" element={<ProtectedRoute><ObraDetalhe /></ProtectedRoute>} />
             <Route path="/autores/:id" element={<ProtectedRoute><AutorDetalhe /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute semLayout><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>

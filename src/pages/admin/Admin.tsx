@@ -1,293 +1,290 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
-  Eye,
-  Gamepad2,
-  Users,
+  ArrowLeft,
   BookOpen,
-  User,
+  Bug,
   Building2,
-  Target,
-  Trophy,
+  ChevronDown,
+  ClipboardList,
+  Eye,
+  Flag,
+  Gamepad2,
+  Globe,
   HeartPulse,
-  RefreshCw,
-  Tags,
+  LayoutDashboard,
+  LineChart,
+  Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Globe,
-  ClipboardList,
-  Flag,
-  Bug,
+  RefreshCw,
+  Tags,
+  Target,
+  Trophy,
+  User,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
-import { GamificacaoTab } from "./tabs/GamificacaoTab";
-import { UsuariosTab } from "./tabs/UsuariosTab";
-import { LivrosTab } from "./tabs/LivrosTab";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { AutoresTab } from "./tabs/AutoresTab";
 import { ClubesTab } from "./tabs/ClubesTab";
-import { MetasTab } from "./tabs/MetasTab";
 import { ConquistasTab } from "./tabs/ConquistasTab";
-import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
-import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
-import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
-import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
-import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
-import { WikidataAutoresTab } from "./tabs/WikidataAutoresTab";
-import { JobsTab } from "./tabs/JobsTab";
 import { DenunciasTab } from "./tabs/DenunciasTab";
 import { ErrosAppTab } from "./tabs/ErrosAppTab";
+import { GamificacaoTab } from "./tabs/GamificacaoTab";
+import { JobsTab } from "./tabs/JobsTab";
+import { LivrosTab } from "./tabs/LivrosTab";
+import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
+import { MetasTab } from "./tabs/MetasTab";
+import { MetricasTab } from "./tabs/MetricasTab";
+import { PainelTab } from "./tabs/PainelTab";
+import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
+import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
+import { UsuariosTab } from "./tabs/UsuariosTab";
+import { VisibilidadeTab } from "./tabs/VisibilidadeTab";
+import { WikidataAutoresTab } from "./tabs/WikidataAutoresTab";
+import { WikidataObrasTab } from "./tabs/WikidataObrasTab";
 
-type TabKey =
-  | "visibilidade"
-  | "gamificacao"
-  | "usuarios"
-  | "livros"
-  | "autores"
-  | "clubes"
-  | "metas"
-  | "conquistas"
-  | "saude"
-  | "reprocessamento"
-  | "mapeamento-generos"
-  | "wikidata-obras"
-  | "wikidata-autores"
-  | "jobs"
-  | "denuncias"
-  | "erros-app";
+// Admin do NAMZU. Tem tela própria, fora do layout do app: menu lateral fixo,
+// conteúdo em largura total. A seção aberta fica na URL (?secao=), para dar
+// para voltar e compartilhar o endereço.
 
-interface NavItem {
-  key: TabKey;
-  label: string;
-  icon: React.ElementType;
+interface Secao {
+  chave: string;
+  rotulo: string;
+  descricao: string;
+  icone: LucideIcon;
 }
 
-const CONTENT_NAV: NavItem[] = [
-  { key: "livros", label: "Livros", icon: BookOpen },
-  { key: "autores", label: "Autores", icon: User },
-  { key: "clubes", label: "Clubes", icon: Building2 },
-];
-
-const PLATFORM_NAV: NavItem[] = [
-  { key: "usuarios", label: "Usuários", icon: Users },
-  { key: "gamificacao", label: "Gamificação", icon: Gamepad2 },
-  { key: "metas", label: "Metas", icon: Target },
-  { key: "conquistas", label: "Conquistas", icon: Trophy },
-  { key: "visibilidade", label: "Visibilidade", icon: Eye },
-  { key: "denuncias", label: "Denúncias e Sugestões", icon: Flag },
-];
-
-const TOOLS_NAV: NavItem[] = [
-  { key: "erros-app", label: "Erros do app", icon: Bug },
-  { key: "jobs", label: "Jobs & Logs", icon: ClipboardList },
-  { key: "saude", label: "Saúde do Catálogo", icon: HeartPulse },
-  { key: "reprocessamento", label: "Reprocessamento", icon: RefreshCw },
-  { key: "mapeamento-generos", label: "Mapeamento de Gêneros", icon: Tags },
-  { key: "wikidata-obras", label: "Wikidata: Obras", icon: Globe },
-  { key: "wikidata-autores", label: "Wikidata: Autores", icon: Globe },
-];
-
-interface Metrics {
-  users: number;
-  books: number;
-  clubs: number;
-  activeToday: number;
+interface Grupo {
+  rotulo: string;
+  /** Grupo que começa fechado: recursos desligados no app. */
+  recolhido?: boolean;
+  secoes: Secao[];
 }
+
+const GRUPOS: Grupo[] = [
+  {
+    rotulo: "Operação",
+    secoes: [
+      { chave: "painel", rotulo: "Painel", descricao: "O que está acontecendo no produto e o que pede atenção.", icone: LayoutDashboard },
+      { chave: "metricas", rotulo: "Métricas", descricao: "Ações de organizadores e membros, por dia e por tipo.", icone: LineChart },
+      { chave: "clubes", rotulo: "Clubes", descricao: "Situação, organizador e atividade de cada clube.", icone: Building2 },
+      { chave: "usuarios", rotulo: "Usuários", descricao: "Contas, papéis e acesso.", icone: Users },
+      { chave: "denuncias", rotulo: "Denúncias e sugestões", descricao: "O que os usuários reportaram pelo app.", icone: Flag },
+      { chave: "erros-app", rotulo: "Erros do app", descricao: "Erros encontrados no navegador de quem estava logado.", icone: Bug },
+    ],
+  },
+  {
+    rotulo: "Catálogo",
+    secoes: [
+      { chave: "livros", rotulo: "Livros", descricao: "Obras e edições do acervo.", icone: BookOpen },
+      { chave: "autores", rotulo: "Autores", descricao: "Autores do acervo.", icone: User },
+      { chave: "saude", rotulo: "Saúde do catálogo", descricao: "Obras sem capa, sem autor ou sem gênero.", icone: HeartPulse },
+      { chave: "wikidata-obras", rotulo: "Wikidata: obras", descricao: "Conferência de obras com o Wikidata.", icone: Globe },
+      { chave: "wikidata-autores", rotulo: "Wikidata: autores", descricao: "Conferência de autores com o Wikidata.", icone: Globe },
+      { chave: "reprocessamento", rotulo: "Reprocessamento", descricao: "Refazer autores e gêneros em lote.", icone: RefreshCw },
+      { chave: "jobs", rotulo: "Integrações e logs", descricao: "Execuções das integrações do catálogo e registro de XP.", icone: ClipboardList },
+    ],
+  },
+  {
+    rotulo: "Configuração",
+    secoes: [{ chave: "visibilidade", rotulo: "Visibilidade", descricao: "Liga e desliga recursos do app.", icone: Eye }],
+  },
+  {
+    rotulo: "Recursos desligados",
+    recolhido: true,
+    secoes: [
+      { chave: "gamificacao", rotulo: "Gamificação", descricao: "XP e conquistas dos usuários. A gamificação está desligada no app.", icone: Gamepad2 },
+      { chave: "metas", rotulo: "Missões", descricao: "Missões da página de metas, que está desligada no app.", icone: Target },
+      { chave: "conquistas", rotulo: "Conquistas", descricao: "Cadastro de conquistas. A gamificação está desligada no app.", icone: Trophy },
+      { chave: "mapeamento-generos", rotulo: "Mapeamento de gêneros", descricao: "Liga interesses a gêneros, para o recurso de leitores parecidos, desligado no app.", icone: Tags },
+    ],
+  },
+];
+
+const TODAS = GRUPOS.flatMap((g) => g.secoes);
+const CHAVE_MENU = "admin-sidebar-collapsed";
 
 const Admin = () => {
-  const [tab, setTab] = useState<TabKey>("visibilidade");
-  const [metrics, setMetrics] = useState<Metrics>({ users: 0, books: 0, clubs: 0, activeToday: 0 });
-
-  // Sidebar: expanded by default on lg+ (≥1024px), collapsed on smaller screens.
-  // State persists in localStorage so user preference is remembered.
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
+  const [busca, setBusca] = useSearchParams();
+  const pedida = busca.get("secao") ?? "painel";
+  const atual = TODAS.find((s) => s.chave === pedida) ?? TODAS[0];
+  const [menuNoCelular, setMenuNoCelular] = useState(false);
+  const [estreito, setEstreito] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem("admin-sidebar-collapsed");
-      if (saved !== null) return JSON.parse(saved) as boolean;
-    } catch { /* ignore */ }
-    return typeof window !== "undefined" && window.innerWidth < 1024;
+      return localStorage.getItem(CHAVE_MENU) === "true";
+    } catch {
+      return false;
+    }
   });
+  const grupoDaAtual = GRUPOS.find((g) => g.secoes.some((s) => s.chave === atual.chave));
+  const [desligadosAbertos, setDesligadosAbertos] = useState(!!grupoDaAtual?.recolhido);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [tab]);
-
-  useEffect(() => {
-    const loadMetrics = async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const [{ count: books }, { count: clubs }, { count: activeToday }] = await Promise.all([
-        (supabase as any).from("obras").select("*", { count: "exact", head: true }),
-        (supabase as any).from("clubes").select("*", { count: "exact", head: true }).eq("is_ativo", true),
-        (supabase as any)
-          .from("gamificacao_perfis")
-          .select("*", { count: "exact", head: true })
-          .gte("updated_at", today),
-      ]);
-      let users = 0;
-      try {
-        const { data } = await supabase.functions.invoke("admin-list-users");
-        users = (data as any)?.users?.length ?? 0;
-      } catch { /* ignore */ }
-
-      setMetrics({
-        users,
-        books: books ?? 0,
-        clubs: clubs ?? 0,
-        activeToday: activeToday ?? 0,
-      });
+    document.title = `${atual.rotulo} · Admin NAMZU`;
+    window.scrollTo({ top: 0 });
+    return () => {
+      document.title = "Namzu";
     };
-    loadMetrics();
-  }, []);
+  }, [atual.chave, atual.rotulo]);
 
-  const toggleSidebar = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try { localStorage.setItem("admin-sidebar-collapsed", JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
+  const irPara = (chave: string) => {
+    const proxima = new URLSearchParams(busca);
+    proxima.set("secao", chave);
+    setBusca(proxima);
+    setMenuNoCelular(false);
   };
 
-  const METRICS = [
-    { label: "Usuários", value: metrics.users, icon: Users },
-    { label: "Livros", value: metrics.books, icon: BookOpen },
-    { label: "Clubes ativos", value: metrics.clubs, icon: Building2 },
-    { label: "Ativos hoje", value: metrics.activeToday, icon: Gamepad2 },
-  ];
+  const alternarMenu = () =>
+    setEstreito((antes) => {
+      try {
+        localStorage.setItem(CHAVE_MENU, String(!antes));
+      } catch {
+        // sem armazenamento: vale só nesta visita
+      }
+      return !antes;
+    });
 
-  const allNav = [...CONTENT_NAV, ...PLATFORM_NAV, ...TOOLS_NAV];
-  const currentNav = allNav.find((n) => n.key === tab);
-
-  // NavGroup renders differently based on collapsed state:
-  // - Expanded: group label + icon + text button
-  // - Collapsed: icon-only buttons + horizontal divider between groups
-  const NavGroup = ({ label, items, isLast }: { label: string; items: NavItem[]; isLast?: boolean }) => (
-    <>
-      {!collapsed && (
-        <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          {label}
-        </p>
-      )}
-      {items.map(({ key, label: itemLabel, icon: Icon }) => (
-        <button
-          key={key}
-          onClick={() => setTab(key)}
-          title={collapsed ? itemLabel : undefined}
-          className={cn(
-            "flex items-center rounded-md transition-colors text-left w-full",
-            collapsed ? "justify-center px-1 py-2" : "gap-2 px-2 py-1.5 text-sm",
-            tab === key
-              ? "bg-secondary font-medium text-foreground"
-              : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-          )}
-        >
-          <Icon className="h-4 w-4 shrink-0" />
-          {!collapsed && itemLabel}
-        </button>
-      ))}
-      {collapsed && !isLast && <div className="h-px bg-border mx-1 my-2" />}
-    </>
+  const menu = (curto: boolean) => (
+    <nav aria-label="Seções do Admin" className="flex flex-col gap-4 p-3">
+      {GRUPOS.map((grupo) => {
+        const aberto = !grupo.recolhido || desligadosAbertos;
+        return (
+          <div key={grupo.rotulo} className="flex flex-col gap-0.5">
+            {curto ? (
+              <div className="h-px bg-border mx-1 my-1" />
+            ) : grupo.recolhido ? (
+              <button
+                type="button"
+                aria-expanded={aberto}
+                onClick={() => setDesligadosAbertos((v) => !v)}
+                className="flex items-center justify-between px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                {grupo.rotulo}
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", aberto && "rotate-180")} />
+              </button>
+            ) : (
+              <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{grupo.rotulo}</p>
+            )}
+            {aberto &&
+              grupo.secoes.map((s) => {
+                const ativa = s.chave === atual.chave;
+                return (
+                  <button
+                    key={s.chave}
+                    type="button"
+                    onClick={() => irPara(s.chave)}
+                    aria-current={ativa ? "page" : undefined}
+                    title={curto ? s.rotulo : undefined}
+                    className={cn(
+                      "flex items-center rounded-lg text-sm text-left transition-colors",
+                      curto ? "justify-center h-10 w-10 mx-auto" : "gap-2.5 px-2.5 py-2",
+                      ativa ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <s.icone className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    {!curto && <span className="truncate">{s.rotulo}</span>}
+                    {curto && <span className="sr-only">{s.rotulo}</span>}
+                  </button>
+                );
+              })}
+          </div>
+        );
+      })}
+    </nav>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <header>
-        <h1 className="text-2xl font-bold text-primary">Administração</h1>
-        <p className="text-sm text-muted-foreground">Gestão completa do NAMZU</p>
-      </header>
-
-      {/* Metrics — 2×2 on mobile, 4×1 on sm+ */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {METRICS.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-lg bg-muted/60 p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{label}</span>
-            </div>
-            <p className="text-xl font-semibold">{value.toLocaleString("pt-BR")}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile nav — horizontal scroll, fora do flex row para não espremer o conteúdo */}
-      <div className="sm:hidden w-full overflow-x-auto pb-2">
-        <div className="flex gap-1 w-max">
-          {allNav.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors",
-                tab === key
-                  ? "bg-secondary font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-secondary/50"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Sidebar + Content */}
-      <div className="flex gap-6">
-        {/* Sidebar — visible on sm+, collapses to icon-only when collapsed=true */}
-        <nav
-          className={cn(
-            "hidden sm:flex flex-col shrink-0 gap-0.5 transition-[width] duration-200",
-            collapsed ? "w-10" : "w-44"
+    <div className="min-h-screen bg-muted/30 text-foreground">
+      {/* Menu lateral fixo, no computador */}
+      <aside
+        className={cn(
+          "hidden lg:flex fixed inset-y-0 left-0 z-30 flex-col border-r border-border bg-card transition-[width] duration-200",
+          estreito ? "w-16" : "w-64",
+        )}
+      >
+        <div className={cn("h-14 flex items-center border-b border-border shrink-0", estreito ? "justify-center" : "justify-between px-4")}>
+          {!estreito && (
+            <span className="font-display text-lg font-semibold">
+              NAMZU <span className="text-muted-foreground font-normal text-sm">Admin</span>
+            </span>
           )}
-        >
-          {/* Toggle button */}
           <button
-            onClick={toggleSidebar}
-            title={collapsed ? "Expandir menu" : "Recolher menu"}
-            className={cn(
-              "flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground",
-              "hover:bg-secondary/50 hover:text-foreground transition-colors mb-1",
-              collapsed ? "self-center" : "self-end"
-            )}
+            type="button"
+            onClick={alternarMenu}
+            aria-label={estreito ? "Abrir o menu" : "Recolher o menu"}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            {collapsed
-              ? <PanelLeftOpen className="h-3.5 w-3.5" />
-              : <PanelLeftClose className="h-3.5 w-3.5" />}
+            {estreito ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
-
-          <NavGroup label="Conteúdo" items={CONTENT_NAV} />
-          <div className={collapsed ? "" : "pt-3"}>
-            <NavGroup label="Plataforma" items={PLATFORM_NAV} />
-          </div>
-          <div className={collapsed ? "" : "pt-3"}>
-            <NavGroup label="Ferramentas" items={TOOLS_NAV} isLast />
-          </div>
-        </nav>
-
-        {/* Content panel — max-w prevents excessive stretch on ultra-wide screens */}
-        <div className="flex-1 min-w-0 max-w-screen-xl">
-          {currentNav && (
-            <div className="hidden sm:flex items-center gap-2 mb-4 pb-3 border-b">
-              <currentNav.icon className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-medium">{currentNav.label}</h2>
-            </div>
-          )}
-
-          {tab === "visibilidade" && <VisibilidadeTab />}
-          {tab === "gamificacao" && <GamificacaoTab />}
-          {tab === "usuarios" && <UsuariosTab />}
-          {tab === "livros" && <LivrosTab />}
-          {tab === "autores" && <AutoresTab />}
-          {tab === "clubes" && <ClubesTab />}
-          {tab === "metas" && <MetasTab />}
-          {tab === "conquistas" && <ConquistasTab />}
-          {tab === "saude" && <SaudeCatalogoTab />}
-          {tab === "reprocessamento" && <ReprocessamentoTab />}
-          {tab === "mapeamento-generos" && <MapeamentoGenerosTab />}
-          {tab === "wikidata-obras" && <WikidataObrasTab />}
-          {tab === "wikidata-autores" && <WikidataAutoresTab />}
-          {tab === "jobs" && <JobsTab />}
-          {tab === "denuncias" && <DenunciasTab />}
-          {tab === "erros-app" && <ErrosAppTab />}
         </div>
+        <div className="flex-1 overflow-y-auto">{menu(estreito)}</div>
+        <Link
+          to="/"
+          className={cn(
+            "flex items-center gap-2 border-t border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted shrink-0",
+            estreito ? "justify-center h-12" : "px-4 h-12",
+          )}
+          title={estreito ? "Voltar ao app" : undefined}
+        >
+          <ArrowLeft className="w-4 h-4" /> {!estreito && "Voltar ao app"}
+        </Link>
+      </aside>
+
+      {/* Menu em gaveta, no celular */}
+      <Sheet open={menuNoCelular} onOpenChange={setMenuNoCelular}>
+        <SheetContent side="left" className="w-72 p-0 overflow-y-auto">
+          <SheetTitle className="h-14 flex items-center px-4 border-b border-border font-display text-lg">
+            NAMZU <span className="text-muted-foreground font-normal text-sm ml-1.5">Admin</span>
+          </SheetTitle>
+          {menu(false)}
+          <Link to="/" className="flex items-center gap-2 border-t border-border px-4 h-12 text-sm text-muted-foreground">
+            <ArrowLeft className="w-4 h-4" /> Voltar ao app
+          </Link>
+        </SheetContent>
+      </Sheet>
+
+      <div className={cn("flex flex-col min-h-screen transition-[padding] duration-200", estreito ? "lg:pl-16" : "lg:pl-64")}>
+        <header className="sticky top-0 z-20 h-14 flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur px-4 lg:px-6">
+          <button
+            type="button"
+            onClick={() => setMenuNoCelular(true)}
+            aria-label="Abrir o menu"
+            className="lg:hidden h-9 w-9 rounded-lg flex items-center justify-center hover:bg-muted"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-lg font-semibold leading-tight truncate">{atual.rotulo}</h1>
+            <p className="text-xs text-muted-foreground truncate hidden sm:block">{atual.descricao}</p>
+          </div>
+          <Link to="/" className="lg:hidden text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 shrink-0">
+            <ArrowLeft className="w-4 h-4" /> App
+          </Link>
+        </header>
+
+        <main className="flex-1 p-4 lg:p-6 min-w-0">
+          {atual.chave === "painel" && <PainelTab onIrPara={irPara} />}
+          {atual.chave === "metricas" && <MetricasTab />}
+          {atual.chave === "clubes" && <ClubesTab />}
+          {atual.chave === "usuarios" && <UsuariosTab />}
+          {atual.chave === "denuncias" && <DenunciasTab />}
+          {atual.chave === "erros-app" && <ErrosAppTab />}
+          {atual.chave === "livros" && <LivrosTab />}
+          {atual.chave === "autores" && <AutoresTab />}
+          {atual.chave === "saude" && <SaudeCatalogoTab />}
+          {atual.chave === "wikidata-obras" && <WikidataObrasTab />}
+          {atual.chave === "wikidata-autores" && <WikidataAutoresTab />}
+          {atual.chave === "reprocessamento" && <ReprocessamentoTab />}
+          {atual.chave === "jobs" && <JobsTab />}
+          {atual.chave === "visibilidade" && <VisibilidadeTab />}
+          {atual.chave === "gamificacao" && <GamificacaoTab />}
+          {atual.chave === "metas" && <MetasTab />}
+          {atual.chave === "conquistas" && <ConquistasTab />}
+          {atual.chave === "mapeamento-generos" && <MapeamentoGenerosTab />}
+        </main>
       </div>
     </div>
   );

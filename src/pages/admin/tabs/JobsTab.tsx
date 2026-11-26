@@ -288,21 +288,11 @@ const JobsSection = () => {
   );
 };
 
+// As subabas de moderação e reputação saíram em 11/2026: as tabelas
+// `moderacao_logs` e `reputacao_logs` nunca receberam registros.
 // ─── LogsSection ─────────────────────────────────────────────────────────────
 
 const LogsSection = () => {
-  const { data: modLogs = [], isLoading: loadingMod, refetch: refetchMod } = useQuery({
-    queryKey: ["admin-logs-moderacao"],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("moderacao_logs")
-        .select("id, moderador_id, acao, entidade_tipo, entidade_id, motivo, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      return data ?? [];
-    },
-  });
-
   const { data: xpLogs = [], isLoading: loadingXp, refetch: refetchXp } = useQuery({
     queryKey: ["admin-logs-xp"],
     queryFn: async () => {
@@ -315,86 +305,17 @@ const LogsSection = () => {
     },
   });
 
-  const { data: repLogs = [], isLoading: loadingRep, refetch: refetchRep } = useQuery({
-    queryKey: ["admin-logs-reputacao"],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("reputacao_logs")
-        .select("id, user_id, origem, score, referencia_id, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      return data ?? [];
-    },
-  });
-
   return (
-    <Tabs defaultValue="moderacao">
+    <Tabs defaultValue="xp">
       <TabsList className="mb-4">
-        <TabsTrigger value="moderacao" className="gap-1.5">
-          <Shield className="w-3.5 h-3.5" /> Moderação
-          {modLogs.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1">{modLogs.length}</Badge>
-          )}
-        </TabsTrigger>
         <TabsTrigger value="xp" className="gap-1.5">
           <Zap className="w-3.5 h-3.5" /> XP
           {xpLogs.length > 0 && (
             <Badge variant="secondary" className="text-[10px] h-4 px-1">{xpLogs.length}</Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="reputacao" className="gap-1.5">
-          <Star className="w-3.5 h-3.5" /> Reputação
-          {repLogs.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1">{repLogs.length}</Badge>
-          )}
-        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="moderacao">
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="w-4 h-4" /> Logs de moderação
-              </CardTitle>
-              <CardDescription>Últimas 100 ações de moderadores</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => refetchMod()} disabled={loadingMod}>
-              <RefreshCcw className={`w-4 h-4 ${loadingMod ? "animate-spin" : ""}`} />
-            </Button>
-          </CardHeader>
-          <CardContent className="overflow-x-auto p-0">
-            {modLogs.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-6">Nenhum log de moderação registrado.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Ação</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Motivo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(modLogs as any[]).map((l) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                        {tempoRelativo(l.created_at)}
-                        <br />
-                        <span className="text-[10px]">{new Date(l.created_at).toLocaleDateString("pt-BR")}</span>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">{l.acao}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{l.entidade_tipo ?? "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[240px] truncate">{l.motivo ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
 
       <TabsContent value="xp">
         <Card>
@@ -444,51 +365,6 @@ const LogsSection = () => {
         </Card>
       </TabsContent>
 
-      <TabsContent value="reputacao">
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Star className="w-4 h-4" /> Log de reputação
-              </CardTitle>
-              <CardDescription>Últimas 100 alterações de score de reputação</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => refetchRep()} disabled={loadingRep}>
-              <RefreshCcw className={`w-4 h-4 ${loadingRep ? "animate-spin" : ""}`} />
-            </Button>
-          </CardHeader>
-          <CardContent className="overflow-x-auto p-0">
-            {repLogs.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-6">Nenhum log de reputação registrado.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead className="text-right">Score</TableHead>
-                    <TableHead>User ID</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(repLogs as any[]).map((l) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                        {tempoRelativo(l.created_at)}
-                        <br />
-                        <span className="text-[10px]">{new Date(l.created_at).toLocaleDateString("pt-BR")}</span>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">{l.origem}</TableCell>
-                      <TableCell className="text-right text-xs font-medium">{Number(l.score).toFixed(2)}</TableCell>
-                      <TableCell className="text-[10px] text-muted-foreground font-mono">{l.user_id}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
     </Tabs>
   );
 };

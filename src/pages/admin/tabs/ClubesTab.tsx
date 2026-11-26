@@ -20,6 +20,11 @@ import { AdminSortableHead } from "../components/AdminSortableHead";
 import { AdminPageSizeSelect, PageSize } from "../components/AdminPageSizeSelect";
 import { AdminModal } from "../components/AdminModal";
 import { useSortable } from "../hooks/useSortable";
+import { Link } from "react-router-dom";
+import { useAdminPainel } from "@/hooks/admin/useAdminPainel";
+import { haQuantoTempo, situacaoDoClube, type ClubeNoPainel } from "@/lib/adminPainel";
+import { quandoDoEncontro } from "@/lib/encontros";
+import { SeloDaSituacao } from "../components/AdminPainelPartes";
 
 const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "", visibilidade: "publico" };
 
@@ -41,12 +46,22 @@ export const ClubesTab = () => {
   };
   useEffect(() => { load(); }, []);
 
-  const filtered = rows.filter((r) => r.nome?.toLowerCase().includes(search.toLowerCase()));
+  // Organizador, membros e atividade vêm do painel do Admin (90 dias).
+  const { data: painel } = useAdminPainel(90);
+  const noPainel = new Map<string, ClubeNoPainel>((painel?.clubes ?? []).map((c) => [c.id, c]));
+
+  const filtered = rows.filter((r) => {
+    const termo = search.toLowerCase();
+    return r.nome?.toLowerCase().includes(termo) || (noPainel.get(r.id)?.organizador ?? "").toLowerCase().includes(termo);
+  });
 
   const [pageSize, setPageSize] = useState<PageSize>(100);
   const { sorted, sort, toggle } = useSortable(filtered, (row, col) => {
     if (col === "nome") return row.nome ?? "";
-    if (col === "duracao_tipo") return row.duracao_tipo ?? "";
+    if (col === "organizador") return noPainel.get(row.id)?.organizador ?? "";
+    if (col === "membros") return noPainel.get(row.id)?.membros ?? 0;
+    if (col === "acoes") return noPainel.get(row.id)?.acoes_no_periodo ?? 0;
+    if (col === "ultima") return noPainel.get(row.id)?.ultima_atividade ?? "";
     if (col === "is_ativo") return row.is_ativo ? 1 : 0;
     return "";
   });
@@ -154,7 +169,7 @@ export const ClubesTab = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <AdminSearchBar value={search} onChange={setSearch} placeholder="Buscar por nome..." />
+        <AdminSearchBar value={search} onChange={setSearch} placeholder="Buscar por nome ou organizador..." />
         <Button size="sm" className="shrink-0" onClick={openCreate}>
           <Plus className="w-4 h-4" />Novo clube
         </Button>
@@ -171,24 +186,45 @@ export const ClubesTab = () => {
             <AdminEmptyState icon={Building2} title="Nenhum clube encontrado" description={search ? `Nenhum resultado para "${search}".` : "Ainda não há clubes cadastrados."} actionLabel="Novo clube" onAction={openCreate} />
           ) : (
             <>
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
-                    <AdminSortableHead col="nome" label="Nome" sort={sort} onToggle={toggle} />
-                    <AdminSortableHead col="duracao_tipo" label="Tipo" sort={sort} onToggle={toggle} />
-                    <AdminSortableHead col="is_ativo" label="Status" sort={sort} onToggle={toggle} />
-                    <TableHead>Ações</TableHead>
+                    <AdminSortableHead col="nome" label="Clube" sort={sort} onToggle={toggle} />
+                    <AdminSortableHead col="organizador" label="Organizador" sort={sort} onToggle={toggle} />
+                    <AdminSortableHead col="is_ativo" label="Situação" sort={sort} onToggle={toggle} />
+                    <AdminSortableHead col="membros" label="Membros" sort={sort} onToggle={toggle} />
+                    <TableHead>Trilha</TableHead>
+                    <AdminSortableHead col="acoes" label="Ações (90 dias)" sort={sort} onToggle={toggle} />
+                    <AdminSortableHead col="ultima" label="Última ação" sort={sort} onToggle={toggle} />
+                    <TableHead>Próximo encontro</TableHead>
+                    <TableHead>Gerir</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paged.map((r) => (
+                  {paged.map((r) => {
+                    const p = noPainel.get(r.id);
+                    return (
                     <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.nome}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs capitalize">{r.duracao_tipo}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link to={`/clubes/${r.id}`} className="hover:underline">{r.nome}</Link>
+                        <p className="text-xs text-muted-foreground font-normal">{r.visibilidade === "privado" ? "Privado" : "Público"}</p>
+                      </TableCell>
+                      <TableCell className="text-sm">{p?.organizador ?? "—"}</TableCell>
                       <TableCell>
-                        {r.is_ativo
-                          ? <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Ativo</Badge>
-                          : <Badge variant="outline" className="text-xs text-muted-foreground">Inativo</Badge>}
+                        <SeloDaSituacao situacao={situacaoDoClube({ ativo: r.is_ativo, ultima_atividade: p?.ultima_atividade ?? null })} />
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {p?.membros ?? "—"}
+                        {p && p.pendentes > 0 && <span className="text-xs text-muted-foreground"> (+{p.pendentes} pendentes)</span>}
+                      </TableCell>
+                      <TableCell className="tabular-nums text-sm text-muted-foreground">
+                        {p ? `${p.livros_na_trilha} ${p.livros_na_trilha === 1 ? "livro" : "livros"}` : "—"}
+                      </TableCell>
+                      <TableCell className="tabular-nums">{p?.acoes_no_periodo ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{p ? haQuantoTempo(p.ultima_atividade) : "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {p?.proximo_encontro ? quandoDoEncontro(p.proximo_encontro) : "Nenhum"}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -198,9 +234,11 @@ export const ClubesTab = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
+              </div>
               <div className="flex items-center gap-4 pt-3 border-t mt-1 text-xs text-muted-foreground">
                 <span>{paged.length < filtered.length ? `Exibindo ${paged.length} de ${filtered.length}` : `${filtered.length} clube${filtered.length !== 1 ? "s" : ""}`}</span>
                 <span>·</span>

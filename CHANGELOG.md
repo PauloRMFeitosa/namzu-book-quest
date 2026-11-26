@@ -54,6 +54,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Corrigido
 
+- **Acervo pela metade.** A Busca e a página "Adicionar obra à trilha" carregavam só 500 das 1.024 obras do acervo; metade dos livros não aparecia para escolher. O acervo passa a ser buscado inteiro, em páginas.
 - **Clube no celular:** na aba Membros, o ranking com nomes compridos passava da borda da tela e levava a liga semanal junto; na aba Microgrupos, o título e os botões não cabiam na mesma linha. Os nomes agora são cortados com reticências e o cabeçalho de Microgrupos quebra em duas linhas.
 - **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.
 - **Criar encontro falhava.** O tipo padrão do formulário, "Encontro", era recusado pelo banco. Só os outros tipos funcionavam.
@@ -68,9 +69,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Menu do clube mais visível:** a barra de abas ganhou ícones, a aba aberta fica em azul e a barra acompanha a rolagem, presa abaixo do cabeçalho. Cabem até seis itens; quando há mais, ficam Visão geral, Feed, Leituras, Eventos e Membros, e as outras (Canais, Conteúdos, Microgrupos e Gestão) vão para o botão "Mais", que mostra o nome da aba aberta. No celular a barra deixa de rolar para o lado.
 - **Aviso, votação de data, canal e microgrupo em página:** as quatro janelas de criação que restavam no clube viraram páginas (`/clubes/:id/avisos/novo`, `/votacao/nova`, `/canais/novo` e `/microgrupos/novo`), com prévia e erro em texto. O canal recusa nome repetido e o microgrupo valida o limite de membros. Com isso, todas as criações do clube seguem a regra de criação em página.
 - **Faixa de avisos menor:** o cartão "Avisos para os membros" virou uma faixa de uma linha, para o menu e o conteúdo do clube aparecerem mais cedo na tela.
+- **Admin com tela própria:** o Admin saiu do layout do app e passou a ocupar a tela inteira, com menu lateral fixo (recolhível, e em gaveta no celular) e a seção aberta guardada no endereço (`/admin?secao=`). O menu foi reorganizado em Operação, Catálogo e Configuração; as quatro seções de recursos desligados no app (gamificação, missões, conquistas e mapeamento de gêneros) ficam em um grupo recolhido.
+- **Painel do Admin:** tela inicial com usuários, ativos na semana, clubes, membros, encontros e acervo; ações por dia; lista do que precisa de atenção (erros, denúncias, pedidos pendentes, clubes parados ou sem uso); e a situação de cada clube.
+- **Métricas no Admin:** ações de organizadores e membros por dia e por tipo, e o caminho do clube (criado, convite, entrada de membro, cronograma, encontro, progresso). Antes só dava para ver por consulta no banco.
+- **Clubes no Admin:** a lista ganhou organizador, situação (em uso, parado, sem uso, desativado), membros, trilha, ações, última ação e próximo encontro, com busca por organizador e link para o clube.
+- Função `admin_painel` no banco (migração `admin_painel`), só de leitura e só para admins.
+- Testes da lógica do painel em `src/lib/adminPainel.test.ts`.
 - **Provedor de IA:** `clube-ai` e `leitura-copiloto` passam a chamar a API do Google direto quando o segredo `GEMINI_API_KEY` existe, e continuam no gateway do Lovable enquanto ele não existir. Os modelos podem ser trocados por segredo, sem publicar código. As mensagens de erro deixam de citar o Lovable e de repassar o detalhe técnico para a pessoa. Passo a passo em `docs/ia.md`.
 - **`.env` fora do repositório:** as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` passam a vir do projeto do Vercel, onde não estavam cadastradas; a produção dependia do arquivo no repositório. O `.env` entrou no `.gitignore` e o CI usa os valores de `.env.example`.
 - `docs/backup.md`: o plano gratuito do Supabase não faz backup automático dos dados. O documento traz as opções e a recomendação para antes do piloto.
+- Em "Integrações e logs" do Admin, saíram as subabas de moderação e reputação, cujas tabelas nunca receberam registros. O número "Ativos hoje", que vinha da gamificação, deu lugar aos indicadores do Painel.
 - **Deploys só de produção:** o Vercel deixa de gerar preview para branches e PRs e publica apenas a `main`, para não estourar o limite diário do plano gratuito. O teste manual passa a ser feito em produção.
 
 ## [0.3.0] - 2026-11-25

@@ -11,7 +11,14 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { rotaVisitante } from "@/lib/navegacao";
 import EntradaOrganizador from "@/pages/EntradaOrganizador";
 
-export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+export const ProtectedRoute = ({
+  children,
+  semLayout = false,
+}: {
+  children: ReactNode;
+  /** Para telas com layout próprio, como o Admin: não envolve no layout do app. */
+  semLayout?: boolean;
+}) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   const { flags, loading: flagsLoading } = useFeatureFlags();
@@ -84,10 +91,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return (
       <>
         <AceitarTermosModal userId={user.id} />
-        <AppLayout>{children}</AppLayout>
+        {semLayout ? children : <AppLayout>{children}</AppLayout>}
       </>
     );
   }
 
+  if (semLayout) return <>{children}</>;
   return <AppLayout>{children}</AppLayout>;
 };
