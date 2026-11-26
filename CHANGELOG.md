@@ -61,6 +61,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - No cartão do encontro, "1 confirmados" passa a "1 confirmado".
 - **Notificação de conteúdo novo.** O banco recusava os tipos de notificação `clube_novo_conteudo` e `meta_diaria_lembrete`, usados pelo gatilho de conteúdos do clube e pelo lembrete da meta diária. A lista de tipos aceitos foi corrigida na migração `fase3_cronograma_leitura`.
 
+### Alterado
+
+- **Deploys só de produção:** o Vercel deixa de gerar preview para branches e PRs e publica apenas a `main`, para não estourar o limite diário do plano gratuito. O teste manual passa a ser feito em produção.
+
 ## [0.3.0] - 2026-11-25
 
 Fase 2 do roadmap: foco. O app passa a se apresentar como plataforma para quem organiza clube de leitura. Entrada pelo clube, menu de três destinos, convite por link, segurança dos clubes, carregamento por rota e medição do uso.

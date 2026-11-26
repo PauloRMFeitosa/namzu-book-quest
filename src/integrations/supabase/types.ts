@@ -1300,6 +1300,48 @@ export type Database = {
           },
         ]
       }
+      erros_app: {
+        Row: {
+          ambiente: string
+          assinatura: string
+          criado_em: string
+          id: number
+          mensagem: string
+          navegador: string | null
+          origem: string
+          pilha: string | null
+          rota: string | null
+          user_id: string | null
+          versao: string | null
+        }
+        Insert: {
+          ambiente?: string
+          assinatura: string
+          criado_em?: string
+          id?: never
+          mensagem: string
+          navegador?: string | null
+          origem: string
+          pilha?: string | null
+          rota?: string | null
+          user_id?: string | null
+          versao?: string | null
+        }
+        Update: {
+          ambiente?: string
+          assinatura?: string
+          criado_em?: string
+          id?: never
+          mensagem?: string
+          navegador?: string | null
+          origem?: string
+          pilha?: string | null
+          rota?: string | null
+          user_id?: string | null
+          versao?: string | null
+        }
+        Relationships: []
+      }
       evento_atas: {
         Row: {
           atualizado_em: string
@@ -3863,6 +3905,7 @@ export type Database = {
           valor_meta: number
         }[]
       }
+      limpar_erros_app: { Args: never; Returns: number }
       marcar_lembrete_meta_enviado: {
         Args: { _canal: string; _user_id: string }
         Returns: undefined

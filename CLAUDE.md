@@ -14,6 +14,14 @@ O NAMZU está sendo reposicionado: de rede social de leitura para **plataforma d
 
 O CI (`.github/workflows/ci.yml`) roda lint, checagem de tipos, testes e build em todo PR. Mudanças relevantes devem ser registradas no `CHANGELOG.md`.
 
+### Publicação e testes (fase atual, cerca de 30 usuários)
+
+- **O Vercel só publica a `main`.** Os deploys de preview estão desligados nos dois `vercel.json` (`git.deploymentEnabled`), porque o plano gratuito tem limite diário de deploys. Não existe link de preview por PR.
+- **O teste manual é feito em produção**, depois da mescla. Por isso, antes de mesclar, o PR precisa estar com o CI verde e com o fluxo conferido localmente (testes e navegador com API simulada).
+- **Menos PRs, maiores:** junte o trabalho relacionado em um PR só, em vez de vários pequenos. Cada mescla gera dois deploys (app e blog).
+- **Migração em produção continua pedindo o OK do Paulo**, e deve ser aplicada antes da mescla do código que depende dela.
+- Rever esta regra quando a base de usuários crescer.
+
 ## Comandos
 
 ```bash

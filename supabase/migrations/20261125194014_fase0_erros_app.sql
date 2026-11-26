@@ -1,5 +1,7 @@
 -- Fase 0 (docs/roadmap.md) — monitoramento de erros em produção.
 --
+-- Aplicada no remoto em 25/11/2026 (versão 20261125194014).
+--
 -- Hoje um erro no app só aparece se a pessoa avisar. Esta tabela guarda os
 -- erros que o navegador encontra (erro não tratado, promessa rejeitada, tela
 -- que quebrou e consulta que falhou), para o admin acompanhar em
