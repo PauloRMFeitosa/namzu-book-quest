@@ -58,6 +58,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - **`src/constants/queryKeys.ts`** — Fábrica centralizada de chaves do React Query. Adicione novas chaves aqui em vez de strings inline.
 - **`src/services/analytics.ts`** — Eventos de produto. Use `registrarEvento("nome_do_evento", { clubeId, props })` depois que a ação deu certo. A lista de eventos e as regras estão em `docs/metricas-produto.md`.
 - **`src/services/monitoramento.ts`** — Erros do app. O registro é automático (erro não tratado, promessa rejeitada, `ErrorBoundary` e consulta que falha) e aparece em Admin > Erros do app. As regras estão em `docs/monitoramento.md`.
+- **`src/pages/admin/`** — Admin, com layout próprio e fora do `AppLayout` (rota com `<ProtectedRoute semLayout>`). As seções ficam em `GRUPOS`, em `Admin.tsx`, e a aberta vai no endereço (`/admin?secao=`). Painel, Métricas e Clubes leem a função `admin_painel` por `useAdminPainel`; a lógica está em `src/lib/adminPainel.ts`.
 
 ### Configuração do React Query
 
