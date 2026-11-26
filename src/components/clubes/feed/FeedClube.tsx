@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFeedClube } from "@/hooks/clubes/useFeed";
 import { PostComposer } from "./PostComposer";
 import { PostCard } from "./PostCard";
+import { ProximoEncontroCard } from "@/components/clubes/painel/ProximoEncontroCard";
 import { ResumoDiscussaoButton } from "@/components/clubes/ai/ResumoDiscussaoButton";
 
 interface Props {
@@ -39,6 +40,7 @@ export const FeedClube = ({ clubeId, isMembro, curadorId, canManage }: Props) =>
 
   return (
     <div className="flex flex-col gap-4">
+      {(isMembro || canManage) && <ProximoEncontroCard clubeId={clubeId} />}
       <div className="flex justify-end">
         <ResumoDiscussaoButton clubeId={clubeId} />
       </div>

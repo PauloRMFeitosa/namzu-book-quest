@@ -63,6 +63,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 
+- **Página do clube em uma coluna só:** a barra lateral saiu. No computador ela empurrava o conteúdo das abas para fora do alinhamento da capa e dos avisos; no celular virava uma pilha de cartões depois de cada aba. Os blocos foram para a aba onde fazem sentido: "Pulso coletivo", ranking e liga semanal na aba Membros, "Próximo encontro" no topo do Feed (leva à aba Eventos) e "Quem está online" na aba Canais.
 - **Provedor de IA:** `clube-ai` e `leitura-copiloto` passam a chamar a API do Google direto quando o segredo `GEMINI_API_KEY` existe, e continuam no gateway do Lovable enquanto ele não existir. Os modelos podem ser trocados por segredo, sem publicar código. As mensagens de erro deixam de citar o Lovable e de repassar o detalhe técnico para a pessoa. Passo a passo em `docs/ia.md`.
 - **Deploys só de produção:** o Vercel deixa de gerar preview para branches e PRs e publica apenas a `main`, para não estourar o limite diário do plano gratuito. O teste manual passa a ser feito em produção.
 
