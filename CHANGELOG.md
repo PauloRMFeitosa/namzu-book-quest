@@ -54,6 +54,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Corrigido
 
+- **Clube no celular:** na aba Membros, o ranking com nomes compridos passava da borda da tela e levava a liga semanal junto; na aba Microgrupos, o título e os botões não cabiam na mesma linha. Os nomes agora são cortados com reticências e o cabeçalho de Microgrupos quebra em duas linhas.
 - **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.
 - **Criar encontro falhava.** O tipo padrão do formulário, "Encontro", era recusado pelo banco. Só os outros tipos funcionavam.
 - **Respostas "Talvez" e "Não" falhavam.** O banco só aceitava "Vou".
