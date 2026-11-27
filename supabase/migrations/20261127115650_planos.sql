@@ -1,5 +1,7 @@
 -- Planos do organizador (preparação da Fase 5, docs/roadmap.md).
 --
+-- Aplicada no remoto em 27/11/2026 (versão 20261127115650).
+--
 -- Cadastro dos planos e de qual plano cada organizador tem, para o admin
 -- montar e ajustar em Admin > Planos. Esta migração NÃO aplica limite nenhum:
 -- nada no app passa a bloquear criação de clube, entrada de membro ou recurso.
