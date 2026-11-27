@@ -224,7 +224,7 @@ Ordem a definir pelos dados do piloto. Candidatas:
 - **Ponte com o WhatsApp:** lembrete do encontro e resumo semanal postados no grupo do clube. O clube vive no WhatsApp; entrar como complemento reduz a barreira de adoção.
 - **PWA com notificação push** (hoje o service worker é só um kill-switch).
 - **Diretório público de clubes** indexável, como canal de aquisição orgânica.
-- **Página pública do clube** com marca do organizador.
+- **Página pública do clube** com marca do organizador. A primeira versão foi adiantada em 27/11/2026 a pedido do Paulo: página em `namzu.com.br/c/<endereco>` e por subdomínio, sem personalização (`docs/pagina-publica.md`). Faltam a prévia no WhatsApp, a personalização e o domínio próprio.
 - **Link de afiliado** do organizador na biblioteca do clube.
 - **Segmento institucional:** escolas, bibliotecas e empresas, com relatório de leitura por turma ou equipe.
 - **Reativar** matching e gamificação individual, se os dados mostrarem demanda dentro dos clubes.

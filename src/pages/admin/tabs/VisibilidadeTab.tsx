@@ -54,6 +54,7 @@ const MENU_INFERIOR_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[
 
 const CLUBE_FLAGS: { key: FeatureFlagKey; label: string; desc: string }[] = [
   { key: "show_clube_visao_geral", label: "Aba Visão geral (organizador)", desc: "Exibir ao organizador a visão geral do clube: próximo encontro, progresso de cada membro e quem está parado." },
+  { key: "show_clube_subdominio", label: "Endereço do clube por subdomínio", desc: "Mostrar ao organizador o endereço nome-do-clube.namzu.com.br. Ligar só depois de o domínio curinga estar configurado no Vercel." },
   { key: "show_clube_feed", label: "Aba Feed", desc: "Exibir a aba Feed dentro do clube." },
   { key: "show_clube_leituras", label: "Aba Leituras", desc: "Exibir a aba Leituras dentro do clube." },
   { key: "show_clube_canais", label: "Aba Canais", desc: "Exibir a aba Canais dentro do clube." },

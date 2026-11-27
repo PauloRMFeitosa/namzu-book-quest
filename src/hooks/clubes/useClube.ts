@@ -20,6 +20,10 @@ export interface ClubeDetalhe {
   regras: string | null;
   categoria: string | null;
   visibilidade: string | null;
+  /** Nome do clube no endereço público (namzu.com.br/c/<endereco>). */
+  endereco?: string | null;
+  /** Página pública ligada pelo organizador. */
+  pagina_publica?: boolean;
   created_at: string;
   curador?: {
     user_id: string;

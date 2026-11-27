@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryCache } from "@tanstack/react-query";
 import { registrarErro } from "@/services/monitoramento";
+import { enderecoDoHost } from "@/lib/enderecoClube";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -47,6 +48,7 @@ const CadastroManual = lazy(() => import("./pages/CadastroManual"));
 const ObraDetalhe = lazy(() => import("./pages/ObraDetalhe"));
 const AutorDetalhe = lazy(() => import("./pages/AutorDetalhe"));
 const Admin = lazy(() => import("./pages/admin/Admin"));
+const PaginaPublicaClube = lazy(() => import("./pages/clubes/PaginaPublicaClube"));
 const EditarPlano = lazy(() => import("./pages/admin/EditarPlano"));
 const Leitores = lazy(() => import("./pages/Leitores"));
 const Citacoes = lazy(() => import("./pages/Citacoes"));
@@ -76,6 +78,9 @@ const persister = createSyncStoragePersister({
   key: "namzu-rq-cache",
 });
 
+// Clube do subdomínio, quando o site é aberto por <clube>.namzu.com.br.
+const enderecoNoSubdominio = enderecoDoHost(window.location.hostname);
+
 const App = () => (
   <PersistQueryClientProvider
     client={queryClient}
@@ -92,11 +97,16 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Suspense fallback={<PaginaCarregando />}>
+          {enderecoNoSubdominio ? (
+            // Aberto por <clube>.namzu.com.br: o site inteiro é a página pública do clube.
+            <PaginaPublicaClube enderecoDoSubdominio={enderecoNoSubdominio} />
+          ) : (
           <Routes>
             <Route path="/comecar" element={<Comecar />} />
             <Route path="/onboarding" element={<Navigate to="/comecar" replace />} />
             <Route path="/onboarding-interesses" element={<OnboardingInteresses />} />
             <Route path="/convite/:id" element={<Convite />} />
+            <Route path="/c/:endereco" element={<PaginaPublicaClube />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
@@ -134,6 +144,7 @@ const App = () => (
             <Route path="/admin/planos/:id" element={<ProtectedRoute semLayout><AdminRoute><EditarPlano /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          )}
           </Suspense>
           <SessaoLeituraModal />
           <OnboardingAutoMerge />

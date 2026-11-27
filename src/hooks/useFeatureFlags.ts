@@ -22,6 +22,7 @@ export type FeatureFlagKey =
   | "show_clube_ai_recomendacoes"
   | "show_gamificacao_clube"
   | "show_clube_visao_geral"
+  | "show_clube_subdominio"
   // visibilidade global de páginas (override sem alterar flags individuais)
   | "pages_global_visible"
   // menu inferior por página
@@ -65,6 +66,8 @@ export const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   show_gamificacao_clube: false,
   // Fase 3: primeira aba do organizador dentro do clube
   show_clube_visao_geral: true,
+  // endereço <clube>.namzu.com.br; ligar só depois de o domínio curinga estar no Vercel
+  show_clube_subdominio: false,
   pages_global_visible: true,
   show_menu_inferior_home: true,
   show_menu_inferior_clubes: true,

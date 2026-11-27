@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { BookOpen, CalendarDays, LayoutDashboard, Megaphone, Settings, UserPlus, Users } from "lucide-react";
+import { BookOpen, CalendarDays, Globe, LayoutDashboard, Megaphone, Settings, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CarregandoCriacao } from "@/components/criacao/CarregandoCriacao";
@@ -10,6 +10,7 @@ import { TrilhaGestao } from "@/components/clubes/gestao/TrilhaGestao";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ComunicacaoDoPainel } from "@/components/clubes/painel-organizador/ComunicacaoDoPainel";
 import { ConfiguracoesDoPainel } from "@/components/clubes/painel-organizador/ConfiguracoesDoPainel";
+import { PaginaPublicaDoPainel } from "@/components/clubes/painel-organizador/PaginaPublicaDoPainel";
 import { VisaoDoPainel } from "@/components/clubes/painel-organizador/VisaoDoPainel";
 import { CascaDoPainel, type GrupoDoPainel } from "@/components/painel/CascaDoPainel";
 import { useAcessoGestao } from "@/hooks/clubes/useAcessoGestao";
@@ -31,6 +32,7 @@ const SECOES = [
   { chave: "leitura", rotulo: "Leitura", descricao: "Trilha de livros, cronograma e metas.", icone: BookOpen },
   { chave: "encontros", rotulo: "Encontros", descricao: "Agenda, respostas, presença, atas e votação de data.", icone: CalendarDays },
   { chave: "comunicacao", rotulo: "Comunicação", descricao: "Avisos para todos os membros.", icone: Megaphone },
+  { chave: "pagina", rotulo: "Página pública", descricao: "Endereço do clube e página aberta para divulgar.", icone: Globe },
   { chave: "configuracoes", rotulo: "Configurações", descricao: "Dados do clube e quem ajuda a organizar.", icone: Settings },
 ];
 
@@ -158,6 +160,8 @@ const PainelOrganizador = () => {
       )}
 
       {atual.chave === "comunicacao" && <ComunicacaoDoPainel clubeId={clube.id} nomeClube={clube.nome} />}
+
+      {atual.chave === "pagina" && <PaginaPublicaDoPainel key={clube.id} clube={clube} podeEditar={podeNomear} />}
 
       {atual.chave === "configuracoes" && <ConfiguracoesDoPainel clube={clube} podeEditar={podeNomear} onIrPara={irPara} />}
 
