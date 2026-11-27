@@ -5,9 +5,6 @@ import { queryKeys } from "@/constants/queryKeys";
 import { registrarEvento } from "@/services/analytics";
 import type { PaginaPublicaDoClube } from "@/lib/enderecoClube";
 
-// Cast temporário: sai quando os tipos forem regenerados após a migração `clube_pagina_publica`.
-const banco = supabase as any;
-
 /** Página pública do clube pelo endereço (função `clube_pagina_publica`, funciona sem login). */
 export const usePaginaPublica = (endereco: string | null | undefined) =>
   useQuery({
@@ -18,9 +15,9 @@ export const usePaginaPublica = (endereco: string | null | undefined) =>
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async (): Promise<PaginaPublicaDoClube | null> => {
-      const { data, error } = await banco.rpc("clube_pagina_publica", { p_endereco: endereco });
+      const { data, error } = await supabase.rpc("clube_pagina_publica", { p_endereco: endereco });
       if (error) throw error;
-      return (data as PaginaPublicaDoClube | null) ?? null;
+      return (data as unknown as PaginaPublicaDoClube | null) ?? null;
     },
   });
 
@@ -29,7 +26,7 @@ export const useDefinirPaginaPublica = (clubeId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ endereco, ativa }: { endereco: string; ativa: boolean }) => {
-      const { data, error } = await banco.rpc("clube_definir_pagina_publica", {
+      const { data, error } = await supabase.rpc("clube_definir_pagina_publica", {
         p_clube_id: clubeId,
         p_endereco: endereco,
         p_ativa: ativa,

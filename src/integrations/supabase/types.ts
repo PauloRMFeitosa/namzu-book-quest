@@ -891,11 +891,13 @@ export type Database = {
           curador_id: string
           descricao: string | null
           duracao_tipo: string
+          endereco: string | null
           id: string
           imagem_capa_url: string | null
           is_ativo: boolean | null
           nome: string
           objetivo: string | null
+          pagina_publica: boolean
           preco_centavos: number | null
           regras: string | null
           updated_at: string
@@ -907,11 +909,13 @@ export type Database = {
           curador_id: string
           descricao?: string | null
           duracao_tipo?: string
+          endereco?: string | null
           id?: string
           imagem_capa_url?: string | null
           is_ativo?: boolean | null
           nome: string
           objetivo?: string | null
+          pagina_publica?: boolean
           preco_centavos?: number | null
           regras?: string | null
           updated_at?: string
@@ -923,11 +927,13 @@ export type Database = {
           curador_id?: string
           descricao?: string | null
           duracao_tipo?: string
+          endereco?: string | null
           id?: string
           imagem_capa_url?: string | null
           is_ativo?: boolean | null
           nome?: string
           objetivo?: string | null
+          pagina_publica?: boolean
           preco_centavos?: number | null
           regras?: string | null
           updated_at?: string
@@ -3807,15 +3813,24 @@ export type Database = {
       }
       clube_da_opcao_de_data: { Args: { p_opcao_id: string }; Returns: string }
       clube_da_votacao_data: { Args: { p_votacao_id: string }; Returns: string }
+      clube_definir_pagina_publica: {
+        Args: { p_ativa: boolean; p_clube_id: string; p_endereco: string }
+        Returns: string
+      }
       clube_e_privado: { Args: { _clube: string }; Returns: boolean }
       clube_encerrar_votacao_data: {
         Args: { p_opcao_id: string; p_votacao_id: string }
         Returns: string
       }
+      clube_endereco_reservado: {
+        Args: { p_endereco: string }
+        Returns: boolean
+      }
       clube_enviar_aviso: {
         Args: { p_clube_id: string; p_mensagem: string; p_titulo: string }
         Returns: string
       }
+      clube_pagina_publica: { Args: { p_endereco: string }; Returns: Json }
       clube_painel_historico: { Args: { p_clube_id: string }; Returns: Json }
       clube_salvar_cronograma: {
         Args: {

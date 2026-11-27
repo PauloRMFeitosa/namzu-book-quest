@@ -1,5 +1,7 @@
 -- Página pública do clube (docs/pagina-publica.md).
 --
+-- Aplicada no remoto em 27/11/2026 (versão 20261127122348).
+--
 -- O organizador escolhe um endereço para o clube e liga a página pública, que
 -- abre sem login em namzu.com.br/c/<endereco> e em <endereco>.namzu.com.br.
 --
