@@ -9,7 +9,7 @@ import { useClubeConvite } from "@/hooks/clubes/useClubeConvite";
 import { useClubeMembership, useEntrarClube } from "@/hooks/clubes/useClube";
 import { caminhoConvite, extrairClubeDoConvite } from "@/lib/convite";
 import type { EstadoEntrada } from "@/lib/entrada";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 
 // Página pública de convite (Fase 2): mostra o clube a quem recebeu o link e
 // leva direto para dentro dele, com cadastro curto se a pessoa não tem conta.
@@ -57,7 +57,7 @@ const Convite = () => {
     <div className="relative z-10 min-h-screen bg-background">
       <div className="max-w-md mx-auto flex flex-col min-h-screen px-6 pt-8 pb-8">
         <Link to="/" className="flex items-center gap-2 mb-6 self-start" aria-label="NAMZU, página inicial">
-          <img src={logoNamzu} alt="" className="w-8 h-8 object-contain" />
+          <LogoNamzu alt="" className="w-8 h-8" />
           <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
         </Link>
 

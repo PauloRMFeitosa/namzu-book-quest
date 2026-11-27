@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 import { BookOpen, Users } from "lucide-react";
 
 const LIVROS_DEMO = Array.from({ length: 6 }, (_, i) => i);
@@ -14,7 +14,7 @@ export function TelaBoasVindas({ onAvancar }: Props) {
   return (
     <div className="flex flex-col min-h-screen px-6 pt-10 pb-8">
       <div className="flex flex-col items-center gap-1 mb-8">
-        <img src={logoNamzu} alt="NAMZU" className="w-14 h-14 object-contain" />
+        <LogoNamzu className="w-14 h-14" />
         <span className="font-display font-extrabold text-primary text-xl tracking-tight">
           NAMZU
         </span>
