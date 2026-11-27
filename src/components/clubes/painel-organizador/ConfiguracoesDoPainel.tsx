@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Globe, Lock, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Bloco } from "@/components/painel/PartesDoPainel";
+import { PlanoDoPainel } from "@/components/clubes/painel-organizador/PlanoDoPainel";
 import { EditarClubeDialog } from "@/components/clubes/gestao/EditarClubeDialog";
 import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
@@ -64,6 +65,8 @@ export const ConfiguracoesDoPainel = ({
           </Linha>
         </dl>
       </Bloco>
+
+      <PlanoDoPainel clubeId={clube.id} />
 
       <Bloco
         titulo="Quem ajuda a organizar"

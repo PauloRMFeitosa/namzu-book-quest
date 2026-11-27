@@ -16,6 +16,44 @@
       "destination": "https://namzu-book-quest.vercel.app/blog/:path*"
     },
     {
+      "source": "/c/:endereco",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|SkypeUriPreview|Pinterest|redditbot|vkShare).*"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "app"
+        }
+      ],
+      "destination": "/api/pagina-clube?endereco=:endereco"
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<endereco>(?!www\\.)[a-z0-9-]+)\\.namzu\\.com\\.br"
+        },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|SkypeUriPreview|Pinterest|redditbot|vkShare).*"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "app"
+        }
+      ],
+      "destination": "/api/pagina-clube?endereco=:endereco"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -8,6 +8,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Limites dos planos:** os limites de clubes por organizador, membros por clube e co-curadores por clube passam a valer. O banco recusa o que passa do limite; a criação de clube avisa antes; Painel > Configurações mostra o plano e o uso; Painel > Membros avisa quando o clube está perto do limite ou lotado. Quem já está acima do limite continua como está. Os recursos de cada plano e o limite de IA ainda não bloqueiam nada. Ver `docs/planos.md`.
+- **Plano Lançamento:** plano padrão enquanto a cobrança não é ativada, grátis, com todos os recursos e sem limites (migração `planos_limites`).
+- **Prévia do clube no WhatsApp e em outras redes:** o link da página pública colado em uma conversa mostra o nome, a descrição e a capa do clube. Feito por uma função no Vercel (`api/pagina-clube.ts`) que atende só os robôs de prévia.
 - **Roteiro "Primeiros passos" do organizador:** depois de criar o clube, o organizador cai no painel com um roteiro de seis passos (primeiro livro, cronograma, primeiro encontro, página pública, convite e, como opcional, o primeiro aviso). Cada passo explica para que serve, leva ao lugar certo e se marca sozinho. Vale também para clubes antigos, que veem só o que falta. Pode ser dispensado e reaberto em Configurações. Ver `docs/primeiros-passos.md`.
 - **Endereço da página na criação do clube:** a criação ganhou o bloco "Página do clube", com o endereço sugerido pelo nome, e a página pública já nasce no ar.
 - As telas de convite e de página pública explicam a diferença entre as duas e apontam uma para a outra.

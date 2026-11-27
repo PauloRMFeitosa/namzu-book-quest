@@ -205,7 +205,8 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 
 - [ ] Plano gratuito com limite (referência de mercado: 1 clube, até 30 membros) e plano Organizador pago. Preço definido com os dados do piloto; a referência do concorrente é R$ 19,90/mês.
   - [x] Cadastro dos planos no Admin (preço, limites e recursos) e plano de cada organizador, definido à mão. Adiantado em 27/11/2026 a pedido do Paulo, sem aplicar limite e sem cobrança (`docs/planos.md`).
-  - [ ] Aplicar os limites e os recursos do plano no app.
+  - [x] Aplicar os limites de clubes, membros e co-curadores, com o plano Lançamento (sem limites) como padrão enquanto não há cobrança. Feito em 27/11/2026.
+  - [ ] Aplicar os recursos de cada plano e o limite de usos de IA.
 - [ ] Testar duas receitas além da assinatura, porque a assinatura sozinha rende pouco (ver `docs/tamanho-mercado-2026-11.md`): taxa sobre a mensalidade dos clubes pagos e plano institucional para escolas e bibliotecas.
 - [ ] Clube pago: organizador cobra mensalidade dos membros com PIX e cartão recorrentes, recebendo direto. Escolher provedor de pagamento na fase; avaliar taxa, PIX recorrente e repasse.
 - [ ] Decidir o destino das tabelas `pagamentos`, `creator_assinaturas` e `creator_assinantes`: adotar com RLS ou substituir.
@@ -224,7 +225,7 @@ Ordem a definir pelos dados do piloto. Candidatas:
 - **Ponte com o WhatsApp:** lembrete do encontro e resumo semanal postados no grupo do clube. O clube vive no WhatsApp; entrar como complemento reduz a barreira de adoção.
 - **PWA com notificação push** (hoje o service worker é só um kill-switch).
 - **Diretório público de clubes** indexável, como canal de aquisição orgânica.
-- **Página pública do clube** com marca do organizador. A primeira versão foi adiantada em 27/11/2026 a pedido do Paulo: página em `namzu.com.br/c/<endereco>` e por subdomínio, sem personalização (`docs/pagina-publica.md`). Faltam a prévia no WhatsApp, a personalização e o domínio próprio.
+- **Página pública do clube** com marca do organizador. A primeira versão foi adiantada em 27/11/2026 a pedido do Paulo: página em `namzu.com.br/c/<endereco>` e por subdomínio, sem personalização (`docs/pagina-publica.md`). A prévia no WhatsApp entrou em 27/11/2026. Faltam a personalização e o domínio próprio.
 - **Link de afiliado** do organizador na biblioteca do clube.
 - **Segmento institucional:** escolas, bibliotecas e empresas, com relatório de leitura por turma ou equipe.
 - **Reativar** matching e gamificação individual, se os dados mostrarem demanda dentro dos clubes.

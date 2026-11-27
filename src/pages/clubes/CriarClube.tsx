@@ -13,10 +13,12 @@ import { AcoesCriacao, ErroCriacao, PaginaCriacao, SecaoCriacao } from "@/compon
 import { CapaUploader } from "@/components/clubes/shared/CapaUploader";
 import { CATEGORIAS } from "@/hooks/clubes/useClubes";
 import { useAuth } from "@/hooks/useAuth";
+import { useMeuPlano } from "@/hooks/clubes/usePlanoDoClube";
 import { useRascunho } from "@/hooks/useRascunho";
 import { supabase } from "@/integrations/supabase/client";
 import { CLUBE_VAZIO, MAXIMO_NOME_CLUBE, explicarVisibilidade, validarNovoClube } from "@/lib/criacao";
 import { DOMINIO_RAIZ, MAXIMO_ENDERECO, limparEndereco, linkDaPagina, semProtocolo, sugerirEndereco } from "@/lib/enderecoClube";
+import { bloqueioParaCriarClube } from "@/lib/planoDoClube";
 import { registrarEvento } from "@/services/analytics";
 
 const DRAFT_KEY = "draft-criar-clube";
@@ -42,12 +44,16 @@ const CriarClube = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // O banco também barra; aqui a pessoa fica sabendo antes de preencher tudo.
+  const { data: meuPlano } = useMeuPlano(!!user);
+  const bloqueio = bloqueioParaCriarClube(meuPlano);
+
   const erro = validarNovoClube(dados);
   const categoria = CATEGORIAS.find((c) => c.value === dados.categoria)?.label;
 
   const salvar = async () => {
     setTentouSalvar(true);
-    if (erro || !user) return;
+    if (erro || bloqueio || !user) return;
     setSalvando(true);
     try {
       const { data, error } = await supabase
@@ -105,6 +111,15 @@ const CriarClube = () => {
       voltarPara="/"
       rotuloVoltar="Voltar para Meu clube"
     >
+      {bloqueio && (
+        <p
+          role="alert"
+          className="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/20 dark:text-amber-200 px-4 py-3 text-sm"
+        >
+          {bloqueio} Para criar outro, encerre um dos clubes ou fale com a equipe do NAMZU sobre o seu plano.
+        </p>
+      )}
+
       <SecaoCriacao titulo="1. Identidade" descricao="Como o clube aparece para quem recebe o convite.">
         <div className="grid gap-1.5">
           <Label htmlFor="clube-nome">Nome do clube</Label>
@@ -243,7 +258,7 @@ const CriarClube = () => {
       <ErroCriacao erro={tentouSalvar && erro} />
 
       <AcoesCriacao cancelarPara="/">
-        <Button onClick={salvar} disabled={salvando} className="rounded-xl">
+        <Button onClick={salvar} disabled={salvando || !!bloqueio} className="rounded-xl">
           {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar clube"}
         </Button>
       </AcoesCriacao>
