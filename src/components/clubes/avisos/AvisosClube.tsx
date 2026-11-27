@@ -18,6 +18,7 @@ import { useApagarAviso, useAvisosClube } from "@/hooks/clubes/useAvisos";
 import { mensagemDoAviso, quandoDoAviso, resumoDoAviso, textoDeAvisos, type AvisoDoClube } from "@/lib/avisos";
 import { linkDoClube } from "@/lib/convite";
 import { registrarEvento } from "@/services/analytics";
+import { EnviarNoWhatsApp } from "@/components/clubes/shared/EnviarNoWhatsApp";
 
 interface Props {
   clubeId: string;
@@ -43,13 +44,11 @@ export const AvisosClube = ({ clubeId, nomeClube, podeGerir, abrirLista, onLista
     onListaAberta?.();
   }, [abrirLista, onListaAberta]);
 
+  const textoDoAviso = (aviso: AvisoDoClube) =>
+    mensagemDoAviso({ nomeClube, titulo: aviso.titulo, mensagem: aviso.mensagem, link: linkDoClube(clubeId) });
+
   const copiar = async (aviso: AvisoDoClube) => {
-    const texto = mensagemDoAviso({
-      nomeClube,
-      titulo: aviso.titulo,
-      mensagem: aviso.mensagem,
-      link: linkDoClube(clubeId),
-    });
+    const texto = textoDoAviso(aviso);
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Aviso copiado. Cole no grupo do clube.");
@@ -114,6 +113,11 @@ export const AvisosClube = ({ clubeId, nomeClube, podeGerir, abrirLista, onLista
                       <Button size="sm" variant="ghost" className="rounded-xl h-8" onClick={() => copiar(a)}>
                         <Copy className="w-3.5 h-3.5 mr-1" /> Copiar para o grupo
                       </Button>
+                      <EnviarNoWhatsApp
+                        className="rounded-xl"
+                        texto={textoDoAviso(a)}
+                        aoEnviar={() => registrarEvento("aviso_copiado", { clubeId, props: { canal: "whatsapp" } })}
+                      />
                       <Button
                         size="sm"
                         variant="ghost"

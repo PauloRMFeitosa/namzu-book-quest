@@ -36,10 +36,13 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `voto_data_registrado` | Membro marcou ou desmarcou datas na votação | `opcoes`: quantas datas ficaram marcadas |
 | `votacao_data_encerrada` | Organizador escolheu a data e o encontro foi criado | `votantes`, `opcoes` |
 | `aviso_enviado` | Organizador enviou um aviso aos membros | |
-| `aviso_copiado` | Organizador copiou um aviso para o grupo | |
+| `aviso_copiado` | Organizador copiou um aviso para o grupo ou enviou pelo WhatsApp | `canal`: `whatsapp` quando foi pelo botão do WhatsApp |
 | `pagina_publica_definida` | Organizador salvou o endereço do clube ou ligou ou desligou a página pública | `ativa`: `true` ou `false` |
 | `pagina_publica_compartilhada` | Organizador copiou ou compartilhou o link da página pública | `canal`: `copiar`, `whatsapp`. `tipo`: `subdominio` ou `caminho` |
 | `roteiro_dispensado` | Organizador dispensou o roteiro "Primeiros passos" | `feitos`: passos obrigatórios já cumpridos |
+| `grupo_do_clube_definido` | Organizador salvou ou removeu o link do grupo do clube | `removido`: `true` ou `false` |
+| `grupo_do_clube_aberto` | Membro tocou em "Entrar no grupo" | `tipo`: `whatsapp` ou `telegram` |
+| `imagem_compartilhada` | Organizador baixou ou compartilhou a imagem do encontro ou da trilha, ou enviou só a mensagem | `tipo`: `encontro` ou `trilha`. `formato`: `feed` ou `stories`. `canal`: `compartilhar`, `baixar` ou `whatsapp_texto` |
 
 Regras para evento novo:
 

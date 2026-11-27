@@ -8,6 +8,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Grupo do clube:** o organizador guarda o link do grupo do WhatsApp ou do Telegram em Painel > Comunicação, e os membros ativos veem o botão "Entrar no grupo" na página do clube. O link fica em tabela própria (`clube_grupos`, migração `clube_grupo`) e só quem faz parte do clube lê.
+- **Enviar no WhatsApp:** ao lado de cada "Copiar para o grupo" (lembrete do encontro, meta da semana, votação de data e avisos), um botão abre o WhatsApp com a mensagem pronta.
+- **Imagens de divulgação:** o encontro e a trilha ganham imagem pronta para o grupo, os stories e o feed, com mensagem editável e o link da página do clube. Ver `docs/divulgacao.md`.
 - **Mensagem de divulgação editável:** na página pública (Painel > Página pública) e na janela de convite, o organizador escreve a mensagem que vai com o link no WhatsApp. O texto fica guardado no aparelho, por clube, e o link entra no fim.
 - **Limites dos planos:** os limites de clubes por organizador, membros por clube e co-curadores por clube passam a valer. O banco recusa o que passa do limite; a criação de clube avisa antes; Painel > Configurações mostra o plano e o uso; Painel > Membros avisa quando o clube está perto do limite ou lotado. Quem já está acima do limite continua como está. Os recursos de cada plano e o limite de IA ainda não bloqueiam nada. Ver `docs/planos.md`.
 - **Plano Lançamento:** plano padrão enquanto a cobrança não é ativada, grátis, com todos os recursos e sem limites (migração `planos_limites`).

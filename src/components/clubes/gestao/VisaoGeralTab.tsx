@@ -28,6 +28,7 @@ import {
   type MembroVisaoGeral,
 } from "@/lib/visaoGeral";
 import { cn } from "@/lib/utils";
+import { EnviarNoWhatsApp } from "@/components/clubes/shared/EnviarNoWhatsApp";
 
 interface Props {
   clubeId: string;
@@ -98,15 +99,20 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
     });
   }
 
+  const textoDoLembrete = () =>
+    encontro
+      ? mensagemDoEncontro({
+          nomeClube,
+          titulo: encontro.titulo,
+          inicio: encontro.inicio_em,
+          urlEvento: encontro.url_evento,
+          link: linkDoClube(clubeId, "eventos"),
+        })
+      : "";
+
   const copiarLembrete = async () => {
     if (!encontro) return;
-    const texto = mensagemDoEncontro({
-      nomeClube,
-      titulo: encontro.titulo,
-      inicio: encontro.inicio_em,
-      urlEvento: encontro.url_evento,
-      link: linkDoClube(clubeId, "eventos"),
-    });
+    const texto = textoDoLembrete();
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Lembrete copiado. Cole no grupo do clube.");
@@ -116,15 +122,14 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
     }
   };
 
+  const textoDaMeta = () =>
+    meta && livro
+      ? mensagemDaMeta({ nomeClube, livro: livro.titulo, meta, totalPaginas, link: linkDoClube(clubeId, "leituras") })
+      : "";
+
   const copiarMensagem = async () => {
     if (!meta || !livro) return;
-    const texto = mensagemDaMeta({
-      nomeClube,
-      livro: livro.titulo,
-      meta,
-      totalPaginas,
-      link: linkDoClube(clubeId, "leituras"),
-    });
+    const texto = textoDaMeta();
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Mensagem copiada. Cole no grupo do clube.");
@@ -168,9 +173,17 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
                 {format(new Date(encontro.inicio_em), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
               </p>
               <p className="text-sm">{resumoRespostas(encontro)}</p>
-              <Button variant="outline" size="sm" className="rounded-xl gap-1.5 self-start" onClick={copiarLembrete}>
-                <Copy className="w-3.5 h-3.5" /> Copiar lembrete para o grupo
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={copiarLembrete}>
+                  <Copy className="w-3.5 h-3.5" /> Copiar lembrete para o grupo
+                </Button>
+                <EnviarNoWhatsApp
+                  variant="outline"
+                  className="rounded-xl h-9"
+                  texto={textoDoLembrete()}
+                  aoEnviar={() => registrarEvento("lembrete_encontro_copiado", { clubeId, props: { origem: "visao_geral", canal: "whatsapp" } })}
+                />
+              </div>
             </>
           ) : (
             <>
@@ -230,9 +243,17 @@ export const VisaoGeralTab = ({ clubeId, nomeClube, onIrPara }: Props) => {
           {livro && livro.trilha_id && (
             <div className="flex flex-wrap gap-2">
               {meta && (
-                <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={copiarMensagem}>
-                  <Copy className="w-3.5 h-3.5" /> Copiar mensagem para o grupo
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={copiarMensagem}>
+                    <Copy className="w-3.5 h-3.5" /> Copiar mensagem para o grupo
+                  </Button>
+                  <EnviarNoWhatsApp
+                    variant="outline"
+                    className="rounded-xl h-9"
+                    texto={textoDaMeta()}
+                    aoEnviar={() => registrarEvento("mensagem_meta_copiada", { clubeId, props: { canal: "whatsapp" } })}
+                  />
+                </>
               )}
               <Button
                 variant={meta ? "ghost" : "outline"}
