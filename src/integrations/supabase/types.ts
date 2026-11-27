@@ -2840,6 +2840,47 @@ export type Database = {
           },
         ]
       }
+      organizador_planos: {
+        Row: {
+          atribuido_por: string | null
+          atualizado_em: string
+          criado_em: string
+          observacao: string | null
+          origem: string
+          plano_id: string
+          user_id: string
+          valido_ate: string | null
+        }
+        Insert: {
+          atribuido_por?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          observacao?: string | null
+          origem?: string
+          plano_id: string
+          user_id: string
+          valido_ate?: string | null
+        }
+        Update: {
+          atribuido_por?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          observacao?: string | null
+          origem?: string
+          plano_id?: string
+          user_id?: string
+          valido_ate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizador_planos_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           created_at: string | null
@@ -3038,6 +3079,72 @@ export type Database = {
           username?: string
           verificado?: boolean | null
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      planos: {
+        Row: {
+          arquivado_em: string | null
+          atualizado_em: string
+          chave: string
+          criado_em: string
+          descricao: string | null
+          destaque: boolean
+          dias_de_teste: number
+          id: string
+          limite_clubes: number | null
+          limite_co_curadores: number | null
+          limite_ia_mes: number | null
+          limite_membros: number | null
+          nome: string
+          ordem: number
+          padrao: boolean
+          preco_anual_centavos: number | null
+          preco_mensal_centavos: number
+          publicado: boolean
+          recursos: string[]
+        }
+        Insert: {
+          arquivado_em?: string | null
+          atualizado_em?: string
+          chave: string
+          criado_em?: string
+          descricao?: string | null
+          destaque?: boolean
+          dias_de_teste?: number
+          id?: string
+          limite_clubes?: number | null
+          limite_co_curadores?: number | null
+          limite_ia_mes?: number | null
+          limite_membros?: number | null
+          nome: string
+          ordem?: number
+          padrao?: boolean
+          preco_anual_centavos?: number | null
+          preco_mensal_centavos?: number
+          publicado?: boolean
+          recursos?: string[]
+        }
+        Update: {
+          arquivado_em?: string | null
+          atualizado_em?: string
+          chave?: string
+          criado_em?: string
+          descricao?: string | null
+          destaque?: boolean
+          dias_de_teste?: number
+          id?: string
+          limite_clubes?: number | null
+          limite_co_curadores?: number | null
+          limite_ia_mes?: number | null
+          limite_membros?: number | null
+          nome?: string
+          ordem?: number
+          padrao?: boolean
+          preco_anual_centavos?: number | null
+          preco_mensal_centavos?: number
+          publicado?: boolean
+          recursos?: string[]
         }
         Relationships: []
       }
@@ -3647,6 +3754,7 @@ export type Database = {
     Functions: {
       aceitar_termos: { Args: never; Returns: undefined }
       admin_painel: { Args: { p_dias?: number }; Returns: Json }
+      admin_planos_organizadores: { Args: never; Returns: Json }
       calcular_matches: { Args: { p_user_id?: string }; Returns: undefined }
       calcular_similaridade_obras: {
         Args: { p_obra_a: string; p_obra_b: string }

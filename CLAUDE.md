@@ -59,6 +59,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - **`src/services/analytics.ts`** — Eventos de produto. Use `registrarEvento("nome_do_evento", { clubeId, props })` depois que a ação deu certo. A lista de eventos e as regras estão em `docs/metricas-produto.md`.
 - **`src/services/monitoramento.ts`** — Erros do app. O registro é automático (erro não tratado, promessa rejeitada, `ErrorBoundary` e consulta que falha) e aparece em Admin > Erros do app. As regras estão em `docs/monitoramento.md`.
 - **`src/pages/admin/`** — Admin, com layout próprio e fora do `AppLayout` (rota com `<ProtectedRoute semLayout>`). As seções ficam em `GRUPOS`, em `Admin.tsx`, e a aberta vai no endereço (`/admin?secao=`). Painel, Métricas e Clubes leem a função `admin_painel` por `useAdminPainel`; a lógica está em `src/lib/adminPainel.ts`.
+- **Planos do organizador** — Admin > Planos (`src/pages/admin/tabs/PlanosTab.tsx`), com criação e edição em `/admin/planos/novo` e `/admin/planos/:id`. O catálogo de recursos e a lógica ficam em `src/lib/planos.ts`. Os planos ainda não bloqueiam nada no app; a situação e as próximas etapas estão em `docs/planos.md`.
 - **`src/pages/clubes/PainelOrganizador.tsx`** — Painel do organizador, em `/clubes/:id/painel?secao=`. Usa a mesma moldura do Admin (`src/components/painel/CascaDoPainel.tsx`) e reaproveita os componentes do clube (`VisaoGeralTab`, `MembrosTab`, `TrilhaGestao`, `EventosTab`). Toda tela de gestão do clube entra aqui, não como aba da página do clube, que fica só com o que o membro usa. As pendências e o histórico estão em `src/lib/painelOrganizador.ts`.
 
 ### Configuração do React Query
@@ -180,6 +181,7 @@ onOpenChange(false);
 | `AtaDialog.tsx` | `draft-ata-{eventoId}` (só enquanto há alteração não salva) |
 | `pages/clubes/AbrirVotacaoData.tsx` (página) | `draft-votacao-data-{clubeId}` |
 | `pages/clubes/CriarAviso.tsx` (página) | `draft-aviso-{clubeId}` |
+| `pages/admin/EditarPlano.tsx` (página, só na criação) | `draft-plano` |
 
 ## Convenções Principais
 

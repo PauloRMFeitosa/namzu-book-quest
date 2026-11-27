@@ -5,6 +5,7 @@ import {
   Bug,
   Building2,
   ClipboardList,
+  CreditCard,
   Eye,
   Flag,
   Gamepad2,
@@ -32,6 +33,7 @@ import { MapeamentoGenerosTab } from "./tabs/MapeamentoGenerosTab";
 import { MetasTab } from "./tabs/MetasTab";
 import { MetricasTab } from "./tabs/MetricasTab";
 import { PainelTab } from "./tabs/PainelTab";
+import { PlanosTab } from "./tabs/PlanosTab";
 import { ReprocessamentoTab } from "./tabs/ReprocessamentoTab";
 import { SaudeCatalogoTab } from "./tabs/SaudeCatalogoTab";
 import { UsuariosTab } from "./tabs/UsuariosTab";
@@ -69,7 +71,10 @@ const GRUPOS: GrupoDoPainel[] = [
   },
   {
     rotulo: "Configuração",
-    secoes: [{ chave: "visibilidade", rotulo: "Visibilidade", descricao: "Liga e desliga recursos do app.", icone: Eye }],
+    secoes: [
+      { chave: "planos", rotulo: "Planos", descricao: "Planos do organizador: preço, limites e recursos.", icone: CreditCard },
+      { chave: "visibilidade", rotulo: "Visibilidade", descricao: "Liga e desliga recursos do app.", icone: Eye },
+    ],
   },
   {
     rotulo: "Recursos desligados",
@@ -128,6 +133,7 @@ const Admin = () => {
           {atual.chave === "wikidata-autores" && <WikidataAutoresTab />}
           {atual.chave === "reprocessamento" && <ReprocessamentoTab />}
           {atual.chave === "jobs" && <JobsTab />}
+          {atual.chave === "planos" && <PlanosTab />}
           {atual.chave === "visibilidade" && <VisibilidadeTab />}
           {atual.chave === "gamificacao" && <GamificacaoTab />}
           {atual.chave === "metas" && <MetasTab />}

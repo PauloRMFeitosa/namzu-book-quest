@@ -17,6 +17,8 @@ export const queryKeys = {
   admin: {
     errosApp: (dias: number) => ["admin-erros-app", dias] as const,
     painel: (dias: number) => ["admin-painel", dias] as const,
+    planos: ["admin-planos"] as const,
+    planosOrganizadores: ["admin-planos-organizadores"] as const,
   },
   acervo: {
     obras: ["acervo-obras"] as const,
