@@ -58,7 +58,7 @@ const EmAndamento = ({
             <Capa url={l.capa_url} titulo={l.titulo} className="w-full h-40 rounded-lg" />
             <p className="text-sm font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{l.titulo}</p>
             <div>
-              <Progress value={l.percentual} className="h-1.5" />
+              <Progress value={l.percentual} className="h-1.5 bg-accent/25" />
               <p className="text-[10px] text-muted-foreground mt-1">{l.percentual}% concluído</p>
             </div>
           </button>
@@ -269,6 +269,7 @@ const LeiturasList = () => {
       <PageHero
         icon={BookMarked}
         badge="Biblioteca"
+        tom="leitura"
         title={<>Minhas <span className="text-gradient-warm">leituras</span></>}
         description="Sua biblioteca ativa: retome, acompanhe e celebre."
       />

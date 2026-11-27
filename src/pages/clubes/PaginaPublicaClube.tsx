@@ -15,7 +15,7 @@ import {
   type LivroDaPagina,
   type PaginaPublicaDoClube,
 } from "@/lib/enderecoClube";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 
 // Página pública do clube, para o organizador divulgar. Abre sem login em
 // /c/:endereco e em <endereco>.namzu.com.br (ver docs/pagina-publica.md).
@@ -40,7 +40,7 @@ const Secao = ({ titulo, children }: { titulo: string; children: React.ReactNode
 
 const Marca = ({ para }: { para: string }) => (
   <a href={para} className="flex items-center gap-2" aria-label="NAMZU, página inicial">
-    <img src={logoNamzu} alt="" className="w-7 h-7 object-contain" />
+    <LogoNamzu alt="" className="w-7 h-7" />
     <span className="font-extrabold text-primary tracking-tight">NAMZU</span>
   </a>
 );

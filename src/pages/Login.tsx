@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { GoogleButton } from "@/components/GoogleButton";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 import { fraseDeEntrada, type EstadoEntrada } from "@/lib/entrada";
 
 const Login = () => {
@@ -39,7 +39,7 @@ const Login = () => {
       </button>
       <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
         <div className="flex flex-col items-center gap-2 mb-6">
-          <img src={logoNamzu} alt="NAMZU" className="w-20 h-20 object-contain" />
+          <LogoNamzu className="w-20 h-20" />
           <span className="font-extrabold text-primary tracking-tight text-4xl">NAMZU</span>
         </div>
         <h1 className="text-3xl font-bold mb-2">Entrar</h1>

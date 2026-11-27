@@ -1,4 +1,5 @@
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface Props {
   paginasLidas: number;
@@ -11,7 +12,7 @@ interface Props {
 export const ProgressoBar = ({ paginasLidas, totalPaginas, percentual, restantes, compact }: Props) => {
   return (
     <div className="flex flex-col gap-1.5">
-      <Progress value={percentual} className={compact ? "h-1.5" : "h-2"} />
+      <Progress value={percentual} className={cn("bg-accent/25", compact ? "h-1.5" : "h-2")} />
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>
           {totalPaginas

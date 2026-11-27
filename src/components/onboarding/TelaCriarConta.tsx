@@ -9,7 +9,7 @@ import { GoogleButton } from "@/components/GoogleButton";
 import { executarMergeOnboarding } from "@/services/onboardingMerge";
 import { temDadosDeOnboarding } from "@/stores/onboardingStore";
 import { trackOnboarding } from "@/services/analyticsOnboarding";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 
 type Vista = "cadastro" | "login";
 
@@ -77,7 +77,7 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
       <div className="relative z-10 min-h-screen flex flex-col px-6 py-8">
         <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
           <div className="flex flex-col items-center gap-2 mb-6">
-            <img src={logoNamzu} alt="NAMZU" className="w-20 h-20 object-contain" />
+            <LogoNamzu className="w-20 h-20" />
             <span className="font-extrabold text-primary tracking-tight text-4xl">NAMZU</span>
           </div>
           <h1 className="text-3xl font-bold mb-2">Entrar</h1>
@@ -137,7 +137,7 @@ export function TelaCriarConta({ returnTo = "/" }: Props) {
     <div className="relative z-10 min-h-screen flex flex-col px-6 py-8">
       <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
         <div className="flex flex-col items-center gap-2 mb-6">
-          <img src={logoNamzu} alt="NAMZU" className="w-20 h-20 object-contain" />
+          <LogoNamzu className="w-20 h-20" />
           <span className="font-extrabold text-primary tracking-tight text-4xl">NAMZU</span>
         </div>
         <h1 className="text-3xl font-bold mb-2">Criar conta</h1>

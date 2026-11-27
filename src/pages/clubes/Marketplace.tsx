@@ -50,6 +50,7 @@ const Marketplace = () => {
         <PageHero
           icon={Sparkles}
           badge="Clubes de leitura"
+          tom="clube"
           title={<>Encontre sua <span className="text-gradient-warm">tribo intelectual</span></>}
           description="Comunidades vivas para mergulhar fundo em livros, ideias e conversas que importam."
         />

@@ -9,7 +9,17 @@ interface PageHeroProps {
   description?: string;
   className?: string;
   children?: React.ReactNode;
+  /**
+   * Cor do domínio. "clube": cartão branco com o ícone em menta. "leitura":
+   * fundo em azul-céu. Sem tom, fica neutro.
+   */
+  tom?: "clube" | "leitura";
 }
+
+const FUNDO_DO_TOM = {
+  clube: "bg-card border-border/60 shadow-soft",
+  leitura: "bg-accent/15 border-accent/30",
+} as const;
 
 export const PageHero = ({
   icon: Icon,
@@ -18,20 +28,29 @@ export const PageHero = ({
   description,
   className,
   children,
+  tom,
 }: PageHeroProps) => (
   <motion.header
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
     className={cn(
-      "relative overflow-hidden rounded-[var(--radius)] border border-border/60 bg-gradient-paper px-5 py-7",
+      "relative overflow-hidden rounded-[var(--radius)] border px-5 py-7",
+      tom ? FUNDO_DO_TOM[tom] : "border-border/60 bg-gradient-paper",
       className
     )}
   >
-    <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
+    {!tom && <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />}
     <div className="relative flex flex-col gap-2">
-      <div className="flex items-center gap-2 text-xs font-medium text-accent uppercase tracking-wider">
-        {Icon && <Icon className="w-3.5 h-3.5" />}
+      <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
+        {Icon &&
+          (tom === "clube" ? (
+            <span className="w-8 h-8 rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center">
+              <Icon className="w-4 h-4" />
+            </span>
+          ) : (
+            <Icon className="w-3.5 h-3.5" />
+          ))}
         <span>{badge}</span>
       </div>
       <h1 className="font-display text-3xl md:text-4xl font-semibold leading-tight text-foreground">

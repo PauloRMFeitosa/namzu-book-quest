@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { caminhoConvite, extrairClubeDoConvite } from "@/lib/convite";
 import type { EstadoEntrada } from "@/lib/entrada";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 
 const BENEFICIOS = [
   {
@@ -50,7 +50,7 @@ const EntradaOrganizador = () => {
       <div className="max-w-md mx-auto flex flex-col min-h-screen px-6 pt-10 pb-8">
         <header className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-2">
-            <img src={logoNamzu} alt="" className="w-9 h-9 object-contain" />
+            <LogoNamzu alt="" className="w-9 h-9" />
             <span className="font-extrabold text-primary tracking-tight text-xl">NAMZU</span>
           </div>
           <Link to="/login" className="text-sm font-semibold text-primary">

@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
 import { useNotificacoesTotal } from "@/hooks/useNotificacoesTotal";
 import { useConquistaRealtime } from "@/hooks/useConquistaRealtime";
@@ -103,7 +103,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-paper border-b border-border/60 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 h-14">
           <Link to="/" className="flex items-center gap-2 hover-lift" aria-label="Ir para Início">
-            <img src={logoNamzu} alt="NAMZU" className="w-8 h-8 object-contain" />
+            <LogoNamzu variante="mono" className="w-8 h-8" />
             <span className="font-extrabold text-primary tracking-tight text-lg">NAMZU</span>
           </Link>
           <span className="hidden md:inline text-sm text-muted-foreground">A sabedoria começa aqui !!!</span>

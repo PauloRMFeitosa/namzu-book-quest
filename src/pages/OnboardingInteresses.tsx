@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import logoNamzu from "@/assets/logo-namzu.png";
+import { LogoNamzu } from "@/components/LogoNamzu";
 
 const MIN_SEL = 3;
 const MAX_SEL = 5;
@@ -120,7 +120,7 @@ const OnboardingInteresses = () => {
     <div className="min-h-screen bg-gradient-paper">
       <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
         <header className="flex items-center gap-3 mb-8">
-          <img src={logoNamzu} alt="NAMZU" className="w-9 h-9" />
+          <LogoNamzu className="w-9 h-9" />
           <span className="font-extrabold text-primary text-lg tracking-tight">NAMZU</span>
         </header>
 
