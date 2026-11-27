@@ -47,6 +47,7 @@ const CadastroManual = lazy(() => import("./pages/CadastroManual"));
 const ObraDetalhe = lazy(() => import("./pages/ObraDetalhe"));
 const AutorDetalhe = lazy(() => import("./pages/AutorDetalhe"));
 const Admin = lazy(() => import("./pages/admin/Admin"));
+const EditarPlano = lazy(() => import("./pages/admin/EditarPlano"));
 const Leitores = lazy(() => import("./pages/Leitores"));
 const Citacoes = lazy(() => import("./pages/Citacoes"));
 const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
@@ -129,6 +130,8 @@ const App = () => (
             <Route path="/obras/:id" element={<ProtectedRoute><ObraDetalhe /></ProtectedRoute>} />
             <Route path="/autores/:id" element={<ProtectedRoute><AutorDetalhe /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute semLayout><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
+            <Route path="/admin/planos/novo" element={<ProtectedRoute semLayout><AdminRoute><EditarPlano /></AdminRoute></ProtectedRoute>} />
+            <Route path="/admin/planos/:id" element={<ProtectedRoute semLayout><AdminRoute><EditarPlano /></AdminRoute></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>

@@ -204,6 +204,8 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 **Objetivo:** primeira receita.
 
 - [ ] Plano gratuito com limite (referência de mercado: 1 clube, até 30 membros) e plano Organizador pago. Preço definido com os dados do piloto; a referência do concorrente é R$ 19,90/mês.
+  - [x] Cadastro dos planos no Admin (preço, limites e recursos) e plano de cada organizador, definido à mão. Adiantado em 27/11/2026 a pedido do Paulo, sem aplicar limite e sem cobrança (`docs/planos.md`).
+  - [ ] Aplicar os limites e os recursos do plano no app.
 - [ ] Testar duas receitas além da assinatura, porque a assinatura sozinha rende pouco (ver `docs/tamanho-mercado-2026-11.md`): taxa sobre a mensalidade dos clubes pagos e plano institucional para escolas e bibliotecas.
 - [ ] Clube pago: organizador cobra mensalidade dos membros com PIX e cartão recorrentes, recebendo direto. Escolher provedor de pagamento na fase; avaliar taxa, PIX recorrente e repasse.
 - [ ] Decidir o destino das tabelas `pagamentos`, `creator_assinaturas` e `creator_assinantes`: adotar com RLS ou substituir.

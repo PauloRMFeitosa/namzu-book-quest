@@ -8,6 +8,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Planos do organizador (preparação da Fase 5):** nova seção Admin > Planos para criar e editar planos com preço mensal e anual, dias de teste, limites (membros por clube, clubes, co-curadores e usos de IA) e recursos. Uma tabela mostra os recursos de cada plano e permite marcar na hora; a lista de organizadores mostra o plano de cada um e avisa quando o uso passa do limite. Os planos ainda não bloqueiam nada no app e não há cobrança. Ver `docs/planos.md`.
+- Tabelas `planos` e `organizador_planos` e função `admin_planos_organizadores` (migração `planos`), com três planos de partida como rascunho.
 - **Visão geral do organizador (Fase 3):** primeira aba do clube para quem organiza. Mostra o próximo encontro com as respostas, o livro atual com quantos concluíram, estão lendo ou não começaram, os pedidos de entrada pendentes e, para cada membro, o progresso no livro, a última atividade no clube e se está parado há 7 dias. Controlada pela flag `show_clube_visao_geral`, ligada por padrão.
 - Função `clube_visao_geral` no banco (migração `fase3_clube_visao_geral`), que só responde ao organizador do clube e a admins.
 - Testes da lógica da visão geral em `src/lib/visaoGeral.test.ts`.
