@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { MensagemDeDivulgacao, useMensagemDeDivulgacao } from "@/components/clubes/shared/MensagemDeDivulgacao";
 import { Bloco } from "@/components/painel/PartesDoPainel";
 import type { ClubeDetalhe } from "@/hooks/clubes/useClube";
 import { useDefinirPaginaPublica } from "@/hooks/clubes/usePaginaPublica";
@@ -20,21 +21,23 @@ import {
   sugerirEndereco,
   validarEndereco,
 } from "@/lib/enderecoClube";
+import { montarMensagem } from "@/lib/mensagemDeDivulgacao";
 import { gravarMarca } from "@/lib/primeirosPassos";
 import { registrarEvento } from "@/services/analytics";
-
-const mensagemDaPagina = (nomeClube: string, link: string) => `Conheça o nosso clube de leitura "${nomeClube}": ${link}`;
 
 const LinhaDoLink = ({
   rotulo,
   link,
   clube,
   tipo,
+  texto,
 }: {
   rotulo: string;
   link: string;
   clube: ClubeDetalhe;
   tipo: "subdominio" | "caminho";
+  /** Mensagem que o organizador escreveu para mandar com o link. */
+  texto: string;
 }) => {
   const copiar = async () => {
     try {
@@ -59,7 +62,7 @@ const LinhaDoLink = ({
         </Button>
         <Button asChild size="sm" variant="outline" className="gap-1.5">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(mensagemDaPagina(clube.nome, link))}`}
+            href={`https://wa.me/?text=${encodeURIComponent(montarMensagem(texto, link))}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => registrarEvento("pagina_publica_compartilhada", { clubeId: clube.id, props: { canal: "whatsapp", tipo } })}
@@ -92,6 +95,7 @@ export const PaginaPublicaDoPainel = ({
   const [endereco, setEndereco] = useState(salvo || sugerirEndereco(clube.nome));
   const [ativa, setAtiva] = useState(noAr || !salvo);
   const [tentouSalvar, setTentouSalvar] = useState(false);
+  const mensagem = useMensagemDeDivulgacao("pagina", clube.id, clube.nome);
 
   const erro = validarEndereco(endereco);
   const mudou = endereco !== salvo || ativa !== noAr;
@@ -183,11 +187,18 @@ export const PaginaPublicaDoPainel = ({
             </Button>
           }
         >
+          <MensagemDeDivulgacao
+            id="pagina-mensagem"
+            texto={mensagem.texto}
+            onMudar={mensagem.mudar}
+            editado={mensagem.editado}
+            onRestaurar={mensagem.restaurar}
+          />
           <div>
             {flags.show_clube_subdominio && (
-              <LinhaDoLink rotulo="Endereço curto" link={linkPorSubdominio(salvo)} clube={clube} tipo="subdominio" />
+              <LinhaDoLink rotulo="Endereço curto" link={linkPorSubdominio(salvo)} clube={clube} tipo="subdominio" texto={mensagem.texto} />
             )}
-            <LinhaDoLink rotulo="Endereço no NAMZU" link={linkDaPagina(salvo)} clube={clube} tipo="caminho" />
+            <LinhaDoLink rotulo="Endereço no NAMZU" link={linkDaPagina(salvo)} clube={clube} tipo="caminho" texto={mensagem.texto} />
           </div>
         </Bloco>
       )}
