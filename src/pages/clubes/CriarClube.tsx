@@ -94,7 +94,9 @@ const CriarClube = () => {
       }
       registrarEvento("clube_criado", { clubeId: data.id, props: { visibilidade: dados.visibilidade, pagina_publica: !erroDaPagina } });
       limpar();
-      qc.invalidateQueries({ queryKey: ["clubes-marketplace"] });
+      // As listas de clubes não estão na tela agora: busca de novo mesmo assim,
+      // para o clube novo aparecer em "Meu clube" e no seletor do painel.
+      qc.invalidateQueries({ queryKey: ["clubes-marketplace"], refetchType: "all" });
       // Abre o painel com o roteiro de primeiros passos.
       navigate(`/clubes/${data.id}/painel?novo=1`);
     } catch (e: any) {

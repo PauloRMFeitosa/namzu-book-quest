@@ -111,7 +111,8 @@ export const useCriarMicrogrupo = (clubeId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success("Microgrupo criado!");
-      qc.invalidateQueries({ queryKey: ["microgrupos", clubeId] });
+      // Criado em outra página: busca a lista de novo mesmo fora da tela.
+      qc.invalidateQueries({ queryKey: ["microgrupos", clubeId], refetchType: "all" });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao criar"),
   });

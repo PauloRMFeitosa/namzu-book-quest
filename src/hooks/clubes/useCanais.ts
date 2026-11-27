@@ -48,7 +48,8 @@ export const useCriarCanal = (clubeId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success("Canal criado");
-      qc.invalidateQueries({ queryKey: ["clube-canais", clubeId] });
+      // Criado em outra página: busca a lista de novo mesmo fora da tela.
+      qc.invalidateQueries({ queryKey: ["clube-canais", clubeId], refetchType: "all" });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao criar canal"),
   });

@@ -68,6 +68,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Corrigido
 
+- **Lista desatualizada depois de criar:** ao criar um encontro, a lista de encontros (no painel e na página do clube) continuava mostrando a versão antiga por vários minutos, porque a criação passou a acontecer em outra página e a lista não era buscada de novo ao voltar. O mesmo valia para canal, conteúdo, microgrupo e para o clube novo em "Meu clube". Agora a lista é buscada de novo na hora.
 - **Acervo pela metade.** A Busca e a página "Adicionar obra à trilha" carregavam só 500 das 1.024 obras do acervo; metade dos livros não aparecia para escolher. O acervo passa a ser buscado inteiro, em páginas.
 - **Clube no celular:** na aba Membros, o ranking com nomes compridos passava da borda da tela e levava a liga semanal junto; na aba Microgrupos, o título e os botões não cabiam na mesma linha. Os nomes agora são cortados com reticências e o cabeçalho de Microgrupos quebra em duas linhas.
 - **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.

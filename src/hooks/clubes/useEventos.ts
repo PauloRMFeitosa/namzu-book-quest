@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { queryKeys } from "@/constants/queryKeys";
 import { registrarEvento } from "@/services/analytics";
 
 export interface EventoClube {
@@ -99,8 +100,15 @@ export const useCriarEvento = (clubeId: string | undefined) => {
     onSuccess: (_resultado, payload) => {
       registrarEvento("encontro_criado", { clubeId, props: { tipo: payload.tipo ?? null } });
       toast.success("Evento criado!");
-      qc.invalidateQueries({ queryKey: ["clube-eventos", clubeId] });
-      qc.invalidateQueries({ queryKey: ["clube-proximos-eventos", clubeId] });
+      // A criação acontece em outra página, onde a lista não está na tela.
+      // Com refetchType "all" ela é buscada de novo mesmo assim; sem isso,
+      // ao voltar, a lista antiga ficava na tela por até 5 minutos.
+      qc.invalidateQueries({ queryKey: ["clube-eventos", clubeId], refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["clube-proximos-eventos", clubeId], refetchType: "all" });
+      if (clubeId) {
+        qc.invalidateQueries({ queryKey: queryKeys.clubes.visaoGeral(clubeId), refetchType: "all" });
+        qc.invalidateQueries({ queryKey: queryKeys.clubes.historico(clubeId), refetchType: "all" });
+      }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao criar evento"),
   });
