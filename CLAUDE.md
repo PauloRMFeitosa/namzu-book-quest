@@ -59,6 +59,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - **`src/services/analytics.ts`** — Eventos de produto. Use `registrarEvento("nome_do_evento", { clubeId, props })` depois que a ação deu certo. A lista de eventos e as regras estão em `docs/metricas-produto.md`.
 - **`src/services/monitoramento.ts`** — Erros do app. O registro é automático (erro não tratado, promessa rejeitada, `ErrorBoundary` e consulta que falha) e aparece em Admin > Erros do app. As regras estão em `docs/monitoramento.md`.
 - **`src/pages/admin/`** — Admin, com layout próprio e fora do `AppLayout` (rota com `<ProtectedRoute semLayout>`). As seções ficam em `GRUPOS`, em `Admin.tsx`, e a aberta vai no endereço (`/admin?secao=`). Painel, Métricas e Clubes leem a função `admin_painel` por `useAdminPainel`; a lógica está em `src/lib/adminPainel.ts`.
+- **`src/pages/clubes/PainelOrganizador.tsx`** — Painel do organizador, em `/clubes/:id/painel?secao=`. Usa a mesma moldura do Admin (`src/components/painel/CascaDoPainel.tsx`) e reaproveita os componentes do clube (`VisaoGeralTab`, `MembrosTab`, `TrilhaGestao`, `EventosTab`). Toda tela de gestão do clube entra aqui, não como aba da página do clube, que fica só com o que o membro usa. As pendências e o histórico estão em `src/lib/painelOrganizador.ts`.
 
 ### Configuração do React Query
 
@@ -108,7 +109,7 @@ Exceções permitidas (inglês obrigatório):
 - **Estrutura:** botão de voltar e título no topo, seções numeradas, prévia do que será criado, erro em texto junto do formulário e os botões "Cancelar" e de confirmar no fim.
 - **Lógica:** validação e montagem dos dados ficam em `src/lib/`, com testes; a página só liga as peças.
 - **Rascunho:** a regra de rascunho abaixo continua valendo. Na página, "aberto" é a página montada: restaure no estado inicial, salve a cada alteração e limpe só no sucesso.
-- **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id?tab=gestao`). Quando é comum criar vários itens em sequência (como os livros da trilha), fique na página com o formulário limpo, mostre abaixo o que já foi criado e ofereça "Concluir". Sair sem salvar não apaga o rascunho.
+- **Depois de salvar:** volte para a tela de origem (ex.: `/clubes/:id/painel?secao=leitura`). Quando é comum criar vários itens em sequência (como os livros da trilha), fique na página com o formulário limpo, mostre abaixo o que já foi criado e ofereça "Concluir". Sair sem salvar não apaga o rascunho.
 - **Peças prontas:** `PaginaCriacao`, `SecaoCriacao`, `ErroCriacao` e `AcoesCriacao` em `src/components/criacao/`, `useRascunho` para o rascunho e `useAcessoGestao` para a permissão dentro do clube (`liberado` para quem gere, `liberadoParaMembro` para o que todo membro pode criar).
 - **Modelos:** `src/pages/clubes/CriarEvento.tsx` (formulário simples) e `src/pages/clubes/AdicionarObraTrilha.tsx` (criação em sequência).
 

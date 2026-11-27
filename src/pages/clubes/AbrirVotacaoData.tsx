@@ -19,7 +19,7 @@ const draftKey = (clubeId: string) => `draft-votacao-data-${clubeId}`;
 const AbrirVotacaoData = () => {
   const { id: clubeId = "" } = useParams();
   const navigate = useNavigate();
-  const voltarPara = `/clubes/${clubeId}?tab=eventos`;
+  const voltarPara = `/clubes/${clubeId}/painel?secao=encontros`;
   const { clube, carregando, liberado } = useAcessoGestao(clubeId);
   const { dados, mudar, limpar } = useRascunho(draftKey(clubeId), VOTACAO_VAZIA);
   const abrir = useAbrirVotacao(clubeId);
@@ -52,7 +52,7 @@ const AbrirVotacaoData = () => {
       titulo="Votar a data do encontro"
       subtitulo={clube?.nome}
       voltarPara={voltarPara}
-      rotuloVoltar="Voltar para os eventos do clube"
+      rotuloVoltar="Voltar para os encontros do painel"
     >
       <SecaoCriacao titulo="1. O encontro">
         <div className="grid gap-1.5">

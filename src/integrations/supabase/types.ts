@@ -3708,6 +3708,7 @@ export type Database = {
         Args: { p_clube_id: string; p_mensagem: string; p_titulo: string }
         Returns: string
       }
+      clube_painel_historico: { Args: { p_clube_id: string }; Returns: Json }
       clube_salvar_cronograma: {
         Args: {
           p_data_fim: string

@@ -75,10 +75,17 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Clubes no Admin:** a lista ganhou organizador, situação (em uso, parado, sem uso, desativado), membros, trilha, ações, última ação e próximo encontro, com busca por organizador e link para o clube.
 - Função `admin_painel` no banco (migração `admin_painel`), só de leitura e só para admins.
 - Testes da lógica do painel em `src/lib/adminPainel.test.ts`.
+- **Painel do organizador (Fase 3):** a gestão do clube ganhou área própria em `/clubes/:id/painel`, em tela inteira e com menu lateral, no mesmo formato do Admin. Seis seções: Visão geral, Membros, Leitura, Encontros, Comunicação e Configurações. O organizador entra pelo botão "Painel do organizador" na página do clube; quem organiza mais de um clube troca de clube pelo menu.
+- **O que precisa de atenção no clube:** a Visão geral do painel lista o que o organizador tem a resolver (pedidos de entrada, livro sem meta, encontro por marcar, quem não respondeu, quem está abaixo da meta, membros parados, encontro sem ata ou sem presença), e o menu mostra o número de pendências de cada seção.
+- **Histórico do clube:** participação por semana nas últimas 8 semanas e os últimos encontros, com presença e ata. Função `clube_painel_historico` no banco (migração `clube_painel_historico`), só de leitura e só para quem organiza.
+- **Comunicação e Configurações:** os avisos enviados ficam em uma lista própria, com copiar e apagar, e os dados do clube aparecem em uma tela de leitura com o botão de editar.
+- Moldura compartilhada `CascaDoPainel` para o Admin e o painel do organizador, e testes da lógica em `src/lib/painelOrganizador.test.ts`.
 - **Provedor de IA:** `clube-ai` e `leitura-copiloto` passam a chamar a API do Google direto quando o segredo `GEMINI_API_KEY` existe, e continuam no gateway do Lovable enquanto ele não existir. Os modelos podem ser trocados por segredo, sem publicar código. As mensagens de erro deixam de citar o Lovable e de repassar o detalhe técnico para a pessoa. Passo a passo em `docs/ia.md`.
 - **`.env` fora do repositório:** as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` passam a vir do projeto do Vercel, onde não estavam cadastradas; a produção dependia do arquivo no repositório. O `.env` entrou no `.gitignore` e o CI usa os valores de `.env.example`.
 - `docs/backup.md`: o plano gratuito do Supabase não faz backup automático dos dados. O documento traz as opções e a recomendação para antes do piloto.
 - Em "Integrações e logs" do Admin, saíram as subabas de moderação e reputação, cujas tabelas nunca receberam registros. O número "Ativos hoje", que vinha da gamificação, deu lugar aos indicadores do Painel.
+- **Página do clube só com o que o membro usa:** as abas Visão geral e Gestão saíram e viraram o painel do organizador. O clube abre no Feed para todos. Links antigos com `?tab=visao` ou `?tab=gestao` levam ao painel.
+- As páginas de criação do organizador (obra na trilha, encontro, votação de data e aviso) voltam para o painel, e não mais para a página do clube.
 - **Deploys só de produção:** o Vercel deixa de gerar preview para branches e PRs e publica apenas a `main`, para não estourar o limite diário do plano gratuito. O teste manual passa a ser feito em produção.
 
 ## [0.3.0] - 2026-11-25
