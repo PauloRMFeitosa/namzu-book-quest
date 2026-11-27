@@ -34,7 +34,7 @@ Limite vazio quer dizer sem limite.
 
 O catálogo de recursos fica no código, em `RECURSOS` de `src/lib/planos.ts`, agrupado em Clube, Comunidade, Gestão, Inteligência artificial, Página e marca e Receita. Para oferecer um recurso novo nos planos, acrescente uma linha ali; não precisa de migração.
 
-Os recursos com `emBreve` ainda não existem no app (página pública, endereço próprio, cobrança de mensalidade). Podem ser marcados no plano desde já.
+Os recursos com `emBreve` ainda não existem no app (página personalizada, endereço próprio, cobrança de mensalidade). Podem ser marcados no plano desde já.
 
 ## Organizadores
 

@@ -23,7 +23,9 @@ export type EventoProduto =
   | "voto_data_registrado"
   | "votacao_data_encerrada"
   | "aviso_enviado"
-  | "aviso_copiado";
+  | "aviso_copiado"
+  | "pagina_publica_definida"
+  | "pagina_publica_compartilhada";
 
 type ValorProp = string | number | boolean | null;
 

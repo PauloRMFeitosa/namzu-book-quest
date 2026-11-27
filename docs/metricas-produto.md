@@ -37,6 +37,8 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `votacao_data_encerrada` | Organizador escolheu a data e o encontro foi criado | `votantes`, `opcoes` |
 | `aviso_enviado` | Organizador enviou um aviso aos membros | |
 | `aviso_copiado` | Organizador copiou um aviso para o grupo | |
+| `pagina_publica_definida` | Organizador salvou o endereço do clube ou ligou ou desligou a página pública | `ativa`: `true` ou `false` |
+| `pagina_publica_compartilhada` | Organizador copiou ou compartilhou o link da página pública | `canal`: `copiar`, `whatsapp`. `tipo`: `subdominio` ou `caminho` |
 
 Regras para evento novo:
 
