@@ -1,5 +1,7 @@
 -- Limites dos planos do organizador (docs/planos.md).
 --
+-- Aplicada no remoto em 27/11/2026 (versão 20261127180632).
+--
 -- Os planos passam a valer para os três limites de quantidade: clubes por
 -- organizador, membros por clube e co-curadores por clube. O banco recusa o
 -- que passa do limite, com mensagem em português para o app mostrar.
