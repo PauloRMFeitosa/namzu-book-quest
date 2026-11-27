@@ -19,11 +19,13 @@ import { useAvisosClube } from "@/hooks/clubes/useAvisos";
 import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { useHistoricoClube } from "@/hooks/clubes/useHistoricoClube";
+import { usePlanoDoClube } from "@/hooks/clubes/usePlanoDoClube";
 import { useMarcasDoRoteiro } from "@/hooks/clubes/useMarcasDoRoteiro";
 import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
 import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
 import { useAuth } from "@/hooks/useAuth";
 import { avisosPorSecao, pendenciasDoClube } from "@/lib/painelOrganizador";
+import { avisoDeVagas } from "@/lib/planoDoClube";
 import { passosDoRoteiro, progressoDoRoteiro, situacaoDoClube } from "@/lib/primeirosPassos";
 import { registrarEvento } from "@/services/analytics";
 
@@ -55,6 +57,8 @@ const PainelOrganizador = () => {
   const [convidando, setConvidando] = useState(false);
   const { data: avisosEnviados } = useAvisosClube(clubeId, liberado);
   const { marcas, marcar } = useMarcasDoRoteiro(clubeId);
+  const { data: planoDoClube } = usePlanoDoClube(clubeId, liberado);
+  const vagas = avisoDeVagas(planoDoClube);
 
   const pedida = busca.get("secao") ?? "visao";
   const pendencias = useMemo(
@@ -182,6 +186,14 @@ const PainelOrganizador = () => {
 
       {atual.chave === "membros" && (
         <div className="flex flex-col gap-4 max-w-5xl">
+          {vagas && (
+            <p
+              role={vagas.cheio ? "alert" : "status"}
+              className="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/20 dark:text-amber-200 px-4 py-3 text-sm"
+            >
+              {vagas.texto}
+            </p>
+          )}
           <div className="flex justify-end">
             <Button size="sm" className="gap-1.5" onClick={() => setConvidando(true)}>
               <UserPlus className="w-4 h-4" /> Convidar membros

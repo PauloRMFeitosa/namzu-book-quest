@@ -49,9 +49,23 @@ Para o subdomínio funcionar em produção:
 
 Em desenvolvimento, `http://<endereco>.localhost:8080` faz o mesmo papel.
 
+## Prévia no WhatsApp e em outras redes
+
+Ao colar o link do clube no WhatsApp, Telegram, Facebook, LinkedIn e parecidos, aparece o nome do clube, a descrição e a capa.
+
+- O app é montado no navegador, então o robô que busca a prévia só veria o título genérico. O `vercel.json` manda os pedidos desses robôs para a função `api/pagina-clube.ts`, que lê a página pública no banco e responde uma página pequena com esses dados.
+- Vale para `namzu.com.br/c/<endereco>` e para `<endereco>.namzu.com.br`.
+- Quem é robô é decidido pelo `user-agent`. Navegador de gente e o robô do Google não passam pela função.
+- Imagem da prévia: a capa do clube; sem capa, a capa do livro atual; sem nenhuma, a imagem do NAMZU.
+- A resposta fica guardada por 5 minutos. Além disso, o WhatsApp guarda a prévia de um link por conta própria: depois de mudar a capa ou a descrição, a prévia antiga pode continuar aparecendo por um tempo em conversas onde o link já foi colado.
+- Clube com a página desligada ou endereço que não existe mostram a prévia genérica do NAMZU.
+- A função usa as mesmas variáveis do app no Vercel (`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`).
+- Os testes da função e das regras do `vercel.json` ficam em `src/lib/previaDoClube.test.ts`.
+
+O link de convite (`/convite/:id`) ainda não tem prévia própria.
+
 ## O que ainda não tem
 
-- **Prévia no WhatsApp:** o link ainda não mostra a capa e o nome do clube ao ser colado, porque a página é montada no navegador. Pede uma função no Vercel que responda com esses dados.
 - **Relação com os planos:** a página e o subdomínio estão no catálogo de recursos (`pagina_publica` e `endereco_namzu`), mas os planos ainda não bloqueiam nada. Hoje todo clube pode publicar a página.
 - **Domínio próprio do organizador** (`clubedafulana.com.br`) e **personalização** (cores, textos, tirar a marca NAMZU).
 - **Contagem de visitas.**

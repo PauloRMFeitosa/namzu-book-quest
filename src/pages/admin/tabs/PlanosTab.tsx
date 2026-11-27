@@ -252,8 +252,9 @@ export const PlanosTab = () => {
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <p className="text-sm text-muted-foreground max-w-2xl">
-          Monte os planos do organizador: preço, limites e recursos. Por enquanto os planos não bloqueiam nada no app e
-          não há cobrança; servem para definir a oferta e ver quem caberia em cada um.
+          Monte os planos do organizador: preço, limites e recursos. Os limites de clubes, membros e co-curadores já
+          valem no app. Quem não tem plano atribuído usa o plano padrão. Ainda não há cobrança, e os recursos e o limite
+          de IA ainda não bloqueiam nada.
         </p>
         <Button asChild className="gap-1.5">
           <Link to="/admin/planos/novo">

@@ -3832,6 +3832,7 @@ export type Database = {
       }
       clube_pagina_publica: { Args: { p_endereco: string }; Returns: Json }
       clube_painel_historico: { Args: { p_clube_id: string }; Returns: Json }
+      clube_plano: { Args: { p_clube_id: string }; Returns: Json }
       clube_salvar_cronograma: {
         Args: {
           p_data_fim: string
@@ -4045,6 +4046,7 @@ export type Database = {
           score: number
         }[]
       }
+      meu_plano: { Args: never; Returns: Json }
       normalize_book_text: { Args: { input_text: string }; Returns: string }
       participa_do_clube: {
         Args: { p_clube_id: string; p_user_id: string }
@@ -4053,6 +4055,36 @@ export type Database = {
       participa_do_clube_do_evento: {
         Args: { p_evento_id: string; p_user_id: string }
         Returns: boolean
+      }
+      plano_do_organizador: {
+        Args: { p_user_id: string }
+        Returns: {
+          arquivado_em: string | null
+          atualizado_em: string
+          chave: string
+          criado_em: string
+          descricao: string | null
+          destaque: boolean
+          dias_de_teste: number
+          id: string
+          limite_clubes: number | null
+          limite_co_curadores: number | null
+          limite_ia_mes: number | null
+          limite_membros: number | null
+          nome: string
+          ordem: number
+          padrao: boolean
+          preco_anual_centavos: number | null
+          preco_mensal_centavos: number
+          publicado: boolean
+          recursos: string[]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "planos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       pode_gerir_evento: { Args: { p_evento_id: string }; Returns: boolean }
       pode_ver_leituras_de: { Args: { p_dono: string }; Returns: boolean }
