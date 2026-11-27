@@ -1,5 +1,7 @@
 -- Painel do organizador (Fase 3): histórico do clube.
 --
+-- Aplicada no remoto em 27/11/2026 (versão 20261127111957).
+--
 -- Uma função só de leitura com o que muda ao longo do tempo no clube: quantas
 -- pessoas leram e participaram em cada uma das últimas 8 semanas, quantos
 -- membros o clube tinha e como foram os últimos encontros (confirmados,

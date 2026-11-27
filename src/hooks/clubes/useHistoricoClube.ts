@@ -11,9 +11,8 @@ export const useHistoricoClube = (clubeId: string | undefined, habilitado = true
     staleTime: 60 * 1000,
     refetchOnMount: true,
     queryFn: async (): Promise<HistoricoDoClube> => {
-      // Cast temporário: sai quando os tipos forem regenerados após a migração.
-      const { data, error } = await (supabase as any).rpc("clube_painel_historico", { p_clube_id: clubeId });
+      const { data, error } = await supabase.rpc("clube_painel_historico", { p_clube_id: clubeId });
       if (error) throw error;
-      return data as HistoricoDoClube;
+      return data as unknown as HistoricoDoClube;
     },
   });
