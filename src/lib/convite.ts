@@ -1,5 +1,7 @@
 // Link de convite do clube (Fase 2). Lógica pura, testável sem React.
 
+import { montarMensagem, textoPadraoDaMensagem } from "@/lib/mensagemDeDivulgacao";
+
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const RE_LINK = new RegExp(`/(?:convite|clubes)/(${UUID})`, "i");
 const RE_UUID_PURO = new RegExp(`^${UUID}$`, "i");
@@ -49,5 +51,5 @@ function hostDe(origem: string): string {
 
 /** Texto pronto para mandar no WhatsApp ou em outro mensageiro. */
 export function mensagemConvite(nomeClube: string, link: string): string {
-  return `Entre no nosso clube de leitura "${nomeClube}" pelo NAMZU: ${link}`;
+  return montarMensagem(textoPadraoDaMensagem("convite", nomeClube), link);
 }

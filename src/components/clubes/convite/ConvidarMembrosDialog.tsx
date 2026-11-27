@@ -10,7 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { linkConvite, mensagemConvite } from "@/lib/convite";
+import { MensagemDeDivulgacao, useMensagemDeDivulgacao } from "@/components/clubes/shared/MensagemDeDivulgacao";
+import { linkConvite } from "@/lib/convite";
+import { montarMensagem } from "@/lib/mensagemDeDivulgacao";
 import { caminhoDaPagina } from "@/lib/enderecoClube";
 import { gravarMarca } from "@/lib/primeirosPassos";
 import { registrarEvento } from "@/services/analytics";
@@ -42,7 +44,8 @@ export const ConvidarMembrosDialog = ({
     gravarMarca(clubeId, "convite");
   };
   const link = linkConvite(clubeId);
-  const mensagem = mensagemConvite(nomeClube, link);
+  const texto = useMensagemDeDivulgacao("convite", clubeId, nomeClube);
+  const mensagem = montarMensagem(texto.texto, link);
   const podeCompartilhar = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   // QR code do link, para projetar no encontro ou imprimir. A biblioteca só é
@@ -87,7 +90,7 @@ export const ConvidarMembrosDialog = ({
 
   const compartilhar = async () => {
     try {
-      await navigator.share({ title: nomeClube, text: mensagem, url: link });
+      await navigator.share({ title: nomeClube, text: texto.texto.trim() || undefined, url: link });
       registrarConvite("compartilhar");
     } catch {
       /* usuário fechou a folha de compartilhamento */
@@ -117,6 +120,14 @@ export const ConvidarMembrosDialog = ({
               <Copy className="w-4 h-4" /> Copiar
             </Button>
           </div>
+
+          <MensagemDeDivulgacao
+            id="convite-mensagem"
+            texto={texto.texto}
+            onMudar={texto.mudar}
+            editado={texto.editado}
+            onRestaurar={texto.restaurar}
+          />
 
           <Button asChild variant="outline" className="h-11 rounded-xl gap-2">
             <a

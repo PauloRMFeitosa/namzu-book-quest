@@ -57,12 +57,25 @@ Ao colar o link do clube no WhatsApp, Telegram, Facebook, LinkedIn e parecidos, 
 - Vale para `namzu.com.br/c/<endereco>` e para `<endereco>.namzu.com.br`.
 - Quem é robô é decidido pelo `user-agent`. Navegador de gente e o robô do Google não passam pela função.
 - Imagem da prévia: a capa do clube; sem capa, a capa do livro atual; sem nenhuma, a imagem do NAMZU.
-- A resposta fica guardada por 5 minutos. Além disso, o WhatsApp guarda a prévia de um link por conta própria: depois de mudar a capa ou a descrição, a prévia antiga pode continuar aparecendo por um tempo em conversas onde o link já foi colado.
+- A função roda na borda do Vercel (`runtime: "edge"`), para responder rápido: o WhatsApp desiste da prévia quando a resposta demora e mostra só o endereço.
+- A resposta fica guardada por 5 minutos e, depois disso, a cópia guardada ainda é servida na hora, por até um dia, enquanto uma nova é buscada. Além disso, o WhatsApp guarda a prévia de um link por conta própria: depois de mudar a capa ou a descrição, a prévia antiga pode continuar aparecendo por um tempo em conversas onde o link já foi colado.
 - Clube com a página desligada ou endereço que não existe mostram a prévia genérica do NAMZU.
 - A função usa as mesmas variáveis do app no Vercel (`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`).
 - Os testes da função e das regras do `vercel.json` ficam em `src/lib/previaDoClube.test.ts`.
 
+Para conferir o que o WhatsApp recebe, peça o link com o `user-agent` dele:
+
+```bash
+curl -s -A "WhatsApp/2.23.20.0" https://namzu.com.br/c/<endereco> | grep "og:"
+```
+
+Para forçar o WhatsApp a buscar a prévia de novo em uma conversa onde o link já foi colado, acrescente um parâmetro qualquer ao link, como `?v=2`.
+
 O link de convite (`/convite/:id`) ainda não tem prévia própria.
+
+## Mensagem que vai com o link
+
+Em Painel > Página pública e na janela de convite há o campo "Mensagem que vai com o link". O organizador escreve o texto e o botão do WhatsApp manda o texto com o link no fim. O texto fica guardado no aparelho, por clube (`mensagem-pagina-{clubeId}` e `mensagem-convite-{clubeId}`), enquanto for diferente do padrão. A lógica está em `src/lib/mensagemDeDivulgacao.ts`.
 
 ## O que ainda não tem
 

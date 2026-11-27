@@ -123,19 +123,27 @@ export async function responder(
     status: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      // Clube que mudou de capa ou de descrição aparece atualizado em poucos minutos.
-      "Cache-Control": clube ? "public, s-maxage=300, stale-while-revalidate=600" : "public, s-maxage=60",
+      // Fica guardada por 5 minutos. Depois disso, quem pede recebe na hora a
+      // cópia guardada enquanto uma nova é buscada, por até um dia: a prévia
+      // nunca espera o banco, e mudança de capa ou descrição aparece em minutos.
+      "Cache-Control": clube ? "public, s-maxage=300, stale-while-revalidate=86400" : "public, s-maxage=60",
     },
   });
 }
 
-export default {
-  fetch(pedido: Request) {
-    const env = ((globalThis as any).process?.env ?? {}) as Record<string, string | undefined>;
-    return responder(
-      pedido,
-      { url: env.VITE_SUPABASE_URL ?? env.SUPABASE_URL, chave: env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_PUBLISHABLE_KEY },
-      (url, init) => fetch(url, init),
-    );
-  },
-};
+// Roda na borda do Vercel: começa a responder em milissegundos, sem a espera
+// de uma função comum que estava parada. O WhatsApp desiste rápido da prévia.
+export const config = { runtime: "edge" };
+
+declare const process: { env: Record<string, string | undefined> };
+
+export default function handler(pedido: Request) {
+  return responder(
+    pedido,
+    {
+      url: process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL,
+      chave: process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY,
+    },
+    (url, init) => fetch(url, init),
+  );
+}

@@ -8,6 +8,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Mensagem de divulgação editável:** na página pública (Painel > Página pública) e na janela de convite, o organizador escreve a mensagem que vai com o link no WhatsApp. O texto fica guardado no aparelho, por clube, e o link entra no fim.
 - **Limites dos planos:** os limites de clubes por organizador, membros por clube e co-curadores por clube passam a valer. O banco recusa o que passa do limite; a criação de clube avisa antes; Painel > Configurações mostra o plano e o uso; Painel > Membros avisa quando o clube está perto do limite ou lotado. Quem já está acima do limite continua como está. Os recursos de cada plano e o limite de IA ainda não bloqueiam nada. Ver `docs/planos.md`.
 - **Plano Lançamento:** plano padrão enquanto a cobrança não é ativada, grátis, com todos os recursos e sem limites (migração `planos_limites`).
 - **Prévia do clube no WhatsApp e em outras redes:** o link da página pública colado em uma conversa mostra o nome, a descrição e a capa do clube. Feito por uma função no Vercel (`api/pagina-clube.ts`) que atende só os robôs de prévia.
@@ -75,6 +76,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 
+- A função da prévia do clube no WhatsApp passa a rodar na borda do Vercel e a servir a cópia guardada enquanto busca uma nova. A primeira resposta levava mais de 2 segundos e o WhatsApp mostrava só o endereço, sem nome nem imagem.
 - **Nova identidade visual (opção B):** logo nova, colorida na entrada, no login, no convite e na página pública, e em uma cor só no cabeçalho do app (`LogoNamzu`). Títulos passam da Fraunces para a Manrope. As cores do guia não mudam, mas ganham função: menta no ícone do destaque das telas de clube, azul-céu no destaque da biblioteca e no trilho do progresso de leitura (`PageHero` com `tom`). A logo vem do SVG original e, no tema escuro, o azul do símbolo troca pelo azul claro do guia (`#88B4D8`). No tema escuro o roxo também clareia. Favicon novo em SVG, que acompanha o tema do navegador, com ícones próprios para o app instalado (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`). O blog usa a mesma logo e o mesmo favicon.
 - Depois de criar o clube, o organizador vai para o painel com o roteiro, e não mais para a página do clube com a janela de convite aberta.
 - A visão geral do organizador passa a conferir os dados sempre que é aberta, para o roteiro e as pendências refletirem na hora o que acabou de ser feito.
