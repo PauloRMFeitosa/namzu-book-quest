@@ -2,7 +2,7 @@
 // botão "Mais". Lógica pura, testável sem React.
 
 /** Abas que ficam sempre na barra, nesta ordem. As demais vão para "Mais". */
-export const ABAS_PRINCIPAIS = ["visao", "feed", "leituras", "eventos", "membros"];
+export const ABAS_PRINCIPAIS = ["feed", "leituras", "eventos", "membros", "canais"];
 
 /** Lugares da barra no celular. Com "Mais", sobram cinco para abas. */
 export const LUGARES_NA_BARRA = 6;

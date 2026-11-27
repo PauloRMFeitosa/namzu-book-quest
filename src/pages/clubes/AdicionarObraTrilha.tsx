@@ -51,7 +51,7 @@ const lerRascunho = (clubeId: string): Rascunho => {
 
 const AdicionarObraTrilha = () => {
   const { id: clubeId = "" } = useParams();
-  const voltarPara = `/clubes/${clubeId}?tab=gestao`;
+  const voltarPara = `/clubes/${clubeId}/painel?secao=leitura`;
 
   const { data: clube, isLoading: carregandoClube } = useClube(clubeId);
   const { isLoading: carregandoParticipacao } = useClubeMembership(clubeId);
@@ -117,7 +117,7 @@ const AdicionarObraTrilha = () => {
   return (
     <div className="flex flex-col gap-5 max-w-2xl w-full mx-auto pb-6">
       <header className="flex items-start gap-2">
-        <Button variant="ghost" size="icon" asChild className="rounded-xl shrink-0" aria-label="Voltar para a gestão do clube">
+        <Button variant="ghost" size="icon" asChild className="rounded-xl shrink-0" aria-label="Voltar para o painel do organizador">
           <Link to={voltarPara}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -253,7 +253,7 @@ const AdicionarObraTrilha = () => {
       <section className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3">
         <div>
           <h2 className="font-display text-base font-semibold">2. Período de leitura</h2>
-          <p className="text-sm text-muted-foreground">Opcional. Você pode definir ou mudar depois, pela Gestão.</p>
+          <p className="text-sm text-muted-foreground">Opcional. Você pode definir ou mudar depois, no painel.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5 min-w-0">
@@ -335,7 +335,7 @@ const AdicionarObraTrilha = () => {
       </div>
 
       <Button variant="outline" asChild className="rounded-xl">
-        <Link to={voltarPara}>Concluir e voltar para a gestão</Link>
+        <Link to={voltarPara}>Concluir e voltar para o painel</Link>
       </Button>
     </div>
   );

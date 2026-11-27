@@ -35,6 +35,7 @@ const CriarAviso = lazy(() => import("./pages/clubes/CriarAviso"));
 const AbrirVotacaoData = lazy(() => import("./pages/clubes/AbrirVotacaoData"));
 const CriarCanal = lazy(() => import("./pages/clubes/CriarCanal"));
 const CriarMicrogrupo = lazy(() => import("./pages/clubes/CriarMicrogrupo"));
+const PainelOrganizador = lazy(() => import("./pages/clubes/PainelOrganizador"));
 const AdicionarObraTrilha = lazy(() => import("./pages/clubes/AdicionarObraTrilha"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Metas = lazy(() => import("./pages/Metas"));
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="/clubes" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubesMarketplace /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/novo" element={<ProtectedRoute><CriarClube /></ProtectedRoute>} />
             <Route path="/clubes/:id" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><ClubeDetalhe /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/clubes/:id/painel" element={<ProtectedRoute semLayout><FeatureRoute flag="show_clubes"><PainelOrganizador /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/eventos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarEvento /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/conteudos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarConteudo /></FeatureRoute></ProtectedRoute>} />
             <Route path="/clubes/:id/avisos/novo" element={<ProtectedRoute><FeatureRoute flag="show_clubes"><CriarAviso /></FeatureRoute></ProtectedRoute>} />

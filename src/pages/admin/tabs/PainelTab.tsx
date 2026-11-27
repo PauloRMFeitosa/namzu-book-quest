@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminPainel } from "@/hooks/admin/useAdminPainel";
 import { haQuantoTempo, nomeDoEvento, pendenciasDoPainel, situacaoDoClube } from "@/lib/adminPainel";
 import { quandoDoEncontro } from "@/lib/encontros";
-import { BarrasPorDia, Bloco, ErroDoPainel, Indicador, SeletorDePeriodo, SeloDaSituacao } from "../components/AdminPainelPartes";
+import { BarrasPorDia, Bloco, ErroDoPainel, Indicador, SeletorDePeriodo, SeloDaSituacao } from "@/components/painel/PartesDoPainel";
 
 // Tela inicial do Admin: o que está acontecendo no produto e o que pede atenção.
 export const PainelTab = ({ onIrPara }: { onIrPara: (secao: string) => void }) => {

@@ -2,11 +2,9 @@ import {
   BookOpen,
   CalendarDays,
   Hash,
-  LayoutDashboard,
   Library,
   MessageSquare,
   MoreHorizontal,
-  Settings,
   Users,
   UsersRound,
   type LucideIcon,
@@ -22,7 +20,6 @@ import { dividirAbas } from "@/lib/abasClube";
 import { cn } from "@/lib/utils";
 
 const ICONES: Record<string, LucideIcon> = {
-  visao: LayoutDashboard,
   feed: MessageSquare,
   leituras: BookOpen,
   canais: Hash,
@@ -30,7 +27,6 @@ const ICONES: Record<string, LucideIcon> = {
   membros: Users,
   conteudos: Library,
   microgrupos: UsersRound,
-  gestao: Settings,
 };
 
 // Ícone em cima e nome embaixo no celular; lado a lado em tela larga.

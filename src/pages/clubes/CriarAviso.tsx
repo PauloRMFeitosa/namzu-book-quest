@@ -19,14 +19,14 @@ const draftKey = (clubeId: string) => `draft-aviso-${clubeId}`;
 const CriarAviso = () => {
   const { id: clubeId = "" } = useParams();
   const navigate = useNavigate();
-  const voltarPara = `/clubes/${clubeId}`;
+  const voltarPara = `/clubes/${clubeId}/painel?secao=comunicacao`;
   const { clube, carregando, liberado } = useAcessoGestao(clubeId);
   const { dados, mudar, limpar } = useRascunho(draftKey(clubeId), AVISO_VAZIO);
   const enviar = useEnviarAviso(clubeId);
   const [tentouSalvar, setTentouSalvar] = useState(false);
 
   if (carregando) return <CarregandoCriacao />;
-  if (!liberado) return <Navigate to={voltarPara} replace />;
+  if (!liberado) return <Navigate to={`/clubes/${clubeId}`} replace />;
 
   const erro = validarAviso(dados.titulo, dados.mensagem);
 
@@ -43,7 +43,7 @@ const CriarAviso = () => {
   };
 
   return (
-    <PaginaCriacao titulo="Novo aviso" subtitulo={clube?.nome} voltarPara={voltarPara} rotuloVoltar="Voltar para o clube">
+    <PaginaCriacao titulo="Novo aviso" subtitulo={clube?.nome} voltarPara={voltarPara} rotuloVoltar="Voltar para o painel">
       <SecaoCriacao
         titulo="1. O aviso"
         descricao="Todos os membros ativos recebem uma notificação no app. O aviso também fica guardado no clube."

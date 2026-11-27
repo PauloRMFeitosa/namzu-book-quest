@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminPainel } from "@/hooks/admin/useAdminPainel";
 import { nomeDoEvento, type PainelDoAdmin } from "@/lib/adminPainel";
-import { BarrasPorDia, Bloco, ErroDoPainel, SeletorDePeriodo } from "../components/AdminPainelPartes";
+import { BarrasPorDia, Bloco, ErroDoPainel, SeletorDePeriodo } from "@/components/painel/PartesDoPainel";
 
 // O caminho que um clube percorre até funcionar, na ordem em que acontece.
 const FUNIL: { evento: string; rotulo: string }[] = [

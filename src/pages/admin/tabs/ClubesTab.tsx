@@ -24,7 +24,7 @@ import { Link } from "react-router-dom";
 import { useAdminPainel } from "@/hooks/admin/useAdminPainel";
 import { haQuantoTempo, situacaoDoClube, type ClubeNoPainel } from "@/lib/adminPainel";
 import { quandoDoEncontro } from "@/lib/encontros";
-import { SeloDaSituacao } from "../components/AdminPainelPartes";
+import { SeloDaSituacao } from "@/components/painel/PartesDoPainel";
 
 const empty = { nome: "", descricao: "", objetivo: "", regras: "", capa: "", duracao_tipo: "continuo", preco: 0, categoria: "", visibilidade: "publico" };
 

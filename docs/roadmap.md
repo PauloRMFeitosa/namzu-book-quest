@@ -152,6 +152,7 @@ O que já existe e será reaproveitado: aba "Área do curador" com estatísticas
 **Decisões do Paulo em 25/11/2026**
 
 - **Ordem das entregas:** (1) visão geral, (2) membros, (3) livro e cronograma, (4) encontros, (5) avisos, (6) co-curador, (7) próximo livro, (8) mediação com IA.
+- **Painel do organizador (27/11/2026):** a gestão saiu das abas do clube e ganhou área própria em `/clubes/:id/painel`, com Visão geral, Membros, Leitura, Encontros, Comunicação e Configurações. Serve de protótipo navegável para as entrevistas da Fase 1; a organização das seções deve ser revista com o que os organizadores disserem.
 - **Lembretes e avisos:** começar com aviso dentro do app e um botão "copiar mensagem para o grupo", com o texto pronto para o WhatsApp. E-mail e notificação no celular não estão configurados em produção e ficam para depois.
 - **Provedor de IA:** API do Google direto, com os mesmos modelos Gemini usados hoje pelo gateway do Lovable. O código da troca está pronto (`supabase/functions/_shared/ia.ts`, ver `docs/ia.md`): as funções passam a usar o Google quando o segredo `GEMINI_API_KEY` existir e seguem no gateway antigo até lá.
 - **Entrevistas:** as entregas 1 a 6 seguem agora. As entregas 7 e 8 esperam as entrevistas da Fase 1.

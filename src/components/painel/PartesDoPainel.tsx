@@ -5,7 +5,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ROTULO_DA_SITUACAO, picoDaSerie, type SituacaoDoClube } from "@/lib/adminPainel";
 import { cn } from "@/lib/utils";
 
-// Peças das telas de acompanhamento do Admin: Painel, Métricas e Clubes.
+// Peças das telas de acompanhamento: Admin (Painel, Métricas, Clubes) e
+// painel do organizador.
 
 export const PERIODOS = [
   { dias: 7, label: "7 dias" },
@@ -55,18 +56,23 @@ export const Indicador = ({
   valor,
   detalhe,
   icone: Icone,
+  sufixo,
 }: {
   rotulo: string;
   valor: number;
   detalhe?: string;
   icone: LucideIcon;
+  /** Unidade colada ao número, ex.: "%". */
+  sufixo?: string;
 }) => (
   <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1 min-w-0">
     <div className="flex items-center justify-between gap-2 text-muted-foreground">
       <span className="text-xs font-medium uppercase tracking-wide truncate">{rotulo}</span>
       <Icone className="w-4 h-4 shrink-0" aria-hidden="true" />
     </div>
-    <p className="font-display text-3xl font-semibold tabular-nums leading-tight">{valor.toLocaleString("pt-BR")}</p>
+    <p className="font-display text-3xl font-semibold tabular-nums leading-tight">{valor.toLocaleString("pt-BR")}
+      {sufixo}
+    </p>
     {detalhe && <p className="text-xs text-muted-foreground">{detalhe}</p>}
   </div>
 );
