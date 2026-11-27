@@ -1,6 +1,8 @@
 // Validação e montagem dos dados das páginas de criação do clube: o próprio
 // clube, o encontro e o conteúdo. Lógica pura, testável sem React.
 
+import { validarEndereco } from "@/lib/enderecoClube";
+
 const ehLink = (texto: string) => {
   try {
     const url = new URL(texto);
@@ -35,6 +37,8 @@ export interface NovoClube {
   categoria: string;
   visibilidade: string;
   imagem_capa_url: string;
+  /** Endereço da página pública (namzu.com.br/c/<endereco>). */
+  endereco: string;
 }
 
 export const CLUBE_VAZIO: NovoClube = {
@@ -44,6 +48,7 @@ export const CLUBE_VAZIO: NovoClube = {
   categoria: "",
   visibilidade: "publico",
   imagem_capa_url: "",
+  endereco: "",
 };
 
 export const MAXIMO_NOME_CLUBE = 80;
@@ -54,6 +59,8 @@ export function validarNovoClube(clube: NovoClube): string | null {
   if (nome.length < 3) return "O nome do clube precisa de pelo menos 3 letras.";
   if (nome.length > MAXIMO_NOME_CLUBE) return `O nome do clube passou de ${MAXIMO_NOME_CLUBE} letras.`;
   if (clube.visibilidade !== "publico" && clube.visibilidade !== "privado") return "Escolha quem pode entrar no clube.";
+  const erroDoEndereco = validarEndereco(clube.endereco);
+  if (erroDoEndereco) return `Endereço da página: ${erroDoEndereco.charAt(0).toLowerCase()}${erroDoEndereco.slice(1)}`;
   return null;
 }
 

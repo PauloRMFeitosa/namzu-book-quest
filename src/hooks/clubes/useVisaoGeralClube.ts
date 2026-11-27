@@ -9,9 +9,11 @@ export const useVisaoGeralClube = (clubeId: string | undefined, habilitado = tru
   useQuery({
     queryKey: queryKeys.clubes.visaoGeral(clubeId ?? ""),
     enabled: !!clubeId && habilitado,
-    // O organizador abre esta tela para ver o que mudou: vale buscar de novo.
-    staleTime: 60 * 1000,
-    refetchOnMount: true,
+    // O organizador volta a esta tela logo depois de criar um livro, um
+    // encontro ou um convite, e o roteiro e as pendências precisam refletir
+    // isso na hora: sempre confere ao abrir.
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async (): Promise<VisaoGeralClube> => {
       const { data, error } = await supabase.rpc("clube_visao_geral", { p_clube_id: clubeId! });
       if (error) throw error;

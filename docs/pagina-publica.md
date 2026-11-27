@@ -17,7 +17,7 @@ Mudar o endereço faz os links antigos pararem de funcionar.
 
 ## Como o organizador usa
 
-Painel do organizador > Página pública (`/clubes/:id/painel?secao=pagina`):
+Clube novo já nasce com a página no ar: o endereço é escolhido na criação do clube (`docs/primeiros-passos.md`). Para mudar, desligar ou publicar a página de um clube antigo, Painel do organizador > Página pública (`/clubes/:id/painel?secao=pagina`):
 
 1. Escolhe o endereço (o painel sugere um a partir do nome do clube).
 2. Liga "Página no ar" e publica.
