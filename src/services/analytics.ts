@@ -25,7 +25,8 @@ export type EventoProduto =
   | "aviso_enviado"
   | "aviso_copiado"
   | "pagina_publica_definida"
-  | "pagina_publica_compartilhada";
+  | "pagina_publica_compartilhada"
+  | "roteiro_dispensado";
 
 type ValorProp = string | number | boolean | null;
 

@@ -19,6 +19,8 @@ interface Props {
   historico: HistoricoDoClube | undefined;
   pendencias: PendenciaDoClube[];
   onIrPara: (secao: string) => void;
+  /** Roteiro "Primeiros passos", quando ainda há o que fazer e não foi dispensado. */
+  roteiro?: React.ReactNode;
 }
 
 // Abas antigas do clube → seções do painel, para os atalhos da visão geral.
@@ -26,13 +28,15 @@ const SECAO_DA_ABA: Record<string, string> = { membros: "membros", eventos: "enc
 
 // Primeira tela do painel do organizador: números, o que pede atenção, o
 // acompanhamento de cada membro e como o clube andou nas últimas semanas.
-export const VisaoDoPainel = ({ clubeId, nomeClube, visao, historico, pendencias, onIrPara }: Props) => {
+export const VisaoDoPainel = ({ clubeId, nomeClube, visao, historico, pendencias, onIrPara, roteiro }: Props) => {
   const leitura = resumoLeitura(visao?.membros ?? []);
   const participacao = participacaoDaSemana(historico);
   const encontros = [...(historico?.encontros ?? [])].reverse();
 
   return (
     <div className="flex flex-col gap-4">
+      {roteiro}
+
       {visao ? (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <Indicador

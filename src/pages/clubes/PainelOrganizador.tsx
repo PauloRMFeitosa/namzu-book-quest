@@ -10,17 +10,22 @@ import { TrilhaGestao } from "@/components/clubes/gestao/TrilhaGestao";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ComunicacaoDoPainel } from "@/components/clubes/painel-organizador/ComunicacaoDoPainel";
 import { ConfiguracoesDoPainel } from "@/components/clubes/painel-organizador/ConfiguracoesDoPainel";
+import { PrimeirosPassos } from "@/components/clubes/painel-organizador/PrimeirosPassos";
 import { PaginaPublicaDoPainel } from "@/components/clubes/painel-organizador/PaginaPublicaDoPainel";
 import { VisaoDoPainel } from "@/components/clubes/painel-organizador/VisaoDoPainel";
 import { CascaDoPainel, type GrupoDoPainel } from "@/components/painel/CascaDoPainel";
 import { useAcessoGestao } from "@/hooks/clubes/useAcessoGestao";
+import { useAvisosClube } from "@/hooks/clubes/useAvisos";
 import { usePermissoesClube } from "@/hooks/clubes/useClubeGestao";
 import { useClubes } from "@/hooks/clubes/useClubes";
 import { useHistoricoClube } from "@/hooks/clubes/useHistoricoClube";
+import { useMarcasDoRoteiro } from "@/hooks/clubes/useMarcasDoRoteiro";
 import { useVisaoGeralClube } from "@/hooks/clubes/useVisaoGeralClube";
 import { useVotacaoAberta } from "@/hooks/clubes/useVotacaoData";
 import { useAuth } from "@/hooks/useAuth";
 import { avisosPorSecao, pendenciasDoClube } from "@/lib/painelOrganizador";
+import { passosDoRoteiro, progressoDoRoteiro, situacaoDoClube } from "@/lib/primeirosPassos";
+import { registrarEvento } from "@/services/analytics";
 
 // Painel do organizador (Fase 3): a área de gestão do clube, com tela própria
 // e fora do layout do app. A página do clube fica para os membros. A seção
@@ -48,6 +53,8 @@ const PainelOrganizador = () => {
   const { data: votacao } = useVotacaoAberta(clubeId, liberado);
   const { data: todosOsClubes = [] } = useClubes();
   const [convidando, setConvidando] = useState(false);
+  const { data: avisosEnviados } = useAvisosClube(clubeId, liberado);
+  const { marcas, marcar } = useMarcasDoRoteiro(clubeId);
 
   const pedida = busca.get("secao") ?? "visao";
   const pendencias = useMemo(
@@ -57,6 +64,12 @@ const PainelOrganizador = () => {
   const avisos = avisosPorSecao(pendencias);
   const grupos: GrupoDoPainel[] = [{ rotulo: "Gestão do clube", secoes: SECOES.map((s) => ({ ...s, aviso: avisos[s.chave] })) }];
   const atual = grupos[0].secoes.find((s) => s.chave === pedida) ?? grupos[0].secoes[0];
+
+  // Abrir a seção da página com ela no ar conta como "conheceu a página" no roteiro.
+  const paginaNoAr = !!clube?.pagina_publica && !!clube?.endereco;
+  useEffect(() => {
+    if (pedida === "pagina" && paginaNoAr) marcar("pagina");
+  }, [pedida, paginaNoAr, marcar]);
 
   useEffect(() => {
     if (!clube) return;
@@ -80,6 +93,31 @@ const PainelOrganizador = () => {
     const proxima = new URLSearchParams(busca);
     proxima.set("secao", chave);
     setBusca(proxima);
+  };
+
+  // Roteiro "Primeiros passos": aparece na Visão geral até ficar completo ou ser dispensado.
+  const recemCriado = busca.get("novo") === "1";
+  const passos = passosDoRoteiro(
+    clube.id,
+    situacaoDoClube({
+      livroAtual: visao?.livro_atual,
+      temMeta: !!visao?.meta_atual,
+      proximoEncontro: visao?.proximo_encontro,
+      encontrosRealizados: historico?.encontros?.length,
+      votacaoAberta: !!votacao,
+      paginaNoAr,
+      viuAPagina: marcas.pagina,
+      membrosAtivos: visao?.membros_ativos,
+      pedidosPendentes: visao?.pedidos_pendentes,
+      gerouConvite: marcas.convite,
+      avisos: avisosEnviados?.length,
+    }),
+  );
+  // Só decide depois de os dados chegarem, para o roteiro não piscar em clube que já fez tudo.
+  const mostrarRoteiro = !!visao && !marcas.dispensado && !progressoDoRoteiro(passos).completo;
+  const dispensarRoteiro = () => {
+    marcar("dispensado");
+    registrarEvento("roteiro_dispensado", { clubeId: clube.id, props: { feitos: progressoDoRoteiro(passos).feitos } });
   };
 
   // Clubes que a pessoa organiza, para trocar sem sair do painel.
@@ -127,6 +165,18 @@ const PainelOrganizador = () => {
           historico={historico}
           pendencias={pendencias}
           onIrPara={irPara}
+          roteiro={
+            mostrarRoteiro ? (
+              <PrimeirosPassos
+                nomeClube={clube.nome}
+                passos={passos}
+                recemCriado={recemCriado}
+                onIrPara={irPara}
+                onConvidar={() => setConvidando(true)}
+                onDispensar={dispensarRoteiro}
+              />
+            ) : undefined
+          }
         />
       )}
 
@@ -161,9 +211,22 @@ const PainelOrganizador = () => {
 
       {atual.chave === "comunicacao" && <ComunicacaoDoPainel clubeId={clube.id} nomeClube={clube.nome} />}
 
-      {atual.chave === "pagina" && <PaginaPublicaDoPainel key={clube.id} clube={clube} podeEditar={podeNomear} />}
+      {atual.chave === "pagina" && (
+        <PaginaPublicaDoPainel key={clube.id} clube={clube} podeEditar={podeNomear} onConvidar={() => setConvidando(true)} />
+      )}
 
-      {atual.chave === "configuracoes" && <ConfiguracoesDoPainel clube={clube} podeEditar={podeNomear} onIrPara={irPara} />}
+      {atual.chave === "configuracoes" && (
+        <ConfiguracoesDoPainel
+          clube={clube}
+          podeEditar={podeNomear}
+          onIrPara={irPara}
+          roteiroDispensado={marcas.dispensado}
+          onReabrirRoteiro={() => {
+            marcar("dispensado", false);
+            irPara("visao");
+          }}
+        />
+      )}
 
       <ConvidarMembrosDialog
         open={convidando}
@@ -171,6 +234,7 @@ const PainelOrganizador = () => {
         clubeId={clube.id}
         nomeClube={clube.nome}
         privado={clube.visibilidade === "privado"}
+        enderecoDaPagina={paginaNoAr ? clube.endereco : null}
       />
     </CascaDoPainel>
   );

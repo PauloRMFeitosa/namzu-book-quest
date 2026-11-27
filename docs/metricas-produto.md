@@ -19,7 +19,7 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 
 | Evento | Quando dispara | Propriedades |
 |---|---|---|
-| `clube_criado` | Clube criado com sucesso | `visibilidade` |
+| `clube_criado` | Clube criado com sucesso | `visibilidade`. `pagina_publica`: se a página foi publicada na criação |
 | `convite_gerado` | Link de convite copiado, enviado pelo WhatsApp, compartilhado ou QR code baixado | `canal`: `copiar`, `whatsapp`, `compartilhar`, `qrcode` |
 | `membro_entrou` | Pessoa entrou ou pediu para entrar em um clube | `status`: `ativo` ou `pendente` |
 | `progresso_registrado` | Progresso de leitura salvo | `origem`: `sessao`, `modal`, `clube`, `concluir`, `registro`, `finalizar`. `percentual`. `tempo_minutos` na sessão |
@@ -39,6 +39,7 @@ Gravados por `registrarEvento` em `src/services/analytics.ts`. Só usuário loga
 | `aviso_copiado` | Organizador copiou um aviso para o grupo | |
 | `pagina_publica_definida` | Organizador salvou o endereço do clube ou ligou ou desligou a página pública | `ativa`: `true` ou `false` |
 | `pagina_publica_compartilhada` | Organizador copiou ou compartilhou o link da página pública | `canal`: `copiar`, `whatsapp`. `tipo`: `subdominio` ou `caminho` |
+| `roteiro_dispensado` | Organizador dispensou o roteiro "Primeiros passos" | `feitos`: passos obrigatórios já cumpridos |
 
 Regras para evento novo:
 

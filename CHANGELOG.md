@@ -8,6 +8,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Roteiro "Primeiros passos" do organizador:** depois de criar o clube, o organizador cai no painel com um roteiro de seis passos (primeiro livro, cronograma, primeiro encontro, página pública, convite e, como opcional, o primeiro aviso). Cada passo explica para que serve, leva ao lugar certo e se marca sozinho. Vale também para clubes antigos, que veem só o que falta. Pode ser dispensado e reaberto em Configurações. Ver `docs/primeiros-passos.md`.
+- **Endereço da página na criação do clube:** a criação ganhou o bloco "Página do clube", com o endereço sugerido pelo nome, e a página pública já nasce no ar.
+- As telas de convite e de página pública explicam a diferença entre as duas e apontam uma para a outra.
 - **Página pública do clube:** página aberta, sem login, para o organizador divulgar o clube. Mostra nome, descrição, organizador, número de membros, o livro atual, os livros da trilha e os próximos encontros, com o botão de participar. O organizador escolhe o endereço e liga a página em Painel do organizador > Página pública. Abre em `namzu.com.br/c/<endereco>` e, quando o domínio curinga estiver configurado, em `<endereco>.namzu.com.br` (flag `show_clube_subdominio`, desligada por padrão). Ver `docs/pagina-publica.md`.
 - Colunas `endereco` e `pagina_publica` em `clubes` e funções `clube_pagina_publica` e `clube_definir_pagina_publica` (migração `clube_pagina_publica`).
 - **Planos do organizador (preparação da Fase 5):** nova seção Admin > Planos para criar e editar planos com preço mensal e anual, dias de teste, limites (membros por clube, clubes, co-curadores e usos de IA) e recursos. Uma tabela mostra os recursos de cada plano e permite marcar na hora; a lista de organizadores mostra o plano de cada um e avisa quando o uso passa do limite. Os planos ainda não bloqueiam nada no app e não há cobrança. Ver `docs/planos.md`.
@@ -69,6 +72,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 
+- Depois de criar o clube, o organizador vai para o painel com o roteiro, e não mais para a página do clube com a janela de convite aberta.
+- A visão geral do organizador passa a conferir os dados sempre que é aberta, para o roteiro e as pendências refletirem na hora o que acabou de ser feito.
 - **Página do clube em uma coluna só:** a barra lateral saiu. No computador ela empurrava o conteúdo das abas para fora do alinhamento da capa e dos avisos; no celular virava uma pilha de cartões depois de cada aba. Os blocos foram para a aba onde fazem sentido: "Pulso coletivo", ranking e liga semanal na aba Membros, "Próximo encontro" no topo do Feed (leva à aba Eventos) e "Quem está online" na aba Canais.
 - **Menu do clube mais visível:** a barra de abas ganhou ícones, a aba aberta fica em azul e a barra acompanha a rolagem, presa abaixo do cabeçalho. Cabem até seis itens; quando há mais, ficam Visão geral, Feed, Leituras, Eventos e Membros, e as outras (Canais, Conteúdos, Microgrupos e Gestão) vão para o botão "Mais", que mostra o nome da aba aberta. No celular a barra deixa de rolar para o lado.
 - **Aviso, votação de data, canal e microgrupo em página:** as quatro janelas de criação que restavam no clube viraram páginas (`/clubes/:id/avisos/novo`, `/votacao/nova`, `/canais/novo` e `/microgrupos/novo`), com prévia e erro em texto. O canal recusa nome repetido e o microgrupo valida o limite de membros. Com isso, todas as criações do clube seguem a regra de criação em página.

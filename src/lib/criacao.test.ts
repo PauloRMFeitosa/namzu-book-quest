@@ -43,8 +43,14 @@ describe("lerRascunho", () => {
 });
 
 describe("validarNovoClube", () => {
-  it("aceita só o nome", () => {
-    expect(validarNovoClube({ ...CLUBE_VAZIO, nome: "Leitoras do Cariri" })).toBeNull();
+  it("aceita nome e endereço", () => {
+    expect(validarNovoClube({ ...CLUBE_VAZIO, nome: "Leitoras do Cariri", endereco: "leitoras-do-cariri" })).toBeNull();
+  });
+
+  it("pede um endereço válido para a página", () => {
+    expect(validarNovoClube({ ...CLUBE_VAZIO, nome: "Leitoras do Cariri" })).toMatch(/Endereço da página: escolha/);
+    expect(validarNovoClube({ ...CLUBE_VAZIO, nome: "Leitoras", endereco: "admin" })).toMatch(/Endereço da página: esse endereço é reservado/);
+    expect(validarNovoClube({ ...CLUBE_VAZIO, nome: "Leitoras", endereco: "ab" })).toMatch(/pelo menos 3/);
   });
 
   it("aponta o primeiro problema", () => {

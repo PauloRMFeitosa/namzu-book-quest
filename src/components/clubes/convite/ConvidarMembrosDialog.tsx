@@ -11,6 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { linkConvite, mensagemConvite } from "@/lib/convite";
+import { caminhoDaPagina } from "@/lib/enderecoClube";
+import { gravarMarca } from "@/lib/primeirosPassos";
 import { registrarEvento } from "@/services/analytics";
 
 interface Props {
@@ -21,9 +23,24 @@ interface Props {
   privado?: boolean;
   /** Abre logo depois de criar o clube, com o texto de boas-vindas. */
   recemCriado?: boolean;
+  /** Endereço da página pública, quando ela está no ar. */
+  enderecoDaPagina?: string | null;
 }
 
-export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, privado, recemCriado }: Props) => {
+export const ConvidarMembrosDialog = ({
+  open,
+  onOpenChange,
+  clubeId,
+  nomeClube,
+  privado,
+  recemCriado,
+  enderecoDaPagina,
+}: Props) => {
+  // Além do evento de produto, marca o passo "Convide os membros" do roteiro.
+  const registrarConvite = (canal: string) => {
+    registrarEvento("convite_gerado", { clubeId, props: { canal } });
+    gravarMarca(clubeId, "convite");
+  };
   const link = linkConvite(clubeId);
   const mensagem = mensagemConvite(nomeClube, link);
   const podeCompartilhar = typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -55,14 +72,14 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
     document.body.appendChild(a);
     a.click();
     a.remove();
-    registrarEvento("convite_gerado", { clubeId, props: { canal: "qrcode" } });
+    registrarConvite("qrcode");
   };
 
   const copiar = async () => {
     try {
       await navigator.clipboard.writeText(link);
       toast.success("Link copiado!");
-      registrarEvento("convite_gerado", { clubeId, props: { canal: "copiar" } });
+      registrarConvite("copiar");
     } catch {
       toast.error("Não foi possível copiar. Selecione o link e copie manualmente.");
     }
@@ -71,7 +88,7 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
   const compartilhar = async () => {
     try {
       await navigator.share({ title: nomeClube, text: mensagem, url: link });
-      registrarEvento("convite_gerado", { clubeId, props: { canal: "compartilhar" } });
+      registrarConvite("compartilhar");
     } catch {
       /* usuário fechou a folha de compartilhamento */
     }
@@ -106,7 +123,7 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
               href={`https://wa.me/?text=${encodeURIComponent(mensagem)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => registrarEvento("convite_gerado", { clubeId, props: { canal: "whatsapp" } })}
+              onClick={() => registrarConvite("whatsapp")}
             >
               <MessageCircle className="w-4 h-4" /> Enviar pelo WhatsApp
             </a>
@@ -134,6 +151,21 @@ export const ConvidarMembrosDialog = ({ open, onOpenChange, clubeId, nomeClube, 
                 </Button>
               </div>
             </div>
+          )}
+
+          {enderecoDaPagina && (
+            <p className="text-xs text-muted-foreground">
+              O convite é para quem você já conhece. Para divulgar a quem ainda não conhece o clube, use a{" "}
+              <a
+                href={caminhoDaPagina(enderecoDaPagina)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-medium hover:underline"
+              >
+                página pública
+              </a>
+              .
+            </p>
           )}
 
           {privado && (

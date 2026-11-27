@@ -21,11 +21,16 @@ export const ConfiguracoesDoPainel = ({
   clube,
   podeEditar,
   onIrPara,
+  roteiroDispensado,
+  onReabrirRoteiro,
 }: {
   clube: ClubeDetalhe;
   /** Só o organizador e o admin editam o clube e nomeiam co-curadores. */
   podeEditar: boolean;
   onIrPara: (secao: string) => void;
+  /** O roteiro "Primeiros passos" foi dispensado neste aparelho. */
+  roteiroDispensado?: boolean;
+  onReabrirRoteiro?: () => void;
 }) => {
   const [editando, setEditando] = useState(false);
   const privado = clube.visibilidade === "privado";
@@ -75,6 +80,14 @@ export const ConfiguracoesDoPainel = ({
             : "Só quem criou o clube nomeia co-curadores."}
         </p>
       </Bloco>
+
+      {roteiroDispensado && onReabrirRoteiro && (
+        <Bloco titulo="Primeiros passos" descricao="O roteiro com o que fazer para deixar o clube pronto: livro, cronograma, encontro, página e convite.">
+          <Button variant="outline" size="sm" className="self-start" onClick={onReabrirRoteiro}>
+            Mostrar o roteiro de novo
+          </Button>
+        </Bloco>
+      )}
 
       <Bloco titulo="Ver como os membros veem">
         <Button asChild variant="outline" size="sm" className="gap-1.5 self-start">

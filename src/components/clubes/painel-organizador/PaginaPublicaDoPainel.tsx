@@ -20,6 +20,7 @@ import {
   sugerirEndereco,
   validarEndereco,
 } from "@/lib/enderecoClube";
+import { gravarMarca } from "@/lib/primeirosPassos";
 import { registrarEvento } from "@/services/analytics";
 
 const mensagemDaPagina = (nomeClube: string, link: string) => `Conheça o nosso clube de leitura "${nomeClube}": ${link}`;
@@ -39,6 +40,7 @@ const LinhaDoLink = ({
     try {
       await navigator.clipboard.writeText(link);
       toast.success("Link copiado.");
+      gravarMarca(clube.id, "pagina");
       registrarEvento("pagina_publica_compartilhada", { clubeId: clube.id, props: { canal: "copiar", tipo } });
     } catch {
       toast.error("Não foi possível copiar. Selecione o endereço e copie à mão.");
@@ -75,10 +77,13 @@ const LinhaDoLink = ({
 export const PaginaPublicaDoPainel = ({
   clube,
   podeEditar,
+  onConvidar,
 }: {
   clube: ClubeDetalhe;
   /** Só quem criou o clube e o admin mudam o endereço e ligam a página. */
   podeEditar: boolean;
+  /** Abre a janela de convite. */
+  onConvidar?: () => void;
 }) => {
   const { flags } = useFeatureFlags();
   const definir = useDefinirPaginaPublica(clube.id);
@@ -186,6 +191,24 @@ export const PaginaPublicaDoPainel = ({
           </div>
         </Bloco>
       )}
+
+      <Bloco titulo="Página pública ou convite?">
+        <ul className="text-sm text-muted-foreground flex flex-col gap-1.5">
+          <li>
+            <span className="font-medium text-foreground">Página pública:</span> para divulgar a quem ainda não conhece o
+            clube. Apresenta o clube e leva ao convite.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">Convite:</span> para quem você já conhece. A pessoa abre o link e
+            entra direto.
+          </li>
+        </ul>
+        {onConvidar && (
+          <Button variant="outline" size="sm" className="self-start" onClick={onConvidar}>
+            Abrir o convite
+          </Button>
+        )}
+      </Bloco>
 
       <Bloco titulo="O que a página mostra">
         <ul className="text-sm text-muted-foreground list-disc pl-5 flex flex-col gap-1">
