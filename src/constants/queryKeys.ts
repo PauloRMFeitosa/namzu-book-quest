@@ -8,6 +8,7 @@ export const queryKeys = {
     convite: (id: string) => ["clube-convite", id] as const,
     paginaPublica: (endereco: string) => ["clube-pagina-publica", endereco] as const,
     plano: (id: string) => ["clube-plano", id] as const,
+    grupo: (id: string) => ["clube-grupo", id] as const,
     meuPlano: ["meu-plano"] as const,
     visaoGeral: (id: string) => ["clube-visao-geral", id] as const,
     historico: (id: string) => ["clube-painel-historico", id] as const,

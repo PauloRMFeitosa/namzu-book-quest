@@ -72,7 +72,8 @@ export const useCriarConteudo = (clubeId: string) => {
     },
     onSuccess: () => {
       toast.success("Conteúdo publicado");
-      qc.invalidateQueries({ queryKey: ["clube-conteudos", clubeId] });
+      // Criado em outra página: busca a lista de novo mesmo fora da tela.
+      qc.invalidateQueries({ queryKey: ["clube-conteudos", clubeId], refetchType: "all" });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao publicar"),
   });

@@ -30,6 +30,7 @@ import {
   type VotacaoDeData,
 } from "@/lib/votacaoData";
 import { cn } from "@/lib/utils";
+import { EnviarNoWhatsApp } from "@/components/clubes/shared/EnviarNoWhatsApp";
 
 interface Props {
   clubeId: string;
@@ -58,8 +59,10 @@ export const VotacaoDataCard = ({ clubeId, nomeClube, votacao, userId, podeVotar
   const maisVotada = opcaoMaisVotada(votacao);
   const ocupado = votar.isPending || encerrar.isPending || cancelar.isPending;
 
+  const textoDaVotacao = () => mensagemDaVotacao({ nomeClube, votacao, link: linkDoClube(clubeId, "eventos") });
+
   const copiarMensagem = async () => {
-    const texto = mensagemDaVotacao({ nomeClube, votacao, link: linkDoClube(clubeId, "eventos") });
+    const texto = textoDaVotacao();
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Mensagem copiada. Cole no grupo do clube.");
@@ -133,6 +136,11 @@ export const VotacaoDataCard = ({ clubeId, nomeClube, votacao, userId, podeVotar
           <Button size="sm" variant="ghost" className="rounded-xl h-8" onClick={copiarMensagem}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Copiar mensagem para o grupo
           </Button>
+          <EnviarNoWhatsApp
+            className="rounded-xl"
+            texto={textoDaVotacao()}
+            aoEnviar={() => registrarEvento("lembrete_encontro_copiado", { clubeId, props: { origem: "votacao", canal: "whatsapp" } })}
+          />
           <Button
             size="sm"
             variant="ghost"

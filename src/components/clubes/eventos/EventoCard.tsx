@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
-import { Calendar, Clock, Users, ExternalLink, Check, X, HelpCircle, Copy, ClipboardCheck, FileText } from "lucide-react";
+import { Calendar, Clock, Users, ExternalLink, Check, X, HelpCircle, Copy, ClipboardCheck, FileText, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import { registrarEvento } from "@/services/analytics";
 import { cn } from "@/lib/utils";
 import { PresencaDialog } from "./PresencaDialog";
 import { AtaDialog } from "./AtaDialog";
+import { CompartilharEncontro } from "@/components/clubes/shared/CompartilharDoClube";
+import { EnviarNoWhatsApp } from "@/components/clubes/shared/EnviarNoWhatsApp";
 
 const TIPO_LABEL: Record<string, string> = {
   encontro: "Encontro",
@@ -39,6 +41,7 @@ export const EventoCard = ({
   const rsvp = useRsvp(clubeId);
   const [presencaAberta, setPresencaAberta] = useState(false);
   const [ataAberta, setAtaAberta] = useState(false);
+  const [compartilhando, setCompartilhando] = useState(false);
   const inicio = new Date(evento.inicio_em);
   const passado = inicio < new Date();
   const lotado =
@@ -50,14 +53,17 @@ export const EventoCard = ({
     rsvp.mutate({ eventoId: evento.id, status: next });
   };
 
-  const copiarLembrete = async () => {
-    const texto = mensagemDoEncontro({
+  const textoDoLembrete = () =>
+    mensagemDoEncontro({
       nomeClube,
       titulo: evento.titulo,
       inicio: evento.inicio_em,
       urlEvento: evento.url_evento,
       link: linkDoClube(clubeId, "eventos"),
     });
+
+  const copiarLembrete = async () => {
+    const texto = textoDoLembrete();
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Lembrete copiado. Cole no grupo do clube.");
@@ -188,6 +194,14 @@ export const EventoCard = ({
           <Button size="sm" variant="ghost" className="rounded-xl h-8" onClick={copiarLembrete}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Copiar lembrete para o grupo
           </Button>
+          <EnviarNoWhatsApp
+            className="rounded-xl"
+            texto={textoDoLembrete()}
+            aoEnviar={() => registrarEvento("lembrete_encontro_copiado", { clubeId, props: { origem: "encontros", canal: "whatsapp" } })}
+          />
+          <Button size="sm" variant="ghost" className="rounded-xl h-8" onClick={() => setCompartilhando(true)}>
+            <ImageIcon className="w-3.5 h-3.5 mr-1" /> Compartilhar imagem
+          </Button>
         </div>
       )}
 
@@ -213,6 +227,16 @@ export const EventoCard = ({
             </span>
           )}
         </div>
+      )}
+
+      {compartilhando && (
+        <CompartilharEncontro
+          clubeId={clubeId}
+          nomeClube={nomeClube}
+          open
+          onOpenChange={setCompartilhando}
+          encontro={{ titulo: evento.titulo, inicio_em: evento.inicio_em, tipo: TIPO_LABEL[evento.tipo ?? ""] ?? "Encontro" }}
+        />
       )}
 
       {presencaAberta && (

@@ -19,6 +19,8 @@ import { useApagarAviso, useAvisosClube } from "@/hooks/clubes/useAvisos";
 import { mensagemDoAviso, quandoDoAviso, textoDeAvisos, type AvisoDoClube } from "@/lib/avisos";
 import { linkDoClube } from "@/lib/convite";
 import { registrarEvento } from "@/services/analytics";
+import { GrupoDoPainel } from "@/components/clubes/shared/GrupoDoClube";
+import { EnviarNoWhatsApp } from "@/components/clubes/shared/EnviarNoWhatsApp";
 
 // Avisos do organizador: enviar, reler, copiar para o grupo e apagar.
 export const ComunicacaoDoPainel = ({ clubeId, nomeClube }: { clubeId: string; nomeClube: string }) => {
@@ -26,8 +28,11 @@ export const ComunicacaoDoPainel = ({ clubeId, nomeClube }: { clubeId: string; n
   const apagar = useApagarAviso(clubeId);
   const [paraApagar, setParaApagar] = useState<AvisoDoClube | null>(null);
 
+  const textoDoAviso = (aviso: AvisoDoClube) =>
+    mensagemDoAviso({ nomeClube, titulo: aviso.titulo, mensagem: aviso.mensagem, link: linkDoClube(clubeId) });
+
   const copiar = async (aviso: AvisoDoClube) => {
-    const texto = mensagemDoAviso({ nomeClube, titulo: aviso.titulo, mensagem: aviso.mensagem, link: linkDoClube(clubeId) });
+    const texto = textoDoAviso(aviso);
     try {
       await navigator.clipboard.writeText(texto);
       toast.success("Aviso copiado. Cole no grupo do clube.");
@@ -39,6 +44,8 @@ export const ComunicacaoDoPainel = ({ clubeId, nomeClube }: { clubeId: string; n
 
   return (
     <div className="flex flex-col gap-4 max-w-4xl">
+      <GrupoDoPainel clubeId={clubeId} />
+
       <Bloco
         titulo="Avisos enviados"
         descricao="Cada aviso vira uma notificação no app para todos os membros ativos e fica guardado no clube."
@@ -70,6 +77,10 @@ export const ComunicacaoDoPainel = ({ clubeId, nomeClube }: { clubeId: string; n
                     <Button size="sm" variant="ghost" className="h-8" onClick={() => copiar(a)}>
                       <Copy className="w-3.5 h-3.5 mr-1" /> Copiar para o grupo
                     </Button>
+                    <EnviarNoWhatsApp
+                      texto={textoDoAviso(a)}
+                      aoEnviar={() => registrarEvento("aviso_copiado", { clubeId, props: { canal: "whatsapp" } })}
+                    />
                     <Button size="sm" variant="ghost" className="h-8 text-destructive hover:text-destructive" onClick={() => setParaApagar(a)}>
                       <Trash2 className="w-3.5 h-3.5 mr-1" /> Apagar
                     </Button>

@@ -26,7 +26,10 @@ export type EventoProduto =
   | "aviso_copiado"
   | "pagina_publica_definida"
   | "pagina_publica_compartilhada"
-  | "roteiro_dispensado";
+  | "roteiro_dispensado"
+  | "grupo_do_clube_definido"
+  | "grupo_do_clube_aberto"
+  | "imagem_compartilhada";
 
 type ValorProp = string | number | boolean | null;
 

@@ -8,6 +8,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Grupo do clube:** o organizador guarda o link do grupo do WhatsApp ou do Telegram em Painel > Comunicação, e os membros ativos veem o botão "Entrar no grupo" na página do clube. O link fica em tabela própria (`clube_grupos`, migração `clube_grupo`) e só quem faz parte do clube lê.
+- **Enviar no WhatsApp:** ao lado de cada "Copiar para o grupo" (lembrete do encontro, meta da semana, votação de data e avisos), um botão abre o WhatsApp com a mensagem pronta.
+- **Imagens de divulgação:** o encontro e a trilha ganham imagem pronta para o grupo, os stories e o feed, com mensagem editável e o link da página do clube. Ver `docs/divulgacao.md`.
 - **Mensagem de divulgação editável:** na página pública (Painel > Página pública) e na janela de convite, o organizador escreve a mensagem que vai com o link no WhatsApp. O texto fica guardado no aparelho, por clube, e o link entra no fim.
 - **Limites dos planos:** os limites de clubes por organizador, membros por clube e co-curadores por clube passam a valer. O banco recusa o que passa do limite; a criação de clube avisa antes; Painel > Configurações mostra o plano e o uso; Painel > Membros avisa quando o clube está perto do limite ou lotado. Quem já está acima do limite continua como está. Os recursos de cada plano e o limite de IA ainda não bloqueiam nada. Ver `docs/planos.md`.
 - **Plano Lançamento:** plano padrão enquanto a cobrança não é ativada, grátis, com todos os recursos e sem limites (migração `planos_limites`).
@@ -65,6 +68,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Corrigido
 
+- **Lista desatualizada depois de criar:** ao criar um encontro, a lista de encontros (no painel e na página do clube) continuava mostrando a versão antiga por vários minutos, porque a criação passou a acontecer em outra página e a lista não era buscada de novo ao voltar. O mesmo valia para canal, conteúdo, microgrupo e para o clube novo em "Meu clube". Agora a lista é buscada de novo na hora.
 - **Acervo pela metade.** A Busca e a página "Adicionar obra à trilha" carregavam só 500 das 1.024 obras do acervo; metade dos livros não aparecia para escolher. O acervo passa a ser buscado inteiro, em páginas.
 - **Clube no celular:** na aba Membros, o ranking com nomes compridos passava da borda da tela e levava a liga semanal junto; na aba Microgrupos, o título e os botões não cabiam na mesma linha. Os nomes agora são cortados com reticências e o cabeçalho de Microgrupos quebra em duas linhas.
 - **Datas da trilha um dia antes.** O período de cada livro aparecia com um dia a menos no fuso do Brasil, na Gestão e na aba Leituras. As datas passam a ser lidas como dia, sem hora.

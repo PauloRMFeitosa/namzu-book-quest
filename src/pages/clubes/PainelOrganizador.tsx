@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { BookOpen, CalendarDays, Globe, LayoutDashboard, Megaphone, Settings, UserPlus, Users } from "lucide-react";
+import { BookOpen, CalendarDays, Globe, Image as ImageIcon, LayoutDashboard, Megaphone, Settings, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CarregandoCriacao } from "@/components/criacao/CarregandoCriacao";
@@ -10,6 +10,7 @@ import { TrilhaGestao } from "@/components/clubes/gestao/TrilhaGestao";
 import { MembrosTab } from "@/components/clubes/membros/MembrosTab";
 import { ComunicacaoDoPainel } from "@/components/clubes/painel-organizador/ComunicacaoDoPainel";
 import { ConfiguracoesDoPainel } from "@/components/clubes/painel-organizador/ConfiguracoesDoPainel";
+import { CompartilharTrilha } from "@/components/clubes/shared/CompartilharDoClube";
 import { PrimeirosPassos } from "@/components/clubes/painel-organizador/PrimeirosPassos";
 import { PaginaPublicaDoPainel } from "@/components/clubes/painel-organizador/PaginaPublicaDoPainel";
 import { VisaoDoPainel } from "@/components/clubes/painel-organizador/VisaoDoPainel";
@@ -55,6 +56,7 @@ const PainelOrganizador = () => {
   const { data: votacao } = useVotacaoAberta(clubeId, liberado);
   const { data: todosOsClubes = [] } = useClubes();
   const [convidando, setConvidando] = useState(false);
+  const [compartilhandoTrilha, setCompartilhandoTrilha] = useState(false);
   const { data: avisosEnviados } = useAvisosClube(clubeId, liberado);
   const { marcas, marcar } = useMarcasDoRoteiro(clubeId);
   const { data: planoDoClube } = usePlanoDoClube(clubeId, liberado);
@@ -210,8 +212,16 @@ const PainelOrganizador = () => {
       )}
 
       {atual.chave === "leitura" && (
-        <div className="max-w-4xl">
+        <div className="flex flex-col gap-4 max-w-4xl">
+          <div className="flex justify-end">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCompartilhandoTrilha(true)}>
+              <ImageIcon className="w-4 h-4" /> Compartilhar a trilha
+            </Button>
+          </div>
           <TrilhaGestao clubeId={clube.id} />
+          {compartilhandoTrilha && (
+            <CompartilharTrilha clubeId={clube.id} nomeClube={clube.nome} open onOpenChange={setCompartilhandoTrilha} />
+          )}
         </div>
       )}
 

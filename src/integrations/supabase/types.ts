@@ -320,6 +320,35 @@ export type Database = {
           },
         ]
       }
+      clube_grupos: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          clube_id: string
+          link: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          clube_id: string
+          link: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          clube_id?: string
+          link?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clube_grupos_clube_id_fkey"
+            columns: ["clube_id"]
+            isOneToOne: true
+            referencedRelation: "clubes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clube_membros: {
         Row: {
           clube_id: string

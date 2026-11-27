@@ -24,6 +24,7 @@ import {
 import { useIsCurador } from "@/hooks/clubes/useClubeGestao";
 import { useFeatureFlags, type FeatureFlagKey } from "@/hooks/useFeatureFlags";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { EntrarNoGrupo } from "@/components/clubes/shared/GrupoDoClube";
 
 const BASE_TABS: { value: string; label: string; flag: FeatureFlagKey }[] = [
   { value: "feed", label: "Feed", flag: "show_clube_feed" },
@@ -132,6 +133,8 @@ const ClubeDetalhe = () => {
               onConvidar={() => setConvidarAberto(true)}
               loading={entrar.isPending || sair.isPending}
             />
+
+            <EntrarNoGrupo clubeId={clube.id} habilitado={acessoTotal} />
 
             {canManage && (
               <Link
