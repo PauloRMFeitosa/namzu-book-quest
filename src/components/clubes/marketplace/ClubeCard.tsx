@@ -28,7 +28,7 @@ export const ClubeCard = ({ clube, variant = "grid", ehCurador = false }: Props)
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className={`${widthClass} text-left card-editorial flex flex-col snap-start group`}
+      className={`${widthClass} text-left card-editorial bg-secondary hover:bg-[#BAE6D4] dark:hover:bg-secondary/80 flex flex-col snap-start group`}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-gradient-warm">
         {clube.imagem_capa_url ? (
@@ -76,7 +76,7 @@ export const ClubeCard = ({ clube, variant = "grid", ehCurador = false }: Props)
         <div className="mt-auto pt-3 flex items-center gap-2 border-t border-border/60">
           <Avatar className="w-6 h-6">
             <AvatarImage src={clube.curador?.avatar_url ?? undefined} />
-            <AvatarFallback className="text-[10px] bg-secondary">{initials}</AvatarFallback>
+            <AvatarFallback className="text-[10px] bg-card">{initials}</AvatarFallback>
           </Avatar>
           <span className="text-xs text-muted-foreground truncate flex-1">
             {clube.curador?.nome_exibicao || clube.curador?.username || "Curador"}

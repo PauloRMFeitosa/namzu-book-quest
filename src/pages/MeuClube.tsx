@@ -64,6 +64,7 @@ const MeuClube = () => {
         <PageHero
           icon={Users}
           badge="Meu clube"
+          tom="clube"
           title={<>Seu clube de leitura <span className="text-gradient-warm">começa aqui</span></>}
           description="Crie o clube, convide os membros e acompanhe a leitura de todos em um só lugar."
         />
@@ -87,6 +88,7 @@ const MeuClube = () => {
       <PageHero
         icon={Users}
         badge="Meu clube"
+          tom="clube"
         title={<>Meus <span className="text-gradient-warm">clubes</span></>}
         description="Escolha um clube para continuar."
       />

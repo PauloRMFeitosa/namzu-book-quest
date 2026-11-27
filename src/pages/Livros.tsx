@@ -465,6 +465,7 @@ const Livros = () => {
       <PageHero
         icon={Library}
         badge="Biblioteca"
+        tom="leitura"
         title={
           <>
             Meus <span className="text-gradient-warm">livros</span>
