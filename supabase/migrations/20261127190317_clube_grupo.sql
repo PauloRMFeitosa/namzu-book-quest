@@ -1,5 +1,7 @@
 -- Grupo do clube no WhatsApp ou no Telegram (docs/divulgacao.md).
 --
+-- Aplicada no remoto em 27/11/2026 (versão 20261127190317).
+--
 -- O organizador guarda o link de convite do grupo, e os membros veem o botão
 -- "Entrar no grupo" na página do clube.
 --

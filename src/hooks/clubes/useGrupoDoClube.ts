@@ -4,17 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/constants/queryKeys";
 import { registrarEvento } from "@/services/analytics";
 
-// Cast temporário: sai quando os tipos forem regenerados após a migração `clube_grupo`.
-const banco = supabase as any;
-
 /** Link do grupo do clube no WhatsApp ou no Telegram. Só quem faz parte do clube consegue ler. */
 export const useGrupoDoClube = (clubeId: string | undefined, habilitado = true) =>
   useQuery({
     queryKey: queryKeys.clubes.grupo(clubeId ?? ""),
     enabled: !!clubeId && habilitado,
     queryFn: async (): Promise<string | null> => {
-      const { data, error } = await banco.from("clube_grupos").select("link").eq("clube_id", clubeId).maybeSingle();
-      // Antes da migração a tabela não existe: o app segue sem o botão do grupo.
+      const { data, error } = await supabase.from("clube_grupos").select("link").eq("clube_id", clubeId!).maybeSingle();
+      // Se a leitura falhar, o app segue sem o botão do grupo.
       if (error) return null;
       return (data?.link as string | undefined) ?? null;
     },
@@ -26,8 +23,8 @@ export const useSalvarGrupoDoClube = (clubeId: string) => {
   return useMutation({
     mutationFn: async (link: string | null) => {
       const consulta = link
-        ? banco.from("clube_grupos").upsert({ clube_id: clubeId, link })
-        : banco.from("clube_grupos").delete().eq("clube_id", clubeId);
+        ? supabase.from("clube_grupos").upsert({ clube_id: clubeId, link })
+        : supabase.from("clube_grupos").delete().eq("clube_id", clubeId);
       const { error } = await consulta;
       if (error) throw error;
       return link;
