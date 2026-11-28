@@ -8,6 +8,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
+- **Imagens do e-mail de apresentação:** quatro imagens em `apps/blog/public/img/email/` (capa, progresso dos membros, encontro e convite), em JPG, para o e-mail de apresentação do NAMZU a organizadores de clubes. Ficam no blog para terem endereço público; nenhuma página do blog as usa.
 - **Guia de uso no blog:** post "Como usar o NAMZU: do cadastro ao primeiro encontro do seu clube de leitura", com o passo a passo ilustrado de criar a conta, criar o clube, convidar os membros e acompanhar a leitura. As imagens usam um clube de exemplo com membros fictícios e ficam em `apps/blog/public/img/guia-namzu/`. O blog ganhou a classe `print` para mostrar prints de celular dentro dos posts.
 - **Grupo do clube:** o organizador guarda o link do grupo do WhatsApp ou do Telegram em Painel > Comunicação, e os membros ativos veem o botão "Entrar no grupo" na página do clube. O link fica em tabela própria (`clube_grupos`, migração `clube_grupo`) e só quem faz parte do clube lê.
 - **Enviar no WhatsApp:** ao lado de cada "Copiar para o grupo" (lembrete do encontro, meta da semana, votação de data e avisos), um botão abre o WhatsApp com a mensagem pronta.
