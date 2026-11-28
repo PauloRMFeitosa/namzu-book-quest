@@ -141,9 +141,72 @@ declare module 'astro:content' {
 
 	type ContentEntryMap = {
 		"posts": {
+"30-ideias-conteudo-bookfluencer.md": {
+	id: "30-ideias-conteudo-bookfluencer.md";
+  slug: "30-ideias-conteudo-bookfluencer";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
 "bem-vindo-ao-blog-namzu.md": {
 	id: "bem-vindo-ao-blog-namzu.md";
   slug: "bem-vindo-ao-blog-namzu";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"bookfluencer-organizar-conteudo-literario.md": {
+	id: "bookfluencer-organizar-conteudo-literario.md";
+  slug: "bookfluencer-organizar-conteudo-literario";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"booktok-brasil-como-comecar.md": {
+	id: "booktok-brasil-como-comecar.md";
+  slug: "booktok-brasil-como-comecar";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"clube-de-leitura-online.md": {
+	id: "clube-de-leitura-online.md";
+  slug: "clube-de-leitura-online";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"como-criar-habito-de-leitura.md": {
+	id: "como-criar-habito-de-leitura.md";
+  slug: "como-criar-habito-de-leitura";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"como-fazer-anotacoes-de-livros.md": {
+	id: "como-fazer-anotacoes-de-livros.md";
+  slug: "como-fazer-anotacoes-de-livros";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"como-monetizar-bookfluencer-brasil.md": {
+	id: "como-monetizar-bookfluencer-brasil.md";
+  slug: "como-monetizar-bookfluencer-brasil";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"como-usar-o-namzu-clube-de-leitura.md": {
+	id: "como-usar-o-namzu-clube-de-leitura.md";
+  slug: "como-usar-o-namzu-clube-de-leitura";
+  body: string;
+  collection: "posts";
+  data: InferEntrySchema<"posts">
+} & { render(): Render[".md"] };
+"melhores-apps-leitura-brasil.md": {
+	id: "melhores-apps-leitura-brasil.md";
+  slug: "melhores-apps-leitura-brasil";
   body: string;
   collection: "posts";
   data: InferEntrySchema<"posts">
