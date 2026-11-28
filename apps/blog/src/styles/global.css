@@ -159,6 +159,11 @@
       prose-img:rounded-2xl prose-img:shadow-md;
   }
 
+  /* Print de tela de celular dentro do post: largura de aparelho, centralizado. */
+  .prose-namzu img.print {
+    @apply mx-auto w-full max-w-[340px] h-auto border border-border;
+  }
+
   .dark .prose-namzu {
     @apply prose-invert;
   }
